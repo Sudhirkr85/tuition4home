@@ -96,31 +96,30 @@ export default function Footer() {
           {/* Col 3: Academic Programs & Modes */}
           <div>
             <h4 style={{ color: '#FFFFFF', fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.25rem' }}>
-              Specialty Programs
+              Subject Tuitions (Gurgaon)
             </h4>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.88rem', color: 'var(--color-slate-300)' }}>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CheckCircle size={15} color="var(--color-emerald-500)" />
-                <span>CBSE Class 9 & 10 Board Maths & Science</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CheckCircle size={15} color="var(--color-emerald-500)" />
-                <span>Class 11 & 12 Physics, Chemistry & Accounts</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CheckCircle size={15} color="var(--color-emerald-500)" />
-                <span>IB & IGCSE Cambridge International Mentors</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CheckCircle size={15} color="var(--color-emerald-500)" />
-                <span>Python, AI & Coding for School Kids</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CheckCircle size={15} color="var(--color-emerald-500)" />
-                <span>Online 1-on-1 Live Interactive Classes</span>
-              </li>
-            </ul>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.85rem' }}>
+              <Link href="/tuition/maths-home-tutor-in-gurgaon" style={{ color: 'var(--color-slate-300)' }} className="hover-link">
+                • Mathematics Home Tutors
+              </Link>
+              <Link href="/tuition/physics-home-tutor-in-gurgaon" style={{ color: 'var(--color-slate-300)' }} className="hover-link">
+                • Physics & NEET/JEE Tutors
+              </Link>
+              <Link href="/tuition/chemistry-home-tutor-in-gurgaon" style={{ color: 'var(--color-slate-300)' }} className="hover-link">
+                • Chemistry (Organic & Inorganic)
+              </Link>
+              <Link href="/tuition/computer-science-python-tutor-in-gurgaon" style={{ color: 'var(--color-slate-300)' }} className="hover-link">
+                • Python, CS & Coding (SSSAM Academy)
+              </Link>
+              <Link href="/tuition/accounts-commerce-home-tutor-in-gurgaon" style={{ color: 'var(--color-slate-300)' }} className="hover-link">
+                • Accounts & Commerce Tutors
+              </Link>
+              <Link href="/tuition/ib-igcse-tutors-in-gurgaon" style={{ color: 'var(--color-slate-300)' }} className="hover-link">
+                • IB & Cambridge IGCSE Elite Mentors
+              </Link>
+            </div>
           </div>
+
 
           {/* Col 4: Physical Office & Helplines */}
           <div>
