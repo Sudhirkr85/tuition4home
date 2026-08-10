@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+
 import Link from 'next/link';
 import { MapPin, Phone, Mail, ShieldCheck, GraduationCap, Clock, CheckCircle } from 'lucide-react';
 import { GURGAON_LOCALITIES, SSSAM_OFFICE_DETAILS } from '@/lib/data';
