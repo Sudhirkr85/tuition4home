@@ -28,22 +28,21 @@ export default function Footer() {
           {/* Col 1: Brand & SSSAM Academy Trust */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
-              <div style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, var(--color-blue-600), #60A5FA)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#FFFFFF',
-              }}>
-                <GraduationCap size={22} />
-              </div>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
-                Tuition<span style={{ color: '#60A5FA' }}>ForHome</span>
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/tuitionforhome.png"
+                alt="TuitionForHome Logo"
+                style={{
+                  height: '42px',
+                  width: 'auto',
+                  objectFit: 'contain',
+                  backgroundColor: '#FFFFFF',
+                  padding: '4px 8px',
+                  borderRadius: '8px',
+                }}
+              />
             </div>
+
 
             <p style={{ color: 'var(--color-slate-300)', fontSize: '0.92rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
               Gurgaon&apos;s premier managed home & online tuition mediation network. Connecting parents with verified, background-checked 1-on-1 educators with a 100% satisfaction guarantee.

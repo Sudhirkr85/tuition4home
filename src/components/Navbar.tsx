@@ -56,29 +56,20 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
       {/* Main Glass Navbar */}
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px' }}>
         {/* Brand Logo */}
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <div style={{
-            width: '42px',
-            height: '42px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, var(--color-blue-600), var(--color-slate-900))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#FFFFFF',
-            boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
-          }}>
-            <GraduationCap size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.35rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--color-slate-900)', lineHeight: 1 }}>
-              Tuition<span style={{ color: 'var(--color-blue-600)' }}>ForHome</span>
-            </div>
-            <div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--color-slate-500)', letterSpacing: '0.02em', marginTop: '2px' }}>
-              HOME & ONLINE • GURGAON
-            </div>
-          </div>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/tuitionforhome.png"
+            alt="TuitionForHome Logo"
+            style={{
+              height: '46px',
+              width: 'auto',
+              objectFit: 'contain',
+              borderRadius: '8px',
+            }}
+          />
         </Link>
+
 
         {/* Desktop Navigation Links */}
         <nav style={{ display: 'none', alignItems: 'center', gap: '1.75rem' }} className="desktop-nav">
