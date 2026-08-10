@@ -1,0 +1,224 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPER_ADMIN
+  TELECALLER
+  TUTOR
+  PARENT
+}
+
+enum TeachingMode {
+  OFFLINE_HOME
+  ONLINE_LIVE
+  BOTH
+}
+
+enum TutorStatus {
+  DRAFT
+  PENDING_INTERVIEW
+  INTERVIEW_SCHEDULED
+  ACTIVE_VERIFIED
+  SUSPENDED
+  REJECTED
+}
+
+enum LeadStatus {
+  NEW_LEAD
+  CALL_SCHEDULED
+  TUTOR_MATCHED
+  DEMO_SCHEDULED
+  DEMO_COMPLETED
+  TUITION_CONFIRMED
+  COMMISSION_RECEIVED
+  LOST
+}
+
+model User {
+  id            String         @id @default(uuid())
+  name          String
+  email         String         @unique
+  emailVerified DateTime?
+  passwordHash  String?        // Bcrypt hash for password login
+  phone         String?        @unique
+  image         String?
+  role          Role           @default(PARENT)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  tutorProfile  TutorProfile?
+  parentLeads   Lead[]         @relation("ParentLeads")
+  assignedLeads Lead[]         @relation("CallerAssignedLeads")
+  reviewsGiven  Review[]
+
+  @@index([role])
+}
+
+model EmailOtpToken {
+  id        String   @id @default(uuid())
+  email     String
+  otpCode   String   // 6-digit Brevo OTP
+  type      String   @default("LOGIN_REGISTER") // "LOGIN_REGISTER" | "PASSWORD_RESET"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+model TutorProfile {
+  id                String       @id @default(uuid())
+  userId            String       @unique
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  avatarUrl         String?      // Profile Photo (Cloudinary)
+  introVideoUrl     String?      // 60-90s Intro Video (Direct upload or YouTube/Vimeo embed)
+  videoThumbnailUrl String?
+  bio               String?      @db.Text
+  experienceYears   Int          @default(0)
+  highestDegree     String
+  teachingMode      TeachingMode @default(BOTH) // OFFLINE_HOME | ONLINE_LIVE | BOTH
+  subjects          String       // JSON string: ["Mathematics", "Physics"]
+  classes           String       // JSON string: ["Class 9", "Class 10", "Class 11", "Class 12"]
+  boards            String       // JSON string: ["CBSE", "ICSE", "IB", "IGCSE"]
+  serviceAreas      String       // JSON string: ["DLF Phase 5", "Golf Course Road", "Sector 56"]
+  travelRadiusKm    Int          @default(5)  // Maximum travel radius in KM for home visits
+  latitude          Float?       // Precise GPS from Google Maps
+  longitude         Float?
+  formattedAddress  String?
+  availableSlots    String?      // JSON string of weekly availability
+  hourlyRateHome    Int?
+  hourlyRateOnline  Int?
+  monthlyRateMin    Int?
+  status            TutorStatus  @default(PENDING_INTERVIEW)
+  isVerified        Boolean      @default(false)
+  hasPoliceCheck    Boolean      @default(false) // Gold background check badge
+  interviewScore    Int?         // 1 to 10
+  interviewNotes    String?      @db.Text
+  rating            Float        @default(5.0)
+  totalReviews      Int          @default(0)
+  reliabilityScore  Int          @default(100)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  kycDoc            TutorKYC?
+  assignedLeads     Lead[]       @relation("TutorAssignedLeads")
+  reviews           Review[]
+
+  @@index([status])
+  @@index([isVerified])
+  @@index([teachingMode])
+}
+
+model TutorKYC {
+  id               String       @id @default(uuid())
+  tutorId          String       @unique
+  tutor            TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  idType           String       // "AADHAAR_MASKED" | "DRIVING_LICENSE" | "PAN" | "VOTER_ID"
+  idLast4          String       // Only store last 4 digits (e.g. "4589") - NEVER plain 12 digits
+  idDocUrl         String       // Secure private encrypted Cloudinary URL
+  verificationDate DateTime?
+  verifiedByAdmin  String?      // Admin/Caller User ID who verified
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model Lead {
+  id               String         @id @default(uuid())
+  parentId         String?
+  parentUser       User?          @relation("ParentLeads", fields: [parentId], references: [id], onDelete: SetNull)
+  studentName      String?
+  parentName       String
+  parentPhone      String
+  parentEmail      String?
+  preferredMode    TeachingMode   @default(OFFLINE_HOME)
+  locality         String         // e.g. "DLF Phase 4, Gurgaon"
+  formattedAddress String?        // Exact Google Maps Address
+  latitude         Float?
+  longitude        Float?
+  gradeClass       String         // e.g. "Class 10"
+  subjectsNeeded   String         // JSON string: ["Mathematics"]
+  board            String         // e.g. "CBSE"
+  budgetMonthly    Int?
+  genderPreference String?        // "Any" | "Male" | "Female"
+  status           LeadStatus     @default(NEW_LEAD)
+  assignedCallerId String?
+  assignedCaller   User?          @relation("CallerAssignedLeads", fields: [assignedCallerId], references: [id], onDelete: SetNull)
+  assignedTutorId  String?
+  assignedTutor    TutorProfile?  @relation("TutorAssignedLeads", fields: [assignedTutorId], references: [id], onDelete: SetNull)
+  demoDate         DateTime?
+  commissionAmount Int?
+  isTwoSplit       Boolean        @default(false) // 50% Day 2 + 50% Day 15 option
+  isCommissionPaid Boolean        @default(false)
+  notes            String?        @db.Text
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  activities       LeadActivity[]
+
+  @@index([status])
+  @@index([locality])
+  @@index([preferredMode])
+}
+
+model LeadActivity {
+  id          String   @id @default(uuid())
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  actionType  String   // "STATUS_CHANGE" | "CALL_MADE" | "WHATSAPP_SENT" | "DEMO_FIXED" | "NOTE_ADDED"
+  description String   @db.Text
+  performedBy String   // Caller/Admin Name
+  createdAt   DateTime @default(now())
+
+  @@index([leadId])
+}
+
+model Review {
+  id          String       @id @default(uuid())
+  tutorId     String
+  tutor       TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  reviewerId  String?
+  reviewer    User?        @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
+  parentName  String
+  rating      Int          // 1 to 5
+  comment     String       @db.Text
+  isApproved  Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+
+  @@index([tutorId])
+}
+
+model LocalitySEO {
+  id            String   @id @default(uuid())
+  slug          String   @unique // e.g. "dlf-phase-5-gurgaon"
+  name          String   // "DLF Phase 5"
+  city          String   @default("Gurgaon")
+  pincode       String?
+  metaTitle     String
+  metaDesc      String   @db.Text
+  h1Heading     String
+  contentBody   String?  @db.Text
+  faqs          String?  @db.Text // JSON string of FAQs
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([slug])
+}
+
+model PlatformConfig {
+  id                   String   @id @default("global_config")
+  baseVerificationFee  Int      @default(999)      // Base price e.g. 999
+  isOfferActive        Boolean  @default(true)     // Toggle offer ON/OFF
+  offerDiscountPercent Int      @default(100)      // 100 = 100% OFF (₹0), 50 = ₹499, 0 = Full Price
+  offerTitle           String   @default("Academic Session Special Drive")
+  offerSubtext         String   @default("100% Verification Fee Waiver for Gurgaon & NCR Educators")
+  officeAddress        String   @default("M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001")
+  helplinePhones       String   @default("+91 95174 47689, +91 92170 31899")
+  supportEmail         String   @default("info@sssamacademy.com")
+  updatedAt            DateTime @updatedAt
+}
