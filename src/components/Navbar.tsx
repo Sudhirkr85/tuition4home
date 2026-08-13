@@ -65,6 +65,22 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
             }}
           />
         </Link>
+        
+        {/* Mobile-only trust branding to fill the empty space */}
+        <div className="mobile-only-flex" style={{
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          lineHeight: '1.2',
+        }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--brand-teal)', letterSpacing: '-0.01em' }}>
+            by SSSAM Academy
+          </span>
+          <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+            Sector 14 Gurugram
+          </span>
+        </div>
+
 
         {/* Desktop Navigation Links */}
         <nav className="desktop-nav" style={{ alignItems: 'center', gap: '1.75rem' }}>

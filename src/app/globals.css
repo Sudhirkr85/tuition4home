@@ -75,6 +75,9 @@ body {
 .mobile-toggle {
   display: flex;
 }
+.mobile-only-flex {
+  display: flex;
+}
 @media (min-width: 900px) {
   .desktop-nav {
     display: flex !important;
@@ -82,7 +85,11 @@ body {
   .mobile-toggle {
     display: none !important;
   }
+  .mobile-only-flex {
+    display: none !important;
+  }
 }
+
 
 a {
   color: inherit;
