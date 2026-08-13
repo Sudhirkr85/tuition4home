@@ -266,7 +266,7 @@ export default function HomePage() {
                     width: '135%',
                     height: '150%',
                     pointerEvents: 'none',
-                    opacity: 0.65,
+                    opacity: 0.7,
                     zIndex: 0,
                   }}
                   viewBox="0 0 600 600"
@@ -301,13 +301,13 @@ export default function HomePage() {
                 <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'center' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/young_indian_teacher_cutout.jpg"
-                    alt="Young Verified Indian Educator in Gurgaon"
+                    src="/hero_young_teacher_girl_student_cutout.jpg"
+                    alt="Young 25yo Indian Female Teacher with Glasses and Girl Student in Gurgaon"
                     style={{
                       width: '100%',
-                      maxWidth: '440px',
+                      maxWidth: '480px',
                       height: 'auto',
-                      borderRadius: '32px',
+                      borderRadius: '24px',
                       display: 'block',
                       mixBlendMode: 'multiply',
                     }}
@@ -349,6 +349,8 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+
 
 
         {/* =========================================================================
