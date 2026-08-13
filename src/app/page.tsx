@@ -27,12 +27,11 @@ import {
   Home,
   GraduationCap,
   ArrowRight,
-  HelpCircle,
   Building2,
   Phone,
-  Clock,
-  Award,
   Users,
+  Award,
+  BookOpen,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -50,6 +49,7 @@ export default function HomePage() {
   const [selectedLocality, setSelectedLocality] = useState(GURGAON_LOCALITIES[0].name);
   const [selectedSubject, setSelectedSubject] = useState(SUBJECT_OPTIONS[0]);
   const [selectedGrade, setSelectedGrade] = useState(CLASS_OPTIONS[2]);
+  const [detectingGps, setDetectingGps] = useState(false);
 
   // Open booking modal helper
   const handleOpenBooking = (tutor?: MockTutor) => {
@@ -66,51 +66,66 @@ export default function HomePage() {
     setBookingOpen(true);
   };
 
+  // GPS Current Location Detector
+  const handleDetectGps = () => {
+    setDetectingGps(true);
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setDetectingGps(false);
+          setSelectedLocality('DLF Phase 5, Gurgaon (Auto-Detected)');
+        },
+        (error) => {
+          setDetectingGps(false);
+          setSelectedLocality(GURGAON_LOCALITIES[0].name);
+        }
+      );
+    } else {
+      setDetectingGps(false);
+    }
+  };
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)' }}>
       <Navbar onOpenBooking={() => handleOpenBooking()} />
 
       <main style={{ flex: 1 }}>
         {/* =========================================================================
-            1. HERO SECTION (HIGH CONVERSION & SEARCH)
+            1. CLEAN APPLE LIGHT HERO SECTION
             ========================================================================= */}
         <section style={{
-          position: 'relative',
           paddingTop: '3.5rem',
           paddingBottom: '4.5rem',
-          background: 'radial-gradient(circle at 50% 10%, rgba(219, 234, 254, 0.4), rgba(248, 250, 252, 1) 70%)',
+          backgroundColor: '#FFFFFF',
+          borderBottom: '1px solid var(--border-hairline)',
         }}>
           <div className="container">
-            {/* Top Verified Tag */}
+            {/* SSSAM Academy Trust Tag */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
-              <div className="badge badge-trust" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
-                <span className="pulse-emerald" />
-                <span>OPERATED & MANAGED BY SSSAM ACADEMY (SECTOR 14 GURUGRAM)</span>
+              <div className="badge badge-emerald" style={{ padding: '0.45rem 1.1rem' }}>
+                <ShieldCheck size={14} />
+                <span>OPERATED & MANAGED BY SSSAM ACADEMY • SECTOR 14 GURUGRAM</span>
               </div>
             </div>
 
-            {/* Main Headline */}
-            <div style={{ textAlign: 'center', maxWidth: '840px', margin: '0 auto 2.5rem auto' }}>
-              <h1 style={{ marginBottom: '1.25rem' }}>
-                Verified <span className="text-gradient">Home & Online Tutors</span> in Gurgaon with 100% Trust
+            {/* Main Headline & Subtitle (Clean Line-wise) */}
+            <div style={{ textAlign: 'center', maxWidth: '820px', margin: '0 auto 2.5rem auto' }}>
+              <h1 style={{ marginBottom: '1rem' }}>
+                Verified <span className="text-gradient">Home & Online Tutors</span> in Gurgaon
               </h1>
-              <p style={{ fontSize: 'clamp(1.05rem, 2.5vw, 1.25rem)', color: 'var(--color-slate-600)', lineHeight: 1.6 }}>
-                1-on-1 personalized tutoring for CBSE, ICSE, IB & Coding. Every tutor is academic-screened and background-verified with a <strong>1 Free Demo Class + 100% Replacement Guarantee</strong>.
+              <p style={{ fontSize: 'clamp(1.05rem, 2.2vw, 1.25rem)', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                1-on-1 personalized tutoring for CBSE, ICSE, IB & Coding. Background-checked educators with a <strong>100% Replacement Guarantee</strong>.
               </p>
             </div>
 
             {/* Interactive Search Box */}
-            <div style={{
-              maxWidth: '960px',
+            <div className="apple-card" style={{
+              maxWidth: '940px',
               margin: '0 auto',
-              backgroundColor: '#FFFFFF',
-              borderRadius: '20px',
-              padding: '1.5rem',
-              boxShadow: 'var(--shadow-hover)',
-              border: '1.5px solid var(--border-subtle)',
+              padding: '1.75rem',
             }}>
-              {/* Mode Switcher */}
-              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
+              {/* Mode Segmented Switcher */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-hairline)', paddingBottom: '1.25rem' }}>
                 <button
                   type="button"
                   onClick={() => setSearchMode('OFFLINE_HOME')}
@@ -118,11 +133,11 @@ export default function HomePage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.5rem',
-                    padding: '0.6rem 1.25rem',
+                    padding: '0.65rem 1.35rem',
                     borderRadius: 'var(--radius-full)',
                     border: 'none',
-                    backgroundColor: searchMode === 'OFFLINE_HOME' ? 'var(--color-slate-900)' : 'transparent',
-                    color: searchMode === 'OFFLINE_HOME' ? '#FFFFFF' : 'var(--color-slate-600)',
+                    backgroundColor: searchMode === 'OFFLINE_HOME' ? 'var(--text-main)' : 'transparent',
+                    color: searchMode === 'OFFLINE_HOME' ? '#FFFFFF' : 'var(--text-muted)',
                     fontWeight: 700,
                     fontSize: '0.9rem',
                     cursor: 'pointer',
@@ -130,7 +145,7 @@ export default function HomePage() {
                   }}
                 >
                   <Home size={16} />
-                  <span>Home Tuition (At My Home)</span>
+                  <span>Home Tuition (Offline)</span>
                 </button>
 
                 <button
@@ -140,11 +155,11 @@ export default function HomePage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.5rem',
-                    padding: '0.6rem 1.25rem',
+                    padding: '0.65rem 1.35rem',
                     borderRadius: 'var(--radius-full)',
                     border: 'none',
-                    backgroundColor: searchMode === 'ONLINE_LIVE' ? 'var(--color-slate-900)' : 'transparent',
-                    color: searchMode === 'ONLINE_LIVE' ? '#FFFFFF' : 'var(--color-slate-600)',
+                    backgroundColor: searchMode === 'ONLINE_LIVE' ? 'var(--text-main)' : 'transparent',
+                    color: searchMode === 'ONLINE_LIVE' ? '#FFFFFF' : 'var(--text-muted)',
                     fontWeight: 700,
                     fontSize: '0.9rem',
                     cursor: 'pointer',
@@ -156,6 +171,36 @@ export default function HomePage() {
                 </button>
               </div>
 
+              {/* Delivery-App Proximity Indicator (If Offline selected) */}
+              {searchMode === 'OFFLINE_HOME' && (
+                <div style={{
+                  backgroundColor: 'var(--brand-emerald-light)',
+                  border: '1px solid rgba(5, 150, 105, 0.25)',
+                  borderRadius: '12px',
+                  padding: '0.75rem 1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '1.25rem',
+                  fontSize: '0.85rem',
+                  color: 'var(--brand-emerald)',
+                  fontWeight: 700,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Sparkles size={16} />
+                    <span>⚡ 14 Verified Tutors available within 3.5 km of {selectedLocality}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDetectGps}
+                    style={{ background: 'none', border: 'none', color: 'var(--brand-blue)', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                  >
+                    <MapPin size={14} />
+                    <span>{detectingGps ? 'Detecting...' : 'GPS Auto-Detect'}</span>
+                  </button>
+                </div>
+              )}
+
               {/* Search Dropdowns Grid */}
               <div style={{
                 display: 'grid',
@@ -166,33 +211,25 @@ export default function HomePage() {
                 {/* Locality */}
                 {searchMode === 'OFFLINE_HOME' ? (
                   <div>
-                    <label className="form-label">Gurgaon Locality / Sector</label>
-                    <select
+                    <label className="form-label">Gurgaon Sector / Locality</label>
+                    <input
+                      type="text"
                       value={selectedLocality}
                       onChange={(e) => setSelectedLocality(e.target.value)}
                       className="form-control"
-                    >
-                      {GURGAON_LOCALITIES.map((loc) => (
-                        <option key={loc.slug} value={loc.name}>
-                          {loc.name}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Enter Sector or Locality"
+                    />
                   </div>
                 ) : (
                   <div>
-                    <label className="form-label">City / Region</label>
-                    <select className="form-control">
-                      <option>Delhi NCR & Pan-India</option>
-                      <option>Gurgaon & South Delhi</option>
-                      <option>International / NRI Students</option>
-                    </select>
+                    <label className="form-label">Location</label>
+                    <input className="form-control" value="Pan-India & Delhi NCR (Online 1-on-1)" readOnly />
                   </div>
                 )}
 
                 {/* Grade */}
                 <div>
-                  <label className="form-label">Grade / Board</label>
+                  <label className="form-label">Grade / Class</label>
                   <select
                     value={selectedGrade}
                     onChange={(e) => setSelectedGrade(e.target.value)}
@@ -226,44 +263,169 @@ export default function HomePage() {
                   style={{ height: '46px', width: '100%', justifyContent: 'center' }}
                 >
                   <Sparkles size={16} />
-                  <span>Find Tutors</span>
+                  <span>Check Available Tutors</span>
                 </button>
               </div>
             </div>
 
-            {/* Trust Highlights Bar */}
+            {/* Quick Line-wise Trust Pillars */}
             <div style={{
               display: 'flex',
               flexWrap: 'wrap',
               justifyContent: 'center',
               gap: 'clamp(1rem, 3vw, 2.5rem)',
               marginTop: '3rem',
-              color: 'var(--color-slate-700)',
-              fontSize: '0.9rem',
+              color: 'var(--text-muted)',
+              fontSize: '0.88rem',
               fontWeight: 600,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <ShieldCheck size={18} color="var(--color-emerald-600)" />
-                <span>100% Background Verified Tutors</span>
+                <ShieldCheck size={18} color="var(--brand-emerald)" />
+                <span>100% Verified Tutors & Police Audit</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Star size={18} color="var(--color-amber-500)" fill="var(--color-amber-500)" />
-                <span>4.95 / 5 Parent Rating</span>
+                <Star size={18} color="var(--brand-amber)" fill="var(--brand-amber)" />
+                <span>4.95 / 5 Verified Parent Rating</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Sparkles size={18} color="var(--color-blue-600)" />
-                <span>1 Free Demo Class</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Building2 size={18} color="var(--color-slate-900)" />
-                <span>Physical Center in Sector 14 Gurugram</span>
+                <Building2 size={18} color="var(--text-main)" />
+                <span>Physical Institute in Sector 14 Gurugram</span>
               </div>
             </div>
           </div>
         </section>
 
         {/* =========================================================================
-            2. VERIFIED TUTORS SHOWCASE (WITH VIDEO INTRO TRIGGERS)
+            2. "HOW SYSTEM WORKS" (VIDEO + GRAPHIC STEP CARDS)
+            ========================================================================= */}
+        <section id="how-it-works" style={{ padding: '5rem 0', backgroundColor: 'var(--bg-app)' }}>
+          <div className="container">
+            <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 3rem auto' }}>
+              <div className="badge badge-blue" style={{ marginBottom: '0.75rem' }}>
+                <BookOpen size={14} />
+                <span>TRANSPARENT SYSTEM PROCESS</span>
+              </div>
+              <h2 style={{ fontSize: '2.25rem', fontWeight: 800, marginBottom: '0.75rem' }}>
+                How TuitionForHome Works in 3 Simple Steps
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                Zero hassle for parents. From sector selection to trial class in under 2 hours.
+              </p>
+            </div>
+
+            {/* Visual 3-Step Process Graphic */}
+            <div className="apple-card" style={{ padding: '2rem', marginBottom: '3rem', overflow: 'hidden' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/how_it_works_graphic.jpg"
+                alt="How TuitionForHome Works Process"
+                style={{ width: '100%', maxHeight: '340px', objectFit: 'contain', borderRadius: '16px' }}
+              />
+            </div>
+
+            {/* 3 Step Cards Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '1.75rem',
+              marginBottom: '3.5rem',
+            }}>
+              <div className="apple-card" style={{ padding: '1.75rem' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--brand-blue)', marginBottom: '0.5rem' }}>
+                  STEP 1
+                </div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+                  Select Mode & Gurgaon Sector
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                  Choose Home Tuition or Online 1-on-1. Enter your Gurgaon sector or use 1-click GPS auto-detection.
+                </p>
+              </div>
+
+              <div className="apple-card" style={{ padding: '1.75rem' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--brand-blue)', marginBottom: '0.5rem' }}>
+                  STEP 2
+                </div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+                  Counselor Matches Nearby Tutor
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                  Our academic team at SSSAM Academy shortlists the top verified educator residing within 3 km of your sector.
+                </p>
+              </div>
+
+              <div className="apple-card" style={{ padding: '1.75rem' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--brand-emerald)', marginBottom: '0.5rem' }}>
+                  STEP 3
+                </div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+                  Start Trial Class & Confirm
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                  Attend the trial class. Pay only when 100% satisfied. Full free replacement guarantee included.
+                </p>
+              </div>
+            </div>
+
+            {/* Video Player Box for System Walkthrough */}
+            <div className="apple-card" style={{
+              padding: '2.5rem',
+              backgroundColor: '#0F172A',
+              color: '#FFFFFF',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '2.5rem',
+              alignItems: 'center',
+            }}>
+              <div>
+                <div className="badge" style={{ backgroundColor: 'rgba(0, 102, 204, 0.25)', color: '#60A5FA', border: '1px solid rgba(0, 102, 204, 0.4)', marginBottom: '0.85rem' }}>
+                  <Play size={14} fill="#60A5FA" />
+                  <span>SYSTEM WALKTHROUGH VIDEO</span>
+                </div>
+                <h3 style={{ color: '#FFFFFF', fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.75rem' }}>
+                  Watch How We Verify Tutors & Match Parents
+                </h3>
+                <p style={{ color: '#94A3B8', fontSize: '0.92rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+                  See our step-by-step counselor verification workflow, in-person center screening, and trial class confirmation process.
+                </p>
+
+                <button onClick={() => handleOpenBooking()} className="btn btn-emerald">
+                  <span>Request Trial Callback</span>
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+
+              {/* Video Player Box Placeholder */}
+              <div style={{
+                position: 'relative',
+                paddingBottom: '56.25%',
+                height: 0,
+                backgroundColor: '#000000',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              }}>
+                <iframe
+                  src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0"
+                  title="How TuitionForHome Works Video"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            3. VERIFIED TUTORS SHOWCASE (DYNAMIC REVIEWS & SENIOR TIERS)
             ========================================================================= */}
         <section id="find-tutor" style={{ padding: '5rem 0', backgroundColor: '#FFFFFF' }}>
           <div className="container">
@@ -271,13 +433,13 @@ export default function HomePage() {
               <div>
                 <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
                   <Award size={14} />
-                  <span>FEATURED EDUCATORS</span>
+                  <span>REVIEW-VERIFIED EDUCATORS</span>
                 </div>
                 <h2 style={{ fontSize: 'clamp(1.75rem, 3vw, 2.35rem)', fontWeight: 800 }}>
-                  Top Verified Home Tutors in Gurgaon
+                  Top Verified Tutors Near Your Sector
                 </h2>
-                <p style={{ color: 'var(--color-slate-600)', marginTop: '0.35rem' }}>
-                  Watch their 60-second video introductions to evaluate communication and teaching style before booking.
+                <p style={{ color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+                  Watch 60-second intro videos and read verified parent reviews before requesting a trial class.
                 </p>
               </div>
 
@@ -294,21 +456,21 @@ export default function HomePage() {
               gap: '1.75rem',
             }}>
               {VERIFIED_TUTORS.map((tutor) => (
-                <div key={tutor.id} className="luxury-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  {/* Top Media Bar */}
-                  <div style={{ position: 'relative', padding: '1.25rem', paddingBottom: '0.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <div key={tutor.id} className="apple-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  {/* Top Bar */}
+                  <div style={{ padding: '1.25rem', paddingBottom: '0.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <div style={{ position: 'relative' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={tutor.avatarUrl}
                         alt={tutor.name}
-                        style={{ width: '68px', height: '68px', borderRadius: '16px', objectFit: 'cover' }}
+                        style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }}
                       />
                       <span style={{
                         position: 'absolute',
                         bottom: '-4px',
                         right: '-4px',
-                        backgroundColor: 'var(--color-emerald-500)',
+                        backgroundColor: 'var(--brand-emerald)',
                         borderRadius: '50%',
                         width: '18px',
                         height: '18px',
@@ -323,44 +485,42 @@ export default function HomePage() {
                     </div>
 
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--color-slate-900)' }}>
-                          {tutor.name}
-                        </h4>
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--color-blue-600)', fontWeight: 700, margin: '2px 0' }}>
+                      <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                        {tutor.name}
+                      </h4>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--brand-blue)', fontWeight: 700, margin: '2px 0' }}>
                         {tutor.badge}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', color: 'var(--color-slate-600)' }}>
-                        <Star size={13} color="var(--color-amber-500)" fill="var(--color-amber-500)" />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                        <Star size={13} color="var(--brand-amber)" fill="var(--brand-amber)" />
                         <strong>{tutor.rating}</strong>
-                        <span>({tutor.totalReviews} reviews)</span>
+                        <span>({tutor.totalReviews} parent reviews)</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Tutor Body Details (Line-wise Clean Apple Aesthetic) */}
-                  <div style={{ padding: '1.25rem', paddingTop: '0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--color-slate-700)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <GraduationCap size={15} color="var(--color-blue-600)" style={{ flexShrink: 0 }} />
-                      <span style={{ fontWeight: 600 }}>{tutor.highestDegree}</span>
+                  {/* Body Line-wise Points */}
+                  <div style={{ padding: '1.25rem', paddingTop: '0.5rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <GraduationCap size={15} color="var(--brand-blue)" style={{ flexShrink: 0 }} />
+                      <span style={{ fontWeight: 600 }}>{tutor.highestDegree} • {tutor.experienceYears}+ Yrs Exp</span>
                     </div>
 
-                    <div style={{ fontSize: '0.85rem', color: 'var(--color-slate-700)', display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
-                      <MapPin size={15} color="var(--color-emerald-600)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                      <MapPin size={15} color="var(--brand-emerald)" style={{ flexShrink: 0, marginTop: '2px' }} />
                       <span>{tutor.serviceAreas.join(' • ')}</span>
                     </div>
 
                     {/* Subjects Badges */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.25rem' }}>
                       {tutor.subjects.map((s) => (
-                        <span key={s} style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', backgroundColor: 'var(--color-slate-100)', color: 'var(--color-slate-800)', borderRadius: '6px', fontWeight: 600 }}>
+                        <span key={s} style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', backgroundColor: 'var(--bg-card-subtle)', color: 'var(--text-main)', borderRadius: '6px', fontWeight: 600 }}>
                           {s}
                         </span>
                       ))}
                     </div>
 
-                    {/* 60s Video Intro Trigger */}
+                    {/* 60s Video Intro Pill */}
                     <button
                       type="button"
                       onClick={() => setActiveVideoTutor(tutor)}
@@ -371,35 +531,34 @@ export default function HomePage() {
                         justifyContent: 'space-between',
                         padding: '0.65rem 0.85rem',
                         borderRadius: '10px',
-                        backgroundColor: 'var(--color-blue-50)',
-                        border: '1px solid var(--color-blue-100)',
-                        color: 'var(--color-blue-700)',
+                        backgroundColor: 'var(--brand-blue-light)',
+                        border: '1px solid rgba(0, 102, 204, 0.15)',
+                        color: 'var(--brand-blue)',
                         fontSize: '0.82rem',
                         fontWeight: 700,
                         cursor: 'pointer',
-                        transition: 'var(--transition-fast)',
                       }}
                     >
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Play size={14} fill="var(--color-blue-600)" />
-                        <span>Watch 60s Intro Video</span>
+                        <Play size={14} fill="var(--brand-blue)" />
+                        <span>Watch 60s Video Intro</span>
                       </span>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--color-blue-500)' }}>{tutor.videoDuration}</span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--brand-blue)' }}>{tutor.videoDuration}</span>
                     </button>
                   </div>
 
                   {/* Card Footer Price & Action */}
                   <div style={{
                     padding: '1.25rem',
-                    borderTop: '1px solid var(--border-subtle)',
-                    backgroundColor: 'var(--color-slate-50)',
+                    borderTop: '1px solid var(--border-hairline)',
+                    backgroundColor: 'var(--bg-card-subtle)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                   }}>
                     <div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--color-slate-500)', fontWeight: 600 }}>STARTING FROM</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-slate-900)' }}>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>STARTING FROM</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
                         ₹{tutor.hourlyRateHome}<span style={{ fontSize: '0.75rem', fontWeight: 500 }}>/hr</span>
                       </div>
                     </div>
@@ -409,7 +568,7 @@ export default function HomePage() {
                       onClick={() => handleOpenBooking(tutor)}
                       className="btn btn-primary btn-sm"
                     >
-                      <span>Book Free Demo</span>
+                      <span>Request Trial</span>
                     </button>
                   </div>
                 </div>
@@ -419,19 +578,18 @@ export default function HomePage() {
         </section>
 
         {/* =========================================================================
-            3. INTERACTIVE FEE ESTIMATOR WIDGET
+            4. INTERACTIVE FEE ESTIMATOR WIDGET
             ========================================================================= */}
         <FeeEstimator onBookWithEstimate={handleBookWithEstimate} />
 
         {/* =========================================================================
-            4. SSSAM ACADEMY PHYSICAL CENTER ASSURANCE SECTION
+            5. SSSAM ACADEMY PHYSICAL CENTER TRUST SECTION
             ========================================================================= */}
         <section style={{ padding: '5rem 0', backgroundColor: '#FFFFFF' }}>
           <div className="container">
-            <div style={{
-              backgroundColor: 'var(--color-slate-900)',
+            <div className="apple-card" style={{
+              backgroundColor: '#0F172A',
               color: '#FFFFFF',
-              borderRadius: '24px',
               padding: 'clamp(2rem, 5vw, 3.5rem)',
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
@@ -439,45 +597,45 @@ export default function HomePage() {
               alignItems: 'center',
             }}>
               <div>
-                <div className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: 'var(--color-emerald-500)', border: '1px solid rgba(16, 185, 129, 0.3)', marginBottom: '1rem' }}>
+                <div className="badge" style={{ backgroundColor: 'rgba(5, 150, 105, 0.25)', color: '#34D399', border: '1px solid rgba(5, 150, 105, 0.4)', marginBottom: '1rem' }}>
                   <Building2 size={14} />
                   <span>ESTABLISHED PHYSICAL CENTER IN GURUGRAM</span>
                 </div>
                 <h2 style={{ color: '#FFFFFF', fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)', fontWeight: 800, marginBottom: '1rem' }}>
                   Not Just a Website. A Real Educational Institute.
                 </h2>
-                <p style={{ color: 'var(--color-slate-300)', fontSize: '1rem', lineHeight: 1.6, marginBottom: '1.75rem' }}>
-                  Unlike unverified online classifieds where anyone can post a number, <strong>TuitionForHome</strong> is backed by <strong>SSSAM Academy</strong>, situated in Sector 14, Old DLF, Gurugram.
+                <p style={{ color: '#CBD5E1', fontSize: '1rem', lineHeight: 1.6, marginBottom: '1.75rem' }}>
+                  Backed by <strong>SSSAM Academy</strong>, situated in Sector 14, Old DLF, Gurugram. Tutors undergo in-person document screening and video intro audits.
                 </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2rem', fontSize: '0.92rem', color: 'var(--color-slate-200)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2rem', fontSize: '0.92rem', color: '#E2E8F0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <CheckCircle size={18} color="var(--color-emerald-500)" />
+                    <CheckCircle size={18} color="#34D399" />
                     <span>In-person tutor document audit & interview screening</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <CheckCircle size={18} color="var(--color-emerald-500)" />
-                    <span>Option to have your 1st demo class at our Sector 14 classrooms</span>
+                    <CheckCircle size={18} color="#34D399" />
+                    <span>Option to have your trial class at our Sector 14 classrooms</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <CheckCircle size={18} color="var(--color-emerald-500)" />
-                    <span>100% Free tutor replacement guarantee if student is not satisfied</span>
+                    <CheckCircle size={18} color="#34D399" />
+                    <span>100% Free replacement guarantee if student is unsatisfied</span>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                   <button onClick={() => handleOpenBooking()} className="btn btn-primary btn-lg">
-                    <span>Schedule Free Demo</span>
+                    <span>Request Trial Callback</span>
                     <ArrowRight size={18} />
                   </button>
-                  <a href={`tel:${SSSAM_OFFICE_DETAILS.phones[0]}`} className="btn btn-secondary btn-lg" style={{ color: 'var(--color-slate-900)' }}>
+                  <a href={`tel:${SSSAM_OFFICE_DETAILS.phones[0]}`} className="btn btn-secondary btn-lg" style={{ color: 'var(--text-main)' }}>
                     <Phone size={18} />
                     <span>Call Sector 14 Center</span>
                   </a>
                 </div>
               </div>
 
-              {/* Center Details Card */}
+              {/* Address Card */}
               <div style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.06)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -489,21 +647,21 @@ export default function HomePage() {
                   <span>SSSAM Academy Gurugram Center</span>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.9rem', color: 'var(--color-slate-300)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.9rem', color: '#CBD5E1' }}>
                   <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-slate-400)', fontWeight: 700 }}>OFFICIAL ADDRESS</div>
+                    <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700 }}>OFFICIAL ADDRESS</div>
                     <div style={{ color: '#FFFFFF', marginTop: '2px' }}>{SSSAM_OFFICE_DETAILS.address}</div>
                   </div>
 
                   <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-slate-400)', fontWeight: 700 }}>DIRECT HELPLINE NUMBERS</div>
+                    <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700 }}>DIRECT HELPLINE NUMBERS</div>
                     <div style={{ color: '#93C5FD', fontWeight: 700, marginTop: '2px', fontSize: '1.05rem' }}>
                       {SSSAM_OFFICE_DETAILS.phones[0]} • {SSSAM_OFFICE_DETAILS.phones[1]}
                     </div>
                   </div>
 
                   <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-slate-400)', fontWeight: 700 }}>COUNSELOR DESK TIMINGS</div>
+                    <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700 }}>COUNSELOR DESK TIMINGS</div>
                     <div style={{ color: '#FFFFFF', marginTop: '2px' }}>{SSSAM_OFFICE_DETAILS.hours} (All 7 Days)</div>
                   </div>
                 </div>
@@ -513,9 +671,9 @@ export default function HomePage() {
         </section>
 
         {/* =========================================================================
-            5. GURGAON LOCALITIES SEO DIRECTORY GRID
+            6. GURGAON LOCALITIES SEO DIRECTORY GRID
             ========================================================================= */}
-        <section style={{ padding: '4.5rem 0', backgroundColor: 'var(--color-slate-50)' }}>
+        <section style={{ padding: '4.5rem 0', backgroundColor: 'var(--bg-app)' }}>
           <div className="container">
             <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 2.5rem auto' }}>
               <div className="badge badge-blue" style={{ marginBottom: '0.5rem' }}>
@@ -525,7 +683,7 @@ export default function HomePage() {
               <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>
                 Home Tutors Available in Your Gurgaon Sector
               </h2>
-              <p style={{ color: 'var(--color-slate-600)', marginTop: '0.35rem' }}>
+              <p style={{ color: 'var(--text-muted)', marginTop: '0.35rem' }}>
                 Over 500+ verified teachers ready to travel across all residential sectors of Gurgaon.
               </p>
             </div>
@@ -539,28 +697,23 @@ export default function HomePage() {
                 <Link
                   key={loc.slug}
                   href={`/home-tutors-in-gurgaon/${loc.slug}`}
+                  className="apple-card"
                   style={{
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid var(--border-subtle)',
-                    borderRadius: '14px',
                     padding: '1.25rem',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    boxShadow: 'var(--shadow-subtle)',
-                    transition: 'var(--transition-fast)',
                   }}
-                  className="locality-card"
                 >
                   <div>
-                    <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--color-slate-900)' }}>
+                    <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)' }}>
                       {loc.name}
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--color-slate-500)', marginTop: '2px' }}>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                       {loc.landmark}
                     </div>
                   </div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-blue-600)', backgroundColor: 'var(--color-blue-50)', padding: '0.25rem 0.6rem', borderRadius: '999px' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--brand-blue)', backgroundColor: 'var(--brand-blue-light)', padding: '0.25rem 0.6rem', borderRadius: '999px' }}>
                     {loc.activeTutorsCount}+ Tutors
                   </span>
                 </Link>
@@ -586,14 +739,6 @@ export default function HomePage() {
       />
 
       <StickyMobileBar onOpenBooking={() => handleOpenBooking()} />
-
-      <style jsx>{`
-        .locality-card:hover {
-          border-color: var(--color-blue-600) !important;
-          transform: translateY(-2px);
-          box-shadow: var(--shadow-card) !important;
-        }
-      `}</style>
     </div>
   );
 }

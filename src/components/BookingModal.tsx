@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Sparkles, CheckCircle2, ShieldCheck, Phone, ArrowRight, Home, Video, Building2 } from 'lucide-react';
+import { X, Sparkles, CheckCircle2, ShieldCheck, Phone, Home, Video, Building2, MapPin } from 'lucide-react';
 import { GURGAON_LOCALITIES, SUBJECT_OPTIONS, CLASS_OPTIONS, SSSAM_OFFICE_DETAILS } from '@/lib/data';
 
 interface BookingModalProps {
@@ -15,22 +15,42 @@ interface BookingModalProps {
 }
 
 export default function BookingModal({ isOpen, onClose, initialData }: BookingModalProps) {
-  const [step, setStep] = useState(1);
   const [mode, setMode] = useState<'HOME' | 'ONLINE' | 'CENTER'>('HOME');
   const [grade, setGrade] = useState(initialData?.grade || CLASS_OPTIONS[2]);
   const [subject, setSubject] = useState(SUBJECT_OPTIONS[0]);
   const [locality, setLocality] = useState(GURGAON_LOCALITIES[0].name);
+  const [budgetRange, setBudgetRange] = useState('₹6,000 – ₹10,000 / month');
   const [parentName, setParentName] = useState('');
   const [phone, setPhone] = useState('');
+  const [detectingGps, setDetectingGps] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
+  // GPS Current Location Detector
+  const handleDetectLocation = () => {
+    setDetectingGps(true);
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setDetectingGps(false);
+          setLocality('DLF Phase 5, Gurgaon (Auto-Detected)');
+        },
+        (error) => {
+          setDetectingGps(false);
+          setLocality(GURGAON_LOCALITIES[0].name);
+        }
+      );
+    } else {
+      setDetectingGps(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone || phone.length < 10) {
-      alert('Please enter a valid 10-digit mobile number for demo confirmation.');
+      alert('Please enter a valid 10-digit mobile number.');
       return;
     }
 
@@ -45,12 +65,14 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
           preferredMode: mode === 'HOME' ? 'OFFLINE_HOME' : mode === 'ONLINE' ? 'ONLINE_LIVE' : 'BOTH',
           locality: mode === 'CENTER' ? 'SSSAM Academy Sector 14 Center' : locality,
           gradeClass: grade,
+          board: 'CBSE',
           subjectsNeeded: [subject],
+          budgetRange,
           assignedTutorName: initialData?.tutorName || null,
         }),
       });
     } catch (err) {
-      console.log('Lead submitted locally:', err);
+      console.log('Lead submitted:', err);
     } finally {
       setLoading(false);
       setSubmitted(true);
@@ -62,8 +84,8 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
       position: 'fixed',
       inset: 0,
       zIndex: 2000,
-      backgroundColor: 'rgba(15, 23, 42, 0.75)',
-      backdropFilter: 'blur(8px)',
+      backgroundColor: 'rgba(15, 23, 42, 0.65)',
+      backdropFilter: 'blur(10px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -77,7 +99,7 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         position: 'relative',
         overflow: 'hidden',
-        border: '1px solid var(--border-subtle)',
+        border: '1px solid var(--border-hairline)',
       }}>
         {/* Close Button */}
         <button
@@ -90,7 +112,7 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
             height: '36px',
             borderRadius: '50%',
             border: 'none',
-            backgroundColor: 'var(--color-slate-100)',
+            backgroundColor: 'var(--bg-card-subtle)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -98,24 +120,23 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
             zIndex: 10,
           }}
         >
-          <X size={18} color="var(--color-slate-700)" />
+          <X size={18} color="var(--text-main)" />
         </button>
 
-        {/* Modal Content */}
         {!submitted ? (
           <div style={{ padding: '2rem' }}>
             <div style={{ marginBottom: '1.5rem' }}>
               <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
                 <ShieldCheck size={14} />
-                <span>100% FREE DEMO • NO ADVANCE OBLIGATION</span>
+                <span>SSSAM ACADEMY VERIFIED MATCHING</span>
               </div>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-slate-900)' }}>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
                 {initialData?.tutorName
-                  ? `Book 1-on-1 Free Demo with ${initialData.tutorName}`
+                  ? `Request Trial Class with ${initialData.tutorName}`
                   : 'Find a Verified Home Tutor in Gurgaon'}
               </h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--color-slate-600)', marginTop: '0.35rem' }}>
-                Our academic counselor will match the top educator in your sector within 2 hours.
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+                Our senior academic counselor will match top educators near your sector within 2 hours.
               </p>
             </div>
 
@@ -130,9 +151,9 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
                     style={{
                       padding: '0.65rem 0.5rem',
                       borderRadius: '10px',
-                      border: `1.5px solid ${mode === 'HOME' ? 'var(--color-blue-600)' : 'var(--border-subtle)'}`,
-                      backgroundColor: mode === 'HOME' ? 'var(--color-blue-50)' : '#FFFFFF',
-                      color: mode === 'HOME' ? 'var(--color-blue-600)' : 'var(--color-slate-700)',
+                      border: `1.5px solid ${mode === 'HOME' ? 'var(--brand-blue)' : 'var(--border-hairline)'}`,
+                      backgroundColor: mode === 'HOME' ? 'var(--brand-blue-light)' : '#FFFFFF',
+                      color: mode === 'HOME' ? 'var(--brand-blue)' : 'var(--text-main)',
                       fontWeight: 700,
                       fontSize: '0.82rem',
                       display: 'flex',
@@ -143,7 +164,7 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
                     }}
                   >
                     <Home size={16} />
-                    <span>Home Tuition</span>
+                    <span>Home Visit</span>
                   </button>
 
                   <button
@@ -152,9 +173,9 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
                     style={{
                       padding: '0.65rem 0.5rem',
                       borderRadius: '10px',
-                      border: `1.5px solid ${mode === 'ONLINE' ? 'var(--color-blue-600)' : 'var(--border-subtle)'}`,
-                      backgroundColor: mode === 'ONLINE' ? 'var(--color-blue-50)' : '#FFFFFF',
-                      color: mode === 'ONLINE' ? 'var(--color-blue-600)' : 'var(--color-slate-700)',
+                      border: `1.5px solid ${mode === 'ONLINE' ? 'var(--brand-blue)' : 'var(--border-hairline)'}`,
+                      backgroundColor: mode === 'ONLINE' ? 'var(--brand-blue-light)' : '#FFFFFF',
+                      color: mode === 'ONLINE' ? 'var(--brand-blue)' : 'var(--text-main)',
                       fontWeight: 700,
                       fontSize: '0.82rem',
                       display: 'flex',
@@ -174,9 +195,9 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
                     style={{
                       padding: '0.65rem 0.5rem',
                       borderRadius: '10px',
-                      border: `1.5px solid ${mode === 'CENTER' ? 'var(--color-blue-600)' : 'var(--border-subtle)'}`,
-                      backgroundColor: mode === 'CENTER' ? 'var(--color-blue-50)' : '#FFFFFF',
-                      color: mode === 'CENTER' ? 'var(--color-blue-600)' : 'var(--color-slate-700)',
+                      border: `1.5px solid ${mode === 'CENTER' ? 'var(--brand-blue)' : 'var(--border-hairline)'}`,
+                      backgroundColor: mode === 'CENTER' ? 'var(--brand-blue-light)' : '#FFFFFF',
+                      color: mode === 'CENTER' ? 'var(--brand-blue)' : 'var(--text-main)',
                       fontWeight: 700,
                       fontSize: '0.82rem',
                       display: 'flex',
@@ -192,52 +213,74 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
                 </div>
               </div>
 
-              {/* Locality (If Home selected) */}
+              {/* Locality with GPS Detector */}
               {mode === 'HOME' && (
                 <div>
-                  <label className="form-label">Gurgaon Locality / Sector</label>
-                  <select
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <label className="form-label" style={{ margin: 0 }}>Gurgaon Sector / Locality</label>
+                    <button
+                      type="button"
+                      onClick={handleDetectLocation}
+                      style={{ fontSize: '0.78rem', color: 'var(--brand-blue)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                    >
+                      <MapPin size={13} />
+                      <span>{detectingGps ? 'Detecting GPS...' : '📍 Use My Location'}</span>
+                    </button>
+                  </div>
+                  <input
+                    type="text"
                     value={locality}
                     onChange={(e) => setLocality(e.target.value)}
                     className="form-control"
-                  >
-                    {GURGAON_LOCALITIES.map((loc) => (
-                      <option key={loc.slug} value={loc.name}>
-                        {loc.name} ({loc.pincode})
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="e.g. DLF Phase 5, Golf Course Road"
+                    required
+                  />
                 </div>
               )}
 
-              {/* Class & Subject in 2 cols */}
+              {/* Grade & Subject */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label className="form-label">Class / Grade</label>
+                  <label className="form-label">Grade / Class</label>
                   <select
                     value={grade}
                     onChange={(e) => setGrade(e.target.value)}
                     className="form-control"
-                    style={{ fontSize: '0.88rem' }}
                   >
                     {CLASS_OPTIONS.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                 </div>
+
                 <div>
                   <label className="form-label">Subject</label>
                   <select
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     className="form-control"
-                    style={{ fontSize: '0.88rem' }}
                   >
                     {SUBJECT_OPTIONS.map((s) => (
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
                 </div>
+              </div>
+
+              {/* Budget Range Selector Starting at ₹1,000+ */}
+              <div>
+                <label className="form-label">Budget / Price Range Preference</label>
+                <select
+                  value={budgetRange}
+                  onChange={(e) => setBudgetRange(e.target.value)}
+                  className="form-control"
+                  style={{ fontWeight: 600 }}
+                >
+                  <option value="₹1,000 – ₹3,000 / month">₹1,000 – ₹3,000 / month (Primary Foundation)</option>
+                  <option value="₹3,000 – ₹6,000 / month">₹3,000 – ₹6,000 / month (Middle School)</option>
+                  <option value="₹6,000 – ₹10,000 / month">₹6,000 – ₹10,000 / month (Board Prep 9-12)</option>
+                  <option value="₹10,000+ / month">₹10,000+ / month (Elite IB / Cambridge / NEET-JEE)</option>
+                </select>
               </div>
 
               {/* Parent Name & Phone */}
@@ -254,10 +297,10 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
               </div>
 
               <div>
-                <label className="form-label">Mobile Number (For Demo Scheduling)</label>
+                <label className="form-label">Mobile Number (For Counselor Callback)</label>
                 <input
                   type="tel"
-                  placeholder="10-digit mobile number (e.g. 9811XXXXXX)"
+                  placeholder="10-digit mobile number"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   className="form-control"
@@ -272,19 +315,19 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
                 style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}
               >
                 <Sparkles size={18} />
-                <span>{loading ? 'Submitting Request...' : 'Schedule Free Demo Class'}</span>
+                <span>{loading ? 'Submitting Request...' : 'Request Trial Class Callback'}</span>
               </button>
             </form>
           </div>
         ) : (
-          /* Confirmation Success State */
+          /* Confirmation Screen */
           <div style={{ padding: '3rem 2rem', textAlign: 'center' }}>
             <div style={{
               width: '64px',
               height: '64px',
               borderRadius: '50%',
-              backgroundColor: 'var(--color-emerald-50)',
-              color: 'var(--color-emerald-500)',
+              backgroundColor: 'var(--brand-emerald-light)',
+              color: 'var(--brand-emerald)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -293,26 +336,26 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
               <CheckCircle2 size={36} />
             </div>
 
-            <h3 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--color-slate-900)', marginBottom: '0.5rem' }}>
-              Free Demo Request Received! 🎉
+            <h3 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              Trial Class Request Received! 🎉
             </h3>
-            <p style={{ color: 'var(--color-slate-600)', fontSize: '0.92rem', lineHeight: 1.5, marginBottom: '1.75rem' }}>
-              Thank you, <strong>{parentName || 'Parent'}</strong>! Our Senior Academic Counselor is reviewing your request for <strong>{grade} • {subject}</strong> and will call you on <strong>+91 {phone}</strong> within 30 minutes to confirm your demo schedule.
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.5, marginBottom: '1.75rem' }}>
+              Thank you, <strong>{parentName || 'Parent'}</strong>! Our Senior Academic Counselor is matching top tutors for <strong>{grade} • {subject}</strong> in <strong>{locality}</strong> and will call you at <strong>+91 {phone}</strong> within 30 minutes.
             </p>
 
             <div style={{
-              backgroundColor: 'var(--color-slate-50)',
-              border: '1px solid var(--border-subtle)',
+              backgroundColor: 'var(--bg-card-subtle)',
+              border: '1px solid var(--border-hairline)',
               borderRadius: '12px',
               padding: '1rem',
               textAlign: 'left',
               marginBottom: '1.75rem',
             }}>
-              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-slate-900)', marginBottom: '0.35rem' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>
                 🏛️ SSSAM ACADEMY COUNSELOR HELPLINE:
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--color-slate-600)' }}>
-                Urgent Demo Booking? Call directly: <strong>{SSSAM_OFFICE_DETAILS.phones[0]}</strong>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                Urgent Inquiry? Call directly: <strong>{SSSAM_OFFICE_DETAILS.phones[0]}</strong>
               </div>
             </div>
 

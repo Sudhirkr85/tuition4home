@@ -24,6 +24,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Building2,
+  Lock,
 } from 'lucide-react';
 
 export default function TutorRegisterPage() {
@@ -49,6 +50,7 @@ export default function TutorRegisterPage() {
   const [hourlyRateOnline, setHourlyRateOnline] = useState(600);
   const [idType, setIdType] = useState('AADHAAR_MASKED');
   const [idLast4, setIdLast4] = useState('');
+  const [agreeTerms, setAgreeTerms] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -63,6 +65,10 @@ export default function TutorRegisterPage() {
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!agreeTerms) {
+      alert('Please accept the privacy policy & social media promotion terms to proceed.');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -91,7 +97,7 @@ export default function TutorRegisterPage() {
         }),
       });
     } catch (err) {
-      console.log('Tutor register offline fallback:', err);
+      console.log('Tutor register fallback:', err);
     } finally {
       setLoading(false);
       setSubmitted(true);
@@ -99,61 +105,59 @@ export default function TutorRegisterPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)' }}>
       <Navbar />
 
-      <main style={{ flex: 1, padding: '3.5rem 0 5rem 0', backgroundColor: 'var(--color-slate-50)' }}>
+      <main style={{ flex: 1, padding: '3.5rem 0 5rem 0' }}>
         <div className="container" style={{ maxWidth: '780px' }}>
           {!submitted ? (
-            <div style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '24px',
-              border: '1.5px solid var(--border-subtle)',
-              boxShadow: 'var(--shadow-card)',
-              overflow: 'hidden',
-            }}>
-              {/* Header Campaign Banner (Admin Dynamic Offer Mock) */}
+            <div className="apple-card" style={{ overflow: 'hidden' }}>
+              {/* Header Campaign Banner */}
               <div style={{
-                background: 'linear-gradient(135deg, var(--color-slate-900), var(--color-blue-700))',
+                backgroundColor: '#0F172A',
                 color: '#FFFFFF',
                 padding: '1.75rem 2rem',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.25)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.4)' }}>
+                  <span className="badge" style={{ backgroundColor: 'rgba(5, 150, 105, 0.25)', color: '#34D399', border: '1px solid rgba(5, 150, 105, 0.4)' }}>
                     ✨ ACADEMIC SESSION DRIVE
                   </span>
-                  <span style={{ fontSize: '0.82rem', color: '#93C5FD', fontWeight: 600 }}>
+                  <span style={{ fontSize: '0.82rem', color: '#94A3B8', fontWeight: 600 }}>
                     Step {currentStep} of {totalSteps}
                   </span>
                 </div>
                 <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '0.25rem' }}>
                   Apply as a Verified Home Tutor
                 </h1>
-                <div style={{ fontSize: '0.88rem', color: '#DBEAFE' }}>
+                <div style={{ fontSize: '0.88rem', color: '#93C5FD' }}>
                   Verification Fee: <span style={{ textDecoration: 'line-through' }}>₹999</span> <strong style={{ color: '#34D399' }}>₹0 FREE</strong> (100% Seasonal Fee Waiver Applied)
                 </div>
               </div>
 
               {/* Progress Bar */}
-              <div style={{ height: '4px', backgroundColor: 'var(--color-slate-100)' }}>
+              <div style={{ height: '4px', backgroundColor: 'var(--border-hairline)' }}>
                 <div style={{
                   height: '100%',
                   width: `${(currentStep / totalSteps) * 100}%`,
-                  backgroundColor: 'var(--color-blue-600)',
+                  backgroundColor: 'var(--brand-blue)',
                   transition: 'width 0.3s ease',
                 }} />
               </div>
 
               {/* Step Forms */}
               <div style={{ padding: '2.25rem' }}>
-                {/* STEP 1: Basic Profile & Teaching Mode */}
+                {/* STEP 1: Personal Info & Login Mandatory */}
                 {currentStep === 1 && (
                   <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--brand-blue)', fontSize: '0.82rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                      <Lock size={14} />
+                      <span>MANDATORY TUTOR LOGIN SETUP</span>
+                    </div>
                     <h3 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-                      Step 1: Teaching Mode & Personal Info
+                      Step 1: Teaching Mode & Account Credentials
                     </h3>
-                    <p style={{ fontSize: '0.88rem', color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
-                      Select where you want to teach and provide your basic contact information.
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                      Set up your email and password to access your tutor dashboard and manage lead assignments.
                     </p>
 
                     {/* Mode Selector */}
@@ -175,9 +179,9 @@ export default function TutorRegisterPage() {
                               style={{
                                 padding: '0.85rem',
                                 borderRadius: '12px',
-                                border: `2px solid ${isSelected ? 'var(--color-blue-600)' : 'var(--border-subtle)'}`,
-                                backgroundColor: isSelected ? 'var(--color-blue-50)' : '#FFFFFF',
-                                color: isSelected ? 'var(--color-blue-700)' : 'var(--color-slate-800)',
+                                border: `2px solid ${isSelected ? 'var(--brand-blue)' : 'var(--border-hairline)'}`,
+                                backgroundColor: isSelected ? 'var(--brand-blue-light)' : '#FFFFFF',
+                                color: isSelected ? 'var(--brand-blue)' : 'var(--text-main)',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
@@ -185,9 +189,9 @@ export default function TutorRegisterPage() {
                                 cursor: 'pointer',
                               }}
                             >
-                              <IconComponent size={20} color={isSelected ? 'var(--color-blue-600)' : 'var(--color-slate-600)'} />
+                              <IconComponent size={20} color={isSelected ? 'var(--brand-blue)' : 'var(--text-muted)'} />
                               <div style={{ fontWeight: 800, fontSize: '0.88rem' }}>{m.title}</div>
-                              <div style={{ fontSize: '0.72rem', color: 'var(--color-slate-500)' }}>{m.desc}</div>
+                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{m.desc}</div>
                             </button>
                           );
                         })}
@@ -208,7 +212,7 @@ export default function TutorRegisterPage() {
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                       <div className="form-group">
-                        <label className="form-label">Email Address</label>
+                        <label className="form-label">Email Address (Required for Login)</label>
                         <input
                           type="email"
                           placeholder="rohit@example.com"
@@ -232,7 +236,7 @@ export default function TutorRegisterPage() {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Create Password (For Tutor Dashboard Login)</label>
+                      <label className="form-label">Create Password (For Tutor Dashboard)</label>
                       <input
                         type="password"
                         placeholder="Minimum 6 characters"
@@ -245,28 +249,25 @@ export default function TutorRegisterPage() {
                   </div>
                 )}
 
-                {/* STEP 2: 60s Video Intro & Headshot */}
+                {/* STEP 2: Photo & 60s Video Intro */}
                 {currentStep === 2 && (
                   <div>
                     <h3 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-                      Step 2: Profile Photo & 60s Video Introduction
+                      Step 2: Profile Photo & 60s Video Intro
                     </h3>
-                    <p style={{ fontSize: '0.88rem', color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
-                      Parents in Gurgaon convert 3x faster when they can watch a 1-minute self-introduction video.
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                      Parents in Gurgaon convert 3x faster when they can watch a 1-minute video introduction.
                     </p>
 
                     <div className="form-group">
-                      <label className="form-label">Profile Photo URL (or Headshot Upload)</label>
+                      <label className="form-label">Profile Photo URL (Headshot)</label>
                       <input
                         type="url"
-                        placeholder="Paste image link or upload headshot"
+                        placeholder="Paste image link or avatar photo"
                         value={avatarUrl}
                         onChange={(e) => setAvatarUrl(e.target.value)}
                         className="form-control"
                       />
-                      <div style={{ fontSize: '0.78rem', color: 'var(--color-slate-500)', marginTop: '4px' }}>
-                        💡 Clear headshot with a friendly smile increases parent bookings significantly.
-                      </div>
                     </div>
 
                     <div className="form-group">
@@ -282,35 +283,35 @@ export default function TutorRegisterPage() {
                         marginTop: '0.75rem',
                         padding: '0.85rem',
                         borderRadius: '12px',
-                        backgroundColor: 'var(--color-blue-50)',
-                        border: '1px solid var(--color-blue-100)',
+                        backgroundColor: 'var(--brand-blue-light)',
+                        border: '1px solid rgba(0, 102, 204, 0.15)',
                         fontSize: '0.82rem',
-                        color: 'var(--color-blue-800)',
+                        color: 'var(--brand-blue)',
                         lineHeight: 1.5,
                       }}>
-                        <strong>🎥 What to say in your 60s video:</strong>
+                        <strong>🎥 What to cover in your 60s video:</strong>
                         <ul style={{ paddingLeft: '1.25rem', marginTop: '0.25rem' }}>
                           <li>Introduce your name and educational degree.</li>
                           <li>Mention which subjects/classes you specialize in.</li>
-                          <li>Briefly describe how you make concepts easy for students.</li>
+                          <li>Briefly explain how you build concepts for students.</li>
                         </ul>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* STEP 3: Qualifications & Teaching Specs */}
+                {/* STEP 3: Qualifications */}
                 {currentStep === 3 && (
                   <div>
                     <h3 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.35rem' }}>
                       Step 3: Academic Qualifications & Subjects
                     </h3>
-                    <p style={{ fontSize: '0.88rem', color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
-                      Select the specific subjects, grades, and boards you are confident teaching.
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                      Select the specific subjects and grade levels you specialize in.
                     </p>
 
                     <div className="form-group">
-                      <label className="form-label">Highest Degree & University</label>
+                      <label className="form-label">Highest Degree & College</label>
                       <input
                         type="text"
                         placeholder="e.g. M.Sc. Mathematics (Delhi University)"
@@ -333,9 +334,9 @@ export default function TutorRegisterPage() {
                       />
                     </div>
 
-                    {/* Subjects Multi-Select */}
+                    {/* Subjects */}
                     <div className="form-group">
-                      <label className="form-label">Subjects Taught (Select all that apply)</label>
+                      <label className="form-label">Subjects Taught</label>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                         {SUBJECT_OPTIONS.map((sub) => {
                           const isSelected = selectedSubjects.includes(sub);
@@ -347,9 +348,9 @@ export default function TutorRegisterPage() {
                               style={{
                                 padding: '0.45rem 0.85rem',
                                 borderRadius: '8px',
-                                border: `1.5px solid ${isSelected ? 'var(--color-blue-600)' : 'var(--border-subtle)'}`,
-                                backgroundColor: isSelected ? 'var(--color-blue-50)' : '#FFFFFF',
-                                color: isSelected ? 'var(--color-blue-700)' : 'var(--color-slate-700)',
+                                border: `1.5px solid ${isSelected ? 'var(--brand-blue)' : 'var(--border-hairline)'}`,
+                                backgroundColor: isSelected ? 'var(--brand-blue-light)' : '#FFFFFF',
+                                color: isSelected ? 'var(--brand-blue)' : 'var(--text-main)',
                                 fontWeight: 600,
                                 fontSize: '0.82rem',
                                 cursor: 'pointer',
@@ -361,50 +362,21 @@ export default function TutorRegisterPage() {
                         })}
                       </div>
                     </div>
-
-                    {/* Classes Multi-Select */}
-                    <div className="form-group">
-                      <label className="form-label">Target Grades / Levels</label>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        {CLASS_OPTIONS.map((cls) => {
-                          const isSelected = selectedClasses.includes(cls);
-                          return (
-                            <button
-                              key={cls}
-                              type="button"
-                              onClick={() => toggleSelection(cls, selectedClasses, setSelectedClasses)}
-                              style={{
-                                padding: '0.45rem 0.85rem',
-                                borderRadius: '8px',
-                                border: `1.5px solid ${isSelected ? 'var(--color-blue-600)' : 'var(--border-subtle)'}`,
-                                backgroundColor: isSelected ? 'var(--color-blue-50)' : '#FFFFFF',
-                                color: isSelected ? 'var(--color-blue-700)' : 'var(--color-slate-700)',
-                                fontWeight: 600,
-                                fontSize: '0.82rem',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              {isSelected ? '✓ ' : '+ '} {cls}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
                   </div>
                 )}
 
-                {/* STEP 4: Dual Location Preferences */}
+                {/* STEP 4: Live Travel Radius & Gurgaon Sectors */}
                 {currentStep === 4 && (
                   <div>
                     <h3 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-                      Step 4: Location & Travel Preferences
+                      Step 4: Location & Travel Radius Selector
                     </h3>
-                    <p style={{ fontSize: '0.88rem', color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
-                      Set your travel radius and select your preferred Gurgaon sectors for home tuition leads.
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                      Set your maximum travel distance and select preferred Gurgaon sectors for home visits.
                     </p>
 
                     <div className="form-group">
-                      <label className="form-label">Maximum Travel Radius (KM for Home Visits)</label>
+                      <label className="form-label">Maximum Travel Radius (KM from your current location)</label>
                       <div style={{ display: 'flex', gap: '0.75rem' }}>
                         {[3, 5, 8, 12, 15].map((km) => (
                           <button
@@ -415,9 +387,9 @@ export default function TutorRegisterPage() {
                               flex: 1,
                               padding: '0.65rem 0',
                               borderRadius: '8px',
-                              border: `1.5px solid ${travelRadius === km ? 'var(--color-blue-600)' : 'var(--border-subtle)'}`,
-                              backgroundColor: travelRadius === km ? 'var(--color-blue-600)' : '#FFFFFF',
-                              color: travelRadius === km ? '#FFFFFF' : 'var(--color-slate-700)',
+                              border: `1.5px solid ${travelRadius === km ? 'var(--brand-blue)' : 'var(--border-hairline)'}`,
+                              backgroundColor: travelRadius === km ? 'var(--brand-blue)' : '#FFFFFF',
+                              color: travelRadius === km ? '#FFFFFF' : 'var(--text-main)',
                               fontWeight: 700,
                               fontSize: '0.85rem',
                               cursor: 'pointer',
@@ -430,8 +402,8 @@ export default function TutorRegisterPage() {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Preferred Gurgaon Sectors / Gated Societies</label>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.5rem', maxHeight: '240px', overflowY: 'auto', padding: '0.5rem', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}>
+                      <label className="form-label">Preferred Gurgaon Sectors</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.5rem', maxHeight: '220px', overflowY: 'auto', padding: '0.5rem', border: '1px solid var(--border-hairline)', borderRadius: '12px' }}>
                         {GURGAON_LOCALITIES.map((loc) => {
                           const isSelected = serviceAreas.includes(loc.name);
                           return (
@@ -442,9 +414,9 @@ export default function TutorRegisterPage() {
                               style={{
                                 padding: '0.5rem',
                                 borderRadius: '8px',
-                                border: `1px solid ${isSelected ? 'var(--color-blue-600)' : 'var(--border-subtle)'}`,
-                                backgroundColor: isSelected ? 'var(--color-blue-50)' : '#FFFFFF',
-                                color: isSelected ? 'var(--color-blue-700)' : 'var(--color-slate-700)',
+                                border: `1px solid ${isSelected ? 'var(--brand-blue)' : 'var(--border-hairline)'}`,
+                                backgroundColor: isSelected ? 'var(--brand-blue-light)' : '#FFFFFF',
+                                color: isSelected ? 'var(--brand-blue)' : 'var(--text-main)',
                                 fontSize: '0.8rem',
                                 fontWeight: 600,
                                 textAlign: 'left',
@@ -460,24 +432,24 @@ export default function TutorRegisterPage() {
                   </div>
                 )}
 
-                {/* STEP 5: Fee Expectations */}
+                {/* STEP 5: Expected Rates starting from ₹1,000+ */}
                 {currentStep === 5 && (
                   <div>
                     <h3 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-                      Step 5: Fee Expectations & Availability
+                      Step 5: Expected Rates & Pricing Tiers
                     </h3>
-                    <p style={{ fontSize: '0.88rem', color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
-                      Set your expected hourly rates for home and online tutoring.
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                      Higher reviews & ratings unlock Senior Verified Tier badges with higher earning potential.
                     </p>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
                       <div className="form-group">
-                        <label className="form-label">Expected Hourly Rate (Home Visit)</label>
+                        <label className="form-label">Expected Rate (Home Visit)</label>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <span style={{ padding: '0.75rem', backgroundColor: 'var(--color-slate-100)', border: '1.5px solid var(--border-subtle)', borderRight: 'none', borderRadius: '8px 0 0 8px', fontWeight: 700 }}>₹</span>
+                          <span style={{ padding: '0.75rem', backgroundColor: 'var(--bg-card-subtle)', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '8px 0 0 8px', fontWeight: 700 }}>₹</span>
                           <input
                             type="number"
-                            min={400}
+                            min={500}
                             max={5000}
                             value={hourlyRateHome}
                             onChange={(e) => setHourlyRateHome(Number(e.target.value))}
@@ -488,12 +460,12 @@ export default function TutorRegisterPage() {
                       </div>
 
                       <div className="form-group">
-                        <label className="form-label">Expected Hourly Rate (Online 1-on-1)</label>
+                        <label className="form-label">Expected Rate (Online 1-on-1)</label>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <span style={{ padding: '0.75rem', backgroundColor: 'var(--color-slate-100)', border: '1.5px solid var(--border-subtle)', borderRight: 'none', borderRadius: '8px 0 0 8px', fontWeight: 700 }}>₹</span>
+                          <span style={{ padding: '0.75rem', backgroundColor: 'var(--bg-card-subtle)', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '8px 0 0 8px', fontWeight: 700 }}>₹</span>
                           <input
                             type="number"
-                            min={300}
+                            min={400}
                             max={4000}
                             value={hourlyRateOnline}
                             onChange={(e) => setHourlyRateOnline(Number(e.target.value))}
@@ -506,18 +478,18 @@ export default function TutorRegisterPage() {
                   </div>
                 )}
 
-                {/* STEP 6: Private KYC Verification (DPDP Compliant) */}
+                {/* STEP 6: KYC & Privacy Policy / Social Media Promotion Terms */}
                 {currentStep === 6 && (
                   <div>
                     <h3 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-                      Step 6: Private Identity Verification (KYC)
+                      Step 6: Private Identity Verification (KYC) & Terms
                     </h3>
-                    <p style={{ fontSize: '0.88rem', color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
-                      Under UIDAI and privacy standards, only the last 4 digits are recorded. All documents are stored in an encrypted vault.
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                      Only the last 4 digits are recorded under Indian DPDP privacy law.
                     </p>
 
                     <div className="form-group">
-                      <label className="form-label">Select Government ID Type</label>
+                      <label className="form-label">Select Government ID</label>
                       <select
                         value={idType}
                         onChange={(e) => setIdType(e.target.value)}
@@ -526,7 +498,6 @@ export default function TutorRegisterPage() {
                         <option value="AADHAAR_MASKED">Masked Aadhaar Card</option>
                         <option value="DRIVING_LICENSE">Driving License</option>
                         <option value="PAN">PAN Card</option>
-                        <option value="VOTER_ID">Voter ID</option>
                       </select>
                     </div>
 
@@ -543,27 +514,35 @@ export default function TutorRegisterPage() {
                       />
                     </div>
 
-                    {/* Terms Agreement Box */}
+                    {/* Privacy & Social Media Terms Checkbox */}
                     <div style={{
-                      backgroundColor: 'var(--color-slate-50)',
-                      border: '1px solid var(--border-subtle)',
+                      backgroundColor: 'var(--bg-card-subtle)',
+                      border: '1px solid var(--border-hairline)',
                       borderRadius: '12px',
-                      padding: '1rem',
-                      fontSize: '0.8rem',
-                      color: 'var(--color-slate-600)',
+                      padding: '1.1rem',
+                      fontSize: '0.82rem',
+                      color: 'var(--text-muted)',
                       lineHeight: 1.5,
                       marginTop: '1.25rem',
                     }}>
-                      <div style={{ fontWeight: 700, color: 'var(--color-slate-900)', marginBottom: '0.25rem' }}>
-                        ⚖️ SSSAM ACADEMY MEDIATION TERMS:
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                        <input
+                          type="checkbox"
+                          id="privacy-terms"
+                          checked={agreeTerms}
+                          onChange={(e) => setAgreeTerms(e.target.checked)}
+                          style={{ marginTop: '3px', width: '16px', height: '16px', accentColor: 'var(--brand-blue)' }}
+                        />
+                        <label htmlFor="privacy-terms" style={{ cursor: 'pointer', color: 'var(--text-main)' }}>
+                          <strong>Privacy & Promotion Agreement:</strong> I agree that my identity documents will be kept 100% private & encrypted. I consent that my interview intro videos and profile photo may be published on official SSSAM Academy platforms and social media for tutor promotion. Upon tuition assignment, I agree to the standard 1st-month bureau fee (50%).
+                        </label>
                       </div>
-                      I agree that upon successful tuition placement after the demo class, the agreed 1st-month bureau mediation fee (50%) will be remitted to TuitionForHome. Bypassing the bureau leads to permanent badge revocation.
                     </div>
                   </div>
                 )}
 
                 {/* Navigation Buttons */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-subtle)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-hairline)' }}>
                   {currentStep > 1 ? (
                     <button
                       type="button"
@@ -601,21 +580,14 @@ export default function TutorRegisterPage() {
               </div>
             </div>
           ) : (
-            /* Submission Confirmation Screen */
-            <div style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '24px',
-              border: '1.5px solid var(--border-subtle)',
-              padding: '3.5rem 2.5rem',
-              textAlign: 'center',
-              boxShadow: 'var(--shadow-card)',
-            }}>
+            /* Confirmation Screen */
+            <div className="apple-card" style={{ padding: '3.5rem 2.5rem', textAlign: 'center' }}>
               <div style={{
                 width: '72px',
                 height: '72px',
                 borderRadius: '50%',
-                backgroundColor: 'var(--color-emerald-50)',
-                color: 'var(--color-emerald-500)',
+                backgroundColor: 'var(--brand-emerald-light)',
+                color: 'var(--brand-emerald)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -624,27 +596,27 @@ export default function TutorRegisterPage() {
                 <CheckCircle2 size={42} />
               </div>
 
-              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-slate-900)', marginBottom: '0.5rem' }}>
+              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
                 Application Submitted Successfully! 🎉
               </h2>
 
-              <p style={{ color: 'var(--color-slate-600)', fontSize: '1rem', lineHeight: 1.6, maxWidth: '560px', margin: '0 auto 2rem auto' }}>
-                Welcome aboard, <strong>{name}</strong>! Your profile is currently under <strong>Pending Telephonic Verification</strong>. Our academic team from <strong>SSSAM Academy Sector 14 Gurugram</strong> will review your video intro and call you within 24 hours for a brief interview.
+              <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.6, maxWidth: '560px', margin: '0 auto 2rem auto' }}>
+                Welcome aboard, <strong>{name}</strong>! Your application is under <strong>Pending Telephonic Verification</strong>. Our academic team from <strong>SSSAM Academy Sector 14 Gurugram</strong> will review your video intro and call you within 24 hours.
               </p>
 
               <div style={{
-                backgroundColor: 'var(--color-slate-50)',
-                border: '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--bg-card-subtle)',
+                border: '1px solid var(--border-hairline)',
                 borderRadius: '16px',
                 padding: '1.5rem',
                 maxWidth: '480px',
                 margin: '0 auto 2rem auto',
                 textAlign: 'left',
               }}>
-                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-slate-900)', marginBottom: '0.4rem' }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
                   🏢 OPTIONAL: WALK-IN VERIFICATION AT GURGAON CENTER
                 </div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--color-slate-600)' }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                   Prefer meeting in person? Visit our center: <strong>{SSSAM_OFFICE_DETAILS.address}</strong> for fast-track badge activation.
                 </div>
               </div>

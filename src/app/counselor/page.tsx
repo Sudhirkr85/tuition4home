@@ -14,17 +14,13 @@ import {
   MessageSquare,
   ShieldCheck,
   CheckCircle2,
-  XCircle,
   Calendar,
   Sparkles,
   QrCode,
-  FileText,
   UserCheck,
-  Users,
   Video,
   Home,
   MapPin,
-  Clock,
   Play,
 } from 'lucide-react';
 
@@ -36,16 +32,17 @@ interface MockLead {
   locality: string;
   grade: string;
   subject: string;
-  status: 'NEW_LEAD' | 'DEMO_SCHEDULED' | 'TUITION_CONFIRMED' | 'COMMISSION_PAID';
+  budgetRange: string;
+  status: 'NEW_LEAD' | 'TRIAL_SCHEDULED' | 'TUITION_CONFIRMED' | 'COMMISSION_PAID';
   assignedTutor?: string;
-  demoDate?: string;
+  trialDate?: string;
   commissionAmount: number;
 }
 
 export default function CounselorPortal() {
   const [activeTab, setActiveTab] = useState<'LEADS' | 'INTERVIEWS' | 'INVOICE'>('LEADS');
 
-  // Leads State
+  // Leads State with budget preferences
   const [leads, setLeads] = useState<MockLead[]>([
     {
       id: 'LD-101',
@@ -55,6 +52,7 @@ export default function CounselorPortal() {
       locality: 'DLF Phase 5, Gurgaon',
       grade: 'Class 10 CBSE',
       subject: 'Mathematics',
+      budgetRange: '₹6,000 – ₹10,000 / month',
       status: 'NEW_LEAD',
       commissionAmount: 4000,
     },
@@ -66,9 +64,10 @@ export default function CounselorPortal() {
       locality: 'Golf Course Road, Gurgaon',
       grade: 'Class 12 CBSE',
       subject: 'Physics & Chemistry',
-      status: 'DEMO_SCHEDULED',
+      budgetRange: '₹8,000 – ₹12,000 / month',
+      status: 'TRIAL_SCHEDULED',
       assignedTutor: 'Dr. Ananya Sengupta',
-      demoDate: 'Tomorrow, 5:00 PM',
+      trialDate: 'Tomorrow, 5:00 PM',
       commissionAmount: 6000,
     },
     {
@@ -79,6 +78,7 @@ export default function CounselorPortal() {
       locality: 'Delhi NCR (Online)',
       grade: 'IB Diploma (Maths HL)',
       subject: 'Mathematics',
+      budgetRange: '₹12,000+ / month',
       status: 'TUITION_CONFIRMED',
       assignedTutor: 'Rohit Sharma',
       commissionAmount: 7500,
@@ -98,8 +98,8 @@ export default function CounselorPortal() {
       teachingMode: 'BOTH',
       subjects: ['Physics', 'Mathematics'],
       classes: ['Class 11 & 12 (Board & JEE/NEET)'],
-      boards: ['CBSE', 'IB (International Baccalaureate)'],
-      serviceAreas: ['DLF Phase 2', 'DLF Phase 4', 'Sector 14 & Old DLF'],
+      boards: ['CBSE', 'IB'],
+      serviceAreas: ['DLF Phase 2', 'DLF Phase 4', 'Sector 14'],
       travelRadiusKm: 6,
       hourlyRateHome: 950,
       hourlyRateOnline: 700,
@@ -108,22 +108,20 @@ export default function CounselorPortal() {
       hasPoliceCheck: true,
       rating: 5.0,
       totalReviews: 0,
-      bio: 'Physics enthusiast with 6 years experience mentoring students for CBSE 12th board exams and JEE Main numerical problem solving.',
+      bio: 'Physics mentor with 6 years experience specializing in CBSE 12th boards and NEET numerical problem solving.',
       badge: 'Pending Verification',
     },
   ]);
 
-  // Selected Lead for Invoice / Slip
   const [selectedInvoiceLead, setSelectedInvoiceLead] = useState<MockLead>(leads[2]);
 
-  // Approve Tutor
   const handleApproveTutor = (tutorId: string) => {
-    alert('🎉 Tutor Interview Cleared! Verified Pro Badge Activated & Profile is now Live in Gurgaon search catalog.');
+    alert('🎉 Tutor Interview Cleared! Verified Badge Activated & Profile is now Live in Gurgaon search catalog.');
     setPendingTutors(pendingTutors.filter((t) => t.id !== tutorId));
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-slate-50)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)' }}>
       <Navbar />
 
       <main style={{ flex: 1, padding: '2.5rem 0 4rem 0' }}>
@@ -131,12 +129,12 @@ export default function CounselorPortal() {
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
             <div>
-              <div className="badge badge-trust" style={{ marginBottom: '0.35rem' }}>
-                <ShieldCheck size={14} color="var(--color-emerald-500)" />
+              <div className="badge badge-emerald" style={{ marginBottom: '0.35rem' }}>
+                <ShieldCheck size={14} />
                 <span>SSSAM ACADEMY • COUNSELOR OPERATIONS DESK</span>
               </div>
-              <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--color-slate-900)' }}>
-                Telecalling & Lead Management Desk
+              <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                Parent Lead Management & Matchmaking Desk
               </h1>
             </div>
 
@@ -144,10 +142,10 @@ export default function CounselorPortal() {
             <div style={{
               display: 'flex',
               backgroundColor: '#FFFFFF',
-              border: '1.5px solid var(--border-subtle)',
+              border: '1px solid var(--border-hairline)',
               borderRadius: 'var(--radius-full)',
               padding: '0.3rem',
-              boxShadow: 'var(--shadow-subtle)',
+              boxShadow: 'var(--shadow-sm)',
             }}>
               <button
                 type="button"
@@ -156,14 +154,14 @@ export default function CounselorPortal() {
                   padding: '0.5rem 1.25rem',
                   borderRadius: 'var(--radius-full)',
                   border: 'none',
-                  backgroundColor: activeTab === 'LEADS' ? 'var(--color-blue-600)' : 'transparent',
-                  color: activeTab === 'LEADS' ? '#FFFFFF' : 'var(--color-slate-700)',
+                  backgroundColor: activeTab === 'LEADS' ? 'var(--brand-blue)' : 'transparent',
+                  color: activeTab === 'LEADS' ? '#FFFFFF' : 'var(--text-muted)',
                   fontWeight: 700,
                   fontSize: '0.88rem',
                   cursor: 'pointer',
                 }}
               >
-                📥 Inbound Parent Leads ({leads.length})
+                📥 Parent Inquiries ({leads.length})
               </button>
 
               <button
@@ -173,8 +171,8 @@ export default function CounselorPortal() {
                   padding: '0.5rem 1.25rem',
                   borderRadius: 'var(--radius-full)',
                   border: 'none',
-                  backgroundColor: activeTab === 'INTERVIEWS' ? 'var(--color-blue-600)' : 'transparent',
-                  color: activeTab === 'INTERVIEWS' ? '#FFFFFF' : 'var(--color-slate-700)',
+                  backgroundColor: activeTab === 'INTERVIEWS' ? 'var(--brand-blue)' : 'transparent',
+                  color: activeTab === 'INTERVIEWS' ? '#FFFFFF' : 'var(--text-muted)',
                   fontWeight: 700,
                   fontSize: '0.88rem',
                   cursor: 'pointer',
@@ -190,8 +188,8 @@ export default function CounselorPortal() {
                   padding: '0.5rem 1.25rem',
                   borderRadius: 'var(--radius-full)',
                   border: 'none',
-                  backgroundColor: activeTab === 'INVOICE' ? 'var(--color-blue-600)' : 'transparent',
-                  color: activeTab === 'INVOICE' ? '#FFFFFF' : 'var(--color-slate-700)',
+                  backgroundColor: activeTab === 'INVOICE' ? 'var(--brand-blue)' : 'transparent',
+                  color: activeTab === 'INVOICE' ? '#FFFFFF' : 'var(--text-muted)',
                   fontWeight: 700,
                   fontSize: '0.88rem',
                   cursor: 'pointer',
@@ -202,21 +200,19 @@ export default function CounselorPortal() {
             </div>
           </div>
 
-          {/* =========================================================================
-              TAB 1: INBOUND PARENT LEADS STREAM
-              ========================================================================= */}
+          {/* TAB 1: PARENT LEADS STREAM */}
           {activeTab === 'LEADS' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {leads.map((lead) => (
-                <div key={lead.id} className="luxury-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div key={lead.id} className="apple-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <div style={{
                         width: '44px',
                         height: '44px',
                         borderRadius: '12px',
-                        backgroundColor: lead.mode === 'OFFLINE_HOME' ? 'var(--color-blue-50)' : 'var(--color-emerald-50)',
-                        color: lead.mode === 'OFFLINE_HOME' ? 'var(--color-blue-600)' : 'var(--color-emerald-600)',
+                        backgroundColor: lead.mode === 'OFFLINE_HOME' ? 'var(--brand-blue-light)' : 'var(--brand-emerald-light)',
+                        color: lead.mode === 'OFFLINE_HOME' ? 'var(--brand-blue)' : 'var(--brand-emerald)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -227,30 +223,28 @@ export default function CounselorPortal() {
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>{lead.parentName}</h3>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-slate-500)' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>
                             [{lead.id}]
                           </span>
                         </div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--color-slate-600)' }}>
-                          📍 {lead.locality} • <strong>{lead.grade} ({lead.subject})</strong>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                          📍 {lead.locality} • <strong>{lead.grade} ({lead.subject})</strong> • Budget: <strong style={{ color: 'var(--brand-blue)' }}>{lead.budgetRange}</strong>
                         </div>
                       </div>
                     </div>
 
-                    {/* Status Badge */}
                     <span className="badge" style={{
                       backgroundColor:
                         lead.status === 'NEW_LEAD' ? '#FEF3C7' :
-                        lead.status === 'DEMO_SCHEDULED' ? '#DBEAFE' : '#D1FAE5',
+                        lead.status === 'TRIAL_SCHEDULED' ? '#DBEAFE' : '#D1FAE5',
                       color:
                         lead.status === 'NEW_LEAD' ? '#B45309' :
-                        lead.status === 'DEMO_SCHEDULED' ? '#1D4ED8' : '#059669',
+                        lead.status === 'TRIAL_SCHEDULED' ? '#1D4ED8' : '#059669',
                     }}>
                       {lead.status.replace('_', ' ')}
                     </span>
                   </div>
 
-                  {/* Actions Bar */}
                   <div style={{
                     display: 'flex',
                     flexWrap: 'wrap',
@@ -258,10 +252,10 @@ export default function CounselorPortal() {
                     justifyContent: 'space-between',
                     gap: '0.75rem',
                     paddingTop: '0.75rem',
-                    borderTop: '1px solid var(--border-subtle)',
+                    borderTop: '1px solid var(--border-hairline)',
                   }}>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--color-slate-600)' }}>
-                      Assigned Tutor: <strong style={{ color: 'var(--color-slate-900)' }}>{lead.assignedTutor || 'Unassigned (Select Nearest)'}</strong>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      Assigned Proximity Tutor: <strong style={{ color: 'var(--text-main)' }}>{lead.assignedTutor || 'Unassigned (Match Nearest Sector)'}</strong>
                     </div>
 
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -269,13 +263,13 @@ export default function CounselorPortal() {
                         href={`tel:${lead.parentPhone}`}
                         className="btn btn-secondary btn-sm"
                       >
-                        <Phone size={14} color="var(--color-emerald-600)" />
+                        <Phone size={14} color="var(--brand-emerald)" />
                         <span>Call: +91 {lead.parentPhone}</span>
                       </a>
 
                       <a
                         href={`https://wa.me/91${lead.parentPhone}?text=${encodeURIComponent(
-                          `Hello ${lead.parentName}, this is TuitionForHome support (SSSAM Academy). We have shortlisted top verified tutors for ${lead.grade} ${lead.subject} in ${lead.locality}. When can we arrange your free demo?`
+                          `Hello ${lead.parentName}, this is TuitionForHome support (SSSAM Academy). We have shortlisted top verified tutors for ${lead.grade} ${lead.subject} near ${lead.locality}. When can we schedule your trial class?`
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -289,13 +283,13 @@ export default function CounselorPortal() {
                       {lead.status === 'NEW_LEAD' && (
                         <button
                           onClick={() => {
-                            setLeads(leads.map((l) => l.id === lead.id ? { ...l, status: 'DEMO_SCHEDULED', assignedTutor: 'Rohit Sharma' } : l));
-                            alert('Demo Scheduled with Mr. Rohit Sharma! Reminder sent to parent & tutor.');
+                            setLeads(leads.map((l) => l.id === lead.id ? { ...l, status: 'TRIAL_SCHEDULED', assignedTutor: 'Rohit Sharma' } : l));
+                            alert('Trial Class Scheduled with Mr. Rohit Sharma!');
                           }}
                           className="btn btn-primary btn-sm"
                         >
                           <Calendar size={14} />
-                          <span>Schedule Demo</span>
+                          <span>Schedule Trial Class</span>
                         </button>
                       )}
                     </div>
@@ -305,139 +299,122 @@ export default function CounselorPortal() {
             </div>
           )}
 
-          {/* =========================================================================
-              TAB 2: TUTOR INTERVIEWS & KYC VERIFICATION
-              ========================================================================= */}
+          {/* TAB 2: TUTOR INTERVIEWS */}
           {activeTab === 'INTERVIEWS' && (
             <div>
               {pendingTutors.length > 0 ? (
                 pendingTutors.map((tutor) => (
-                  <div key={tutor.id} className="luxury-card" style={{ padding: '2rem', marginBottom: '1.5rem' }}>
+                  <div key={tutor.id} className="apple-card" style={{ padding: '2rem', marginBottom: '1.5rem' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', alignItems: 'center' }}>
-                      {/* Left: Tutor Bio & Video */}
                       <div>
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={tutor.avatarUrl} alt={tutor.name} style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }} />
                           <div>
                             <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{tutor.name}</h3>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--color-blue-600)', fontWeight: 600 }}>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--brand-blue)', fontWeight: 600 }}>
                               {tutor.highestDegree} • {tutor.experienceYears} Yrs Exp
                             </div>
                           </div>
                         </div>
 
-                        <div style={{ fontSize: '0.88rem', color: 'var(--color-slate-600)', marginBottom: '1.25rem', lineHeight: 1.5 }}>
+                        <div style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.25rem', lineHeight: 1.5 }}>
                           {tutor.bio}
                         </div>
 
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-                          {tutor.subjects.map((s) => (
-                            <span key={s} style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem', backgroundColor: 'var(--color-slate-100)', borderRadius: '6px', fontWeight: 600 }}>
-                              {s}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* Video player preview */}
-                        <div style={{ padding: '0.85rem', backgroundColor: 'var(--color-blue-50)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-blue-800)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <Play size={15} fill="var(--color-blue-600)" />
-                            <span>Watch 60s Intro Video Submission</span>
+                        <div style={{ padding: '0.85rem', backgroundColor: 'var(--brand-blue-light)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--brand-blue)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Play size={15} fill="var(--brand-blue)" />
+                            <span>Watch 60s Video Intro Submission</span>
                           </span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--color-blue-600)' }}>{tutor.videoDuration}</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--brand-blue)' }}>{tutor.videoDuration}</span>
                         </div>
                       </div>
 
-                      {/* Right: Interview Scorecard & Decision */}
+                      {/* Scorecard */}
                       <div style={{
-                        backgroundColor: 'var(--color-slate-50)',
-                        border: '1px solid var(--border-subtle)',
+                        backgroundColor: 'var(--bg-card-subtle)',
+                        border: '1px solid var(--border-hairline)',
                         borderRadius: '16px',
                         padding: '1.5rem',
                       }}>
-                        <h4 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--color-slate-900)' }}>
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--text-main)' }}>
                           Academic Interview Scorecard
                         </h4>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Communication (English/Hindi):</span>
-                            <strong style={{ color: 'var(--color-emerald-600)' }}>9 / 10 (Clear)</strong>
+                            <span>Communication:</span>
+                            <strong style={{ color: 'var(--brand-emerald)' }}>9 / 10 (Clear)</strong>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span>Subject Conceptual Depth:</span>
-                            <strong style={{ color: 'var(--color-emerald-600)' }}>High (Verified)</strong>
+                            <strong style={{ color: 'var(--brand-emerald)' }}>High (Verified)</strong>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Aadhaar ID Proof (Last 4):</span>
-                            <strong>XXXX-XXXX-4589 (Checked)</strong>
+                            <span>Aadhaar Last 4 Digits:</span>
+                            <strong>XXXX-4589 (Checked)</strong>
                           </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '0.75rem' }}>
-                          <button
-                            onClick={() => handleApproveTutor(tutor.id)}
-                            className="btn btn-emerald"
-                            style={{ flex: 1, justifyContent: 'center' }}
-                          >
-                            <CheckCircle2 size={16} />
-                            <span>Approve & Activate Badge</span>
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handleApproveTutor(tutor.id)}
+                          className="btn btn-emerald"
+                          style={{ width: '100%', justifyContent: 'center' }}
+                        >
+                          <CheckCircle2 size={16} />
+                          <span>Approve & Activate Badge</span>
+                        </button>
                       </div>
                     </div>
                   </div>
                 ))
               ) : (
                 <div style={{ padding: '4rem', textAlign: 'center', backgroundColor: '#FFFFFF', borderRadius: '20px' }}>
-                  <CheckCircle2 size={48} color="var(--color-emerald-500)" style={{ margin: '0 auto 1rem auto' }} />
+                  <CheckCircle2 size={48} color="var(--brand-emerald)" style={{ margin: '0 auto 1rem auto' }} />
                   <h3 style={{ fontSize: '1.35rem', fontWeight: 800 }}>All Tutor Interviews Cleared!</h3>
-                  <p style={{ color: 'var(--color-slate-600)' }}>No pending tutors in the queue right now.</p>
+                  <p style={{ color: 'var(--text-muted)' }}>No pending tutors in the interview queue.</p>
                 </div>
               )}
             </div>
           )}
 
-          {/* =========================================================================
-              TAB 3: DIGITAL INVOICE & UPI QR CODE GENERATOR
-              ========================================================================= */}
+          {/* TAB 3: COMMISSION INVOICE */}
           {activeTab === 'INVOICE' && (
             <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-              <div className="luxury-card" style={{ padding: '2.5rem', backgroundColor: '#FFFFFF' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
+              <div className="apple-card" style={{ padding: '2.5rem', backgroundColor: '#FFFFFF' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-hairline)', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
                   <div>
                     <h3 style={{ fontSize: '1.35rem', fontWeight: 800 }}>1st-Month Bureau Fee Invoice</h3>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--color-slate-500)' }}>Issued by SSSAM Academy Gurugram</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Issued by SSSAM Academy Gurugram</div>
                   </div>
                   <span className="badge badge-emerald">TUITION CONFIRMED</span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.75rem', fontSize: '0.9rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--color-slate-600)' }}>Student & Parent:</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Student & Parent:</span>
                     <strong>{selectedInvoiceLead.parentName} ({selectedInvoiceLead.locality})</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--color-slate-600)' }}>Subject / Grade:</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Subject / Grade:</span>
                     <strong>{selectedInvoiceLead.grade} • {selectedInvoiceLead.subject}</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--color-slate-600)' }}>Assigned Tutor:</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Assigned Tutor:</span>
                     <strong>{selectedInvoiceLead.assignedTutor}</strong>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.75rem', borderTop: '1px dashed var(--border-subtle)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.75rem', borderTop: '1px dashed var(--border-hairline)' }}>
                     <span style={{ fontSize: '1.1rem', fontWeight: 800 }}>Bureau 50% Placement Fee:</span>
-                    <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-blue-600)' }}>
+                    <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--brand-blue)' }}>
                       ₹{selectedInvoiceLead.commissionAmount.toLocaleString('en-IN')}
                     </span>
                   </div>
                 </div>
 
-                {/* QR Code Placeholder Box */}
                 <div style={{
-                  backgroundColor: 'var(--color-slate-50)',
-                  border: '1.5px solid var(--border-subtle)',
+                  backgroundColor: 'var(--bg-card-subtle)',
+                  border: '1.5px solid var(--border-hairline)',
                   borderRadius: '16px',
                   padding: '1.5rem',
                   textAlign: 'center',
@@ -447,20 +424,20 @@ export default function CounselorPortal() {
                     width: '140px',
                     height: '140px',
                     backgroundColor: '#FFFFFF',
-                    border: '1px solid var(--border-subtle)',
+                    border: '1px solid var(--border-hairline)',
                     borderRadius: '12px',
                     margin: '0 auto 1rem auto',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--color-slate-900)',
+                    color: 'var(--text-main)',
                   }}>
                     <QrCode size={90} />
                   </div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-slate-900)' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>
                     Scan & Pay via UPI / GPay / PhonePe / Paytm
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--color-slate-500)', marginTop: '2px' }}>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                     UPI ID: <strong>sssamacademy@okaxis</strong>
                   </div>
                 </div>
