@@ -114,25 +114,43 @@ export default function HomePage() {
             }}>
               {/* Left Column: Headline & Action Controls */}
               <div>
-                <div className="badge badge-blue" style={{ marginBottom: '1rem' }}>
-                  <ShieldCheck size={14} />
-                  <span>BUILT FOR GURGAON & NCR • SSSAM ACADEMY</span>
+                {/* Sector Auto-Sliding Ticker Badge Above Headline (Zero Layout Shift) */}
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.65rem', marginBottom: '0.85rem' }}>
+                  <div className="badge badge-blue">
+                    <ShieldCheck size={14} />
+                    <span>BUILT FOR GURGAON & NCR • SSSAM ACADEMY</span>
+                  </div>
+
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.3rem 0.85rem',
+                    borderRadius: 'var(--radius-full)',
+                    backgroundColor: 'var(--brand-teal-light)',
+                    border: '1px solid var(--border-teal)',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    color: 'var(--brand-teal)',
+                  }}>
+                    <MapPin size={13} />
+                    <span>Active In:</span>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        minWidth: '140px',
+                        color: 'var(--brand-teal)',
+                        transition: 'all 0.3s ease',
+                      }}
+                    >
+                      {sectorList[currentSectorIndex]} ↕
+                    </span>
+                  </div>
                 </div>
-                {/* Dynamic Sector Auto-Sliding Headline - FIXED ROCK SOLID HEIGHT */}
-                <h1 style={{ marginBottom: '1.25rem', minHeight: '120px', lineHeight: 1.15 }}>
-                  <span className="text-teal">Verified</span> Home & Online Tutors in{' '}
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      color: 'var(--brand-teal)',
-                      borderBottom: '3px solid var(--brand-teal)',
-                      paddingBottom: '2px',
-                      transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {sectorList[currentSectorIndex]} ↕
-                  </span>
+
+                {/* Rock-Solid Fixed Main Headline (100% Zero Layout Shift) */}
+                <h1 style={{ marginBottom: '1.25rem', lineHeight: 1.15 }}>
+                  <span className="text-teal">Verified</span> Home & Online Tutors in Gurgaon
                 </h1>
 
                 <p style={{ fontSize: 'clamp(1.02rem, 2vw, 1.2rem)', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.75rem' }}>
@@ -302,67 +320,89 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Right Column: Hero Young Teacher Cutout & Figma Style Organic Flower Scribble Background */}
+              {/* Right Column: Full-Frame Rich Organic Flower Scribble Background & Subject Badges */}
               <div style={{
                 position: 'relative',
-                minHeight: 'clamp(360px, 45vh, 480px)',
+                minHeight: 'clamp(400px, 50vh, 520px)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 width: '100%',
               }}>
-                {/* SVG Organic Flower Scribble Loop Pattern (Figma Screenshot 1 Style - 100% Responsive) */}
+                {/* Full-Frame SVG Organic Flower Scribble Loop Pattern (Figma Prototype Style) */}
                 <svg
                   style={{
                     position: 'absolute',
-                    top: '-20%',
-                    left: '-10%',
-                    width: '120%',
-                    height: '140%',
+                    inset: '-15%',
+                    width: '130%',
+                    height: '130%',
                     pointerEvents: 'none',
                     opacity: 0.85,
                     zIndex: 0,
                     overflow: 'visible',
                   }}
-                  viewBox="0 0 600 600"
+                  viewBox="0 0 700 700"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <defs>
-                    <linearGradient id="figmaFlowerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#0D9488" stopOpacity="0.85" />
-                      <stop offset="60%" stopColor="#2DD4BF" stopOpacity="0.75" />
+                    <linearGradient id="fullFlowerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#0D9488" stopOpacity="0.9" />
+                      <stop offset="50%" stopColor="#2DD4BF" stopOpacity="0.8" />
                       <stop offset="100%" stopColor="#94A3B8" stopOpacity="0.4" />
                     </linearGradient>
                   </defs>
 
-                  {/* Organic Flower Swirl Loops behind Teacher Head & Desk */}
+                  {/* Organic Flower Loops Filling Right Frame */}
                   <path
-                    d="M120,300 C60,180 180,60 320,120 C460,180 520,320 400,440 C280,560 120,440 180,300 C240,160 420,100 480,240 C540,380 380,520 220,460 C60,400 80,220 240,140 C400,60 540,200 460,360 C380,520 200,480 140,340 C80,200 220,100 360,160 C500,220 480,400 320,480"
-                    stroke="url(#figmaFlowerGradient)"
-                    strokeWidth="2.2"
+                    d="M120,350 C60,200 200,80 380,140 C560,200 620,400 480,540 C340,680 140,540 200,380 C260,220 500,120 580,300 C660,480 460,620 260,560 C80,500 100,280 300,180 C500,80 660,260 560,460 C460,660 240,600 180,420 C120,240 280,100 460,200 C640,300 580,520 380,600"
+                    stroke="url(#fullFlowerGradient)"
+                    strokeWidth="2.5"
                     strokeLinecap="round"
                   />
 
                   <path
-                    d="M200,220 C140,120 280,80 380,180 C480,280 400,420 260,380 C120,340 160,180 280,160 C400,140 480,260 400,400 C320,540 180,440 220,300"
+                    d="M240,280 C180,160 340,120 440,220 C540,320 460,480 320,440 C180,400 220,220 340,200 C460,180 540,300 460,460 C380,620 220,500 280,360"
                     stroke="#CBD5E1"
-                    strokeWidth="1.5"
+                    strokeWidth="1.6"
                     strokeLinecap="round"
                   />
                 </svg>
+
+                {/* Floating Academic Badges Filling Upper/Side Empty Space */}
+                <div style={{
+                  position: 'absolute',
+                  top: '10px',
+                  left: '0px',
+                  zIndex: 4,
+                }}>
+                  <div className="apple-card float-card-1" style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem', fontWeight: 800, backgroundColor: '#FFFFFF', color: 'var(--brand-teal)' }}>
+                    📐 Maths & Science Specialist
+                  </div>
+                </div>
+
+                <div style={{
+                  position: 'absolute',
+                  top: '20px',
+                  right: '0px',
+                  zIndex: 4,
+                }}>
+                  <div className="apple-card float-card-2" style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem', fontWeight: 800, backgroundColor: '#FFFFFF', color: '#047857' }}>
+                    💻 Python & AI Coding
+                  </div>
+                </div>
 
                 {/* Pulsing Background Soft Mint Glow Aura */}
                 <div style={{
                   position: 'absolute',
                   inset: '-10px',
                   borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(13, 148, 136, 0.14) 0%, transparent 68%)',
+                  background: 'radial-gradient(circle, rgba(13, 148, 136, 0.16) 0%, transparent 68%)',
                   pointerEvents: 'none',
                   zIndex: 1,
                 }} />
 
-                {/* Tightly Cropped Cutout Image Placement (Zero Rectangle Box & Responsive Sizing) */}
+                {/* Cutout Image Placement */}
                 <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'center' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -370,7 +410,7 @@ export default function HomePage() {
                     alt="Young 25yo Indian Female Teacher with Glasses and Girl Student in Gurgaon"
                     style={{
                       width: '100%',
-                      maxWidth: '480px',
+                      maxWidth: '500px',
                       height: 'auto',
                       borderRadius: '20px',
                       display: 'block',
@@ -379,7 +419,7 @@ export default function HomePage() {
                   />
                 </div>
 
-                {/* Bottom Floating Feature Cards (Screenshot 1 Style - Responsive Grid) */}
+                {/* Bottom Floating Feature Cards */}
                 <div style={{
                   position: 'absolute',
                   bottom: '-28px',
@@ -411,6 +451,7 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
+
 
             </div>
           </div>
