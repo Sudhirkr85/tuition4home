@@ -9,6 +9,8 @@ import BookingModal from '@/components/BookingModal';
 import VideoModal from '@/components/VideoModal';
 import StickyMobileBar from '@/components/StickyMobileBar';
 import RapidoStyleMap from '@/components/RapidoStyleMap';
+import HowItWorks from '@/components/HowItWorks';
+
 import {
   GURGAON_LOCALITIES,
   SUBJECT_OPTIONS,
@@ -141,8 +143,8 @@ export default function HomePage() {
             1. APPLE-STYLE MINIMALIST HERO SECTION (SEO & TRUST OPTIMIZED)
             ========================================================================= */}
         <section style={{
-          paddingTop: '4.5rem',
-          paddingBottom: '5.5rem',
+          paddingTop: '1.5rem',
+          paddingBottom: '3.5rem',
           backgroundColor: '#FFFFFF',
           borderBottom: '1px solid #E8E8ED',
           position: 'relative',
@@ -271,7 +273,7 @@ export default function HomePage() {
                       gap: '0.65rem',
                     }}
                   >
-                    <span>Request Trial Class</span>
+                    <span>Book a Tutor — Free Callback</span>
                     <ChevronRight size={18} />
                   </button>
 
@@ -373,21 +375,53 @@ export default function HomePage() {
                     <circle cx="85" cy="38" r="3" fill="#2DD4BF" />
                   </g>
 
-                  {/* Floating STEM Math & Physics Formulas in Soft Opacity */}
-                  <text x="510" y="85" fontSize="17" fontFamily="serif" fontStyle="italic" fill="#0F6E56" opacity="0.5" fontWeight="700">E = mc²</text>
-                  <text x="110" y="240" fontSize="17" fontFamily="serif" fontStyle="italic" fill="#0F6E56" opacity="0.45" fontWeight="700">∫ f(x) dx</text>
-                  <text x="560" y="190" fontSize="16" fontFamily="sans-serif" fill="#2DD4BF" opacity="0.55" fontWeight="800">A = πr²</text>
-                  <text x="115" y="150" fontSize="15" fontFamily="serif" fill="#64748B" opacity="0.45" fontWeight="700">a² + b² = c²</text>
+                  {/* === Floating STEM Formulas — Left, Right, Center, and Behind/Above Image === */}
 
-                  {/* Connected Constellation Network Nodes */}
-                  <line x1="460" y1="110" x2="540" y2="80" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3 3" />
-                  <circle cx="460" cy="110" r="5" fill="#2DD4BF" />
-                  <circle cx="540" cy="80" r="6" fill="#0F6E56" />
+                  {/* LEFT SIDE — Distributed vertically */}
+                  <text className="formula-float-8" x="18" y="55"  fontSize="12" fontFamily="sans-serif" fill="#7C3AED" fontWeight="700">NaCl → Na⁺ + Cl⁻</text>
+                  <text className="formula-float-7" x="22" y="145" fontSize="13" fontFamily="serif" fill="#64748B" fontWeight="700">a² + b² = c²</text>
+                  <text className="formula-float-9" x="15" y="240" fontSize="12" fontFamily="serif" fontStyle="italic" fill="#0891B2" fontWeight="700">sin²θ + cos²θ = 1</text>
+                  <text className="formula-float-2" x="25" y="360" fontSize="14" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">∫ f(x) dx</text>
+                  <text className="formula-float-10" x="15" y="470" fontSize="11" fontFamily="monospace" fill="#0891B2" fontWeight="700">print(&quot;Hello!&quot;)</text>
+                  <text className="formula-float-5" x="22" y="570" fontSize="12" fontFamily="sans-serif" fill="#047857" fontWeight="700">ATP = Energy</text>
 
-                  {/* 4-Point Geometric Sparkle Stars (✨ Accent Elements) */}
-                  <path d="M490,60 L492,68 L500,70 L492,72 L490,80 L488,72 L480,70 L488,68 Z" fill="#0F6E56" opacity="0.8" />
-                  <path d="M590,250 L592,258 L600,260 L592,262 L590,270 L588,262 L580,260 L588,258 Z" fill="#2DD4BF" opacity="0.85" />
+                  {/* RIGHT SIDE — Distributed vertically */}
+                  <text className="formula-float-1" x="520" y="55"  fontSize="15" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">E = mc²</text>
+                  <text className="formula-float-3" x="540" y="145" fontSize="13" fontFamily="sans-serif" fill="#7C3AED" fontWeight="700">H₂O + CO₂</text>
+                  <text className="formula-float-4" x="550" y="240" fontSize="13" fontFamily="sans-serif" fill="#2DD4BF" fontWeight="800">A = πr²</text>
+                  <text className="formula-float-6" x="560" y="360" fontSize="13" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">F = ma</text>
+                  <text className="formula-float-5" x="540" y="470" fontSize="12" fontFamily="sans-serif" fill="#047857" fontWeight="700">DNA → RNA</text>
+                  <text className="formula-float-4" x="520" y="570" fontSize="11" fontFamily="sans-serif" fill="#B45309" fontWeight="700">Supply ∝ Price</text>
+                  <text className="formula-float-7" x="535" y="630" fontSize="12" fontFamily="monospace" fill="#0F6E56" fontWeight="700">x = [1,2,3...]</text>
+
+                  {/* CENTER & BEHIND IMAGE / JUST ABOVE IMAGE */}
+                  {/* Just above image heads */}
+                  <text className="formula-float-3" x="260" y="90" fontSize="13" fontFamily="sans-serif" fill="#7C3AED" fontWeight="700">CO₂ + H₂O</text>
+                  <text className="formula-float-1" x="380" y="75" fontSize="15" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">dy/dx</text>
+                  
+                  {/* Behind teacher & student (layered underneath since SVG zIndex is 0 and image is 2) */}
+                  <text className="formula-float-6" x="180" y="210" fontSize="14" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">PV = nRT</text>
+                  <text className="formula-float-4" x="420" y="220" fontSize="13" fontFamily="sans-serif" fill="#2DD4BF" fontWeight="800">λ = h/p</text>
+                  
+                  <text className="formula-float-2" x="200" y="330" fontSize="15" fontFamily="serif" fontStyle="italic" fill="#0891B2" fontWeight="700">∑ x_i</text>
+                  <text className="formula-float-10" x="450" y="340" fontSize="12" fontFamily="monospace" fill="#0F6E56" fontWeight="700">def match_tutor():</text>
+                  
+                  <text className="formula-float-9" x="230" y="460" fontSize="13" fontFamily="serif" fontStyle="italic" fill="#7C3AED" fontWeight="700">lim (x→0)</text>
+                  <text className="formula-float-5" x="410" y="470" fontSize="12" fontFamily="sans-serif" fill="#047857" fontWeight="700">C₆H₁₂O₆</text>
+                  
+                  <text className="formula-float-7" x="320" y="550" fontSize="12" fontFamily="monospace" fill="#B45309" fontWeight="700">import numpy as np</text>
+
+                  {/* Sparkle Stars & Accents */}
+                  <path d="M468,28 L470,36 L478,38 L470,40 L468,48 L466,40 L458,38 L466,36 Z" fill="#0F6E56" opacity="0.8" />
+                  <path d="M8,155 L10,162 L17,164 L10,166 L8,173 L6,166 L-1,164 L6,162 Z" fill="#7C3AED" opacity="0.65" />
+                  <path d="M570,480 L572,487 L579,489 L572,491 L570,498 L568,491 L561,489 L568,487 Z" fill="#2DD4BF" opacity="0.7" />
+
+                  {/* Constellation line */}
+                  <line x1="465" y1="55" x2="498" y2="45" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3 3" />
+                  <circle cx="465" cy="55" r="3" fill="#2DD4BF" />
+                  <circle cx="498" cy="45" r="4" fill="#0F6E56" />
                 </svg>
+
 
 
                 {/* Physical Center Trust Badge */}
@@ -419,7 +453,7 @@ export default function HomePage() {
                 <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/hero_young_teacher_girl_student_cutout.jpg"
+                    src="/hero_young_teacher_girl_student_cutout.png"
                     alt="Home tutor teaching CBSE student in Gurgaon"
                     style={{
                       width: '100%',
@@ -496,105 +530,11 @@ export default function HomePage() {
         )}
 
         {/* =========================================================================
-            3. FIGMA SCREENSHOT 4 STYLE: "FROM SETUP TO SCORE IN MINUTES" (4-STEP GRID)
+            3. HOW IT WORKS — Animated Scroll Reveal Step-by-Step Section
             ========================================================================= */}
-        <section id="how-it-works" style={{ padding: '5rem 0', backgroundColor: 'var(--bg-app)' }}>
-          <div className="container">
-            <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 3rem auto' }}>
-              <div className="badge badge-blue" style={{ marginBottom: '0.75rem' }}>
-                <span>SIMPLE 4-STEP PROCESS</span>
-              </div>
-              <h2 style={{ fontSize: '2.35rem', fontWeight: 800, marginBottom: '0.75rem' }}>
-                From Setup to Score in Minutes
-              </h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.98rem' }}>
-                No complex paperwork. Get your Gurgaon sector matched with verified tutors today.
-              </p>
-            </div>
+        <HowItWorks onOpenBooking={() => handleOpenBooking()} />
 
-            {/* 4 Horizontal Step Cards (Screenshot 4 Style) */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-              gap: '1.5rem',
-              marginBottom: '3.5rem',
-            }}>
-              {/* Step 1 */}
-              <div className="step-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                  <span className="step-pill">• Step-1</span>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'var(--brand-teal-light)', color: 'var(--brand-teal)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <MapPin size={18} />
-                  </div>
-                </div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-                  Select Mode & Sector
-                </h3>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
-                  Choose Home Visit or Online 1-on-1. Enter your Gurgaon sector or use 1-click GPS detection.
-                </p>
-              </div>
 
-              {/* Step 2 */}
-              <div className="step-card" style={{ borderColor: '#0F6E56' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                  <span className="step-pill">• Step-2</span>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#E8F5E9', color: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Users size={18} />
-                  </div>
-                </div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-                  Counselor Proximity Match
-                </h3>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
-                  Our team at SSSAM Academy shortlists verified educators residing within 3.5 km of your sector.
-                </p>
-              </div>
-
-              {/* Step 3 */}
-              <div className="step-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                  <span className="step-pill">• Step-3</span>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'var(--brand-teal-light)', color: 'var(--brand-teal)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Sparkles size={18} />
-                  </div>
-                </div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-                  Attend 1-on-1 Trial Class
-                </h3>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
-                  Evaluate teaching style and conceptual clarity. Watch tutor 60s intro video beforehand.
-                </p>
-              </div>
-
-              {/* Step 4 */}
-              <div className="step-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                  <span className="step-pill">• Step-4</span>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#D1FAE5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <CheckCircle2 size={18} />
-                  </div>
-                </div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-                  Confirm & Start Regulars
-                </h3>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
-                  Pay monthly tuition only when 100% satisfied. Full free replacement guarantee included.
-                </p>
-              </div>
-            </div>
-
-            {/* Visual Process Graphic Illustration */}
-            <div className="apple-card" style={{ padding: '1.5rem', overflow: 'hidden' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/how_it_works_graphic.jpg"
-                alt="How TuitionForHome System Works"
-                style={{ width: '100%', maxHeight: '320px', objectFit: 'contain', borderRadius: '16px' }}
-              />
-            </div>
-          </div>
-        </section>
 
         {/* =========================================================================
             4. FIGMA SCREENSHOT 3 STYLE: MOBILE EXPERIENCE CARD
@@ -884,7 +824,7 @@ export default function HomePage() {
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                   <button onClick={() => handleOpenBooking()} className="btn btn-primary btn-lg" style={{ backgroundColor: '#0F6E56' }}>
-                    <span>Request Trial Class</span>
+                    <span>Book a Tutor — Free Callback</span>
                     <div className="btn-arrow">
                       <ChevronRight size={16} />
                     </div>

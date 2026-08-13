@@ -1,271 +1,268 @@
 'use client';
 
-import React, { useState } from 'react';
-import { MapPin, Navigation, Edit2, CheckCircle2, ShieldCheck, Star } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Navigation, Edit2, CheckCircle2, ShieldCheck, MapPin } from 'lucide-react';
 import { VERIFIED_TUTORS, MockTutor } from '@/lib/data';
+import 'leaflet/dist/leaflet.css';
 
 interface RapidoStyleMapProps {
   onLocationSelected: (data: { address: string; lat: number; lng: number; nearestTutorsCount: number }) => void;
+  isCompact?: boolean;
 }
 
-export default function RapidoStyleMap({ onLocationSelected }: RapidoStyleMapProps) {
+export default function RapidoStyleMap({ onLocationSelected, isCompact = false }: RapidoStyleMapProps) {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [L, setL] = useState<any>(null);
+  const [map, setMap] = useState<any>(null);
+  
+  // State values
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectedAddress, setDetectedAddress] = useState('DLF Phase 5, Golf Course Road, Gurugram');
   const [isEditing, setIsEditing] = useState(false);
   const [selectedTutor, setSelectedTutor] = useState<MockTutor | null>(VERIFIED_TUTORS[0]);
+  
+  // Current coordinates (Center of Gurgaon, Haryana)
+  const [currentCoords, setCurrentCoords] = useState({ lat: 28.4728, lng: 77.0345 });
 
-  // Mock nearby tutor map pins relative to center location
-  const mockTutorPins = [
-    { tutor: VERIFIED_TUTORS[0], distance: '1.2 km', top: '28%', left: '32%' },
-    { tutor: VERIFIED_TUTORS[1], distance: '2.1 km', top: '45%', left: '68%' },
-    { tutor: VERIFIED_TUTORS[2], distance: '3.4 km', top: '65%', left: '25%' },
-  ];
+  // Load Leaflet dynamically on the client
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('leaflet').then((leaflet) => {
+        setL(leaflet.default);
+      });
+    }
+  }, []);
 
+  // Initialize Map
+  useEffect(() => {
+    if (!L || !mapContainerRef.current || map) return;
+
+    // Create Leaflet Map instance
+    const leafletMap = L.map(mapContainerRef.current, {
+      center: [currentCoords.lat, currentCoords.lng],
+      zoom: 14,
+      zoomControl: !isCompact,
+      attributionControl: false,
+    });
+
+    // Add OpenStreetMap light styled tiles (jawg or osm standard)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+    }).addTo(leafletMap);
+
+    setMap(leafletMap);
+
+    return () => {
+      leafletMap.remove();
+    };
+  }, [L]);
+
+  // Handle markers placement on map load/coordinate updates
+  useEffect(() => {
+    if (!L || !map) return;
+
+    // Clear existing markers/layers (except tile layer)
+    map.eachLayer((layer: any) => {
+      if (layer instanceof L.Marker) {
+        map.removeLayer(layer);
+      }
+    });
+
+    // 1. YOUR LOCATION marker
+    const parentIcon = L.divIcon({
+      className: 'custom-parent-pin',
+      html: `
+        <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #2563EB; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(37,99,235,0.45);">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #FFFFFF;"></div>
+          </div>
+          <span style="margin-top: 3px; font-size: 0.65rem; font-weight: 800; background: #0F172A; color: #FFFFFF; padding: 0.15rem 0.45rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); white-space: nowrap;">
+            YOUR LOCATION
+          </span>
+        </div>
+      `,
+      iconSize: [80, 50],
+      iconAnchor: [40, 16],
+    });
+
+    L.marker([currentCoords.lat, currentCoords.lng], { icon: parentIcon }).addTo(map);
+
+    // 2. TUTOR pins mapped around center coordinates
+    const tutorCoordinates = [
+      { id: 'tut-1', latOffset: 0.007, lngOffset: 0.005, distance: '1.2 km' },
+      { id: 'tut-2', latOffset: -0.004, lngOffset: 0.012, distance: '2.1 km' },
+      { id: 'tut-3', latOffset: -0.012, lngOffset: -0.008, distance: '3.4 km' },
+    ];
+
+
+    VERIFIED_TUTORS.forEach((tutor) => {
+      const match = tutorCoordinates.find((tc) => tc.id === tutor.id);
+      if (!match) return;
+
+      const tLat = currentCoords.lat + match.latOffset;
+      const tLng = currentCoords.lng + match.lngOffset;
+
+      const tutorIcon = L.divIcon({
+        className: 'custom-tutor-pin',
+        html: `
+          <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+            <div style="position: relative; padding: 2px; border-radius: 50%; background: ${selectedTutor?.id === tutor.id ? '#0F6E56' : '#FFFFFF'}; box-shadow: 0 4px 12px rgba(0,0,0,0.18);">
+              <img src="${tutor.avatarUrl}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; display: block;" />
+              <div style="position: absolute; bottom: -2px; right: -2px; background: #047857; color: #FFFFFF; border-radius: 50%; width: 12px; height: 12px; display: flex; align-items: center; justify-content: center; font-size: 7px;">✓</div>
+            </div>
+            <span style="margin-top: 2px; font-size: 0.62rem; font-weight: 700; background: #FFFFFF; color: #1D1D1F; padding: 0.1rem 0.35rem; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); border: 1px solid #E8E8ED; white-space: nowrap;">
+              ${tutor.name.split(' ')[0]} (${match.distance})
+            </span>
+          </div>
+        `,
+        iconSize: [60, 50],
+        iconAnchor: [30, 16],
+      });
+
+      const tMarker = L.marker([tLat, tLng], { icon: tutorIcon }).addTo(map);
+      tMarker.on('click', () => {
+        setSelectedTutor(tutor);
+      });
+    });
+
+  }, [L, map, currentCoords, selectedTutor]);
+
+  // Handle GPS location auto-detect
   const handleAutoDetectGPS = () => {
     setIsDetecting(true);
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setIsDetecting(false);
-          const newAddress = 'Sector 56, Golf Course Extension, Gurugram';
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          
+          // Center map to new coordinates
+          setCurrentCoords({ lat, lng });
+          if (map) {
+            map.setView([lat, lng], 14);
+          }
+
+          // Mock Gurgaon address mapping near coordinates
+          const mockSectors = ['Sector 49', 'Sector 47', 'DLF Phase 5', 'Golf Course Road', 'Sector 14'];
+          const randomSector = mockSectors[Math.floor(Math.random() * mockSectors.length)];
+          const newAddress = `${randomSector}, Gurugram (Auto-Detected GPS)`;
+          
           setDetectedAddress(newAddress);
           onLocationSelected({
             address: newAddress,
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            nearestTutorsCount: 14,
+            lat,
+            lng,
+            nearestTutorsCount: 12,
           });
         },
         (error) => {
           setIsDetecting(false);
-          onLocationSelected({
-            address: detectedAddress,
-            lat: 28.4595,
-            lng: 77.0266,
-            nearestTutorsCount: 12,
-          });
-        }
+          console.error('Error fetching GPS:', error);
+          alert('GPS permission denied or timeout. Defaulting to Gurgaon Sector 14.');
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
       );
     } else {
       setIsDetecting(false);
+      alert('Geolocation is not supported by your browser.');
     }
   };
 
   return (
-    <div className="apple-card" style={{ padding: '1.5rem', backgroundColor: '#FFFFFF', overflow: 'hidden' }}>
+    <div style={{
+      padding: isCompact ? '0.5rem' : '1.5rem',
+      backgroundColor: '#FFFFFF',
+      overflow: 'hidden',
+      borderRadius: isCompact ? '0px' : '24px',
+    }}>
       {/* Map Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <div>
-          <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--brand-emerald)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span className="pulse-emerald" />
-            <span>LIVE TUTOR PROXIMITY MAP (RAPIDO STYLE)</span>
-          </div>
-          <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '2px' }}>
-            Nearby Verified Tutors in Your Sector
-          </h4>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleAutoDetectGPS}
-          disabled={isDetecting}
-          className="btn btn-primary btn-sm"
-        >
-          <Navigation size={14} />
-          <span>{isDetecting ? 'Detecting GPS...' : '📍 Auto-Detect My Location'}</span>
-        </button>
-      </div>
-
-      {/* Interactive Map Visual Box */}
-      <div style={{
-        position: 'relative',
-        height: '280px',
-        borderRadius: '16px',
-        backgroundColor: '#E2E8F0',
-        backgroundImage: 'radial-gradient(#CBD5E1 1.5px, transparent 1.5px)',
-        backgroundSize: '24px 24px',
-        overflow: 'hidden',
-        border: '1px solid var(--border-hairline)',
-        marginBottom: '1.25rem',
-      }}>
-        {/* Map Grid Lines Effect */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'linear-gradient(135deg, rgba(239, 246, 255, 0.6), rgba(243, 244, 246, 0.8))',
-        }} />
-
-        {/* Center Parent Location Pin */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 10,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}>
-          {/* Radar Pulse */}
-          <div style={{
-            position: 'absolute',
-            width: '90px',
-            height: '90px',
-            borderRadius: '50%',
-            backgroundColor: 'rgba(0, 102, 204, 0.15)',
-            border: '1px solid rgba(0, 102, 204, 0.4)',
-            top: '-25px',
-            left: '-25px',
-            pointerEvents: 'none',
-          }} />
-
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--brand-blue)',
-            color: '#FFFFFF',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(0, 102, 204, 0.4)',
-            border: '2px solid #FFFFFF',
-          }}>
-            <MapPin size={22} />
-          </div>
-          <span style={{
-            marginTop: '4px',
-            fontSize: '0.72rem',
-            fontWeight: 800,
-            backgroundColor: '#0F172A',
-            color: '#FFFFFF',
-            padding: '0.2rem 0.6rem',
-            borderRadius: '999px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-          }}>
-            YOUR LOCATION
-          </span>
-        </div>
-
-        {/* Dynamic Floating Nearby Tutor Avatar Pins */}
-        {mockTutorPins.map((item) => (
-          <button
-            key={item.tutor.id}
-            type="button"
-            onClick={() => setSelectedTutor(item.tutor)}
-            style={{
-              position: 'absolute',
-              top: item.top,
-              left: item.left,
-              zIndex: 12,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              transition: 'var(--transition-fast)',
-            }}
-          >
-            <div style={{
-              position: 'relative',
-              padding: '2px',
-              borderRadius: '50%',
-              backgroundColor: selectedTutor?.id === item.tutor.id ? 'var(--brand-emerald)' : '#FFFFFF',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={item.tutor.avatarUrl}
-                alt={item.tutor.name}
-                style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover' }}
-              />
-              <span style={{
-                position: 'absolute',
-                bottom: '-2px',
-                right: '-2px',
-                backgroundColor: 'var(--brand-emerald)',
-                color: '#FFFFFF',
-                borderRadius: '50%',
-                width: '14px',
-                height: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '8px',
-              }}>
-                ✓
-              </span>
+      {!isCompact && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--brand-emerald)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <span className="pulse-emerald" />
+              <span>LIVE TUTOR PROXIMITY MAP (REAL-TIME OPENSTREETMAP)</span>
             </div>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '2px' }}>
+              Nearby Verified Tutors in Your Sector
+            </h4>
+          </div>
 
-            <span style={{
-              marginTop: '3px',
-              fontSize: '0.7rem',
-              fontWeight: 700,
-              backgroundColor: '#FFFFFF',
-              color: 'var(--text-main)',
-              padding: '0.15rem 0.5rem',
-              borderRadius: '6px',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-              border: '1px solid var(--border-hairline)',
-              whiteSpace: 'nowrap',
-            }}>
-              {item.tutor.name.split(' ')[0]} ({item.distance})
-            </span>
+          <button
+            type="button"
+            onClick={handleAutoDetectGPS}
+            disabled={isDetecting}
+            className="btn btn-primary btn-sm"
+          >
+            <span>{isDetecting ? 'Detecting GPS...' : '📍 Auto-Detect My Location'}</span>
           </button>
-        ))}
-      </div>
+        </div>
+      )}
 
-      {/* Selected Tutor Quick Preview Map Card */}
+      {/* Map container */}
+      <div 
+        ref={mapContainerRef}
+        style={{
+          position: 'relative',
+          height: isCompact ? '180px' : '280px',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          border: '1px solid var(--border-hairline)',
+          marginBottom: isCompact ? '0.5rem' : '1.25rem',
+          zIndex: 2,
+          touchAction: 'pan-y',
+        }}
+      />
+
+      {/* Selected Tutor Preview Card */}
       {selectedTutor && (
         <div style={{
           backgroundColor: 'var(--brand-blue-light)',
           border: '1px solid rgba(0, 102, 204, 0.18)',
-          borderRadius: '14px',
-          padding: '0.85rem 1rem',
+          borderRadius: '12px',
+          padding: '0.65rem 0.85rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '1rem',
+          marginBottom: isCompact ? '0.5rem' : '1rem',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={selectedTutor.avatarUrl} alt={selectedTutor.name} style={{ width: '42px', height: '42px', borderRadius: '12px', objectFit: 'cover' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+            <img src={selectedTutor.avatarUrl} alt={selectedTutor.name} style={{ width: '34px', height: '34px', borderRadius: '8px', objectFit: 'cover' }} />
             <div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                {selectedTutor.name} <span style={{ fontSize: '0.75rem', color: 'var(--brand-emerald)', fontWeight: 700 }}>(1.2 km away)</span>
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                {selectedTutor.name} <span style={{ fontSize: '0.7rem', color: 'var(--brand-emerald)', fontWeight: 700 }}>({selectedTutor.id === 'tut-1' ? '1.2' : selectedTutor.id === 'tut-2' ? '2.1' : '3.4'} km away)</span>
               </div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                 {selectedTutor.highestDegree} • ₹{selectedTutor.hourlyRateHome}/hr
               </div>
             </div>
           </div>
 
-          <span className="badge badge-emerald">
-            <ShieldCheck size={12} />
-            <span>VERIFIED PROXIMITY MATCH</span>
+          <span className="badge badge-emerald" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>
+            <span>MATCHED</span>
           </span>
         </div>
       )}
 
-      {/* Auto-Fetched Address Confirmation & Editable Box */}
+      {/* Auto-Fetched Address Confirmation */}
       <div style={{
         backgroundColor: 'var(--bg-card-subtle)',
         border: '1px solid var(--border-hairline)',
-        borderRadius: '12px',
-        padding: '0.85rem 1rem',
+        borderRadius: '10px',
+        padding: '0.65rem 0.85rem',
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-            AUTO-FETCHED LOCATION DETAILS (CONFIRM & EDIT)
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+            CONFIRM NEAREST SECTOR
           </span>
           <button
             type="button"
             onClick={() => setIsEditing(!isEditing)}
-            style={{ fontSize: '0.78rem', color: 'var(--brand-blue)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+            style={{ fontSize: '0.72rem', color: 'var(--brand-blue)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
           >
-            <Edit2 size={13} />
-            <span>{isEditing ? 'Save Address' : 'Edit Sector'}</span>
+            <span>{isEditing ? 'Save' : 'Edit'}</span>
           </button>
         </div>
 
@@ -273,13 +270,16 @@ export default function RapidoStyleMap({ onLocationSelected }: RapidoStyleMapPro
           <input
             type="text"
             value={detectedAddress}
-            onChange={(e) => setDetectedAddress(e.target.value)}
+            onChange={(e) => {
+              setDetectedAddress(e.target.value);
+              onLocationSelected({ address: e.target.value, lat: currentCoords.lat, lng: currentCoords.lng, nearestTutorsCount: 3 });
+            }}
             className="form-control"
-            style={{ padding: '0.5rem 0.75rem', fontSize: '0.88rem' }}
+            style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem', height: '32px' }}
           />
         ) : (
-          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <CheckCircle2 size={16} color="var(--brand-emerald)" />
+          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            <CheckCircle2 size={14} color="var(--brand-emerald)" />
             <span>{detectedAddress}</span>
           </div>
         )}

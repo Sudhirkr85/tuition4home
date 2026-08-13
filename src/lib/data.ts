@@ -98,7 +98,7 @@ export const VERIFIED_TUTORS: MockTutor[] = [
   {
     id: 'tut-1',
     name: 'Rohit Sharma',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+    avatarUrl: '/tutor_rohit_sharma_avatar.jpg',
     introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     videoDuration: '1m 15s',
     highestDegree: 'M.Sc. Mathematics (Delhi University)',
@@ -122,7 +122,7 @@ export const VERIFIED_TUTORS: MockTutor[] = [
   {
     id: 'tut-2',
     name: 'Dr. Ananya Sengupta',
-    avatarUrl: 'https://images.unsplash.com/photo-1594744803329-e583d7de66f7?w=400&auto=format&fit=crop&q=80',
+    avatarUrl: '/tutor_ananya_sengupta_avatar.jpg',
     introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     videoDuration: '1m 40s',
     highestDegree: 'Ph.D. Organic Chemistry (IIT Delhi Alum)',
@@ -145,8 +145,8 @@ export const VERIFIED_TUTORS: MockTutor[] = [
   },
   {
     id: 'tut-3',
-    name: 'Priyanka Chopra',
-    avatarUrl: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=400&auto=format&fit=crop&q=80',
+    name: 'Priyanka Verma',
+    avatarUrl: '/tutor_priyanka_verma_avatar.jpg',
     introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     videoDuration: '1m 10s',
     highestDegree: 'B.Tech CS (NSUT) & SSSAM Coding Mentor',
@@ -170,7 +170,7 @@ export const VERIFIED_TUTORS: MockTutor[] = [
   {
     id: 'tut-4',
     name: 'Priyanka Aggarwal',
-    avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop&q=80',
+    avatarUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&auto=format&fit=crop&q=80',
     introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     videoDuration: '1m 25s',
     highestDegree: 'M.Com, Chartered Accountant (Inter)',

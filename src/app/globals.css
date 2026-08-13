@@ -66,6 +66,24 @@ body {
   }
 }
 
+/* =========================================================================
+   NAVBAR RESPONSIVE — Desktop nav hidden on mobile, visible on 900px+
+   ========================================================================= */
+.desktop-nav {
+  display: none;
+}
+.mobile-toggle {
+  display: flex;
+}
+@media (min-width: 900px) {
+  .desktop-nav {
+    display: flex !important;
+  }
+  .mobile-toggle {
+    display: none !important;
+  }
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -343,4 +361,54 @@ h3 {
   }
 }
 
+/* =========================================================================
+   HERO FORMULA FLOATING ANIMATIONS — HIGH VISIBILITY
+   ========================================================================= */
 
+@keyframes formulaFloat1 {
+  0%, 100% { transform: translateY(0px) rotate(0deg)   scale(1);    opacity: 0.88; }
+  40%       { transform: translateY(-14px) rotate(1.2deg) scale(1.06); opacity: 0.98; }
+  70%       { transform: translateY(-6px) rotate(-0.6deg) scale(1.02); opacity: 0.82; }
+}
+@keyframes formulaFloat2 {
+  0%, 100% { transform: translateY(0px) rotate(0deg)    scale(1);    opacity: 0.85; }
+  35%       { transform: translateY(-16px) rotate(-1.4deg) scale(1.07); opacity: 0.98; }
+  65%       { transform: translateY(-7px) rotate(0.8deg)  scale(1.03); opacity: 0.80; }
+}
+@keyframes formulaFloat3 {
+  0%, 100% { transform: translateY(0px) scale(1);    opacity: 0.86; }
+  50%       { transform: translateY(-12px) rotate(0.9deg) scale(1.05); opacity: 0.98; }
+}
+@keyframes formulaFloat4 {
+  0%, 100% { transform: translateY(0px) rotate(0deg)    scale(1);    opacity: 0.84; }
+  45%       { transform: translateY(-18px) rotate(-1.1deg) scale(1.08); opacity: 0.98; }
+}
+@keyframes formulaFloat5 {
+  0%, 100% { transform: translateY(0px) rotate(0deg)   scale(1);    opacity: 0.85; }
+  55%       { transform: translateY(-13px) rotate(1.3deg) scale(1.06); opacity: 0.98; }
+}
+
+.formula-float-1,
+.formula-float-2,
+.formula-float-3,
+.formula-float-4,
+.formula-float-5,
+.formula-float-6,
+.formula-float-7,
+.formula-float-8,
+.formula-float-9,
+.formula-float-10 {
+  transform-box: fill-box;
+  transform-origin: center center;
+}
+
+.formula-float-1  { animation: formulaFloat1 5s   ease-in-out infinite; }
+.formula-float-2  { animation: formulaFloat2 6.2s ease-in-out infinite 0.8s; }
+.formula-float-3  { animation: formulaFloat3 4.8s ease-in-out infinite 1.5s; }
+.formula-float-4  { animation: formulaFloat4 7s   ease-in-out infinite 0.3s; }
+.formula-float-5  { animation: formulaFloat5 5.5s ease-in-out infinite 1.1s; }
+.formula-float-6  { animation: formulaFloat1 6.8s ease-in-out infinite 2s; }
+.formula-float-7  { animation: formulaFloat2 5.2s ease-in-out infinite 0.5s; }
+.formula-float-8  { animation: formulaFloat3 7.5s ease-in-out infinite 1.8s; }
+.formula-float-9  { animation: formulaFloat4 4.5s ease-in-out infinite 0.9s; }
+.formula-float-10 { animation: formulaFloat5 6.5s ease-in-out infinite 2.5s; }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Sparkles, CheckCircle2, ShieldCheck, Phone, Home, Video, Building2, MapPin } from 'lucide-react';
+import { X, CheckCircle2, ShieldCheck, Phone, Home, Video, Building2, User, ChevronRight } from 'lucide-react';
 import { GURGAON_LOCALITIES, SUBJECT_OPTIONS, CLASS_OPTIONS, SSSAM_OFFICE_DETAILS } from '@/lib/data';
 import RapidoStyleMap from '@/components/RapidoStyleMap';
 
@@ -20,36 +20,13 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
   const [mode, setMode] = useState<'HOME' | 'ONLINE' | 'CENTER'>('HOME');
   const [grade, setGrade] = useState(initialData?.grade || CLASS_OPTIONS[2]);
   const [subject, setSubject] = useState(SUBJECT_OPTIONS[0]);
-  const [customSubject, setCustomSubject] = useState('');
   const [locality, setLocality] = useState(GURGAON_LOCALITIES[0].name);
-
-  const [budgetRange, setBudgetRange] = useState('₹6,000 – ₹10,000 / month');
   const [parentName, setParentName] = useState('');
   const [phone, setPhone] = useState('');
-  const [detectingGps, setDetectingGps] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
-
-  // GPS Current Location Detector
-  const handleDetectLocation = () => {
-    setDetectingGps(true);
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setDetectingGps(false);
-          setLocality('DLF Phase 5, Gurgaon (Auto-Detected)');
-        },
-        (error) => {
-          setDetectingGps(false);
-          setLocality(GURGAON_LOCALITIES[0].name);
-        }
-      );
-    } else {
-      setDetectingGps(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +34,6 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
       alert('Please enter a valid 10-digit mobile number.');
       return;
     }
-
     setLoading(true);
     try {
       await fetch('/api/leads', {
@@ -71,7 +47,6 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
           gradeClass: grade,
           board: 'CBSE',
           subjectsNeeded: [subject],
-          budgetRange,
           assignedTutorName: initialData?.tutorName || null,
         }),
       });
@@ -83,293 +58,291 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
     }
   };
 
+  const modeOptions = [
+    { key: 'HOME', icon: <Home size={16} />, label: 'Home Visit' },
+    { key: 'ONLINE', icon: <Video size={16} />, label: 'Online 1-on-1' },
+    { key: 'CENTER', icon: <Building2 size={16} />, label: 'Center Visit' },
+  ] as const;
+
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 2000,
-      backgroundColor: 'rgba(15, 23, 42, 0.65)',
-      backdropFilter: 'blur(10px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1rem',
-    }}>
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 2000,
+        backgroundColor: 'rgba(15,23,42,0.7)',
+        backdropFilter: 'blur(12px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '1.5rem 1rem',
+        overflowY: 'auto',
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div style={{
         backgroundColor: '#FFFFFF',
-        borderRadius: '24px',
-        maxWidth: '540px',
+        borderRadius: '28px',
+        maxWidth: '520px',
         width: '100%',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        boxShadow: '0 32px 64px rgba(0,0,0,0.22)',
         position: 'relative',
-        overflow: 'hidden',
-        border: '1px solid var(--border-hairline)',
+        maxHeight: 'min(90vh, 850px)',
+        overflowY: 'auto',
       }}>
-        {/* Close Button */}
+
+
+        {/* Top accent bar */}
+        <div style={{
+          height: '5px',
+          background: 'linear-gradient(90deg, #0F6E56 0%, #2DD4BF 50%, #0891B2 100%)',
+        }} />
+
+        {/* Close button */}
         <button
           onClick={onClose}
           style={{
-            position: 'absolute',
-            top: '1.25rem',
-            right: '1.25rem',
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            border: 'none',
-            backgroundColor: 'var(--bg-card-subtle)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            zIndex: 10,
+            position: 'absolute', top: '1.25rem', right: '1.25rem',
+            width: '34px', height: '34px', borderRadius: '50%',
+            border: 'none', backgroundColor: '#F1F5F9',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', zIndex: 10,
           }}
         >
-          <X size={18} color="var(--text-main)" />
+          <X size={16} color="#64748B" />
         </button>
 
         {!submitted ? (
-          <div style={{ padding: '2rem' }}>
+          <div style={{ padding: '1.75rem 2rem 2rem' }}>
+
+            {/* Header */}
             <div style={{ marginBottom: '1.5rem' }}>
-              <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
-                <ShieldCheck size={14} />
-                <span>SSSAM ACADEMY VERIFIED MATCHING</span>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                padding: '0.3rem 0.85rem', borderRadius: '999px',
+                backgroundColor: '#E8F5E9', marginBottom: '0.75rem',
+              }}>
+                <ShieldCheck size={13} color="#0F6E56" />
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F6E56', letterSpacing: '0.04em' }}>
+                  SSSAM ACADEMY · VERIFIED MATCHING
+                </span>
               </div>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#1D1D1F', lineHeight: 1.25, marginBottom: '0.35rem' }}>
                 {initialData?.tutorName
-                  ? `Request Trial Class with ${initialData.tutorName}`
-                  : 'Find a Verified Home Tutor in Gurgaon'}
+                  ? `Book a Session with ${initialData.tutorName}`
+                  : 'Book Your Tutor — Counselor Will Call Back'}
               </h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-                Our senior academic counselor will match top educators near your sector within 2 hours.
+              <p style={{ fontSize: '0.86rem', color: '#515154', lineHeight: 1.55 }}>
+                Fill in 5 quick details. Our academic counselor will call you within <strong>30 minutes</strong> to match a verified tutor near your sector.
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
               {/* Mode Selection */}
               <div>
-                <label className="form-label">Preferred Learning Mode</label>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#515154', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.45rem' }}>
+                  Preferred Mode
+                </label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setMode('HOME')}
-                    style={{
-                      padding: '0.65rem 0.5rem',
-                      borderRadius: '10px',
-                      border: `1.5px solid ${mode === 'HOME' ? 'var(--brand-blue)' : 'var(--border-hairline)'}`,
-                      backgroundColor: mode === 'HOME' ? 'var(--brand-blue-light)' : '#FFFFFF',
-                      color: mode === 'HOME' ? 'var(--brand-blue)' : 'var(--text-main)',
-                      fontWeight: 700,
-                      fontSize: '0.82rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <Home size={16} />
-                    <span>Home Visit</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setMode('ONLINE')}
-                    style={{
-                      padding: '0.65rem 0.5rem',
-                      borderRadius: '10px',
-                      border: `1.5px solid ${mode === 'ONLINE' ? 'var(--brand-blue)' : 'var(--border-hairline)'}`,
-                      backgroundColor: mode === 'ONLINE' ? 'var(--brand-blue-light)' : '#FFFFFF',
-                      color: mode === 'ONLINE' ? 'var(--brand-blue)' : 'var(--text-main)',
-                      fontWeight: 700,
-                      fontSize: '0.82rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <Video size={16} />
-                    <span>Online 1-on-1</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setMode('CENTER')}
-                    style={{
-                      padding: '0.65rem 0.5rem',
-                      borderRadius: '10px',
-                      border: `1.5px solid ${mode === 'CENTER' ? 'var(--brand-blue)' : 'var(--border-hairline)'}`,
-                      backgroundColor: mode === 'CENTER' ? 'var(--brand-blue-light)' : '#FFFFFF',
-                      color: mode === 'CENTER' ? 'var(--brand-blue)' : 'var(--text-main)',
-                      fontWeight: 700,
-                      fontSize: '0.82rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <Building2 size={16} />
-                    <span>Sector 14 Center</span>
-                  </button>
+                  {modeOptions.map(({ key, icon, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setMode(key)}
+                      style={{
+                        padding: '0.6rem 0.4rem',
+                        borderRadius: '12px',
+                        border: `2px solid ${mode === key ? '#0F6E56' : '#E8E8ED'}`,
+                        backgroundColor: mode === key ? '#E8F5E9' : '#FFFFFF',
+                        color: mode === key ? '#0F6E56' : '#515154',
+                        fontWeight: 700, fontSize: '0.8rem',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem',
+                        cursor: 'pointer', transition: 'all 0.18s ease',
+                      }}
+                    >
+                      {icon}
+                      <span>{label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Rapido-Style Interactive Visual Map for Home Tuition */}
-              {mode === 'HOME' && (
-                <RapidoStyleMap
-                  onLocationSelected={(data) => {
-                    setLocality(data.address);
-                  }}
-                />
+              {/* Sector or Interactive Map selection */}
+              {mode === 'HOME' ? (
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#515154', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.45rem' }}>
+                    Select Your Sector on the Map
+                  </label>
+                  <div style={{ marginBottom: '0.5rem', borderRadius: '12px', overflow: 'hidden', border: '1.5px solid #E8E8ED' }}>
+                    <RapidoStyleMap
+                      isCompact
+                      onLocationSelected={(data) => {
+                        setLocality(data.address);
+                      }}
+                    />
+
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#0F6E56', fontWeight: 700 }}>
+                    Selected Location: {locality}
+                  </div>
+                </div>
+              ) : (
+                mode !== 'CENTER' && (
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#515154', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.45rem' }}>
+                      Your Gurgaon Sector / Area
+                    </label>
+                    <select
+                      value={locality}
+                      onChange={(e) => setLocality(e.target.value)}
+                      className="form-control"
+                      required
+                    >
+                      {GURGAON_LOCALITIES.map((l) => (
+                        <option key={l.name} value={l.name}>{l.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )
               )}
 
 
-              {/* Grade & Subject */}
+              {/* Class + Subject */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label className="form-label">Grade / Class</label>
-                  <select
-                    value={grade}
-                    onChange={(e) => setGrade(e.target.value)}
-                    className="form-control"
-                  >
-                    {CLASS_OPTIONS.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#515154', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.45rem' }}>
+                    Class / Grade
+                  </label>
+                  <select value={grade} onChange={(e) => setGrade(e.target.value)} className="form-control">
+                    {CLASS_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-
                 <div>
-                  <label className="form-label">Subject</label>
-                  <select
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    className="form-control"
-                  >
-                    {SUBJECT_OPTIONS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#515154', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.45rem' }}>
+                    Subject
+                  </label>
+                  <select value={subject} onChange={(e) => setSubject(e.target.value)} className="form-control">
+                    {SUBJECT_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
               </div>
 
-              {/* Custom Subject Write-In if Other selected */}
-              {subject === 'Other / Specify Custom Subject' && (
+              {/* Name + Phone */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label className="form-label">Specify Your Custom Subject / Skill</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Russian Language, Saxophone, Quantum Physics"
-                    value={customSubject}
-                    onChange={(e) => setCustomSubject(e.target.value)}
-                    className="form-control"
-                    required
-                  />
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#515154', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.45rem' }}>
+                    Parent Name
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <User size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                    <input
+                      type="text"
+                      placeholder="e.g. Ritu Sharma"
+                      value={parentName}
+                      onChange={(e) => setParentName(e.target.value)}
+                      className="form-control"
+                      style={{ paddingLeft: '2.2rem' }}
+                      required
+                    />
+                  </div>
                 </div>
-              )}
-
-
-              {/* Budget Range Selector Starting at ₹1,000+ */}
-              <div>
-                <label className="form-label">Budget / Price Range Preference</label>
-                <select
-                  value={budgetRange}
-                  onChange={(e) => setBudgetRange(e.target.value)}
-                  className="form-control"
-                  style={{ fontWeight: 600 }}
-                >
-                  <option value="₹1,000 – ₹3,000 / month">₹1,000 – ₹3,000 / month (Primary Foundation)</option>
-                  <option value="₹3,000 – ₹6,000 / month">₹3,000 – ₹6,000 / month (Middle School)</option>
-                  <option value="₹6,000 – ₹10,000 / month">₹6,000 – ₹10,000 / month (Board Prep 9-12)</option>
-                  <option value="₹10,000+ / month">₹10,000+ / month (Elite IB / Cambridge / NEET-JEE)</option>
-                </select>
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#515154', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.45rem' }}>
+                    Mobile Number
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Phone size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                    <input
+                      type="tel"
+                      placeholder="10-digit number"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      className="form-control"
+                      style={{ paddingLeft: '2.2rem' }}
+                      required
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Parent Name & Phone */}
-              <div>
-                <label className="form-label">Your Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Mrs. Ritu Sharma"
-                  value={parentName}
-                  onChange={(e) => setParentName(e.target.value)}
-                  className="form-control"
-                  required
-                />
+              {/* Guarantee strip */}
+              <div style={{
+                backgroundColor: '#F0FDF4',
+                border: '1px solid #BBF7D0',
+                borderRadius: '10px',
+                padding: '0.65rem 0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.55rem',
+                fontSize: '0.78rem',
+                color: '#047857',
+                fontWeight: 600,
+              }}>
+                <ShieldCheck size={15} />
+                <span>100% free. Zero advance payment. Counselor calls within 30 min.</span>
               </div>
 
-              <div>
-                <label className="form-label">Mobile Number (For Counselor Callback)</label>
-                <input
-                  type="tel"
-                  placeholder="10-digit mobile number"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  className="form-control"
-                  required
-                />
-              </div>
-
+              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}
-                className="btn btn-primary btn-lg"
-                style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.55rem',
+                  padding: '0.95rem 1.5rem',
+                  borderRadius: '999px',
+                  border: 'none',
+                  background: loading ? '#94A3B8' : 'linear-gradient(135deg, #0F6E56 0%, #0891B2 100%)',
+                  color: '#FFFFFF',
+                  fontWeight: 800, fontSize: '1rem',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  boxShadow: loading ? 'none' : '0 6px 20px rgba(15,110,86,0.3)',
+                  transition: 'all 0.2s ease',
+                }}
               >
-                <Sparkles size={18} />
-                <span>{loading ? 'Submitting Request...' : 'Request Trial Class Callback'}</span>
+                <span>{loading ? 'Booking...' : 'Book Tutor — Get Counselor Callback'}</span>
+                {!loading && <ChevronRight size={18} />}
               </button>
+
             </form>
           </div>
         ) : (
-          /* Confirmation Screen */
+          /* Success Screen */
           <div style={{ padding: '3rem 2rem', textAlign: 'center' }}>
             <div style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--brand-emerald-light)',
-              color: 'var(--brand-emerald)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 1.25rem auto',
+              width: '72px', height: '72px', borderRadius: '50%',
+              background: 'linear-gradient(135deg, #0F6E56, #2DD4BF)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 1.5rem auto',
             }}>
-              <CheckCircle2 size={36} />
+              <CheckCircle2 size={36} color="white" />
             </div>
-
-            <h3 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              Trial Class Request Received! 🎉
+            <h3 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1D1D1F', marginBottom: '0.5rem' }}>
+              Request Received! 🎉
             </h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.5, marginBottom: '1.75rem' }}>
-              Thank you, <strong>{parentName || 'Parent'}</strong>! Our Senior Academic Counselor is matching top tutors for <strong>{grade} • {subject}</strong> in <strong>{locality}</strong> and will call you at <strong>+91 {phone}</strong> within 30 minutes.
+            <p style={{ color: '#515154', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1.75rem' }}>
+              Our counselor will call <strong>+91 {phone}</strong> within <strong>30 minutes</strong> to match the best verified tutor for <strong>{grade} · {subject}</strong> in <strong>{mode === 'CENTER' ? 'Sector 14 Center' : locality}</strong>.
             </p>
 
             <div style={{
-              backgroundColor: 'var(--bg-card-subtle)',
-              border: '1px solid var(--border-hairline)',
-              borderRadius: '12px',
-              padding: '1rem',
-              textAlign: 'left',
-              marginBottom: '1.75rem',
+              backgroundColor: '#F8FAFC', border: '1px solid #E8E8ED',
+              borderRadius: '14px', padding: '1rem 1.25rem',
+              textAlign: 'left', marginBottom: '1.5rem',
             }}>
-              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                🏛️ SSSAM ACADEMY COUNSELOR HELPLINE:
+              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#1D1D1F', marginBottom: '4px' }}>
+                📞 Need urgent help?
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Urgent Inquiry? Call directly: <strong>{SSSAM_OFFICE_DETAILS.phones[0]}</strong>
+              <div style={{ fontSize: '0.88rem', color: '#515154' }}>
+                Call directly: <strong style={{ color: '#0F6E56' }}>{SSSAM_OFFICE_DETAILS.phones[0]}</strong>
               </div>
             </div>
 
             <button
               onClick={onClose}
-              className="btn btn-secondary"
-              style={{ width: '100%', justifyContent: 'center' }}
+              style={{
+                width: '100%', padding: '0.85rem',
+                borderRadius: '999px', border: '1.5px solid #E8E8ED',
+                backgroundColor: '#FFFFFF', color: '#1D1D1F',
+                fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer',
+              }}
             >
-              Done & Return to Website
+              Back to Website
             </button>
           </div>
         )}

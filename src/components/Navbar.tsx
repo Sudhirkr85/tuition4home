@@ -67,7 +67,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav style={{ display: 'none', alignItems: 'center', gap: '1.75rem' }} className="desktop-nav">
+        <nav className="desktop-nav" style={{ alignItems: 'center', gap: '1.75rem' }}>
           <Link href="/" style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--brand-teal)' }}>
             Home
           </Link>
@@ -86,7 +86,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
         </nav>
 
         {/* Desktop Actions */}
-        <div style={{ display: 'none', alignItems: 'center', gap: '0.75rem' }} className="desktop-nav">
+        <div className="desktop-nav" style={{ alignItems: 'center', gap: '0.75rem' }}>
           <Link href="/tutor/register" className="btn btn-secondary btn-sm">
             <UserCheck size={14} />
             <span>Tutor Login</span>
@@ -97,7 +97,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
             onClick={() => onOpenBooking && onOpenBooking()}
             className="btn btn-primary btn-sm"
           >
-            <span>Request Trial Class</span>
+            <span>Book a Tutor</span>
             <div className="btn-arrow">
               <ChevronRight size={14} />
             </div>
@@ -153,7 +153,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               className="btn btn-primary"
               style={{ justifyContent: 'center' }}
             >
-              <span>Request Trial Class</span>
+              <span>Book a Tutor</span>
               <div className="btn-arrow">
                 <ChevronRight size={14} />
               </div>
@@ -162,12 +162,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
         </div>
       )}
 
-      <style jsx>{`
-        @media (min-width: 900px) {
-          .desktop-nav { display: flex !important; }
-          .mobile-toggle { display: none !important; }
-        }
-      `}</style>
+
     </header>
   );
 }
