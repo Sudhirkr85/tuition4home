@@ -48,12 +48,8 @@ export default function HomePage() {
 
   const [activeVideoTutor, setActiveVideoTutor] = useState<MockTutor | null>(null);
 
-  // Search Filters State
+  // Search Mode State
   const [searchMode, setSearchMode] = useState<'OFFLINE_HOME' | 'ONLINE_LIVE'>('OFFLINE_HOME');
-  const [selectedLocality, setSelectedLocality] = useState(GURGAON_LOCALITIES[0].name);
-  const [selectedSubject, setSelectedSubject] = useState(SUBJECT_OPTIONS[0]);
-  const [selectedGrade, setSelectedGrade] = useState(CLASS_OPTIONS[2]);
-  const [teachingMedium, setTeachingMedium] = useState('Bilingual (English + Hindi)');
 
   // Dynamic Sector Text Auto-Slide State
   const [currentSectorIndex, setCurrentSectorIndex] = useState(0);
@@ -63,7 +59,7 @@ export default function HomePage() {
     'Sector 56',
     'DLF Phase 1',
     'Sohna Road',
-    'Nirvana Country (Sector 50)',
+    'Nirvana Country',
     'Sushant Lok 1',
     'Sector 14 & Old DLF',
   ];
@@ -89,19 +85,66 @@ export default function HomePage() {
     setBookingOpen(true);
   };
 
+  // LocalBusiness Schema JSON-LD Markup
+  const localBusinessSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: 'TuitionForHome',
+    alternateName: 'SSSAM Academy Tuition Services',
+    url: 'https://tuitionforhome.com',
+    logo: 'https://tuitionforhome.com/logo.png',
+    image: 'https://tuitionforhome.com/hero_young_teacher_girl_student_cutout.jpg',
+    description: 'Verified home tutors in Gurgaon and online tutors for CBSE, ICSE, IB & Coding by SSSAM Academy.',
+    telephone: '+91 92170 31899',
+    email: 'support@tuitionforhome.com',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'M24 Ground Floor, Old DLF Colony, Sector 14',
+      addressLocality: 'Gurugram',
+      addressRegion: 'Haryana',
+      postalCode: '122001',
+      addressCountry: 'IN',
+    },
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: 28.4703,
+      longitude: 77.0418,
+    },
+    openingHoursSpecification: {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+      opens: '09:00',
+      closes: '21:00',
+    },
+    priceRange: '₹₹',
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.95',
+      reviewCount: '500',
+      bestRating: '5',
+      worstRating: '1',
+    },
+  };
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)' }}>
+      {/* Inject LocalBusiness JSON-LD Schema Markup */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+      />
+
       <Navbar onOpenBooking={() => handleOpenBooking()} />
 
       <main style={{ flex: 1 }}>
         {/* =========================================================================
-            1. FIGMA SCREENSHOT STYLE HERO SECTION WITH DYNAMIC SECTOR SLIDE & MEDIUM SELECTOR
+            1. APPLE-STYLE MINIMALIST HERO SECTION (SEO & TRUST OPTIMIZED)
             ========================================================================= */}
         <section style={{
-          paddingTop: '3.5rem',
-          paddingBottom: '4.5rem',
+          paddingTop: '4.5rem',
+          paddingBottom: '5.5rem',
           backgroundColor: '#FFFFFF',
-          borderBottom: '1px solid var(--border-hairline)',
+          borderBottom: '1px solid #E8E8ED',
           position: 'relative',
           overflow: 'hidden',
         }}>
@@ -109,233 +152,190 @@ export default function HomePage() {
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '3rem',
+              gap: '3.5rem',
               alignItems: 'center',
             }}>
               {/* Left Column: Headline & Action Controls */}
-              <div>
-                {/* Sector Auto-Sliding Ticker Badge Above Headline (Zero Layout Shift) */}
-                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.65rem', marginBottom: '0.85rem' }}>
-                  <div className="badge badge-blue">
-                    <ShieldCheck size={14} />
-                    <span>BUILT FOR GURGAON & NCR • SSSAM ACADEMY</span>
-                  </div>
-
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+                {/* 1. Merged Top Badge */}
+                <div>
                   <div style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.4rem',
-                    padding: '0.3rem 0.85rem',
-                    borderRadius: 'var(--radius-full)',
-                    backgroundColor: 'var(--brand-teal-light)',
-                    border: '1px solid var(--border-teal)',
-                    fontSize: '0.82rem',
+                    gap: '0.55rem',
+                    padding: '0.45rem 1rem',
+                    borderRadius: '999px',
+                    backgroundColor: '#E8F5E9',
+                    border: '1px solid #C8E6C9',
+                    color: '#0F6E56',
+                    fontSize: '0.85rem',
                     fontWeight: 700,
-                    color: 'var(--brand-teal)',
                   }}>
-                    <MapPin size={13} />
-                    <span>Active In:</span>
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        minWidth: '140px',
-                        color: 'var(--brand-teal)',
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      {sectorList[currentSectorIndex]} ↕
-                    </span>
+                    <ShieldCheck size={16} color="#0F6E56" />
+                    <span>Operated by SSSAM Academy · Active in <strong>{sectorList[currentSectorIndex]}</strong></span>
                   </div>
                 </div>
 
-                {/* Rock-Solid Fixed Main Headline (100% Zero Layout Shift) */}
-                <h1 style={{ marginBottom: '1.25rem', lineHeight: 1.15 }}>
-                  <span className="text-teal">Verified</span> Home & Online Tutors in Gurgaon
+                {/* 7. Single Primary Keyword H1 Headline */}
+                <h1 style={{
+                  fontSize: 'clamp(2.2rem, 4vw, 3.2rem)',
+                  fontWeight: 800,
+                  color: '#1D1D1F',
+                  lineHeight: 1.15,
+                  letterSpacing: '-0.02em',
+                  margin: 0,
+                }}>
+                  Verified <span style={{ color: '#0F6E56' }}>Home & Online Tutors</span> in Gurgaon
                 </h1>
 
-                <p style={{ fontSize: 'clamp(1.02rem, 2vw, 1.2rem)', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.75rem' }}>
-                  1-on-1 personalized tutoring for CBSE, ICSE, IB & Coding. Educators matched within 3.5 km of your sector with a <strong>100% Free Replacement Guarantee</strong>.
+                {/* 9. LSI Keywords Subtext */}
+                <p style={{
+                  fontSize: 'clamp(1.05rem, 2vw, 1.2rem)',
+                  color: '#515154',
+                  lineHeight: 1.6,
+                  margin: 0,
+                }}>
+                  Connect with background-checked <strong>home tutors in Gurgaon</strong> and <strong>online tutors in Gurgaon</strong> for CBSE, ICSE, IB & Coding. Matched within 3.5 km of your sector with a <strong>100% Free Replacement Guarantee</strong>.
                 </p>
 
-                {/* Mode Segmented Pill Switcher */}
-                <div style={{
-                  display: 'inline-flex',
-                  backgroundColor: 'var(--bg-app)',
-                  padding: '0.35rem',
-                  borderRadius: 'var(--radius-full)',
-                  border: '1px solid var(--border-hairline)',
-                  marginBottom: '1.5rem',
-                }}>
-                  <button
-                    type="button"
-                    onClick={() => setSearchMode('OFFLINE_HOME')}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      padding: '0.55rem 1.25rem',
-                      borderRadius: 'var(--radius-full)',
-                      border: 'none',
-                      backgroundColor: searchMode === 'OFFLINE_HOME' ? 'var(--brand-teal)' : 'transparent',
-                      color: searchMode === 'OFFLINE_HOME' ? '#FFFFFF' : 'var(--text-muted)',
-                      fontWeight: 700,
-                      fontSize: '0.88rem',
-                      cursor: 'pointer',
-                      transition: 'var(--transition-fast)',
-                    }}
-                  >
-                    <Home size={15} />
-                    <span>Home Visit (Offline)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSearchMode('ONLINE_LIVE')}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      padding: '0.55rem 1.25rem',
-                      borderRadius: 'var(--radius-full)',
-                      border: 'none',
-                      backgroundColor: searchMode === 'ONLINE_LIVE' ? 'var(--brand-teal)' : 'transparent',
-                      color: searchMode === 'ONLINE_LIVE' ? '#FFFFFF' : 'var(--text-muted)',
-                      fontWeight: 700,
-                      fontSize: '0.88rem',
-                      cursor: 'pointer',
-                      transition: 'var(--transition-fast)',
-                    }}
-                  >
-                    <Video size={15} />
-                    <span>Online 1-on-1</span>
-                  </button>
-                </div>
-
-                {/* Search Bar Row with Teaching Medium Selector */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-                  gap: '0.75rem',
-                  marginBottom: '1.75rem',
-                }}>
-                  {searchMode === 'OFFLINE_HOME' ? (
-                    <div>
-                      <label className="form-label">Gurgaon Sector</label>
-                      <input
-                        type="text"
-                        value={selectedLocality}
-                        onChange={(e) => setSelectedLocality(e.target.value)}
-                        className="form-control"
-                        placeholder="Enter Sector or Locality"
-                      />
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="form-label">Location</label>
-                      <input className="form-control" value="Pan-India (Online Live)" readOnly />
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="form-label">Class & Subject</label>
-                    <select
-                      value={selectedGrade}
-                      onChange={(e) => setSelectedGrade(e.target.value)}
-                      className="form-control"
+                {/* Mode Switcher */}
+                <div>
+                  <div style={{
+                    display: 'inline-flex',
+                    backgroundColor: '#F5F5F7',
+                    padding: '0.35rem',
+                    borderRadius: '999px',
+                    border: '1px solid #E8E8ED',
+                  }}>
+                    <button
+                      type="button"
+                      onClick={() => setSearchMode('OFFLINE_HOME')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        padding: '0.6rem 1.35rem',
+                        borderRadius: '999px',
+                        border: 'none',
+                        backgroundColor: searchMode === 'OFFLINE_HOME' ? '#0F6E56' : 'transparent',
+                        color: searchMode === 'OFFLINE_HOME' ? '#FFFFFF' : '#6E6E73',
+                        fontWeight: 700,
+                        fontSize: '0.88rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
                     >
-                      {CLASS_OPTIONS.map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
+                      <Home size={15} />
+                      <span>Home Visit (Offline)</span>
+                    </button>
 
-                  <div>
-                    <label className="form-label">Teaching Medium / Language</label>
-                    <select
-                      value={teachingMedium}
-                      onChange={(e) => setTeachingMedium(e.target.value)}
-                      className="form-control"
-                      style={{ fontWeight: 600 }}
+                    <button
+                      type="button"
+                      onClick={() => setSearchMode('ONLINE_LIVE')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        padding: '0.6rem 1.35rem',
+                        borderRadius: '999px',
+                        border: 'none',
+                        backgroundColor: searchMode === 'ONLINE_LIVE' ? '#0F6E56' : 'transparent',
+                        color: searchMode === 'ONLINE_LIVE' ? '#FFFFFF' : '#6E6E73',
+                        fontWeight: 700,
+                        fontSize: '0.88rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
                     >
-                      <option value="Bilingual (English + Hindi)">🇮🇳 Bilingual (English + Hindi)</option>
-                      <option value="English Medium">🇬🇧 English Medium Only</option>
-                      <option value="Hindi Medium">📙 Hindi Medium</option>
-                    </select>
+                      <Video size={15} />
+                      <span>Online 1-on-1</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Primary Pill Button + Side Arrow Link (Screenshot 1 Style) */}
-                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem', marginBottom: '2rem' }}>
+                {/* 6. Bolder CTA Button Row */}
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
                   <button
                     type="button"
                     onClick={() => handleOpenBooking()}
                     className="btn btn-primary btn-lg"
+                    style={{
+                      backgroundColor: '#0F6E56',
+                      padding: '0.9rem 2.2rem',
+                      fontSize: '1.05rem',
+                      fontWeight: 800,
+                      borderRadius: '999px',
+                      boxShadow: '0 4px 14px rgba(15, 110, 86, 0.28)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.65rem',
+                    }}
                   >
                     <span>Request Trial Class</span>
-                    <div className="btn-arrow">
-                      <ChevronRight size={16} />
-                    </div>
+                    <ChevronRight size={18} />
                   </button>
 
                   <a
                     href="#find-tutor"
                     style={{
-                      fontSize: '0.92rem',
+                      fontSize: '0.95rem',
                       fontWeight: 700,
-                      color: 'var(--text-main)',
+                      color: '#1D1D1F',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.35rem',
+                      textDecoration: 'none',
                     }}
                   >
                     <span>View Tutor Catalog</span>
-                    <ChevronRight size={16} color="var(--brand-teal)" />
+                    <ChevronRight size={16} color="#0F6E56" />
                   </a>
                 </div>
 
-                {/* Live Animated Metric Bar */}
+                {/* 12. Visible Trust Metrics Bar */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '1.5rem',
-                  paddingTop: '1.25rem',
-                  borderTop: '1px solid var(--border-hairline)',
+                  paddingTop: '1.5rem',
+                  borderTop: '1px solid #E8E8ED',
                   fontSize: '0.82rem',
-                  color: 'var(--text-muted)',
+                  color: '#6E6E73',
                 }}>
                   <div>
-                    <strong style={{ fontSize: '1.15rem', color: 'var(--brand-teal)', display: 'block' }}>500+</strong>
+                    <strong style={{ fontSize: '1.2rem', color: '#0F6E56', display: 'block', fontWeight: 800 }}>500+</strong>
                     <span>Verified Tutors</span>
                   </div>
-                  <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-hairline)' }} />
+                  <div style={{ width: '1px', height: '28px', backgroundColor: '#E8E8ED' }} />
                   <div>
-                    <strong style={{ fontSize: '1.15rem', color: 'var(--brand-teal)', display: 'block' }}>14</strong>
+                    <strong style={{ fontSize: '1.2rem', color: '#0F6E56', display: 'block', fontWeight: 800 }}>14+</strong>
                     <span>Gurgaon Sectors</span>
                   </div>
-                  <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-hairline)' }} />
+                  <div style={{ width: '1px', height: '28px', backgroundColor: '#E8E8ED' }} />
                   <div>
-                    <strong style={{ fontSize: '1.15rem', color: 'var(--brand-emerald)', display: 'block' }}>4.95 ★</strong>
+                    <strong style={{ fontSize: '1.2rem', color: '#047857', display: 'block', fontWeight: 800 }}>4.95 ★</strong>
                     <span>Parent Rating</span>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column: Full-Frame Rich Organic Flower Scribble Background & Subject Badges */}
+              {/* Right Column: Hero Visual Frame with Rich Background Flower Scribble Line-Art */}
               <div style={{
                 position: 'relative',
-                minHeight: 'clamp(400px, 50vh, 520px)',
+                minHeight: 'clamp(440px, 52vh, 540px)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 width: '100%',
               }}>
-                {/* Full-Frame SVG Organic Flower Scribble Loop Pattern (Figma Prototype Style) */}
+                {/* Rich SVG Organic Flower Scribble Line-Art, Atomic Orbits & Math Formulas */}
                 <svg
                   style={{
                     position: 'absolute',
-                    inset: '-15%',
+                    top: '-25%',
+                    left: '-15%',
                     width: '130%',
-                    height: '130%',
+                    height: '150%',
                     pointerEvents: 'none',
                     opacity: 0.85,
                     zIndex: 0,
@@ -346,113 +346,136 @@ export default function HomePage() {
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <defs>
-                    <linearGradient id="fullFlowerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#0D9488" stopOpacity="0.9" />
-                      <stop offset="50%" stopColor="#2DD4BF" stopOpacity="0.8" />
-                      <stop offset="100%" stopColor="#94A3B8" stopOpacity="0.4" />
+                    <linearGradient id="heroFlowerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#0F6E56" stopOpacity="0.85" />
+                      <stop offset="50%" stopColor="#2DD4BF" stopOpacity="0.75" />
+                      <stop offset="100%" stopColor="#CBD5E1" stopOpacity="0.5" />
                     </linearGradient>
                   </defs>
 
-                  {/* Organic Flower Loops Filling Right Frame */}
+                  {/* Organic Swirl Petal Loops Filling Upper Space Above Teacher Head */}
                   <path
-                    d="M120,350 C60,200 200,80 380,140 C560,200 620,400 480,540 C340,680 140,540 200,380 C260,220 500,120 580,300 C660,480 460,620 260,560 C80,500 100,280 300,180 C500,80 660,260 560,460 C460,660 240,600 180,420 C120,240 280,100 460,200 C640,300 580,520 380,600"
-                    stroke="url(#fullFlowerGradient)"
-                    strokeWidth="2.5"
+                    d="M140,320 C70,160 210,60 380,120 C550,180 610,360 470,500 C330,640 130,500 190,340 C250,180 470,90 550,260 C630,430 430,590 230,530 C70,470 90,250 270,150 C450,50 630,210 530,410 C430,610 210,550 150,370 C90,190 270,80 430,160 C590,240 550,460 370,540"
+                    stroke="url(#heroFlowerGrad)"
+                    strokeWidth="2.2"
                     strokeLinecap="round"
                   />
 
-                  <path
-                    d="M240,280 C180,160 340,120 440,220 C540,320 460,480 320,440 C180,400 220,220 340,200 C460,180 540,300 460,460 C380,620 220,500 280,360"
-                    stroke="#CBD5E1"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  />
+                  {/* Concentric Decorative Rings */}
+                  <circle cx="350" cy="350" r="260" stroke="#E8E8ED" strokeWidth="1.5" strokeDasharray="6 6" />
+                  <circle cx="350" cy="350" r="190" stroke="#0F6E56" strokeWidth="1.2" strokeOpacity="0.2" />
+
+                  {/* Atomic Electron Orbit Rings (Physics/Chemistry Symbol) */}
+                  <g opacity="0.45" transform="translate(130, 80) scale(0.85)">
+                    <ellipse cx="50" cy="50" rx="42" ry="16" stroke="#0F6E56" strokeWidth="1.5" transform="rotate(-30 50 50)" />
+                    <ellipse cx="50" cy="50" rx="42" ry="16" stroke="#0F6E56" strokeWidth="1.5" transform="rotate(30 50 50)" />
+                    <circle cx="50" cy="50" r="5" fill="#0F6E56" />
+                    <circle cx="85" cy="38" r="3" fill="#2DD4BF" />
+                  </g>
+
+                  {/* Floating STEM Math & Physics Formulas in Soft Opacity */}
+                  <text x="510" y="85" fontSize="17" fontFamily="serif" fontStyle="italic" fill="#0F6E56" opacity="0.5" fontWeight="700">E = mc²</text>
+                  <text x="110" y="240" fontSize="17" fontFamily="serif" fontStyle="italic" fill="#0F6E56" opacity="0.45" fontWeight="700">∫ f(x) dx</text>
+                  <text x="560" y="190" fontSize="16" fontFamily="sans-serif" fill="#2DD4BF" opacity="0.55" fontWeight="800">A = πr²</text>
+                  <text x="115" y="150" fontSize="15" fontFamily="serif" fill="#64748B" opacity="0.45" fontWeight="700">a² + b² = c²</text>
+
+                  {/* Connected Constellation Network Nodes */}
+                  <line x1="460" y1="110" x2="540" y2="80" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3 3" />
+                  <circle cx="460" cy="110" r="5" fill="#2DD4BF" />
+                  <circle cx="540" cy="80" r="6" fill="#0F6E56" />
+
+                  {/* 4-Point Geometric Sparkle Stars (✨ Accent Elements) */}
+                  <path d="M490,60 L492,68 L500,70 L492,72 L490,80 L488,72 L480,70 L488,68 Z" fill="#0F6E56" opacity="0.8" />
+                  <path d="M590,250 L592,258 L600,260 L592,262 L590,270 L588,262 L580,260 L588,258 Z" fill="#2DD4BF" opacity="0.85" />
                 </svg>
 
-                {/* Floating Academic Badges Filling Upper/Side Empty Space */}
+
+                {/* Physical Center Trust Badge */}
                 <div style={{
                   position: 'absolute',
-                  top: '10px',
-                  left: '0px',
+                  top: '15px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
                   zIndex: 4,
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E8E8ED',
+                  padding: '0.45rem 1rem',
+                  borderRadius: '999px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  color: '#1D1D1F',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  whiteSpace: 'nowrap',
                 }}>
-                  <div className="apple-card float-card-1" style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem', fontWeight: 800, backgroundColor: '#FFFFFF', color: 'var(--brand-teal)' }}>
-                    📐 Maths & Science Specialist
-                  </div>
+                  <Building2 size={14} color="#0F6E56" />
+                  <span>Physical Center in Sector 14 Gurugram</span>
                 </div>
 
-                <div style={{
-                  position: 'absolute',
-                  top: '20px',
-                  right: '0px',
-                  zIndex: 4,
-                }}>
-                  <div className="apple-card float-card-2" style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem', fontWeight: 800, backgroundColor: '#FFFFFF', color: '#047857' }}>
-                    💻 Python & AI Coding
-                  </div>
-                </div>
 
-                {/* Pulsing Background Soft Mint Glow Aura */}
-                <div style={{
-                  position: 'absolute',
-                  inset: '-10px',
-                  borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(13, 148, 136, 0.16) 0%, transparent 68%)',
-                  pointerEvents: 'none',
-                  zIndex: 1,
-                }} />
-
-                {/* Cutout Image Placement */}
-                <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'center' }}>
+                {/* Soft Fade Blend Hero Image Cutout */}
+                <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/hero_young_teacher_girl_student_cutout.jpg"
-                    alt="Young 25yo Indian Female Teacher with Glasses and Girl Student in Gurgaon"
+                    alt="Home tutor teaching CBSE student in Gurgaon"
                     style={{
                       width: '100%',
-                      maxWidth: '500px',
+                      maxWidth: '490px',
                       height: 'auto',
                       borderRadius: '20px',
                       display: 'block',
                       mixBlendMode: 'multiply',
+                      maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
+                      WebkitMaskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
                     }}
                   />
                 </div>
 
-                {/* Bottom Floating Feature Cards */}
-                <div style={{
+
+                {/* 3. Combined Single Unified Bottom White Trust Card */}
+                <div className="apple-card hero-unified-card" style={{
                   position: 'absolute',
-                  bottom: '-28px',
-                  left: '3%',
-                  right: '3%',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-                  gap: '0.75rem',
+                  bottom: '-32px',
+                  left: '4%',
+                  right: '4%',
+                  padding: '0.95rem 1.25rem',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E8E8ED',
+                  borderRadius: '16px',
+                  boxShadow: '0 12px 32px rgba(0, 0, 0, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
                   zIndex: 3,
                 }}>
-                  <div className="apple-card float-card-1" style={{ padding: '0.85rem 0.95rem', display: 'flex', alignItems: 'center', gap: '0.65rem', backgroundColor: '#FFFFFF' }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '12px', backgroundColor: 'var(--brand-teal-light)', color: 'var(--brand-teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Building2 size={17} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <div style={{ width: '38px', height: '38px', borderRadius: '12px', backgroundColor: '#E8F5E9', color: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Building2 size={18} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 800 }}>SSSAM Academy</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Sector 14 Gurugram</div>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1D1D1F' }}>SSSAM Academy</div>
+                      <div style={{ fontSize: '0.72rem', color: '#6E6E73' }}>Sector 14 Gurugram</div>
                     </div>
                   </div>
 
-                  <div className="apple-card float-card-2" style={{ padding: '0.85rem 0.95rem', display: 'flex', alignItems: 'center', gap: '0.65rem', backgroundColor: '#FFFFFF' }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '12px', backgroundColor: '#D1FAE5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <ShieldCheck size={17} />
+                  <div className="hero-unified-divider" style={{ width: '1px', height: '28px', backgroundColor: '#E8E8ED' }} />
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <div style={{ width: '38px', height: '38px', borderRadius: '12px', backgroundColor: '#E8F5E9', color: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <ShieldCheck size={18} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 800 }}>100% Replacement</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Zero Advance Risk</div>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1D1D1F' }}>100% Replacement</div>
+                      <div style={{ fontSize: '0.72rem', color: '#6E6E73' }}>Zero Advance Risk</div>
                     </div>
                   </div>
                 </div>
+
               </div>
-
-
             </div>
           </div>
         </section>
@@ -464,8 +487,8 @@ export default function HomePage() {
           <section style={{ padding: '3.5rem 0 1rem 0' }}>
             <div className="container">
               <RapidoStyleMap
-                onLocationSelected={(data) => {
-                  setSelectedLocality(data.address);
+                onLocationSelected={() => {
+                  handleOpenBooking();
                 }}
               />
             </div>
@@ -513,10 +536,10 @@ export default function HomePage() {
               </div>
 
               {/* Step 2 */}
-              <div className="step-card" style={{ borderColor: 'var(--brand-teal)' }}>
+              <div className="step-card" style={{ borderColor: '#0F6E56' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                   <span className="step-pill">• Step-2</span>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'var(--brand-teal-light)', color: 'var(--brand-teal)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#E8F5E9', color: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Users size={18} />
                   </div>
                 </div>
@@ -611,7 +634,7 @@ export default function HomePage() {
               {/* Right Column: Key Experience Points (Screenshot 3 Style) */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--brand-teal-light)', color: 'var(--brand-teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--brand-teal-light)', color: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <MessageSquare size={20} />
                   </div>
                   <div>
@@ -625,7 +648,7 @@ export default function HomePage() {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--brand-teal-light)', color: 'var(--brand-teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--brand-teal-light)', color: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Smartphone size={20} />
                   </div>
                   <div>
@@ -677,7 +700,7 @@ export default function HomePage() {
 
               <button onClick={() => handleOpenBooking()} className="btn btn-secondary">
                 <span>View All 500+ Tutors</span>
-                <ChevronRight size={16} color="var(--brand-teal)" />
+                <ChevronRight size={16} color="#0F6E56" />
               </button>
             </div>
 
@@ -702,7 +725,7 @@ export default function HomePage() {
                         position: 'absolute',
                         bottom: '-4px',
                         right: '-4px',
-                        backgroundColor: 'var(--brand-emerald)',
+                        backgroundColor: '#047857',
                         borderRadius: '50%',
                         width: '18px',
                         height: '18px',
@@ -720,7 +743,7 @@ export default function HomePage() {
                       <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)' }}>
                         {tutor.name}
                       </h4>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--brand-teal)', fontWeight: 700, margin: '2px 0' }}>
+                      <div style={{ fontSize: '0.78rem', color: '#0F6E56', fontWeight: 700, margin: '2px 0' }}>
                         {tutor.badge}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
@@ -734,19 +757,19 @@ export default function HomePage() {
                   {/* Body Line-wise Points */}
                   <div style={{ padding: '1.25rem', paddingTop: '0.5rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <GraduationCap size={15} color="var(--brand-teal)" style={{ flexShrink: 0 }} />
+                      <GraduationCap size={15} color="#0F6E56" style={{ flexShrink: 0 }} />
                       <span style={{ fontWeight: 600 }}>{tutor.highestDegree} • {tutor.experienceYears}+ Yrs Exp</span>
                     </div>
 
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
-                      <MapPin size={15} color="var(--brand-emerald)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                      <MapPin size={15} color="#047857" style={{ flexShrink: 0, marginTop: '2px' }} />
                       <span>{tutor.serviceAreas.join(' • ')}</span>
                     </div>
 
                     {/* Subjects Badges */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.25rem' }}>
                       {tutor.subjects.map((s) => (
-                        <span key={s} style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', backgroundColor: 'var(--brand-teal-light)', color: 'var(--brand-teal)', borderRadius: '6px', fontWeight: 600 }}>
+                        <span key={s} style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', backgroundColor: 'var(--brand-teal-light)', color: '#0F6E56', borderRadius: '6px', fontWeight: 600 }}>
                           {s}
                         </span>
                       ))}
@@ -765,17 +788,17 @@ export default function HomePage() {
                         borderRadius: '10px',
                         backgroundColor: 'var(--brand-teal-light)',
                         border: '1px solid var(--border-teal)',
-                        color: 'var(--brand-teal)',
+                        color: '#0F6E56',
                         fontSize: '0.82rem',
                         fontWeight: 700,
                         cursor: 'pointer',
                       }}
                     >
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Play size={14} fill="var(--brand-teal)" />
+                        <Play size={14} fill="#0F6E56" />
                         <span>Watch 60s Video Intro</span>
                       </span>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--brand-teal)' }}>{tutor.videoDuration}</span>
+                      <span style={{ fontSize: '0.72rem', color: '#0F6E56' }}>{tutor.videoDuration}</span>
                     </button>
                   </div>
 
@@ -799,6 +822,7 @@ export default function HomePage() {
                       type="button"
                       onClick={() => handleOpenBooking(tutor)}
                       className="btn btn-primary btn-sm"
+                      style={{ backgroundColor: '#0F6E56' }}
                     >
                       <span>Request Trial</span>
                       <div className="btn-arrow">
@@ -859,7 +883,7 @@ export default function HomePage() {
                 </div>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-                  <button onClick={() => handleOpenBooking()} className="btn btn-primary btn-lg">
+                  <button onClick={() => handleOpenBooking()} className="btn btn-primary btn-lg" style={{ backgroundColor: '#0F6E56' }}>
                     <span>Request Trial Class</span>
                     <div className="btn-arrow">
                       <ChevronRight size={16} />
@@ -950,7 +974,7 @@ export default function HomePage() {
                       {loc.landmark}
                     </div>
                   </div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--brand-teal)', backgroundColor: 'var(--brand-teal-light)', padding: '0.25rem 0.6rem', borderRadius: '999px' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0F6E56', backgroundColor: 'var(--brand-teal-light)', padding: '0.25rem 0.6rem', borderRadius: '999px' }}>
                     {loc.activeTutorsCount}+ Tutors
                   </span>
                 </Link>
