@@ -198,7 +198,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Primary Pill Button + Side Arrow Link (Screenshot 1 Style) */}
-                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem', marginBottom: '2rem' }}>
                   <button
                     type="button"
                     onClick={() => handleOpenBooking()}
@@ -225,30 +225,65 @@ export default function HomePage() {
                     <ChevronRight size={16} color="var(--brand-teal)" />
                   </a>
                 </div>
+
+                {/* Live Animated Metric Bar */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1.5rem',
+                  paddingTop: '1.25rem',
+                  borderTop: '1px solid var(--border-hairline)',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-muted)',
+                }}>
+                  <div>
+                    <strong style={{ fontSize: '1.15rem', color: 'var(--brand-teal)', display: 'block' }}>500+</strong>
+                    <span>Verified Tutors</span>
+                  </div>
+                  <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-hairline)' }} />
+                  <div>
+                    <strong style={{ fontSize: '1.15rem', color: 'var(--brand-teal)', display: 'block' }}>14</strong>
+                    <span>Gurgaon Sectors</span>
+                  </div>
+                  <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-hairline)' }} />
+                  <div>
+                    <strong style={{ fontSize: '1.15rem', color: 'var(--brand-emerald)', display: 'block' }}>4.95 ★</strong>
+                    <span>Parent Rating</span>
+                  </div>
+                </div>
               </div>
 
               {/* Right Column: Hero Teacher Cutout & Floating Feature Cards (Screenshot 1 Style) */}
               <div style={{ position: 'relative' }}>
-                <div className="apple-card" style={{ padding: '1rem', backgroundColor: 'var(--bg-app)', border: 'none', boxShadow: 'none' }}>
+                {/* Pulsing Background Aura */}
+                <div style={{
+                  position: 'absolute',
+                  inset: '-10px',
+                  borderRadius: '32px',
+                  background: 'radial-gradient(circle, rgba(13, 148, 136, 0.15) 0%, transparent 70%)',
+                  pointerEvents: 'none',
+                }} />
+
+                <div className="apple-card" style={{ padding: '0.5rem', backgroundColor: 'var(--bg-app)', border: 'none', boxShadow: 'none', position: 'relative' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/hero_tutor_student_cutout.jpg"
                     alt="Verified Home Tutor in Gurgaon"
-                    style={{ width: '100%', borderRadius: '20px', objectFit: 'cover' }}
+                    style={{ width: '100%', borderRadius: '24px', objectFit: 'cover' }}
                   />
                 </div>
 
-                {/* Bottom Floating Feature Cards (Screenshot 1 Style) */}
+                {/* Bottom Floating Feature Cards with Floating Animation */}
                 <div style={{
                   position: 'absolute',
-                  bottom: '-20px',
+                  bottom: '-25px',
                   left: '5%',
                   right: '5%',
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
                   gap: '0.75rem',
                 }}>
-                  <div className="apple-card" style={{ padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <div className="apple-card float-card-1" style={{ padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                     <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'var(--brand-teal-light)', color: 'var(--brand-teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Building2 size={18} />
                     </div>
@@ -258,7 +293,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="apple-card" style={{ padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <div className="apple-card float-card-2" style={{ padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                     <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#D1FAE5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <ShieldCheck size={18} />
                     </div>
@@ -269,6 +304,7 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         </section>

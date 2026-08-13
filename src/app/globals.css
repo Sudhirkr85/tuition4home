@@ -297,3 +297,31 @@ h3 {
     gap: 0.5rem;
   }
 }
+
+/* Floating Card Keyframe Animations */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+.float-card-1 {
+  animation: floatSlow 4s ease-in-out infinite;
+}
+
+.float-card-2 {
+  animation: floatReverse 4.5s ease-in-out infinite;
+}
+
