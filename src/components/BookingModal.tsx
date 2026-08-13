@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { X, Sparkles, CheckCircle2, ShieldCheck, Phone, Home, Video, Building2, MapPin } from 'lucide-react';
 import { GURGAON_LOCALITIES, SUBJECT_OPTIONS, CLASS_OPTIONS, SSSAM_OFFICE_DETAILS } from '@/lib/data';
+import RapidoStyleMap from '@/components/RapidoStyleMap';
+
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -213,30 +215,15 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
                 </div>
               </div>
 
-              {/* Locality with GPS Detector */}
+              {/* Rapido-Style Interactive Visual Map for Home Tuition */}
               {mode === 'HOME' && (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                    <label className="form-label" style={{ margin: 0 }}>Gurgaon Sector / Locality</label>
-                    <button
-                      type="button"
-                      onClick={handleDetectLocation}
-                      style={{ fontSize: '0.78rem', color: 'var(--brand-blue)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                    >
-                      <MapPin size={13} />
-                      <span>{detectingGps ? 'Detecting GPS...' : '📍 Use My Location'}</span>
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    value={locality}
-                    onChange={(e) => setLocality(e.target.value)}
-                    className="form-control"
-                    placeholder="e.g. DLF Phase 5, Golf Course Road"
-                    required
-                  />
-                </div>
+                <RapidoStyleMap
+                  onLocationSelected={(data) => {
+                    setLocality(data.address);
+                  }}
+                />
               )}
+
 
               {/* Grade & Subject */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>

@@ -8,6 +8,8 @@ import FeeEstimator from '@/components/FeeEstimator';
 import BookingModal from '@/components/BookingModal';
 import VideoModal from '@/components/VideoModal';
 import StickyMobileBar from '@/components/StickyMobileBar';
+import RapidoStyleMap from '@/components/RapidoStyleMap';
+
 import {
   GURGAON_LOCALITIES,
   SUBJECT_OPTIONS,
@@ -171,35 +173,17 @@ export default function HomePage() {
                 </button>
               </div>
 
-              {/* Delivery-App Proximity Indicator (If Offline selected) */}
+              {/* Rapido-Style Live Tutor Proximity Map for Home Tuition */}
               {searchMode === 'OFFLINE_HOME' && (
-                <div style={{
-                  backgroundColor: 'var(--brand-emerald-light)',
-                  border: '1px solid rgba(5, 150, 105, 0.25)',
-                  borderRadius: '12px',
-                  padding: '0.75rem 1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.85rem',
-                  color: 'var(--brand-emerald)',
-                  fontWeight: 700,
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Sparkles size={16} />
-                    <span>⚡ 14 Verified Tutors available within 3.5 km of {selectedLocality}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleDetectGps}
-                    style={{ background: 'none', border: 'none', color: 'var(--brand-blue)', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                  >
-                    <MapPin size={14} />
-                    <span>{detectingGps ? 'Detecting...' : 'GPS Auto-Detect'}</span>
-                  </button>
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <RapidoStyleMap
+                    onLocationSelected={(data) => {
+                      setSelectedLocality(data.address);
+                    }}
+                  />
                 </div>
               )}
+
 
               {/* Search Dropdowns Grid */}
               <div style={{

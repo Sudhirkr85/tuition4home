@@ -164,12 +164,14 @@ export default function Footer() {
           <div>
             © {new Date().getFullYear()} <strong>TuitionForHome</strong>. Powered by SSSAM Academy. All rights reserved.
           </div>
-          <div style={{ display: 'flex', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
             <Link href="/" style={{ color: 'var(--color-slate-400)' }}>Privacy Policy</Link>
             <Link href="/" style={{ color: 'var(--color-slate-400)' }}>Terms of Service</Link>
+            <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-slate-400)' }}>Sitemap (XML)</a>
             <Link href="/counselor" style={{ color: 'var(--color-slate-400)' }}>Counselor Desk</Link>
             <Link href="/admin" style={{ color: 'var(--color-slate-400)' }}>Admin Portal</Link>
           </div>
+
         </div>
       </div>
 
