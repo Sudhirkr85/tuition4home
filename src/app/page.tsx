@@ -98,7 +98,7 @@ export default function HomePage() {
     image: 'https://tuitionforhome.com/hero_young_teacher_girl_student_cutout.jpg',
     description: 'Verified home tutors in Gurgaon and online tutors for CBSE, ICSE, IB & Coding by SSSAM Academy.',
     telephone: '+91 92170 31899',
-    email: 'support@tuitionforhome.com',
+    email: 'info@tuitionforhome.com',
     address: {
       '@type': 'PostalAddress',
       streetAddress: 'M24 Ground Floor, Old DLF Colony, Sector 14',

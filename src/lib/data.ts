@@ -199,7 +199,10 @@ export const SSSAM_OFFICE_DETAILS = {
   address: 'M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001',
   geo: { lat: 28.4703, lng: 77.0418 },
   phones: ['+91 92170 31899', '+91 95174 47689'],
-  email: 'support@tuitionforhome.com',
+  email: 'info@tuitionforhome.com', // General default contact/info
+  contactEmail: 'contact@tuitionforhome.com',
+  supportEmail: 'support@tuitionforhome.com',
+  tutorsEmail: 'tutors@tuitionforhome.com',
   website: 'https://tuitionforhome.com',
   hours: 'Mon - Sun: 9:00 AM – 9:00 PM',
 };
