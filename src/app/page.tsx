@@ -253,38 +253,79 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Right Column: Hero Teacher Cutout & Floating Feature Cards (Screenshot 1 Style) */}
+              {/* Right Column: Hero Teacher Cutout & Figma Scribble Background Accent */}
               <div style={{ position: 'relative' }}>
+                {/* SVG Organic Scribble Pattern Accent (Figma Screenshot 1 Style) */}
+                <svg
+                  style={{
+                    position: 'absolute',
+                    top: '-15%',
+                    right: '-10%',
+                    width: '120%',
+                    height: '130%',
+                    pointerEvents: 'none',
+                    opacity: 0.35,
+                    zIndex: 0,
+                  }}
+                  viewBox="0 0 500 500"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M80,220 C120,80 320,60 420,180 C500,280 360,450 180,400 C60,350 40,160 160,100 C280,40 460,130 430,300 C400,460 180,420 100,280"
+                    stroke="#0D9488"
+                    strokeWidth="1.5"
+                    strokeDasharray="5 5"
+                  />
+                  <path
+                    d="M140,180 C190,70 360,100 400,220 C430,340 260,420 160,360 C80,300 120,130 240,120 C360,110 420,220 360,340"
+                    stroke="#64748B"
+                    strokeWidth="1.2"
+                  />
+                </svg>
+
                 {/* Pulsing Background Aura */}
                 <div style={{
                   position: 'absolute',
                   inset: '-10px',
                   borderRadius: '32px',
-                  background: 'radial-gradient(circle, rgba(13, 148, 136, 0.15) 0%, transparent 70%)',
+                  background: 'radial-gradient(circle, rgba(13, 148, 136, 0.12) 0%, transparent 70%)',
                   pointerEvents: 'none',
+                  zIndex: 1,
                 }} />
 
-                <div className="apple-card" style={{ padding: '0.5rem', backgroundColor: 'var(--bg-app)', border: 'none', boxShadow: 'none', position: 'relative' }}>
+                {/* Seamless Cutout Image Placement (Figma Screenshot 1 Style - Zero Rectangle Box) */}
+                <div style={{ position: 'relative', zIndex: 2 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/hero_tutor_student_cutout.jpg"
-                    alt="Verified Home Tutor in Gurgaon"
-                    style={{ width: '100%', borderRadius: '24px', objectFit: 'cover' }}
+                    src="/hero_indian_girl_tutor_cutout.jpg"
+                    alt="Verified Indian Female Home Tutor and Girl Student in Gurgaon"
+                    style={{
+                      width: '100%',
+                      borderRadius: '28px',
+                      objectFit: 'cover',
+                      display: 'block',
+                      mixBlendMode: 'multiply',
+                      boxShadow: 'none',
+                    }}
                   />
                 </div>
 
-                {/* Bottom Floating Feature Cards with Floating Animation */}
+
+
+                {/* Bottom Floating Feature Cards (Screenshot 1 Style) */}
                 <div style={{
                   position: 'absolute',
-                  bottom: '-25px',
-                  left: '5%',
-                  right: '5%',
+                  bottom: '-28px',
+                  left: '3%',
+                  right: '3%',
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
                   gap: '0.75rem',
+                  zIndex: 3,
                 }}>
-                  <div className="apple-card float-card-1" style={{ padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'var(--brand-teal-light)', color: 'var(--brand-teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div className="apple-card float-card-1" style={{ padding: '0.9rem 1rem', display: 'flex', alignItems: 'center', gap: '0.65rem', backgroundColor: '#FFFFFF' }}>
+                    <div style={{ width: '38px', height: '38px', borderRadius: '12px', backgroundColor: 'var(--brand-teal-light)', color: 'var(--brand-teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Building2 size={18} />
                     </div>
                     <div>
@@ -293,8 +334,8 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="apple-card float-card-2" style={{ padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#D1FAE5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div className="apple-card float-card-2" style={{ padding: '0.9rem 1rem', display: 'flex', alignItems: 'center', gap: '0.65rem', backgroundColor: '#FFFFFF' }}>
+                    <div style={{ width: '38px', height: '38px', borderRadius: '12px', backgroundColor: '#D1FAE5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <ShieldCheck size={18} />
                     </div>
                     <div>
@@ -304,6 +345,7 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
+
 
             </div>
           </div>
