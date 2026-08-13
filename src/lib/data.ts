@@ -78,7 +78,9 @@ export const SUBJECT_OPTIONS = [
   'IGCSE Combined Science',
   'French / German / Spanish Language',
   'Abacus & Vedic Mathematics',
+  'Other / Specify Custom Subject',
 ];
+
 
 export const CLASS_OPTIONS = [
   'Class 1 - 5 (Primary Foundation)',

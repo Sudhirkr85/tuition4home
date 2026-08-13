@@ -20,7 +20,9 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
   const [mode, setMode] = useState<'HOME' | 'ONLINE' | 'CENTER'>('HOME');
   const [grade, setGrade] = useState(initialData?.grade || CLASS_OPTIONS[2]);
   const [subject, setSubject] = useState(SUBJECT_OPTIONS[0]);
+  const [customSubject, setCustomSubject] = useState('');
   const [locality, setLocality] = useState(GURGAON_LOCALITIES[0].name);
+
   const [budgetRange, setBudgetRange] = useState('₹6,000 – ₹10,000 / month');
   const [parentName, setParentName] = useState('');
   const [phone, setPhone] = useState('');
@@ -253,6 +255,22 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
                   </select>
                 </div>
               </div>
+
+              {/* Custom Subject Write-In if Other selected */}
+              {subject === 'Other / Specify Custom Subject' && (
+                <div>
+                  <label className="form-label">Specify Your Custom Subject / Skill</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Russian Language, Saxophone, Quantum Physics"
+                    value={customSubject}
+                    onChange={(e) => setCustomSubject(e.target.value)}
+                    className="form-control"
+                    required
+                  />
+                </div>
+              )}
+
 
               {/* Budget Range Selector Starting at ₹1,000+ */}
               <div>
