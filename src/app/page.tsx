@@ -302,7 +302,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Right Column: Hero Young Teacher Cutout & Rich Background Typography + Badges */}
+               {/* Right Column: Hero Young Teacher Cutout & Rich Background Flower Scribbles + Badges */}
               <div style={{ position: 'relative', minHeight: '460px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {/* Academic Keyword Watermark Typography in Background */}
                 <div style={{
@@ -312,8 +312,8 @@ export default function HomePage() {
                   flexDirection: 'column',
                   justifyContent: 'space-around',
                   pointerEvents: 'none',
-                  opacity: 0.08,
-                  fontSize: '2.5rem',
+                  opacity: 0.07,
+                  fontSize: '2.4rem',
                   fontWeight: 900,
                   letterSpacing: '0.1em',
                   color: 'var(--brand-teal)',
@@ -326,47 +326,62 @@ export default function HomePage() {
                   <div style={{ whiteSpace: 'nowrap', transform: 'rotate(-3deg)' }}>MATHS • PHYSICS • CHEMISTRY • ACCOUNTS</div>
                 </div>
 
-                {/* SVG Dual-Tone Gradient Organic Scribble Loop Pattern */}
+                {/* Rich Multi-Layered SVG Flower Scribble Loop Pattern (Figma Prototype Style) */}
                 <svg
                   style={{
                     position: 'absolute',
-                    top: '-25%',
-                    right: '-15%',
-                    width: '135%',
-                    height: '150%',
+                    top: '-30%',
+                    right: '-20%',
+                    width: '145%',
+                    height: '160%',
                     pointerEvents: 'none',
-                    opacity: 0.75,
+                    opacity: 0.85,
                     zIndex: 0,
                   }}
-                  viewBox="0 0 600 600"
+                  viewBox="0 0 700 700"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <defs>
-                    <linearGradient id="scribbleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#0D9488" />
-                      <stop offset="100%" stopColor="#2DD4BF" />
+                    <linearGradient id="flowerGradientMain" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#0D9488" stopOpacity="0.9" />
+                      <stop offset="50%" stopColor="#2DD4BF" stopOpacity="0.8" />
+                      <stop offset="100%" stopColor="#64748B" stopOpacity="0.4" />
+                    </linearGradient>
+                    <linearGradient id="flowerGradientSub" x1="100%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#2DD4BF" stopOpacity="0.7" />
+                      <stop offset="100%" stopColor="#CBD5E1" stopOpacity="0.5" />
                     </linearGradient>
                   </defs>
+
+                  {/* Main Flower Petal Organic Loop 1 */}
                   <path
-                    d="M120,300 C60,180 180,60 320,120 C460,180 520,320 400,440 C280,560 120,440 180,300 C240,160 420,100 480,240 C540,380 380,520 220,460 C60,400 80,220 240,140 C400,60 540,200 460,360 C380,520 200,480 140,340 C80,200 220,100 360,160 C500,220 480,400 320,480"
-                    stroke="url(#scribbleGradient)"
-                    strokeWidth="2.2"
+                    d="M150,350 C80,200 220,80 380,140 C540,200 600,380 460,500 C320,620 140,500 200,350 C260,200 480,120 540,280 C600,440 420,580 240,520 C80,460 100,260 280,160 C460,60 620,220 520,400 C420,580 220,540 160,380 C100,220 260,100 420,180 C580,260 540,460 360,540"
+                    stroke="url(#flowerGradientMain)"
+                    strokeWidth="2.5"
                     strokeLinecap="round"
                   />
+
+                  {/* Secondary Inner Flower Loop 2 */}
                   <path
-                    d="M200,220 C140,120 280,80 380,180 C480,280 400,420 260,380 C120,340 160,180 280,160 C400,140 480,260 400,400 C320,540 180,440 220,300"
-                    stroke="#94A3B8"
-                    strokeWidth="1.5"
+                    d="M220,260 C160,140 320,100 420,200 C520,300 440,460 300,420 C160,380 200,200 320,180 C440,160 520,280 440,440 C360,600 200,480 250,340"
+                    stroke="url(#flowerGradientSub)"
+                    strokeWidth="1.8"
                     strokeLinecap="round"
                   />
+
+                  {/* Accent Flower Sparkles */}
+                  <circle cx="160" cy="180" r="4" fill="#0D9488" opacity="0.6" />
+                  <circle cx="540" cy="140" r="6" fill="#2DD4BF" opacity="0.8" />
+                  <circle cx="580" cy="440" r="5" fill="#0D9488" opacity="0.5" />
+                  <circle cx="120" cy="480" r="4" fill="#94A3B8" opacity="0.6" />
                 </svg>
 
-                {/* Top-Left Floating Badge */}
+                {/* Top-Left Floating Trust Badge */}
                 <div style={{
                   position: 'absolute',
-                  top: '10px',
-                  left: '0px',
+                  top: '5px',
+                  left: '-10px',
                   zIndex: 4,
                 }}>
                   <div className="apple-card float-card-1" style={{ padding: '0.5rem 0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 800, backgroundColor: '#FFFFFF' }}>
@@ -375,11 +390,11 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Top-Right Floating Badge */}
+                {/* Top-Right Floating Trust Badge */}
                 <div style={{
                   position: 'absolute',
-                  top: '20px',
-                  right: '0px',
+                  top: '15px',
+                  right: '-10px',
                   zIndex: 4,
                 }}>
                   <div className="apple-card float-card-2" style={{ padding: '0.5rem 0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 800, backgroundColor: '#FFFFFF', color: '#047857' }}>
@@ -388,17 +403,17 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Pulsing Background Teal Aura */}
+                {/* Pulsing Background Soft Mint Glow Aura */}
                 <div style={{
                   position: 'absolute',
-                  inset: '-10px',
+                  inset: '-15px',
                   borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(13, 148, 136, 0.14) 0%, transparent 68%)',
+                  background: 'radial-gradient(circle, rgba(13, 148, 136, 0.16) 0%, transparent 68%)',
                   pointerEvents: 'none',
                   zIndex: 1,
                 }} />
 
-                {/* Seamless Cutout Image Placement */}
+                {/* Tightly Cropped Cutout Image Placement (Zero Rectangle Box) */}
                 <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'center' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -406,9 +421,9 @@ export default function HomePage() {
                     alt="Young 25yo Indian Female Teacher with Glasses and Girl Student in Gurgaon"
                     style={{
                       width: '100%',
-                      maxWidth: '480px',
+                      maxWidth: '520px',
                       height: 'auto',
-                      borderRadius: '24px',
+                      borderRadius: '20px',
                       display: 'block',
                       mixBlendMode: 'multiply',
                     }}
