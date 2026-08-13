@@ -118,9 +118,8 @@ export default function HomePage() {
                   <ShieldCheck size={14} />
                   <span>BUILT FOR GURGAON & NCR • SSSAM ACADEMY</span>
                 </div>
-
-                {/* Dynamic Sector Auto-Sliding Headline */}
-                <h1 style={{ marginBottom: '1.25rem', minHeight: '110px' }}>
+                {/* Dynamic Sector Auto-Sliding Headline - FIXED ROCK SOLID HEIGHT */}
+                <h1 style={{ marginBottom: '1.25rem', minHeight: '120px', lineHeight: 1.15 }}>
                   <span className="text-teal">Verified</span> Home & Online Tutors in{' '}
                   <span
                     style={{
@@ -129,6 +128,7 @@ export default function HomePage() {
                       borderBottom: '3px solid var(--brand-teal)',
                       paddingBottom: '2px',
                       transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {sectorList[currentSectorIndex]} ↕
@@ -302,9 +302,31 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Right Column: Hero Young Teacher Cutout & Exact Organic Scribble Background (Figma Style) */}
-              <div style={{ position: 'relative', minHeight: '420px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {/* SVG Dual-Tone Gradient Organic Scribble Loop Pattern (Figma Screenshot Style) */}
+              {/* Right Column: Hero Young Teacher Cutout & Rich Background Typography + Badges */}
+              <div style={{ position: 'relative', minHeight: '460px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {/* Academic Keyword Watermark Typography in Background */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-around',
+                  pointerEvents: 'none',
+                  opacity: 0.08,
+                  fontSize: '2.5rem',
+                  fontWeight: 900,
+                  letterSpacing: '0.1em',
+                  color: 'var(--brand-teal)',
+                  overflow: 'hidden',
+                  userSelect: 'none',
+                  zIndex: 0,
+                }}>
+                  <div style={{ whiteSpace: 'nowrap', transform: 'rotate(-4deg)' }}>CBSE • ICSE • IB DIPLOMA • IGCSE</div>
+                  <div style={{ whiteSpace: 'nowrap', transform: 'rotate(2deg)', textAlign: 'right' }}>NEET • JEE MAIN • PYTHON CODING</div>
+                  <div style={{ whiteSpace: 'nowrap', transform: 'rotate(-3deg)' }}>MATHS • PHYSICS • CHEMISTRY • ACCOUNTS</div>
+                </div>
+
+                {/* SVG Dual-Tone Gradient Organic Scribble Loop Pattern */}
                 <svg
                   style={{
                     position: 'absolute',
@@ -340,6 +362,32 @@ export default function HomePage() {
                   />
                 </svg>
 
+                {/* Top-Left Floating Badge */}
+                <div style={{
+                  position: 'absolute',
+                  top: '10px',
+                  left: '0px',
+                  zIndex: 4,
+                }}>
+                  <div className="apple-card float-card-1" style={{ padding: '0.5rem 0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 800, backgroundColor: '#FFFFFF' }}>
+                    <Star size={14} color="var(--brand-amber)" fill="var(--brand-amber)" />
+                    <span>4.95 Parent Rating</span>
+                  </div>
+                </div>
+
+                {/* Top-Right Floating Badge */}
+                <div style={{
+                  position: 'absolute',
+                  top: '20px',
+                  right: '0px',
+                  zIndex: 4,
+                }}>
+                  <div className="apple-card float-card-2" style={{ padding: '0.5rem 0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 800, backgroundColor: '#FFFFFF', color: '#047857' }}>
+                    <CheckCircle2 size={14} />
+                    <span>Aadhaar Verified</span>
+                  </div>
+                </div>
+
                 {/* Pulsing Background Teal Aura */}
                 <div style={{
                   position: 'absolute',
@@ -350,7 +398,7 @@ export default function HomePage() {
                   zIndex: 1,
                 }} />
 
-                {/* Seamless Cutout Image Placement (Figma Screenshot Style - Zero Rectangle Box) */}
+                {/* Seamless Cutout Image Placement */}
                 <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'center' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -367,7 +415,7 @@ export default function HomePage() {
                   />
                 </div>
 
-                {/* Bottom Floating Feature Cards (Screenshot 1 Style) */}
+                {/* Bottom Floating Feature Cards */}
                 <div style={{
                   position: 'absolute',
                   bottom: '-28px',
