@@ -253,65 +253,66 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Right Column: Hero Teacher Cutout & Figma Scribble Background Accent */}
-              <div style={{ position: 'relative' }}>
-                {/* SVG Organic Scribble Pattern Accent (Figma Screenshot 1 Style) */}
+
+              {/* Right Column: Hero Young Teacher Cutout & Exact Organic Scribble Background (Figma Style) */}
+              <div style={{ position: 'relative', minHeight: '420px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+
+                {/* Exact Organic Scribble Wave Loop Pattern (Figma Screenshot Style) */}
                 <svg
                   style={{
                     position: 'absolute',
-                    top: '-15%',
-                    right: '-10%',
-                    width: '120%',
-                    height: '130%',
+                    top: '-25%',
+                    right: '-15%',
+                    width: '135%',
+                    height: '150%',
                     pointerEvents: 'none',
-                    opacity: 0.35,
+                    opacity: 0.65,
                     zIndex: 0,
                   }}
-                  viewBox="0 0 500 500"
+                  viewBox="0 0 600 600"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
-                    d="M80,220 C120,80 320,60 420,180 C500,280 360,450 180,400 C60,350 40,160 160,100 C280,40 460,130 430,300 C400,460 180,420 100,280"
-                    stroke="#0D9488"
-                    strokeWidth="1.5"
-                    strokeDasharray="5 5"
+                    d="M120,300 C60,180 180,60 320,120 C460,180 520,320 400,440 C280,560 120,440 180,300 C240,160 420,100 480,240 C540,380 380,520 220,460 C60,400 80,220 240,140 C400,60 540,200 460,360 C380,520 200,480 140,340 C80,200 220,100 360,160 C500,220 480,400 320,480"
+                    stroke="#CBD5E1"
+                    strokeWidth="2"
+                    strokeLinecap="round"
                   />
                   <path
-                    d="M140,180 C190,70 360,100 400,220 C430,340 260,420 160,360 C80,300 120,130 240,120 C360,110 420,220 360,340"
-                    stroke="#64748B"
-                    strokeWidth="1.2"
+                    d="M200,220 C140,120 280,80 380,180 C480,280 400,420 260,380 C120,340 160,180 280,160 C400,140 480,260 400,400 C320,540 180,440 220,300"
+                    stroke="#94A3B8"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
                   />
                 </svg>
 
-                {/* Pulsing Background Aura */}
+                {/* Pulsing Background Teal Aura */}
                 <div style={{
                   position: 'absolute',
                   inset: '-10px',
-                  borderRadius: '32px',
-                  background: 'radial-gradient(circle, rgba(13, 148, 136, 0.12) 0%, transparent 70%)',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(13, 148, 136, 0.12) 0%, transparent 68%)',
                   pointerEvents: 'none',
                   zIndex: 1,
                 }} />
 
-                {/* Seamless Cutout Image Placement (Figma Screenshot 1 Style - Zero Rectangle Box) */}
-                <div style={{ position: 'relative', zIndex: 2 }}>
+                {/* Seamless Cutout Image Placement (Figma Screenshot Style - Zero Rectangle Box) */}
+                <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'center' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/hero_indian_girl_tutor_cutout.jpg"
-                    alt="Verified Indian Female Home Tutor and Girl Student in Gurgaon"
+                    src="/young_indian_teacher_cutout.jpg"
+                    alt="Young Verified Indian Educator in Gurgaon"
                     style={{
                       width: '100%',
-                      borderRadius: '28px',
-                      objectFit: 'cover',
+                      maxWidth: '440px',
+                      height: 'auto',
+                      borderRadius: '32px',
                       display: 'block',
                       mixBlendMode: 'multiply',
-                      boxShadow: 'none',
                     }}
                   />
                 </div>
-
-
 
                 {/* Bottom Floating Feature Cards (Screenshot 1 Style) */}
                 <div style={{
@@ -345,11 +346,10 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-
-
             </div>
           </div>
         </section>
+
 
         {/* =========================================================================
             2. RAPIDO-STYLE INTERACTIVE VISUAL PROXIMITY MAP (IF OFFLINE HOME TUITION)
