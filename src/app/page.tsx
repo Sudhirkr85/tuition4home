@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -35,7 +35,7 @@ import {
   BookOpen,
   MessageSquare,
   Smartphone,
-  Lock,
+  Globe,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -53,6 +53,27 @@ export default function HomePage() {
   const [selectedLocality, setSelectedLocality] = useState(GURGAON_LOCALITIES[0].name);
   const [selectedSubject, setSelectedSubject] = useState(SUBJECT_OPTIONS[0]);
   const [selectedGrade, setSelectedGrade] = useState(CLASS_OPTIONS[2]);
+  const [teachingMedium, setTeachingMedium] = useState('Bilingual (English + Hindi)');
+
+  // Dynamic Sector Text Auto-Slide State
+  const [currentSectorIndex, setCurrentSectorIndex] = useState(0);
+  const sectorList = [
+    'DLF Phase 5',
+    'Golf Course Road',
+    'Sector 56',
+    'DLF Phase 1',
+    'Sohna Road',
+    'Nirvana Country (Sector 50)',
+    'Sushant Lok 1',
+    'Sector 14 & Old DLF',
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSectorIndex((prev) => (prev + 1) % sectorList.length);
+    }, 2800);
+    return () => clearInterval(timer);
+  }, [sectorList.length]);
 
   const handleOpenBooking = (tutor?: MockTutor) => {
     if (tutor) {
@@ -74,13 +95,15 @@ export default function HomePage() {
 
       <main style={{ flex: 1 }}>
         {/* =========================================================================
-            1. FIGMA SCREENSHOT 1 STYLE HERO SECTION
+            1. FIGMA SCREENSHOT STYLE HERO SECTION WITH DYNAMIC SECTOR SLIDE & MEDIUM SELECTOR
             ========================================================================= */}
         <section style={{
           paddingTop: '3.5rem',
           paddingBottom: '4.5rem',
           backgroundColor: '#FFFFFF',
           borderBottom: '1px solid var(--border-hairline)',
+          position: 'relative',
+          overflow: 'hidden',
         }}>
           <div className="container">
             <div style={{
@@ -96,12 +119,24 @@ export default function HomePage() {
                   <span>BUILT FOR GURGAON & NCR • SSSAM ACADEMY</span>
                 </div>
 
-                <h1 style={{ marginBottom: '1.25rem' }}>
-                  <span className="text-teal">Verified</span> Home & Online Tutors. End to End.
+                {/* Dynamic Sector Auto-Sliding Headline */}
+                <h1 style={{ marginBottom: '1.25rem', minHeight: '110px' }}>
+                  <span className="text-teal">Verified</span> Home & Online Tutors in{' '}
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      color: 'var(--brand-teal)',
+                      borderBottom: '3px solid var(--brand-teal)',
+                      paddingBottom: '2px',
+                      transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
+                  >
+                    {sectorList[currentSectorIndex]} ↕
+                  </span>
                 </h1>
 
-                <p style={{ fontSize: 'clamp(1.05rem, 2.2vw, 1.25rem)', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '2rem' }}>
-                  1-on-1 personalized tutoring for CBSE, ICSE, IB & Coding. Background-checked educators matched to your sector with a <strong>100% Replacement Guarantee</strong>.
+                <p style={{ fontSize: 'clamp(1.02rem, 2vw, 1.2rem)', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.75rem' }}>
+                  1-on-1 personalized tutoring for CBSE, ICSE, IB & Coding. Educators matched within 3.5 km of your sector with a <strong>100% Free Replacement Guarantee</strong>.
                 </p>
 
                 {/* Mode Segmented Pill Switcher */}
@@ -158,10 +193,10 @@ export default function HomePage() {
                   </button>
                 </div>
 
-                {/* Search Bar Row */}
+                {/* Search Bar Row with Teaching Medium Selector */}
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
                   gap: '0.75rem',
                   marginBottom: '1.75rem',
                 }}>
@@ -193,6 +228,20 @@ export default function HomePage() {
                       {CLASS_OPTIONS.map((c) => (
                         <option key={c} value={c}>{c}</option>
                       ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="form-label">Teaching Medium / Language</label>
+                    <select
+                      value={teachingMedium}
+                      onChange={(e) => setTeachingMedium(e.target.value)}
+                      className="form-control"
+                      style={{ fontWeight: 600 }}
+                    >
+                      <option value="Bilingual (English + Hindi)">🇮🇳 Bilingual (English + Hindi)</option>
+                      <option value="English Medium">🇬🇧 English Medium Only</option>
+                      <option value="Hindi Medium">📙 Hindi Medium</option>
                     </select>
                   </div>
                 </div>
@@ -253,11 +302,9 @@ export default function HomePage() {
                 </div>
               </div>
 
-
               {/* Right Column: Hero Young Teacher Cutout & Exact Organic Scribble Background (Figma Style) */}
               <div style={{ position: 'relative', minHeight: '420px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-
-                {/* Exact Organic Scribble Wave Loop Pattern (Figma Screenshot Style) */}
+                {/* SVG Dual-Tone Gradient Organic Scribble Loop Pattern (Figma Screenshot Style) */}
                 <svg
                   style={{
                     position: 'absolute',
@@ -266,17 +313,23 @@ export default function HomePage() {
                     width: '135%',
                     height: '150%',
                     pointerEvents: 'none',
-                    opacity: 0.7,
+                    opacity: 0.75,
                     zIndex: 0,
                   }}
                   viewBox="0 0 600 600"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
+                  <defs>
+                    <linearGradient id="scribbleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#0D9488" />
+                      <stop offset="100%" stopColor="#2DD4BF" />
+                    </linearGradient>
+                  </defs>
                   <path
                     d="M120,300 C60,180 180,60 320,120 C460,180 520,320 400,440 C280,560 120,440 180,300 C240,160 420,100 480,240 C540,380 380,520 220,460 C60,400 80,220 240,140 C400,60 540,200 460,360 C380,520 200,480 140,340 C80,200 220,100 360,160 C500,220 480,400 320,480"
-                    stroke="#CBD5E1"
-                    strokeWidth="2"
+                    stroke="url(#scribbleGradient)"
+                    strokeWidth="2.2"
                     strokeLinecap="round"
                   />
                   <path
@@ -292,7 +345,7 @@ export default function HomePage() {
                   position: 'absolute',
                   inset: '-10px',
                   borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(13, 148, 136, 0.12) 0%, transparent 68%)',
+                  background: 'radial-gradient(circle, rgba(13, 148, 136, 0.14) 0%, transparent 68%)',
                   pointerEvents: 'none',
                   zIndex: 1,
                 }} />
@@ -349,9 +402,6 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
-
-
 
         {/* =========================================================================
             2. RAPIDO-STYLE INTERACTIVE VISUAL PROXIMITY MAP (IF OFFLINE HOME TUITION)
