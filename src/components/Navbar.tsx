@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Phone, Menu, X, ShieldCheck, Home, Video, Sparkles, Building2, UserCheck } from 'lucide-react';
+import { Phone, Menu, X, ShieldCheck, UserCheck, ChevronRight } from 'lucide-react';
 import { SSSAM_OFFICE_DETAILS } from '@/lib/data';
 
 interface NavbarProps {
@@ -17,7 +17,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
       position: 'sticky',
       top: 0,
       zIndex: 1000,
-      backgroundColor: 'rgba(255, 255, 255, 0.92)',
+      backgroundColor: 'rgba(237, 251, 247, 0.94)',
       backdropFilter: 'blur(16px)',
       borderBottom: '1px solid var(--border-hairline)',
     }}>
@@ -30,7 +30,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
       }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <ShieldCheck size={14} color="#34D399" />
+            <ShieldCheck size={14} color="#2DD4BF" />
             <span>Operated & Verified by <strong>SSSAM Academy</strong> • Sector 14, Gurugram</span>
           </div>
 
@@ -50,7 +50,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
       </div>
 
       {/* Main Glass Navbar */}
-      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '70px' }}>
+      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px' }}>
         {/* Brand Logo */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -67,20 +67,20 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav style={{ display: 'none', alignItems: 'center', gap: '1.5rem' }} className="desktop-nav">
-          <Link href="/" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>
+        <nav style={{ display: 'none', alignItems: 'center', gap: '1.75rem' }} className="desktop-nav">
+          <Link href="/" style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--brand-teal)' }}>
             Home
           </Link>
-          <Link href="/#find-tutor" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+          <Link href="/#find-tutor" style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text-muted)' }}>
             Find Tutors
           </Link>
-          <Link href="/#how-it-works" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+          <Link href="/#how-it-works" style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text-muted)' }}>
             How It Works
           </Link>
-          <Link href="/#fee-estimator" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+          <Link href="/#fee-estimator" style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text-muted)' }}>
             Fee Estimator
           </Link>
-          <Link href="/tutor/register" style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--brand-blue)' }}>
+          <Link href="/tutor/register" style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--brand-teal)' }}>
             Apply as Tutor
           </Link>
         </nav>
@@ -97,8 +97,10 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
             onClick={() => onOpenBooking && onOpenBooking()}
             className="btn btn-primary btn-sm"
           >
-            <Sparkles size={14} />
-            <span>Request Trial Callback</span>
+            <span>Request Trial Class</span>
+            <div className="btn-arrow">
+              <ChevronRight size={14} />
+            </div>
           </button>
         </div>
 
@@ -112,7 +114,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
             justifyContent: 'center',
             padding: '0.5rem',
             borderRadius: '8px',
-            border: '1px solid var(--border-hairline)',
+            border: '1.5px solid var(--border-hairline)',
             backgroundColor: '#FFFFFF',
             cursor: 'pointer',
           }}
@@ -132,11 +134,11 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
           flexDirection: 'column',
           gap: '1rem',
         }}>
-          <Link href="/" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 700 }}>Home</Link>
+          <Link href="/" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 700, color: 'var(--brand-teal)' }}>Home</Link>
           <Link href="/#find-tutor" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Find Tutors</Link>
           <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-muted)' }}>How It Works</Link>
           <Link href="/#fee-estimator" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Fee Estimator</Link>
-          <Link href="/tutor/register" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 700, color: 'var(--brand-blue)' }}>Apply as Tutor</Link>
+          <Link href="/tutor/register" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 700, color: 'var(--brand-teal)' }}>Apply as Tutor</Link>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-hairline)' }}>
             <Link href="/tutor/register" onClick={() => setMobileMenuOpen(false)} className="btn btn-secondary" style={{ justifyContent: 'center' }}>
@@ -151,8 +153,10 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               className="btn btn-primary"
               style={{ justifyContent: 'center' }}
             >
-              <Sparkles size={16} />
-              <span>Request Trial Callback</span>
+              <span>Request Trial Class</span>
+              <div className="btn-arrow">
+                <ChevronRight size={14} />
+              </div>
             </button>
           </div>
         </div>

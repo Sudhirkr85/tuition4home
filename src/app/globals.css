@@ -1,43 +1,46 @@
 /* =========================================================================
-   TUITIONFORHOME — CLEAN APPLE LIGHT DESIGN SYSTEM
+   TUITIONFORHOME — FIGMA SOFT MINT & DEEP TEAL DESIGN SYSTEM
    ========================================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Apple Light Color Palette */
-  --bg-app: #F8F9FA;
-  --bg-card: #FFFFFF;
-  --bg-card-subtle: #F3F4F6;
+  /* Figma Soft Mint & Deep Teal Palette */
+  --bg-app: #EDFBF7;           /* Soft Light Mint Background (Screenshot 1-4) */
+  --bg-card: #FFFFFF;          /* Pure White Soft Glass Cards */
+  --bg-card-subtle: #F0FDF9;
   --bg-dark-accent: #0F172A;
 
   /* Typography Colors */
-  --text-main: #111827;      /* Deep Obsidian Charcoal */
-  --text-muted: #4B5563;     /* Muted Slate Gray */
-  --text-light: #9CA3AF;
+  --text-main: #18181B;        /* Deep Obsidian Charcoal */
+  --text-muted: #475569;       /* Muted Slate Charcoal */
+  --text-light: #94A3B8;
 
-  /* Brand Accents */
-  --brand-blue: #0066CC;     /* Apple Signature Blue */
-  --brand-blue-light: #EFF6FF;
-  --brand-emerald: #059669;  /* Verified Emerald Green */
-  --brand-emerald-light: #ECFDF5;
+  /* Brand Accents (Deep Teal / Cyan) */
+  --brand-teal: #0D9488;       /* Primary Action Teal */
+  --brand-teal-hover: #0F766E;
+  --brand-teal-light: #CCFBF1; /* Soft Mint Pill Background */
+  --brand-teal-subtle: #E0F2FE;
+
+  /* Status Colors */
+  --brand-emerald: #059669;
   --brand-amber: #D97706;
 
   /* Borders & Shadows */
-  --border-hairline: #E5E7EB;
-  --border-strong: #D1D5DB;
-  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.03);
-  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.04);
-  --shadow-hover: 0 18px 40px rgba(0, 0, 0, 0.08);
+  --border-hairline: #E2E8F0;
+  --border-teal: #99F6E4;
+  --shadow-sm: 0 4px 12px rgba(13, 148, 136, 0.04);
+  --shadow-card: 0 12px 36px rgba(13, 148, 136, 0.06);
+  --shadow-hover: 0 20px 48px rgba(13, 148, 136, 0.12);
 
-  /* Border Radii */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
+  /* Border Radii (Super Soft 24px - 32px) */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
   --radius-full: 9999px;
 
   /* Transition */
-  --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * {
@@ -51,7 +54,7 @@ body {
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-app);
   color: var(--text-main);
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -59,7 +62,7 @@ body {
 /* Mobile Sticky Bar Padding */
 @media (max-width: 768px) {
   body {
-    padding-bottom: 74px;
+    padding-bottom: 76px;
   }
 }
 
@@ -76,39 +79,39 @@ a {
 
 /* Typography Hierarchy */
 h1 {
-  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  font-size: clamp(2.1rem, 4.8vw, 3.4rem);
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.035em;
   line-height: 1.12;
   color: var(--text-main);
 }
 
 h2 {
-  font-size: clamp(1.6rem, 3.2vw, 2.35rem);
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
   font-weight: 800;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.028em;
   color: var(--text-main);
 }
 
 h3 {
-  font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+  font-size: clamp(1.3rem, 2.4vw, 1.7rem);
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--text-main);
 }
 
-/* Text Accent Gradients */
+/* Text Accent Teal */
+.text-teal {
+  color: var(--brand-teal);
+}
+
 .text-gradient {
-  background: linear-gradient(135deg, var(--brand-blue), #2563EB);
+  background: linear-gradient(135deg, var(--brand-teal), #0284C7);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.text-emerald {
-  color: var(--brand-emerald);
-}
-
-/* Apple Glass & Elevated Card Components */
+/* Figma Super Soft Cards (24px Radius) */
 .apple-card {
   background-color: var(--bg-card);
   border: 1px solid var(--border-hairline);
@@ -118,9 +121,37 @@ h3 {
 }
 
 .apple-card:hover {
-  border-color: var(--border-strong);
+  border-color: var(--border-teal);
   box-shadow: var(--shadow-hover);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+}
+
+/* Screenshot 4 Step Cards */
+.step-card {
+  background-color: var(--bg-card);
+  border: 1.5px solid var(--border-hairline);
+  border-radius: 24px;
+  padding: 1.85rem;
+  transition: var(--transition-fast);
+  position: relative;
+}
+
+.step-card:hover {
+  border-color: var(--brand-teal);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-4px);
+}
+
+.step-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  background-color: var(--brand-teal-light);
+  color: var(--brand-teal);
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 /* Badges */
@@ -128,7 +159,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.35rem 0.85rem;
+  padding: 0.35rem 0.95rem;
   border-radius: var(--radius-full);
   font-size: 0.78rem;
   font-weight: 700;
@@ -137,30 +168,24 @@ h3 {
 }
 
 .badge-blue {
-  background-color: var(--brand-blue-light);
-  color: var(--brand-blue);
-  border: 1px solid rgba(0, 102, 204, 0.15);
+  background-color: var(--brand-teal-light);
+  color: var(--brand-teal);
+  border: 1px solid var(--border-teal);
 }
 
 .badge-emerald {
-  background-color: var(--brand-emerald-light);
-  color: var(--brand-emerald);
-  border: 1px solid rgba(5, 150, 105, 0.2);
-}
-
-.badge-verified {
   background-color: #D1FAE5;
-  color: #065F46;
+  color: #047857;
   border: 1px solid #A7F3D0;
 }
 
-/* Buttons */
+/* Pill Buttons with Circular Arrow Icon (Figma Screenshot 1 & 2 Style) */
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.35rem;
-  border-radius: var(--radius-md);
+  gap: 0.6rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius-full);
   font-weight: 700;
   font-size: 0.92rem;
   cursor: pointer;
@@ -171,49 +196,52 @@ h3 {
 }
 
 .btn-primary {
-  background-color: var(--brand-blue);
+  background-color: var(--brand-teal);
   color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(0, 102, 204, 0.25);
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.28);
 }
 
 .btn-primary:hover {
-  background-color: #0052A3;
-  transform: translateY(-1px);
+  background-color: var(--brand-teal-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(13, 148, 136, 0.35);
 }
 
-.btn-emerald {
-  background-color: var(--brand-emerald);
-  color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
+.btn-primary .btn-arrow {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
 }
 
-.btn-emerald:hover {
-  background-color: #047857;
-  transform: translateY(-1px);
+.btn-primary:hover .btn-arrow {
+  transform: translateX(3px);
 }
 
 .btn-secondary {
   background-color: #FFFFFF;
   color: var(--text-main);
-  border: 1px solid var(--border-hairline);
+  border: 1.5px solid var(--border-hairline);
   box-shadow: var(--shadow-sm);
 }
 
 .btn-secondary:hover {
   background-color: var(--bg-card-subtle);
-  border-color: var(--border-strong);
+  border-color: var(--brand-teal);
 }
 
 .btn-lg {
-  padding: 0.9rem 1.75rem;
+  padding: 0.95rem 2rem;
   font-size: 1rem;
-  border-radius: var(--radius-md);
 }
 
 .btn-sm {
-  padding: 0.5rem 0.9rem;
+  padding: 0.5rem 1rem;
   font-size: 0.82rem;
-  border-radius: 10px;
 }
 
 /* Form Controls */
@@ -231,7 +259,7 @@ h3 {
 
 .form-control {
   width: 100%;
-  padding: 0.8rem 1rem;
+  padding: 0.85rem 1.1rem;
   border-radius: var(--radius-md);
   border: 1.5px solid var(--border-hairline);
   background-color: #FFFFFF;
@@ -243,8 +271,8 @@ h3 {
 }
 
 .form-control:focus {
-  border-color: var(--brand-blue);
-  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.12);
+  border-color: var(--brand-teal);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.14);
 }
 
 /* Mobile Bottom Sticky Bar */
@@ -255,7 +283,7 @@ h3 {
   left: 0;
   right: 0;
   z-index: 1000;
-  background-color: rgba(255, 255, 255, 0.92);
+  background-color: rgba(237, 251, 247, 0.94);
   backdrop-filter: blur(16px);
   border-top: 1px solid var(--border-hairline);
   padding: 0.65rem 1rem;
