@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 
 import TutorMatchModal from '@/components/TutorMatchModal';
+import { VERIFIED_TUTORS, MockTutor } from '@/lib/data';
 
 interface LeadActivityItem {
   id: string;
@@ -65,12 +66,15 @@ interface LeadItem {
 }
 
 export default function CounselorPortal() {
-  const [activeTab, setActiveTab] = useState<'LEADS' | 'INTERVIEWS' | 'INVOICE'>('LEADS');
+  const [activeTab, setActiveTab] = useState<'LEADS' | 'TUTOR_ALLOCATION' | 'INTERVIEWS' | 'INVOICE'>('LEADS');
   const [dbLoading, setDbLoading] = useState(false);
   const [leadsLoading, setLeadsLoading] = useState(false);
 
   // Active counselor identity
   const [currentOperator, setCurrentOperator] = useState('Counselor Pooja');
+
+  // Selected tutor for lead allocation desk
+  const [selectedTutorForLeads, setSelectedTutorForLeads] = useState<MockTutor>(VERIFIED_TUTORS[0]);
 
   // Leads State
   const [leads, setLeads] = useState<LeadItem[]>([]);
@@ -465,6 +469,23 @@ export default function CounselorPortal() {
 
               <button
                 type="button"
+                onClick={() => setActiveTab('TUTOR_ALLOCATION')}
+                style={{
+                  padding: '0.5rem 1.25rem',
+                  borderRadius: 'var(--radius-full)',
+                  border: 'none',
+                  backgroundColor: activeTab === 'TUTOR_ALLOCATION' ? 'var(--brand-blue)' : 'transparent',
+                  color: activeTab === 'TUTOR_ALLOCATION' ? '#FFFFFF' : 'var(--text-muted)',
+                  fontWeight: 700,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                }}
+              >
+                👨‍🏫 Tutor Lead Allocator ({VERIFIED_TUTORS.length})
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setActiveTab('INTERVIEWS')}
                 style={{
                   padding: '0.5rem 1.25rem',
@@ -855,7 +876,255 @@ export default function CounselorPortal() {
             </div>
           )}
 
-          {/* TAB 2: TUTOR INTERVIEWS */}
+          {/* TAB 2: TUTOR LEAD ALLOCATOR (MATCH NEARBY STUDENTS PER TUTOR) */}
+          {activeTab === 'TUTOR_ALLOCATION' && (
+            <div>
+              {/* Top Banner */}
+              <div className="apple-card" style={{ padding: '1.5rem', marginBottom: '1.5rem', backgroundColor: '#FFFFFF' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <div className="badge badge-emerald" style={{ marginBottom: '0.35rem' }}>
+                      <MapPin size={13} />
+                      <span>PROXIMITY STUDENT ALLOCATION DESK</span>
+                    </div>
+                    <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
+                      Assign Nearby Parent Leads by Tutor
+                    </h2>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', margin: 0 }}>
+                      Select a verified educator to view all nearby parent inquiries matching their subjects and travel radius.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tutor Selector & Matched Leads Container */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', alignItems: 'flex-start' }}>
+                {/* Left: Tutors List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Select Verified Tutor ({VERIFIED_TUTORS.length})
+                  </div>
+
+                  {VERIFIED_TUTORS.map((tut) => {
+                    const isSelected = selectedTutorForLeads.id === tut.id;
+                    // Count matching open leads for this tutor
+                    const matchingLeadsCount = leads.filter((l) => {
+                      const subjects = l.subjectsNeeded || '';
+                      const matchesSubject = tut.subjects.some((s) => subjects.toLowerCase().includes(s.toLowerCase()));
+                      return matchesSubject && l.status !== 'TUITION_CONFIRMED' && l.status !== 'LOST';
+                    }).length;
+
+                    return (
+                      <div
+                        key={tut.id}
+                        onClick={() => setSelectedTutorForLeads(tut)}
+                        style={{
+                          padding: '1.15rem',
+                          borderRadius: '16px',
+                          backgroundColor: isSelected ? 'var(--brand-blue-light)' : '#FFFFFF',
+                          border: `2px solid ${isSelected ? 'var(--brand-blue)' : 'var(--border-hairline)'}`,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.85rem',
+                          transition: 'all 0.15s ease',
+                          boxShadow: isSelected ? 'var(--shadow-sm)' : 'none',
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={tut.avatarUrl}
+                          alt={tut.name}
+                          style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover' }}
+                        />
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>{tut.name}</h4>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#D97706' }}>⭐ {tut.rating}</span>
+                          </div>
+
+                          <div style={{ fontSize: '0.78rem', color: 'var(--brand-teal)', fontWeight: 700, marginTop: '2px' }}>
+                            {tut.highestDegree} • {tut.experienceYears} Yrs Exp
+                          </div>
+
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            📍 {tut.serviceAreas.slice(0, 2).join(', ')} (Radius: {tut.travelRadiusKm} KM)
+                          </div>
+                        </div>
+
+                        <span
+                          className="badge"
+                          style={{
+                            backgroundColor: matchingLeadsCount > 0 ? '#DCFCE7' : '#F1F5F9',
+                            color: matchingLeadsCount > 0 ? '#166534' : '#64748B',
+                            fontWeight: 800,
+                            fontSize: '0.72rem',
+                          }}
+                        >
+                          {matchingLeadsCount} Leads
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Right: Available Student Leads for Selected Tutor */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {/* Selected Tutor Spotlight Banner */}
+                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', border: '1.5px solid var(--border-hairline)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={selectedTutorForLeads.avatarUrl}
+                          alt={selectedTutorForLeads.name}
+                          style={{ width: '52px', height: '52px', borderRadius: '14px', objectFit: 'cover' }}
+                        />
+                        <div>
+                          <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
+                            {selectedTutorForLeads.name}
+                          </h3>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            Base: <strong>{selectedTutorForLeads.serviceAreas[0]}</strong> • Travel Radius: <strong>{selectedTutorForLeads.travelRadiusKm} KM</strong> • Home Rate: <strong style={{ color: 'var(--brand-blue)' }}>₹{selectedTutorForLeads.hourlyRateHome}/hr</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <a
+                        href={`https://wa.me/?text=${encodeURIComponent(`Hello ${selectedTutorForLeads.name}, this is SSSAM Academy / TuitionForHome Counselor desk regarding active student leads in your sector.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-secondary btn-sm"
+                        style={{ borderColor: '#25D366', color: '#15803D' }}
+                      >
+                        <MessageSquare size={14} color="#25D366" />
+                        <span>Chat with Tutor</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Nearby Open Parent Leads List */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Available Student Leads for {selectedTutorForLeads.name}
+                    </div>
+
+                    {leads
+                      .filter((l) => l.status !== 'TUITION_CONFIRMED' && l.status !== 'LOST')
+                      .map((lead) => {
+                        const subjects = Array.isArray(lead.subjectsNeeded)
+                          ? lead.subjectsNeeded.join(', ')
+                          : lead.subjectsNeeded.replace(/[\[\]"]/g, '');
+
+                        const matchesSubject = selectedTutorForLeads.subjects.some((s) => subjects.toLowerCase().includes(s.toLowerCase()));
+
+                        // Calculate distance from this tutor's service areas
+                        const normLeadLoc = lead.locality.toLowerCase();
+                        let estDist = 5.2;
+                        for (const area of selectedTutorForLeads.serviceAreas) {
+                          if (normLeadLoc.includes(area.toLowerCase()) || area.toLowerCase().includes(normLeadLoc)) {
+                            estDist = 1.2;
+                            break;
+                          }
+                        }
+                        if (estDist > 2.0 && (normLeadLoc.includes('dlf') || normLeadLoc.includes('golf course'))) {
+                          estDist = 2.4;
+                        }
+
+                        const isWithinRadius = estDist <= selectedTutorForLeads.travelRadiusKm;
+
+                        return (
+                          <div
+                            key={lead.id}
+                            className="apple-card"
+                            style={{
+                              padding: '1.25rem',
+                              backgroundColor: '#FFFFFF',
+                              borderLeft: `4px solid ${matchesSubject && isWithinRadius ? 'var(--brand-emerald)' : 'var(--border-hairline)'}`,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.75rem',
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                  <h4 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}>{lead.parentName}</h4>
+                                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>[{lead.id}]</span>
+                                </div>
+                                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                  📍 <strong>{lead.locality}</strong> • {lead.gradeClass} ({subjects}) • Budget: <strong style={{ color: 'var(--brand-blue)' }}>₹{lead.budgetMonthly?.toLocaleString('en-IN') || 'Negotiable'}</strong>
+                                </div>
+                              </div>
+
+                              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                <span
+                                  className="badge"
+                                  style={{
+                                    backgroundColor: isWithinRadius ? '#DCFCE7' : '#FEF3C7',
+                                    color: isWithinRadius ? '#166534' : '#92400E',
+                                    fontWeight: 800,
+                                    fontSize: '0.75rem',
+                                  }}
+                                >
+                                  ~{estDist} KM AWAY
+                                </span>
+                                {getStatusBadge(lead.status)}
+                              </div>
+                            </div>
+
+                            {/* Action Buttons for Counselor */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-hairline)' }}>
+                              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                <a
+                                  href={`https://wa.me/?text=${encodeURIComponent(
+                                    `*TuitionForHome (SSSAM Academy) - Student Lead Offer*\n\n` +
+                                    `Hello ${selectedTutorForLeads.name},\n` +
+                                    `We have an immediate student inquiry in *${lead.locality}* (~${estDist} KM from your sector):\n` +
+                                    `👤 *Student/Parent:* ${lead.parentName}\n` +
+                                    `📚 *Class & Subject:* ${lead.gradeClass} (${subjects})\n` +
+                                    `🎯 *Mode:* ${lead.preferredMode === 'OFFLINE_HOME' ? 'Home Visit' : 'Online Live'}\n` +
+                                    `💰 *Parent Budget:* ₹${lead.budgetMonthly || 8000}/month\n\n` +
+                                    `Please confirm if you are available to take this trial class.`
+                                  )}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn btn-secondary btn-sm"
+                                  style={{ borderColor: '#25D366', color: '#15803D', fontSize: '0.78rem' }}
+                                >
+                                  <MessageSquare size={13} color="#25D366" />
+                                  <span>Dispatch to Tutor (WhatsApp)</span>
+                                </a>
+
+                                <a href={`tel:${lead.parentPhone}`} className="btn btn-secondary btn-sm" style={{ fontSize: '0.78rem' }}>
+                                  <Phone size={13} color="var(--brand-emerald)" />
+                                  <span>Call Parent</span>
+                                </a>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedLeadForMatching(lead);
+                                }}
+                                className="btn btn-primary btn-sm"
+                                style={{ backgroundColor: 'var(--brand-blue)', fontSize: '0.78rem' }}
+                              >
+                                <CheckCircle2 size={13} />
+                                <span>Assign to this Tutor</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: TUTOR INTERVIEWS */}
           {activeTab === 'INTERVIEWS' && (
             <div>
               {pendingTutors.length > 0 ? (
