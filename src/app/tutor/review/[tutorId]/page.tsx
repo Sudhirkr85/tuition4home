@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, use } from 'react';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import {
@@ -25,6 +26,13 @@ interface ReviewItem {
   rating: number;
   comment: string;
   createdAt: string;
+  reviewerId?: string | null;
+  reviewer?: {
+    id: string;
+    name: string;
+    image?: string | null;
+    role?: string;
+  } | null;
 }
 
 export default function TutorPublicReviewPage({
@@ -50,8 +58,19 @@ export default function TutorPublicReviewPage({
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [parentSession, setParentSession] = useState<{ userId: string; name: string; email: string } | null>(null);
 
   useEffect(() => {
+    // Read logged-in parent session if any
+    const rawParent = localStorage.getItem('parent_session');
+    if (rawParent) {
+      try {
+        const parsed = JSON.parse(rawParent);
+        setParentSession(parsed);
+        setParentName(parsed.name || '');
+      } catch {}
+    }
+
     if (!tutorId) return;
 
     // Fetch tutor profile data
@@ -98,6 +117,7 @@ export default function TutorPublicReviewPage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: tutorId,
+          reviewerId: parentSession?.userId || null,
           parentName: parentName.trim(),
           rating,
           comment: comment.trim()
@@ -108,7 +128,7 @@ export default function TutorPublicReviewPage({
       if (data.success && data.review) {
         setReviews([data.review, ...reviews]);
         setSubmitSuccess(true);
-        setParentName('');
+        if (!parentSession) setParentName('');
         setComment('');
         setRating(5);
       } else {
@@ -411,12 +431,46 @@ export default function TutorPublicReviewPage({
             
             {/* Submit Review Form Card */}
             <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', padding: '1.5rem', border: '1.5px solid var(--border-hairline)', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.85rem' }}>
-                <MessageSquare size={18} style={{ color: 'var(--brand-teal)' }} />
-                <strong style={{ fontSize: '0.95rem', color: 'var(--text-main)', fontWeight: 800 }}>
-                  Rate &amp; Review This Educator
-                </strong>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <MessageSquare size={18} style={{ color: 'var(--brand-teal)' }} />
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--text-main)', fontWeight: 800 }}>
+                    Rate &amp; Review This Educator
+                  </strong>
+                </div>
+
+                {parentSession ? (
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    fontSize: '0.68rem',
+                    fontWeight: 800,
+                    backgroundColor: '#EFF6FF',
+                    color: '#2563EB',
+                    padding: '0.15rem 0.5rem',
+                    borderRadius: '999px',
+                    border: '1px solid #BFDBFE'
+                  }}>
+                    <ShieldCheck size={12} />
+                    <span>Verified Parent Active</span>
+                  </span>
+                ) : (
+                  <Link
+                    href="/parent/login"
+                    style={{ fontSize: '0.74rem', color: '#2563EB', fontWeight: 700, textDecoration: 'none' }}
+                  >
+                    Parent Login →
+                  </Link>
+                )}
               </div>
+
+              {parentSession && (
+                <div style={{ padding: '0.65rem 0.85rem', backgroundColor: '#F0FDFA', border: '1px solid #99F6E4', borderRadius: '10px', fontSize: '0.78rem', color: '#0F766E', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <ShieldCheck size={15} />
+                  <span>Posting as verified parent <strong>{parentSession.name}</strong> ({parentSession.email})</span>
+                </div>
+              )}
 
               {submitSuccess && (
                 <div style={{ padding: '0.85rem', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '12px', color: '#065F46', fontSize: '0.82rem', marginBottom: '1rem' }}>
@@ -514,8 +568,25 @@ export default function TutorPublicReviewPage({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {reviews.map(rev => (
                   <div key={rev.id} style={{ padding: '0.9rem', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid var(--border-hairline)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                      <strong style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>{rev.parentName}</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem', flexWrap: 'wrap', gap: '0.3rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <strong style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>{rev.parentName}</strong>
+                        {(rev.reviewerId || rev.reviewer) && (
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.2rem',
+                            fontSize: '0.62rem',
+                            fontWeight: 800,
+                            backgroundColor: '#ECFDF5',
+                            color: '#059669',
+                            padding: '0.08rem 0.4rem',
+                            borderRadius: '4px'
+                          }}>
+                            ✓ SSSAM Verified
+                          </span>
+                        )}
+                      </div>
                       <div style={{ display: 'flex', gap: '0.15rem' }}>
                         {[...Array(rev.rating)].map((_, i) => (
                           <Star key={i} size={13} fill="#F59E0B" color="#F59E0B" />

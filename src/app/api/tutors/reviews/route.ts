@@ -36,7 +36,11 @@ export async function GET(req: Request) {
         parentName: true,
         rating: true,
         comment: true,
-        createdAt: true
+        createdAt: true,
+        reviewerId: true,
+        reviewer: {
+          select: { id: true, name: true, image: true, role: true }
+        }
       }
     });
 
@@ -54,7 +58,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { tutorId, userId, parentName, rating, comment } = body;
+    const { tutorId, userId, parentName, rating, comment, reviewerId } = body;
 
     if ((!tutorId && !userId) || !parentName || !rating || !comment) {
       return NextResponse.json({ success: false, error: 'All fields are required.' }, { status: 400 });
@@ -76,10 +80,16 @@ export async function POST(req: Request) {
     const newReview = await prisma.review.create({
       data: {
         tutorId: profileId!,
+        reviewerId: reviewerId || null,
         parentName: parentName.trim(),
         rating: Math.min(5, Math.max(1, Number(rating))),
         comment: comment.trim(),
         isApproved: true,
+      },
+      include: {
+        reviewer: {
+          select: { id: true, name: true, image: true, role: true }
+        }
       }
     });
 

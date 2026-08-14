@@ -141,15 +141,39 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: 'Tutor profile not found.' }, { status: 404 });
     }
 
-    // Helper to safely parse JSON strings
-    const safeParse = (val: string | null) => {
+    // Helper to safely parse JSON strings or return arrays
+    const safeParse = (val: any) => {
       if (!val) return [];
-      try {
-        return JSON.parse(val);
-      } catch (e) {
-        return [];
+      if (Array.isArray(val)) return val;
+      if (typeof val === 'object') return [val];
+      if (typeof val === 'string') {
+        try {
+          const parsed = JSON.parse(val);
+          if (Array.isArray(parsed)) return parsed;
+          if (typeof parsed === 'object' && parsed !== null) return [parsed];
+          return [];
+        } catch (e) {
+          return [];
+        }
       }
+      return [];
     };
+
+    // Ensure qualifications and experiences are retrieved cleanly even if runtime schema is cached
+    let rawQual = (profile as any).qualifications;
+    let rawExp = (profile as any).experiences;
+
+    if (rawQual === undefined || rawExp === undefined) {
+      try {
+        const rawRows: any = await prisma.$queryRaw`SELECT qualifications, experiences FROM TutorProfile WHERE userId = ${userId} LIMIT 1`;
+        if (rawRows && rawRows[0]) {
+          rawQual = rawRows[0].qualifications;
+          rawExp = rawRows[0].experiences;
+        }
+      } catch (e) {
+        console.warn('Fallback query error:', e);
+      }
+    }
 
     const parsedProfile = {
       ...profile,
@@ -157,8 +181,8 @@ export async function GET(req: Request) {
       classes: safeParse(profile.classes),
       boards: safeParse(profile.boards),
       serviceAreas: safeParse(profile.serviceAreas),
-      qualifications: safeParse(profile.qualifications),
-      experiences: safeParse(profile.experiences),
+      qualifications: safeParse(rawQual),
+      experiences: safeParse(rawExp),
     };
 
     return NextResponse.json({
