@@ -155,24 +155,24 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
       <div style={{
         backgroundColor: '#0F172A',
         color: '#FFFFFF',
-        fontSize: '0.78rem',
-        padding: '0.4rem 0',
+        fontSize: '0.74rem',
+        padding: '0.45rem 0',
       }}>
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
             <ShieldCheck size={14} color="#2DD4BF" />
             <span>Operated &amp; Verified by <strong>SSSAM Academy</strong> • Sector 14, Gurugram</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <span style={{ display: 'none', color: '#94A3B8' }} className="desktop-nav">
               📍 M24 Ground Floor, Old DLF Colony
             </span>
             <a
               href={`tel:${SSSAM_OFFICE_DETAILS.phones[0]}`}
-              style={{ color: '#93C5FD', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+              style={{ color: '#93C5FD', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.72rem' }}
             >
-              <Phone size={13} />
-              <span>Call Helpline: {SSSAM_OFFICE_DETAILS.phones[0]}</span>
+              <Phone size={12} />
+              <span>Helpline: {SSSAM_OFFICE_DETAILS.phones[0]}</span>
             </a>
           </div>
         </div>

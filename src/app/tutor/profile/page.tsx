@@ -44,7 +44,8 @@ import {
   BookOpen,
   Trash2,
   Calendar,
-  Award
+  Award,
+  Download
 } from 'lucide-react';
 
 export interface QualificationItem {
@@ -413,6 +414,226 @@ export default function TutorProfileDashboard() {
     setShowPreviewModal(true);
   };
 
+  // Direct 1-Click High Resolution Image Card Download (Zero Popups)
+  const handleDirectDownloadCard = async () => {
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // High Resolution 2x Canvas (1000px x 560px)
+      canvas.width = 1000;
+      canvas.height = 560;
+
+      // Rounded Card Background
+      const r = 36;
+      ctx.beginPath();
+      ctx.moveTo(r, 0);
+      ctx.lineTo(1000 - r, 0);
+      ctx.quadraticCurveTo(1000, 0, 1000, r);
+      ctx.lineTo(1000, 560 - r);
+      ctx.quadraticCurveTo(1000, 560, 1000 - r, 560);
+      ctx.lineTo(r, 560);
+      ctx.quadraticCurveTo(0, 560, 0, 560 - r);
+      ctx.lineTo(0, r);
+      ctx.quadraticCurveTo(0, 0, r, 0);
+      ctx.closePath();
+
+      // Background Gradient Fill
+      const grad = ctx.createLinearGradient(0, 0, 1000, 560);
+      grad.addColorStop(0, '#0F172A');
+      grad.addColorStop(0.65, '#115E59');
+      grad.addColorStop(1, '#0F172A');
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Metallic Border
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.stroke();
+
+      // Top Header: Logo Pill
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.roundRect(40, 36, 185, 44, 10);
+      ctx.fill();
+
+      ctx.fillStyle = '#0F172A';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('TuitionForHome', 58, 64);
+
+      // Top Header: ID Badge
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.beginPath();
+      ctx.roundRect(580, 36, 170, 38, 8);
+      ctx.fill();
+
+      ctx.fillStyle = '#E2E8F0';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText(`ID: TFH-${userId ? userId.slice(0, 6).toUpperCase() : 'GUR01'}`, 595, 61);
+
+      // Top Header: SSSAM Verified Badge
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.beginPath();
+      ctx.roundRect(765, 36, 195, 38, 999);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(252, 211, 77, 0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = '#FCD34D';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillText('🛡️ SSSAM VERIFIED', 785, 60);
+
+      // Top Header Divider Line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(40, 105);
+      ctx.lineTo(960, 105);
+      ctx.stroke();
+
+      // Avatar Circle
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(95, 205, 55, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+
+      if (avatarUrl) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = avatarUrl;
+        await new Promise((resolve) => {
+          img.onload = () => {
+            ctx.drawImage(img, 40, 150, 110, 110);
+            resolve(null);
+          };
+          img.onerror = () => {
+            ctx.fillStyle = '#0D9488';
+            ctx.fillRect(40, 150, 110, 110);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 44px sans-serif';
+            ctx.fillText(userName.charAt(0), 78, 220);
+            resolve(null);
+          };
+        });
+      } else {
+        ctx.fillStyle = '#0D9488';
+        ctx.fillRect(40, 150, 110, 110);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 44px sans-serif';
+        ctx.fillText(userName.charAt(0), 78, 220);
+      }
+      ctx.restore();
+
+      // Avatar Teal Outline Ring
+      ctx.beginPath();
+      ctx.arc(95, 205, 55, 0, Math.PI * 2);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#2DD4BF';
+      ctx.stroke();
+
+      // Tutor Name
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 30px sans-serif';
+      ctx.fillText(userName, 175, 185);
+
+      // Degree / Specialization
+      ctx.fillStyle = '#2DD4BF';
+      ctx.font = 'bold 17px sans-serif';
+      ctx.fillText((highestDegree || 'Verified Educator').toUpperCase(), 175, 218);
+
+      // Mode & Classes
+      ctx.fillStyle = '#CBD5E1';
+      ctx.font = '15px sans-serif';
+      const modeText = `${teachingMode === 'BOTH' ? '🏠 Home Visit & Online' : teachingMode === 'OFFLINE_HOME' ? '🏠 Home Visit Tuition' : '💻 Online Live Classes'} • ${selectedClasses.length > 0 ? selectedClasses.slice(0, 2).join(', ') : `${experienceYears || 3}+ Yrs Exp`}`;
+      ctx.fillText(modeText, 175, 248);
+
+      // QR Code Drawing
+      const qrImg = new Image();
+      qrImg.crossOrigin = 'anonymous';
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(reviewLink || `https://tuitionforhome.com/tutor/review/${userId}`)}`;
+      
+      await new Promise((resolve) => {
+        qrImg.onload = () => {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.beginPath();
+          ctx.roundRect(790, 135, 150, 155, 14);
+          ctx.fill();
+
+          ctx.drawImage(qrImg, 805, 145, 120, 120);
+
+          ctx.fillStyle = '#64748B';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.fillText('SCAN TO VIEW', 825, 280);
+          resolve(null);
+        };
+        qrImg.onerror = () => resolve(null);
+      });
+
+      // Bottom Divider
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(40, 420);
+      ctx.lineTo(960, 420);
+      ctx.stroke();
+
+      // Bottom Subject Pills
+      let curX = 40;
+      const subjectsToDraw = selectedSubjects.slice(0, 3);
+      for (const sub of subjectsToDraw) {
+        ctx.font = 'bold 14px sans-serif';
+        const textWidth = ctx.measureText(sub).width;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.beginPath();
+        ctx.roundRect(curX, 450, textWidth + 24, 38, 8);
+        ctx.fill();
+
+        ctx.fillStyle = '#E2E8F0';
+        ctx.fillText(sub, curX + 12, 474);
+        curX += textWidth + 36;
+      }
+
+      if (selectedBoards.length > 0) {
+        const board = selectedBoards[0];
+        ctx.font = 'bold 14px sans-serif';
+        const textWidth = ctx.measureText(board).width;
+        ctx.fillStyle = 'rgba(45, 212, 191, 0.2)';
+        ctx.beginPath();
+        ctx.roundRect(curX, 450, textWidth + 24, 38, 8);
+        ctx.fill();
+
+        ctx.fillStyle = '#2DD4BF';
+        ctx.fillText(board, curX + 12, 474);
+      }
+
+      // Location at Bottom Right
+      const locText = `📍 ${serviceAreas.length > 0 ? serviceAreas.slice(0, 2).join(', ') : 'Gurgaon'} (${travelRadiusKm} KM)`;
+      ctx.fillStyle = '#CBD5E1';
+      ctx.font = '15px sans-serif';
+      const locWidth = ctx.measureText(locText).width;
+      ctx.fillText(locText, 960 - locWidth, 474);
+
+      // Instant 1-Click File Download
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TuitionForHome-VisitingCard-${userName.replace(/\s+/g, '_')}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setSuccessMsg('🎉 Official visiting card downloaded directly to your device!');
+      }, 'image/png');
+    } catch {
+      setErrorMsg('Unable to direct download card. Please try again.');
+    }
+  };
+
   // Helper toggle list
   const toggleSelection = (item: string, list: string[], setter: React.Dispatch<React.SetStateAction<string[]>>) => {
     if (list.includes(item)) {
@@ -554,59 +775,64 @@ export default function TutorProfileDashboard() {
                     </button>
                   </div>
 
-                  <strong style={{ display: 'block', fontSize: '1.05rem', color: 'var(--text-main)', fontWeight: 800 }}>{userName}</strong>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>{userEmail}</span>
-                  
-                  {/* Status Badges */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
-                    {profileStatus === 'ACTIVE_VERIFIED' ? (
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.2rem',
-                        backgroundColor: 'var(--brand-teal-light)',
-                        color: 'var(--brand-teal)',
-                        fontSize: '0.68rem',
-                        fontWeight: 800,
-                        padding: '0.15rem 0.55rem',
-                        borderRadius: '999px',
-                        border: '1px solid rgba(45,212,191,0.4)'
-                      }}>
-                        ✓ ACTIVE VERIFIED
-                      </span>
-                    ) : (
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.2rem',
-                        backgroundColor: '#FEF3C7',
-                        color: '#D97706',
-                        fontSize: '0.68rem',
-                        fontWeight: 800,
-                        padding: '0.15rem 0.55rem',
-                        borderRadius: '999px',
-                        border: '1px solid rgba(217,119,6,0.25)'
-                      }}>
-                        ⏳ UNDER VERIFICATION
-                      </span>
-                    )}
+                  {/* User Identity & Status Info */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'inherit', minWidth: 0, gap: '0.15rem' }}>
+                    <strong style={{ display: 'block', fontSize: '1.05rem', color: 'var(--text-main)', fontWeight: 800 }}>{userName}</strong>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {userEmail}
+                    </span>
+                    
+                    {/* Status Badges */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', justifyContent: 'inherit' }}>
+                      {profileStatus === 'ACTIVE_VERIFIED' ? (
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.2rem',
+                          backgroundColor: 'var(--brand-teal-light)',
+                          color: 'var(--brand-teal)',
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          padding: '0.15rem 0.55rem',
+                          borderRadius: '999px',
+                          border: '1px solid rgba(45,212,191,0.4)'
+                        }}>
+                          ✓ ACTIVE VERIFIED
+                        </span>
+                      ) : (
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.2rem',
+                          backgroundColor: '#FEF3C7',
+                          color: '#D97706',
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          padding: '0.15rem 0.55rem',
+                          borderRadius: '999px',
+                          border: '1px solid rgba(217,119,6,0.25)'
+                        }}>
+                          ⏳ UNDER VERIFICATION
+                        </span>
+                      )}
 
-                    {hasPoliceCheck && (
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        backgroundColor: '#FFFBEB',
-                        color: '#D97706',
-                        fontSize: '0.65rem',
-                        fontWeight: 800,
-                        padding: '0.15rem 0.55rem',
-                        borderRadius: '999px',
-                        border: '1px solid #FCD34D'
-                      }}>
-                        🛡️ GOLD SHIELD
-                      </span>
-                    )}
+                      {hasPoliceCheck && (
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          backgroundColor: '#FFFBEB',
+                          color: '#D97706',
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          padding: '0.15rem 0.55rem',
+                          borderRadius: '999px',
+                          border: '1px solid #FCD34D'
+                        }}>
+                          🛡️ GOLD SHIELD
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -1005,7 +1231,7 @@ export default function TutorProfileDashboard() {
                       </div>
 
                       {/* Main Middle Row: Avatar, Name, Degree, QR */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.85rem' }}>
                         
                         {/* Left: Avatar + Details */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1, minWidth: 0 }}>
@@ -1078,7 +1304,26 @@ export default function TutorProfileDashboard() {
                     </div>
 
                     {/* Quick Action Buttons Below Card */}
-                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.85rem' }}>
+                    <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', marginTop: '0.85rem' }}>
+                      {/* Direct 1-Click Card Download */}
+                      <button
+                        type="button"
+                        onClick={handleDirectDownloadCard}
+                        className="btn btn-primary btn-sm"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          fontSize: '0.78rem',
+                          backgroundColor: 'var(--brand-teal)',
+                          borderColor: 'var(--brand-teal)',
+                          boxShadow: '0 2px 8px rgba(13, 148, 136, 0.25)'
+                        }}
+                      >
+                        <Download size={13} />
+                        <span>Download Card</span>
+                      </button>
+
                       {/* WhatsApp Share */}
                       <a
                         href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hello! View my verified TuitionForHome tutor profile and book a home tuition demo in Gurgaon: ${reviewLink || `https://tuitionforhome.com/tutor/review/${userId}`}`)}`}
@@ -2563,7 +2808,7 @@ export default function TutorProfileDashboard() {
               )}
 
               {/* Rates & Coverage */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }} className="profile-form-2col">
                 <div style={{ backgroundColor: '#FFFFFF', padding: '1.15rem', borderRadius: '14px', border: '1px solid var(--border-hairline)' }}>
                   <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block' }}>Estimated Pricing</span>
                   <strong style={{ fontSize: '1.05rem', color: 'var(--brand-teal)', display: 'block', marginTop: '0.2rem' }}>
