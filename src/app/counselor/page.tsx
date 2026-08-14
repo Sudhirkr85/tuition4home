@@ -27,9 +27,9 @@ import {
   Filter,
   Search,
   User,
-  CheckCircle,
-  XCircle,
   FileText,
+  Grid,
+  CalendarClock,
 } from 'lucide-react';
 
 import TutorMatchModal from '@/components/TutorMatchModal';
@@ -196,7 +196,13 @@ export default function CounselorPortal() {
     e.preventDefault();
     if (!selectedLeadForUpdate) return;
     if (!updateNotes.trim()) {
-      setNoteError('Follow-up note/remark is mandatory.');
+      setNoteError('Follow-up note / remark is mandatory.');
+      return;
+    }
+
+    const isTerminal = updateStatus === 'LOST' || updateStatus === 'TUITION_CONFIRMED';
+    if (!isTerminal && !updateNextFollowup) {
+      setNoteError('Please select next follow-up date (use 1-tap Today, Tomorrow, or 3 Days buttons).');
       return;
     }
 
@@ -210,7 +216,7 @@ export default function CounselorPortal() {
         body: JSON.stringify({
           status: updateStatus,
           notes: updateNotes,
-          nextFollowupDate: updateNextFollowup || null,
+          nextFollowupDate: isTerminal ? null : (updateNextFollowup || null),
           performedBy: currentOperator,
         }),
       });
@@ -390,135 +396,286 @@ export default function CounselorPortal() {
   });
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'NEW_LEAD':
-        return <span className="badge" style={{ backgroundColor: '#FEF3C7', color: '#92400E', fontWeight: 800 }}>🆕 New Lead</span>;
-      case 'INTERESTED':
-        return <span className="badge" style={{ backgroundColor: '#FEF08A', color: '#854D0E', fontWeight: 800 }}>⭐ Highly Interested</span>;
-      case 'CONTACTED':
-        return <span className="badge" style={{ backgroundColor: '#E0F2FE', color: '#0369A1', fontWeight: 800 }}>📞 Contacted</span>;
-      case 'DEMO_SCHEDULED':
-        return <span className="badge" style={{ backgroundColor: '#DBEAFE', color: '#1E40AF', fontWeight: 800 }}>🎓 Demo Fixed</span>;
-      case 'TUITION_CONFIRMED':
-        return <span className="badge" style={{ backgroundColor: '#DCFCE7', color: '#166534', fontWeight: 800 }}>🏆 Tuition Won</span>;
-      case 'LOST':
-        return <span className="badge" style={{ backgroundColor: '#FEE2E2', color: '#991B1B', fontWeight: 800 }}>❌ Lost</span>;
-      default:
-        return <span className="badge" style={{ backgroundColor: '#F1F5F9', color: '#475569' }}>{status}</span>;
+    const norm = (status || '').toUpperCase().trim();
+    if (norm === 'NEW_LEAD' || norm === 'NEW' || norm === 'PENDING') {
+      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#FEF3C7', color: '#B45309', fontWeight: 700, fontSize: '0.74rem' }}>New Lead</span>;
     }
+    if (norm === 'INTERESTED' || norm === 'HIGHLY_INTERESTED') {
+      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#DCFCE7', color: '#15803D', fontWeight: 700, fontSize: '0.74rem' }}>Interested</span>;
+    }
+    if (norm === 'CONTACTED') {
+      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#DBEAFE', color: '#1E40AF', fontWeight: 700, fontSize: '0.74rem' }}>Contacted</span>;
+    }
+    if (norm === 'DEMO_SCHEDULED' || norm === 'DEMO_FIXED' || norm === 'DEMO') {
+      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#EDE9FE', color: '#6D28D9', fontWeight: 700, fontSize: '0.74rem' }}>Demo Fixed</span>;
+    }
+    if (norm === 'TUITION_CONFIRMED' || norm === 'CONVERTED' || norm === 'ADMISSION_CONFIRMED' || norm === 'WON') {
+      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#CCFBF1', color: '#0F766E', fontWeight: 700, fontSize: '0.74rem' }}>Converted</span>;
+    }
+    if (norm === 'LOST' || norm === 'CANCELLED' || norm === 'DROPPED' || norm === 'NOT_INTERESTED') {
+      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#FFE4E6', color: '#9F1239', fontWeight: 700, fontSize: '0.74rem' }}>Not Interested</span>;
+    }
+    return (
+      <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#F1F5F9', color: '#334155', fontWeight: 700, fontSize: '0.74rem' }}>
+        {status || 'New Lead'}
+      </span>
+    );
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)' }}>
-      <Navbar />
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F8FAFC' }}>
+      {/* Sleek Top Mini-Header for Portal Status */}
+      <header style={{ backgroundColor: '#0F172A', color: '#F8FAFC', padding: '0.65rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', borderBottom: '1px solid #1E293B' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#38BDF8' }}></span>
+          <span style={{ fontWeight: 700, letterSpacing: '0.03em' }}>TuitionForHome • Counselor & Operations Portal</span>
+          <span style={{ color: '#64748B' }}>|</span>
+          <span style={{ color: '#94A3B8' }}>SSSAM Academy Gurugram</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <span style={{ color: '#94A3B8' }}>
+            Current Desk: <strong style={{ color: '#38BDF8' }}>{currentOperator}</strong>
+          </span>
+          <a href="/" target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8', fontWeight: 600, textDecoration: 'none', fontSize: '0.78rem' }}>
+            View Public Site ↗
+          </a>
+        </div>
+      </header>
 
-      <main style={{ flex: 1, padding: '2.5rem 0 4rem 0' }}>
-        <div className="container">
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem', marginBottom: '2rem' }}>
-            <div>
-              <div className="badge badge-emerald" style={{ marginBottom: '0.35rem' }}>
-                <ShieldCheck size={14} />
-                <span>SSSAM ACADEMY • COUNSELOR & OPERATIONS HUB</span>
+      <main style={{ flex: 1, padding: '1.75rem 2rem 3rem 2rem' }}>
+        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+          {/* Main Grid: Left Sidebar + Right Content Area */}
+          <div style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '1.75rem', alignItems: 'flex-start' }}>
+
+            {/* LEFT STICKY SIDEBAR */}
+            <aside
+              style={{
+                position: 'sticky',
+                top: '90px',
+                backgroundColor: '#FFFFFF',
+                borderRadius: '20px',
+                border: '1px solid var(--border-hairline)',
+                padding: '1.5rem',
+                boxShadow: 'var(--shadow-sm)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.5rem',
+              }}
+            >
+              {/* Brand Header */}
+              <div>
+                <div className="badge badge-emerald" style={{ marginBottom: '0.4rem', fontSize: '0.72rem' }}>
+                  <ShieldCheck size={13} />
+                  <span>COUNSELOR DESK</span>
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                  Operations Hub
+                </h3>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  Calling & Lead Allocations
+                </div>
               </div>
-              <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                Shared Lead Follow-up & Matchmaking Desk
-              </h1>
-            </div>
 
-            {/* Operator Switcher */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', backgroundColor: '#FFFFFF', padding: '0.4rem 0.85rem', borderRadius: '12px', border: '1px solid var(--border-hairline)' }}>
-              <User size={16} color="var(--brand-teal)" />
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Desk:</span>
-              <select
-                value={currentOperator}
-                onChange={(e) => setCurrentOperator(e.target.value)}
-                style={{ border: 'none', background: 'transparent', fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-main)', outline: 'none', cursor: 'pointer' }}
-              >
-                <option value="Counselor Pooja">Counselor Pooja (Desk 1)</option>
-                <option value="Counselor Karan">Counselor Karan (Desk 2)</option>
-                <option value="Admin (SSSAM Lead Desk)">Admin (SSSAM Lead Desk)</option>
-              </select>
-            </div>
+              {/* Active Desk Selector */}
+              <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: '12px', border: '1px solid var(--border-hairline)' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                  Operator Desk
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <User size={15} color="var(--brand-teal)" />
+                  <select
+                    value={currentOperator}
+                    onChange={(e) => setCurrentOperator(e.target.value)}
+                    className="form-control form-control-sm"
+                    style={{ fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px', border: '1px solid #CBD5E1' }}
+                  >
+                    <option value="Counselor Pooja">Pooja (Senior Telecaller)</option>
+                    <option value="Counselor Amit">Amit (Admission Specialist)</option>
+                    <option value="Counselor Rahul">Rahul (Academic Lead)</option>
+                    <option value="Admin Team">Admin Team (Super Desk)</option>
+                  </select>
+                </div>
+              </div>
 
-            {/* Main Tab Switcher */}
-            <div style={{
-              display: 'flex',
-              backgroundColor: '#FFFFFF',
-              border: '1px solid var(--border-hairline)',
-              borderRadius: 'var(--radius-full)',
-              padding: '0.3rem',
-              boxShadow: 'var(--shadow-sm)',
-            }}>
-              <button
-                type="button"
-                onClick={() => setActiveTab('LEADS')}
-                style={{
-                  padding: '0.5rem 1.25rem',
-                  borderRadius: 'var(--radius-full)',
-                  border: 'none',
-                  backgroundColor: activeTab === 'LEADS' ? 'var(--brand-blue)' : 'transparent',
-                  color: activeTab === 'LEADS' ? '#FFFFFF' : 'var(--text-muted)',
-                  fontWeight: 700,
-                  fontSize: '0.88rem',
-                  cursor: 'pointer',
-                }}
-              >
-                📥 Shared Leads & Follow-ups ({leads.length})
-              </button>
+              {/* Navigation Menu */}
+              <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem', paddingLeft: '0.5rem' }}>
+                  Navigation Desk
+                </div>
 
-              <button
-                type="button"
-                onClick={() => setActiveTab('TUTOR_ALLOCATION')}
-                style={{
-                  padding: '0.5rem 1.25rem',
-                  borderRadius: 'var(--radius-full)',
-                  border: 'none',
-                  backgroundColor: activeTab === 'TUTOR_ALLOCATION' ? 'var(--brand-blue)' : 'transparent',
-                  color: activeTab === 'TUTOR_ALLOCATION' ? '#FFFFFF' : 'var(--text-muted)',
-                  fontWeight: 700,
-                  fontSize: '0.88rem',
-                  cursor: 'pointer',
-                }}
-              >
-                👨‍🏫 Tutor Lead Allocator ({VERIFIED_TUTORS.length})
-              </button>
+                {/* Nav 1: Shared Leads */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('LEADS')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    outline: 'none',
+                    boxShadow: activeTab === 'LEADS' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
+                    backgroundColor: activeTab === 'LEADS' ? '#6366F1' : 'transparent',
+                    color: activeTab === 'LEADS' ? '#FFFFFF' : '#334155',
+                    fontWeight: 700,
+                    fontSize: '0.84rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <Phone size={16} color={activeTab === 'LEADS' ? '#FFFFFF' : '#10B981'} />
+                    <span>Shared Leads Desk</span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      padding: '1px 6px',
+                      borderRadius: '6px',
+                      backgroundColor: activeTab === 'LEADS' ? 'rgba(255,255,255,0.25)' : '#DCFCE7',
+                      color: activeTab === 'LEADS' ? '#FFFFFF' : '#166534',
+                    }}
+                  >
+                    {leads.length}
+                  </span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveTab('INTERVIEWS')}
-                style={{
-                  padding: '0.5rem 1.25rem',
-                  borderRadius: 'var(--radius-full)',
-                  border: 'none',
-                  backgroundColor: activeTab === 'INTERVIEWS' ? 'var(--brand-blue)' : 'transparent',
-                  color: activeTab === 'INTERVIEWS' ? '#FFFFFF' : 'var(--text-muted)',
-                  fontWeight: 700,
-                  fontSize: '0.88rem',
-                  cursor: 'pointer',
-                }}
-              >
-                🎓 Tutor Interviews ({pendingTutors.length})
-              </button>
+                {/* Nav 2: Tutor Lead Allocator */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('TUTOR_ALLOCATION')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    outline: 'none',
+                    boxShadow: activeTab === 'TUTOR_ALLOCATION' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
+                    backgroundColor: activeTab === 'TUTOR_ALLOCATION' ? '#6366F1' : 'transparent',
+                    color: activeTab === 'TUTOR_ALLOCATION' ? '#FFFFFF' : '#334155',
+                    fontWeight: 700,
+                    fontSize: '0.84rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <MapPin size={16} color={activeTab === 'TUTOR_ALLOCATION' ? '#FFFFFF' : '#F59E0B'} />
+                    <span>Tutor Allocator</span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      padding: '1px 6px',
+                      borderRadius: '6px',
+                      backgroundColor: activeTab === 'TUTOR_ALLOCATION' ? 'rgba(255,255,255,0.25)' : '#FEF3C7',
+                      color: activeTab === 'TUTOR_ALLOCATION' ? '#FFFFFF' : '#92400E',
+                    }}
+                  >
+                    {VERIFIED_TUTORS.length}
+                  </span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveTab('INVOICE')}
-                style={{
-                  padding: '0.5rem 1.25rem',
-                  borderRadius: 'var(--radius-full)',
-                  border: 'none',
-                  backgroundColor: activeTab === 'INVOICE' ? 'var(--brand-blue)' : 'transparent',
-                  color: activeTab === 'INVOICE' ? '#FFFFFF' : 'var(--text-muted)',
-                  fontWeight: 700,
-                  fontSize: '0.88rem',
-                  cursor: 'pointer',
-                }}
-              >
-                💳 Commission Generator
-              </button>
-            </div>
-          </div>
+                {/* Nav 3: Tutor Interviews & KYC */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('INTERVIEWS')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    outline: 'none',
+                    boxShadow: activeTab === 'INTERVIEWS' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
+                    backgroundColor: activeTab === 'INTERVIEWS' ? '#6366F1' : 'transparent',
+                    color: activeTab === 'INTERVIEWS' ? '#FFFFFF' : '#334155',
+                    fontWeight: 700,
+                    fontSize: '0.84rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <UserCheck size={16} color={activeTab === 'INTERVIEWS' ? '#FFFFFF' : '#6366F1'} />
+                    <span>Tutor Interviews</span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      padding: '1px 6px',
+                      borderRadius: '6px',
+                      backgroundColor: activeTab === 'INTERVIEWS' ? 'rgba(255,255,255,0.25)' : '#F1F5F9',
+                      color: activeTab === 'INTERVIEWS' ? '#FFFFFF' : '#64748B',
+                    }}
+                  >
+                    {pendingTutors.length}
+                  </span>
+                </button>
+
+                {/* Nav 4: Commission Generator */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('INVOICE')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    outline: 'none',
+                    boxShadow: activeTab === 'INVOICE' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
+                    backgroundColor: activeTab === 'INVOICE' ? '#6366F1' : 'transparent',
+                    color: activeTab === 'INVOICE' ? '#FFFFFF' : '#334155',
+                    fontWeight: 700,
+                    fontSize: '0.84rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <QrCode size={16} color={activeTab === 'INVOICE' ? '#FFFFFF' : '#10B981'} />
+                    <span>Commission Generator</span>
+                  </div>
+                </button>
+              </nav>
+            </aside>
+
+            {/* RIGHT MAIN CONTENT VIEWPORT */}
+            <section style={{ minWidth: 0 }}>
+              {/* Dynamic Header */}
+              <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div>
+                  <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                    {activeTab === 'LEADS' && 'Shared Lead Follow-up & Matchmaking Desk'}
+                    {activeTab === 'TUTOR_ALLOCATION' && 'Proximity Student Lead Allocator by Tutor'}
+                    {activeTab === 'INTERVIEWS' && 'Tutor Screening & Video Evaluation'}
+                    {activeTab === 'INVOICE' && 'Tuition Confirmation & Placement Fee Generator'}
+                  </h1>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', margin: 0 }}>
+                    {activeTab === 'LEADS' && '8 operational filters with live counts, mandatory remarks, and double-call timeline.'}
+                    {activeTab === 'TUTOR_ALLOCATION' && 'Match and dispatch nearby student inquiries based on tutor travel radius.'}
+                    {activeTab === 'INTERVIEWS' && 'Review KYC documents, conduct subject interviews, and activate verified educator badge.'}
+                    {activeTab === 'INVOICE' && 'Generate 50% 1st-month placement fee invoice with instant UPI QR code.'}
+                  </p>
+                </div>
+              </div>
 
           {/* TAB 1: SHARED LEADS & FOLLOW-UP TIMELINE */}
           {activeTab === 'LEADS' && (
@@ -543,18 +700,17 @@ export default function CounselorPortal() {
                   </div>
                 </div>
 
-                {/* 8 Operational Filters */}
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+                {/* Filter Pills (Matching User's Reference Palette) */}
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', overflowX: 'auto', paddingBottom: '0.25rem' }}>
                   {[
-                    { id: 'ALL', label: '📋 All Leads', count: filterCounts.ALL },
-                    { id: 'TODAY', label: '🔔 Today\'s Follow-up', count: filterCounts.TODAY, highlight: true },
-                    { id: 'OVERDUE', label: '⚠️ Pending / Overdue', count: filterCounts.OVERDUE, danger: true },
-                    { id: 'NEW_LEAD', label: '🆕 Not Contacted', count: filterCounts.NEW_LEAD },
-                    { id: 'INTERESTED', label: '⭐ Highly Interested', count: filterCounts.INTERESTED, star: true },
-                    { id: 'CONTACTED', label: '📞 Contacted', count: filterCounts.CONTACTED },
-                    { id: 'DEMO_SCHEDULED', label: '🎓 Demo Scheduled', count: filterCounts.DEMO_SCHEDULED },
-                    { id: 'TUITION_CONFIRMED', label: '🏆 Converted', count: filterCounts.TUITION_CONFIRMED },
-                    { id: 'LOST', label: '❌ Lost', count: filterCounts.LOST },
+                    { id: 'ALL', label: 'All', count: filterCounts.ALL, icon: <Grid size={12} />, bg: '#283344', text: '#FFFFFF', countBg: 'rgba(255,255,255,0.2)', border: '#1E293B' },
+                    { id: 'TODAY', label: 'Today', count: filterCounts.TODAY, icon: <CalendarClock size={12} />, bg: '#EA580C', text: '#FFFFFF', countBg: 'rgba(0,0,0,0.18)', border: '#C2410C' },
+                    { id: 'OVERDUE', label: 'Pending', count: filterCounts.OVERDUE, icon: <Clock size={12} />, bg: '#D97706', text: '#FFFFFF', countBg: 'rgba(0,0,0,0.18)', border: '#B45309' },
+                    { id: 'NEW_LEAD', label: 'New', count: filterCounts.NEW_LEAD, bg: '#F1F5F9', text: '#334155', countBg: '#E2E8F0', border: '#CBD5E1' },
+                    { id: 'CONTACTED', label: 'Contacted', count: filterCounts.CONTACTED, bg: '#FEF9C3', text: '#854D0E', countBg: '#FDE047', border: '#FACC15' },
+                    { id: 'INTERESTED', label: 'Interested', count: filterCounts.INTERESTED, bg: '#ECFCCB', text: '#3F6212', countBg: '#D9F99D', border: '#BEF264' },
+                    { id: 'DEMO_SCHEDULED', label: 'Demo Fixed', count: filterCounts.DEMO_SCHEDULED, bg: '#EDE9FE', text: '#6D28D9', countBg: '#DDD6FE', border: '#C4B5FD' },
+                    { id: 'LOST', label: 'Not Interested', count: filterCounts.LOST, bg: '#FFE4E6', text: '#9F1239', countBg: '#FECDD3', border: '#FDA4AF' },
                   ].map((tab) => {
                     const isActive = activeFilter === tab.id;
                     return (
@@ -563,47 +719,32 @@ export default function CounselorPortal() {
                         type="button"
                         onClick={() => setActiveFilter(tab.id)}
                         style={{
-                          padding: '0.45rem 0.85rem',
-                          borderRadius: '10px',
-                          border: `1.5px solid ${
-                            isActive
-                              ? 'var(--brand-blue)'
-                              : tab.danger && tab.count > 0
-                              ? '#FCA5A5'
-                              : tab.highlight && tab.count > 0
-                              ? '#93C5FD'
-                              : 'var(--border-hairline)'
-                          }`,
-                          backgroundColor: isActive
-                            ? 'var(--brand-blue)'
-                            : tab.danger && tab.count > 0
-                            ? '#FEF2F2'
-                            : tab.highlight && tab.count > 0
-                            ? '#EFF6FF'
-                            : '#FFFFFF',
-                          color: isActive
-                            ? '#FFFFFF'
-                            : tab.danger && tab.count > 0
-                            ? '#DC2626'
-                            : tab.highlight && tab.count > 0
-                            ? '#1D4ED8'
-                            : 'var(--text-main)',
-                          fontWeight: isActive || (tab.count > 0 && (tab.danger || tab.highlight || tab.star)) ? 700 : 600,
-                          fontSize: '0.82rem',
+                          padding: '0.32rem 0.7rem',
+                          borderRadius: '8px',
+                          border: `1px solid ${isActive ? '#38BDF8' : tab.border}`,
+                          backgroundColor: tab.bg,
+                          color: tab.text,
+                          boxShadow: isActive ? '0 0 0 2px #38BDF8, 0 2px 8px rgba(0,0,0,0.12)' : '0 1px 2px rgba(0,0,0,0.04)',
+                          fontWeight: 700,
+                          fontSize: '0.74rem',
                           cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '0.35rem',
                           transition: 'all 0.15s ease',
+                          lineHeight: 1.2,
+                          opacity: isActive ? 1 : 0.92,
                         }}
                       >
+                        {tab.icon && <span>{tab.icon}</span>}
                         <span>{tab.label}</span>
                         <span
                           style={{
-                            padding: '0.1rem 0.45rem',
+                            padding: '1px 6px',
                             borderRadius: '999px',
-                            backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.06)',
-                            fontSize: '0.75rem',
+                            backgroundColor: tab.countBg,
+                            color: tab.text,
+                            fontSize: '0.68rem',
                             fontWeight: 800,
                           }}
                         >
@@ -1344,173 +1485,192 @@ export default function CounselorPortal() {
               </div>
             </div>
           )}
+            </section>
+          </div>
         </div>
       </main>
 
-      {/* UPDATE FOLLOW-UP & MANDATORY NOTE MODAL */}
+      {/* COMPACT & CLEAN UPDATE FOLLOW-UP MODAL (COUNSELOR) */}
       {selectedLeadForUpdate && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
             zIndex: 1000,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             padding: '1rem',
+            backdropFilter: 'blur(2px)',
           }}
         >
           <div
-            className="apple-card"
             style={{
               width: '100%',
-              maxWidth: '560px',
+              maxWidth: '430px',
               backgroundColor: '#FFFFFF',
-              padding: '2rem',
-              borderRadius: '20px',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
-              maxHeight: '90vh',
-              overflowY: 'auto',
+              padding: '1.25rem 1.5rem',
+              borderRadius: '16px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
+              border: '1px solid #E2E8F0',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-hairline)', paddingBottom: '1rem' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.75rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>
-                  Update Lead Follow-up
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
+                  Update Follow-up
                 </h3>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  Parent: <strong>{selectedLeadForUpdate.parentName}</strong> ({selectedLeadForUpdate.locality})
+                <div style={{ fontSize: '0.76rem', color: '#64748B', marginTop: '2px' }}>
+                  Student: <strong>{selectedLeadForUpdate.parentName}</strong> ({selectedLeadForUpdate.locality})
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedLeadForUpdate(null)}
-                style={{ border: 'none', background: 'transparent', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--text-muted)' }}
+                style={{ border: 'none', background: '#F1F5F9', borderRadius: '6px', width: '26px', height: '26px', fontSize: '0.9rem', cursor: 'pointer', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSaveFollowup} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <form onSubmit={handleSaveFollowup} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
               {/* Status Selector */}
-              <div className="form-group">
-                <label className="form-label" style={{ fontWeight: 700 }}>
-                  Update Lead Status
+              <div>
+                <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
+                  Lead Status
                 </label>
                 <select
                   value={updateStatus}
                   onChange={(e) => setUpdateStatus(e.target.value)}
                   className="form-control"
-                  style={{ fontWeight: 700 }}
+                  style={{ fontWeight: 600, fontSize: '0.82rem', padding: '0.42rem 0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1' }}
                 >
-                  <option value="NEW_LEAD">🆕 New Lead (Not Contacted)</option>
-                  <option value="CONTACTED">📞 Contacted (Spoke with parent)</option>
-                  <option value="INTERESTED">⭐ Highly Interested (Ready for tutor)</option>
-                  <option value="DEMO_SCHEDULED">🎓 Demo Scheduled</option>
-                  <option value="TUITION_CONFIRMED">🏆 Tuition Confirmed (Won)</option>
-                  <option value="LOST">❌ Lost / Not Interested</option>
+                  <option value="CONTACTED">Contacted</option>
+                  <option value="INTERESTED">Interested</option>
+                  <option value="DEMO_SCHEDULED">Demo Fixed</option>
+                  <option value="LOST">Not Interested</option>
                 </select>
               </div>
 
-              {/* 1-Tap Quick Note Buttons */}
+              {/* Notes / Remarks */}
               <div>
-                <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
-                  ⚡ 1-Tap Quick Note Presets:
-                </label>
-                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickNote('Parent did not pick call. Call back in 2 hours.', 'CONTACTED')}
-                    style={{ padding: '0.35rem 0.65rem', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid var(--border-hairline)', backgroundColor: '#F8FAFC', cursor: 'pointer', fontWeight: 600 }}
-                  >
-                    📞 Didn&apos;t pick call
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickNote('Shared 2 shortlisted tutor profiles on WhatsApp.', 'CONTACTED')}
-                    style={{ padding: '0.35rem 0.65rem', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid var(--border-hairline)', backgroundColor: '#F8FAFC', cursor: 'pointer', fontWeight: 600 }}
-                  >
-                    💬 WhatsApp profiles sent
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickNote('Parent very positive. Agreed for demo trial.', 'INTERESTED')}
-                    style={{ padding: '0.35rem 0.65rem', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid var(--border-hairline)', backgroundColor: '#F8FAFC', cursor: 'pointer', fontWeight: 600 }}
-                  >
-                    ⭐ High Interest
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickNote('Demo class fixed for tomorrow 5:00 PM.', 'DEMO_SCHEDULED')}
-                    style={{ padding: '0.35rem 0.65rem', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid var(--border-hairline)', backgroundColor: '#F8FAFC', cursor: 'pointer', fontWeight: 600 }}
-                  >
-                    📅 Demo Fixed
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickNote('Parent already hired a local teacher.', 'LOST')}
-                    style={{ padding: '0.35rem 0.65rem', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid var(--border-hairline)', backgroundColor: '#F8FAFC', cursor: 'pointer', fontWeight: 600 }}
-                  >
-                    ❌ Lost to competitor
-                  </button>
-                </div>
-              </div>
-
-              {/* Mandatory Note / Remarks */}
-              <div className="form-group">
-                <label className="form-label" style={{ fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Follow-up Note / Call Remarks *</span>
-                  <span style={{ fontSize: '0.75rem', color: '#EF4444' }}>Mandatory</span>
+                <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
+                  Notes / Remarks <span style={{ color: '#DC2626' }}>*</span>
                 </label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={updateNotes}
                   onChange={(e) => setUpdateNotes(e.target.value)}
-                  placeholder="e.g. Spoke with Mrs. Verma. Requested Class 10 Math demo on Saturday 4 PM. Budget ₹9,000 agreed."
+                  placeholder="e.g. Spoke to parent, requested weekend demo..."
                   className="form-control"
+                  style={{ fontSize: '0.82rem', padding: '0.42rem 0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1', resize: 'vertical' }}
                   required
-                  style={{ resize: 'vertical' }}
                 />
               </div>
 
-              {/* Next Follow-up Reminder */}
-              <div className="form-group">
-                <label className="form-label" style={{ fontWeight: 700 }}>
-                  ⏰ Set Next Follow-up Date & Time (Optional)
-                </label>
-                <input
-                  type="datetime-local"
-                  value={updateNextFollowup}
-                  onChange={(e) => setUpdateNextFollowup(e.target.value)}
-                  className="form-control"
-                />
-              </div>
+              {/* Next Follow-up Reminder with Quick Buttons below Date */}
+              {updateStatus === 'LOST' || updateStatus === 'TUITION_CONFIRMED' ? (
+                <div style={{ padding: '0.45rem 0.7rem', borderRadius: '8px', backgroundColor: '#F8FAFC', border: '1px dashed #CBD5E1', fontSize: '0.74rem', color: '#64748B' }}>
+                  ✓ No follow-up required for {updateStatus === 'LOST' ? 'Not Interested' : 'Converted'}
+                </div>
+              ) : (
+                <div>
+                  <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
+                    Next Follow-up Date <span style={{ color: '#DC2626' }}>*</span>
+                  </label>
+
+                  {/* Custom Date Selector */}
+                  <input
+                    type="date"
+                    value={updateNextFollowup ? updateNextFollowup.split('T')[0] : ''}
+                    onChange={(e) => setUpdateNextFollowup(e.target.value)}
+                    className="form-control"
+                    style={{ fontSize: '0.82rem', padding: '0.4rem 0.65rem', borderRadius: '8px', border: '1px solid #CBD5E1', width: '100%' }}
+                    required
+                  />
+
+                  {/* Quick 1-Tap Pickers directly below the input */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem', marginTop: '0.35rem' }}>
+                    {[
+                      { label: '⚡ Today', days: 0 },
+                      { label: '⚡ Tomorrow', days: 1 },
+                      { label: '⚡ In 3 Days', days: 3 },
+                    ].map((preset) => {
+                      const targetD = new Date(Date.now() + preset.days * 86400000).toISOString().split('T')[0];
+                      const isSelected = updateNextFollowup.startsWith(targetD);
+                      return (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => setUpdateNextFollowup(targetD)}
+                          style={{
+                            padding: '0.28rem 0.35rem',
+                            borderRadius: '6px',
+                            border: `1px solid ${isSelected ? '#6366F1' : '#E2E8F0'}`,
+                            backgroundColor: isSelected ? '#EEF2FF' : '#F8FAFC',
+                            color: isSelected ? '#4F46E5' : '#475569',
+                            fontSize: '0.72rem',
+                            fontWeight: isSelected ? 800 : 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            textAlign: 'center',
+                          }}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {noteError && (
-                <div style={{ padding: '0.6rem 0.85rem', borderRadius: '8px', backgroundColor: '#FEE2E2', color: '#DC2626', fontSize: '0.82rem', fontWeight: 700 }}>
+                <div style={{ padding: '0.42rem 0.7rem', borderRadius: '6px', backgroundColor: '#FEE2E2', color: '#DC2626', fontSize: '0.75rem', fontWeight: 700 }}>
                   ⚠️ {noteError}
                 </div>
               )}
 
-              {/* Submit Buttons */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem', paddingTop: '0.65rem', borderTop: '1px solid #F1F5F9' }}>
                 <button
                   type="button"
                   onClick={() => setSelectedLeadForUpdate(null)}
-                  className="btn btn-secondary"
+                  style={{
+                    padding: '0.38rem 0.8rem',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    backgroundColor: '#FFFFFF',
+                    color: '#475569',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
                   disabled={noteSubmitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary"
                   disabled={noteSubmitting}
-                  style={{ backgroundColor: 'var(--brand-blue)' }}
+                  style={{
+                    padding: '0.38rem 0.95rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: '#6366F1',
+                    color: '#FFFFFF',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    boxShadow: '0 2px 6px rgba(99, 102, 241, 0.3)',
+                  }}
                 >
-                  <Send size={16} />
-                  <span>{noteSubmitting ? 'Saving...' : 'Save & Update Timeline'}</span>
+                  <Send size={13} />
+                  <span>{noteSubmitting ? 'Saving...' : 'Save Update'}</span>
                 </button>
               </div>
             </form>
@@ -1527,8 +1687,6 @@ export default function CounselorPortal() {
           onAssignTutor={(tutorName, tutorId, notes) => handleAssignProximityTutor(tutorName, tutorId, notes)}
         />
       )}
-
-      <Footer />
     </div>
   );
 }

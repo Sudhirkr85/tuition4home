@@ -9,6 +9,8 @@ export interface LocalityInfo {
 export interface MockTutor {
   id: string;
   name: string;
+  phone: string;
+  email: string;
   avatarUrl: string;
   introVideoUrl: string;
   videoDuration: string;
@@ -98,7 +100,9 @@ export const VERIFIED_TUTORS: MockTutor[] = [
   {
     id: 'tut-1',
     name: 'Rohit Sharma',
-    avatarUrl: '/tutor_rohit_sharma_avatar.jpg',
+    phone: '9811204921',
+    email: 'rohit.sharma@tuitionforhome.com',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
     introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     videoDuration: '1m 15s',
     highestDegree: 'M.Sc. Mathematics (Delhi University)',
@@ -122,7 +126,9 @@ export const VERIFIED_TUTORS: MockTutor[] = [
   {
     id: 'tut-2',
     name: 'Dr. Ananya Sengupta',
-    avatarUrl: '/tutor_ananya_sengupta_avatar.jpg',
+    phone: '9873194021',
+    email: 'ananya.sengupta@tuitionforhome.com',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
     introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     videoDuration: '1m 40s',
     highestDegree: 'Ph.D. Organic Chemistry (IIT Delhi Alum)',
@@ -146,7 +152,9 @@ export const VERIFIED_TUTORS: MockTutor[] = [
   {
     id: 'tut-3',
     name: 'Priyanka Verma',
-    avatarUrl: '/tutor_priyanka_verma_avatar.jpg',
+    phone: '9517447689',
+    email: 'priyanka.verma@tuitionforhome.com',
+    avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop&q=80',
     introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     videoDuration: '1m 10s',
     highestDegree: 'B.Tech CS (NSUT) & SSSAM Coding Mentor',
@@ -170,6 +178,8 @@ export const VERIFIED_TUTORS: MockTutor[] = [
   {
     id: 'tut-4',
     name: 'Priyanka Aggarwal',
+    phone: '9810482019',
+    email: 'priyanka.aggarwal@tuitionforhome.com',
     avatarUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&auto=format&fit=crop&q=80',
     introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     videoDuration: '1m 25s',
@@ -190,6 +200,32 @@ export const VERIFIED_TUTORS: MockTutor[] = [
     totalReviews: 24,
     bio: 'Specialist in Class 11-12 CBSE Accounts & Economics. Simplifies balance sheets and cash flow statements with practical company examples.',
     badge: 'Commerce & Accounts Pro',
+  },
+  {
+    id: 'tut-5',
+    name: 'Vikram Malhotra',
+    phone: '9899124012',
+    email: 'vikram.malhotra@tuitionforhome.com',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+    introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    videoDuration: '1m 30s',
+    highestDegree: 'B.Tech Mechanical (IIT Roorkee)',
+    experienceYears: 8,
+    teachingMode: 'BOTH',
+    subjects: ['Physics', 'Mathematics'],
+    classes: ['Class 11 & 12 (Board & JEE/NEET)', 'Class 9 & 10 (CBSE / ICSE Board)'],
+    boards: ['CBSE', 'ICSE', 'IB (International Baccalaureate)'],
+    serviceAreas: ['Nirvana Country (Sector 50)', 'Sohna Road', 'Sector 48', 'Sector 57'],
+    travelRadiusKm: 8,
+    hourlyRateHome: 1100,
+    hourlyRateOnline: 750,
+    monthlyRateMin: 9000,
+    isVerified: true,
+    hasPoliceCheck: true,
+    rating: 4.98,
+    totalReviews: 44,
+    bio: 'IITian Physics specialist with 8 years of coaching experience in Gurgaon. Master in rotational dynamics, electromagnetism, and board numericals.',
+    badge: 'IITian Physics Mentor',
   },
 ];
 

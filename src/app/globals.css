@@ -16,15 +16,22 @@
   --text-muted: #475569;       /* Muted Slate Charcoal */
   --text-light: #94A3B8;
 
-  /* Brand Accents (Deep Teal / Cyan) */
+  /* Brand Accents (Deep Teal / Cyan / Royal Blue) */
   --brand-teal: #0D9488;       /* Primary Action Teal */
   --brand-teal-hover: #0F766E;
   --brand-teal-light: #CCFBF1; /* Soft Mint Pill Background */
   --brand-teal-subtle: #E0F2FE;
 
+  --brand-blue: #0284C7;       /* Royal Portal Blue */
+  --brand-blue-hover: #0369A1;
+  --brand-blue-light: #E0F2FE;
+  --brand-blue-subtle: #F0F9FF;
+
   /* Status Colors */
   --brand-emerald: #059669;
+  --brand-emerald-light: #DCFCE7;
   --brand-amber: #D97706;
+  --brand-amber-light: #FEF3C7;
 
   /* Borders & Shadows */
   --border-hairline: #E2E8F0;
@@ -223,7 +230,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.8rem 1.5rem;
+  padding: 0.75rem 1.5rem;
   border-radius: var(--radius-full);
   font-weight: 700;
   font-size: 0.92rem;
@@ -232,6 +239,8 @@ h3 {
   transition: var(--transition-fast);
   text-align: center;
   justify-content: center;
+  white-space: nowrap;
+  outline: none;
 }
 
 .btn-primary {
@@ -279,8 +288,9 @@ h3 {
 }
 
 .btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.82rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8rem;
+  border-radius: 10px;
 }
 
 /* Form Controls */

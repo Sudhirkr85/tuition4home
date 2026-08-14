@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import {
@@ -29,6 +30,21 @@ import {
   Send,
   Home,
   Video,
+  LogOut,
+  Lock,
+  UserCheck,
+  AlertCircle,
+  GraduationCap,
+  RotateCcw,
+  Eye,
+  BookOpen,
+  Menu,
+  X,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Grid,
+  CalendarClock,
+  Clock,
 } from 'lucide-react';
 import { SSSAM_OFFICE_DETAILS, VERIFIED_TUTORS, MockTutor } from '@/lib/data';
 import TutorMatchModal from '@/components/TutorMatchModal';
@@ -77,7 +93,11 @@ interface LeadItem {
 }
 
 export default function SuperAdminPage() {
-  const [activeAdminTab, setActiveAdminTab] = useState<'OVERVIEW' | 'COUNSELORS' | 'LEADS' | 'TUTOR_ALLOCATION'>('OVERVIEW');
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [adminUser, setAdminUser] = useState<any>(null);
+
+  const [activeAdminTab, setActiveAdminTab] = useState<'OVERVIEW' | 'COUNSELORS' | 'LEADS' | 'TUTOR_ALLOCATION' | 'PRICING_CAMPAIGNS' | 'CONVERTED'>('OVERVIEW');
   const [selectedTutorForLeads, setSelectedTutorForLeads] = useState<MockTutor>(VERIFIED_TUTORS[0]);
 
   // Pricing & campaign config state
@@ -91,6 +111,7 @@ export default function SuperAdminPage() {
   // Counselors State
   const [counselors, setCounselors] = useState<Counselor[]>([]);
   const [counselorLoading, setCounselorLoading] = useState(false);
+  const [counselorSearch, setCounselorSearch] = useState('');
   const [showAddCounselorModal, setShowAddCounselorModal] = useState(false);
   const [newCounselorName, setNewCounselorName] = useState('');
   const [newCounselorEmail, setNewCounselorEmail] = useState('');
@@ -100,15 +121,54 @@ export default function SuperAdminPage() {
   const [counselorFormSubmitting, setCounselorFormSubmitting] = useState(false);
   const [counselorSuccessMsg, setCounselorSuccessMsg] = useState('');
 
+  // Counselor Edit & Password Reset State
+  const [selectedCounselorForEdit, setSelectedCounselorForEdit] = useState<Counselor | null>(null);
+  const [editCounselorName, setEditCounselorName] = useState('');
+  const [editCounselorEmail, setEditCounselorEmail] = useState('');
+  const [editCounselorPhone, setEditCounselorPhone] = useState('');
+  const [editCounselorPassword, setEditCounselorPassword] = useState('');
+  const [editCounselorSubmitting, setEditCounselorSubmitting] = useState(false);
+  const [editCounselorError, setEditCounselorError] = useState('');
+
+  // Sidebar Collapse & Mobile Drawer State
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
   // Leads State
   const [leads, setLeads] = useState<LeadItem[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('ALL');
   const [expandedTimelines, setExpandedTimelines] = useState<Record<string, boolean>>({});
+  const [dashboardMonthFilter, setDashboardMonthFilter] = useState<'THIS_MONTH' | 'LAST_MONTH' | 'LAST_3_MONTHS' | 'ALL_TIME'>('THIS_MONTH');
 
   // Proximity Tutor Match State
   const [selectedLeadForMatching, setSelectedLeadForMatching] = useState<LeadItem | null>(null);
+
+  // Full Lead Detail View Modal & Hover Notes (1s Hold Delay)
+  const [selectedLeadForFullView, setSelectedLeadForFullView] = useState<LeadItem | null>(null);
+  const [selectedConverted, setSelectedConverted] = useState<LeadItem | null>(null);
+  const [hoveredLeadId, setHoveredLeadId] = useState<string | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Leads Desk Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const handleRowMouseEnter = (id: string) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredLeadId(id);
+    }, 1000); // 1 second hold
+  };
+
+  const handleRowMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setHoveredLeadId(null);
+  };
 
   // Follow-up modal state
   const [selectedLeadForUpdate, setSelectedLeadForUpdate] = useState<LeadItem | null>(null);
@@ -117,6 +177,35 @@ export default function SuperAdminPage() {
   const [updateNextFollowup, setUpdateNextFollowup] = useState<string>('');
   const [noteSubmitting, setNoteSubmitting] = useState(false);
   const [noteError, setNoteError] = useState('');
+
+  // Authentication check on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('tfh_admin_user');
+      if (!stored) {
+        setIsAuthenticated(false);
+        router.push('/admin/login');
+      } else {
+        try {
+          const parsed = JSON.parse(stored);
+          setAdminUser(parsed);
+          setIsAuthenticated(true);
+          fetchCounselors();
+          fetchLeads();
+        } catch {
+          setIsAuthenticated(false);
+          router.push('/admin/login');
+        }
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('tfh_admin_user');
+    }
+    router.push('/admin/login');
+  };
 
   // Fetch counselors
   const fetchCounselors = async () => {
@@ -204,6 +293,60 @@ export default function SuperAdminPage() {
     }
   };
 
+  // Open Edit & Password Reset Modal for Counselor
+  const handleOpenEditCounselor = (csl: Counselor) => {
+    setSelectedCounselorForEdit(csl);
+    setEditCounselorName(csl.name);
+    setEditCounselorEmail(csl.email);
+    setEditCounselorPhone(csl.phone || '');
+    setEditCounselorPassword('');
+    setEditCounselorError('');
+  };
+
+  // Update Counselor Details & Reset Password
+  const handleUpdateCounselor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCounselorForEdit) return;
+
+    if (!editCounselorName || !editCounselorEmail) {
+      setEditCounselorError('Name and Email are required.');
+      return;
+    }
+
+    setEditCounselorSubmitting(true);
+    setEditCounselorError('');
+
+    try {
+      const res = await fetch('/api/admin/counselors', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: selectedCounselorForEdit.id,
+          name: editCounselorName,
+          email: editCounselorEmail,
+          phone: editCounselorPhone,
+          password: editCounselorPassword.trim() ? editCounselorPassword.trim() : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setCounselorSuccessMsg(`✅ Counselor ${editCounselorName} updated successfully!`);
+        setCounselors((prev) =>
+          prev.map((c) => (c.id === selectedCounselorForEdit.id ? { ...c, ...data.counselor } : c))
+        );
+        setSelectedCounselorForEdit(null);
+        setTimeout(() => setCounselorSuccessMsg(''), 4000);
+      } else {
+        setEditCounselorError(data.error || 'Failed to update counselor');
+      }
+    } catch {
+      setEditCounselorError('Network error updating counselor');
+    } finally {
+      setEditCounselorSubmitting(false);
+    }
+  };
+
   const toggleTimeline = (leadId: string) => {
     setExpandedTimelines((prev) => ({
       ...prev,
@@ -223,7 +366,13 @@ export default function SuperAdminPage() {
     e.preventDefault();
     if (!selectedLeadForUpdate) return;
     if (!updateNotes.trim()) {
-      setNoteError('Follow-up note/remark is mandatory.');
+      setNoteError('Follow-up note / remark is mandatory.');
+      return;
+    }
+
+    const isTerminal = updateStatus === 'LOST' || updateStatus === 'TUITION_CONFIRMED';
+    if (!isTerminal && !updateNextFollowup) {
+      setNoteError('Please select next follow-up date (use 1-tap Today, Tomorrow, or 3 Days buttons).');
       return;
     }
 
@@ -237,7 +386,7 @@ export default function SuperAdminPage() {
         body: JSON.stringify({
           status: updateStatus,
           notes: updateNotes,
-          nextFollowupDate: updateNextFollowup || null,
+          nextFollowupDate: isTerminal ? null : (updateNextFollowup || null),
           performedBy: 'Admin (SSSAM Lead Desk)',
         }),
       });
@@ -272,6 +421,18 @@ export default function SuperAdminPage() {
               : l
           )
         );
+
+        // Sync full view if open
+        if (selectedLeadForFullView && selectedLeadForFullView.id === selectedLeadForUpdate.id) {
+          setSelectedLeadForFullView({
+            ...selectedLeadForFullView,
+            status: updateStatus as any,
+            notes: updateNotes,
+            nextFollowupDate: updateNextFollowup || selectedLeadForFullView.nextFollowupDate,
+            updatedAt: new Date().toISOString(),
+            activities: updatedActivities,
+          });
+        }
 
         setExpandedTimelines((prev) => ({ ...prev, [selectedLeadForUpdate.id]: true }));
         setSelectedLeadForUpdate(null);
@@ -317,7 +478,7 @@ export default function SuperAdminPage() {
           l.id === selectedLeadForMatching.id
             ? {
                 ...l,
-                status: 'DEMO_SCHEDULED',
+                status: l.status === 'TUITION_CONFIRMED' ? 'TUITION_CONFIRMED' : 'DEMO_SCHEDULED',
                 assignedTutor: tutorName,
                 notes: matchNote,
                 updatedAt: new Date().toISOString(),
@@ -327,9 +488,32 @@ export default function SuperAdminPage() {
         )
       );
 
+      // Sync full view if open
+      if (selectedLeadForFullView && selectedLeadForFullView.id === selectedLeadForMatching.id) {
+        setSelectedLeadForFullView({
+          ...selectedLeadForFullView,
+          status: selectedLeadForFullView.status === 'TUITION_CONFIRMED' ? 'TUITION_CONFIRMED' : 'DEMO_SCHEDULED',
+          assignedTutor: tutorName,
+          notes: matchNote,
+          updatedAt: new Date().toISOString(),
+          activities: updatedActivities,
+        });
+      }
+
+      // Sync converted view if open
+      if (selectedConverted && selectedConverted.id === selectedLeadForMatching.id) {
+        setSelectedConverted({
+          ...selectedConverted,
+          assignedTutor: tutorName,
+          notes: matchNote,
+          updatedAt: new Date().toISOString(),
+          activities: updatedActivities,
+        });
+      }
+
       setExpandedTimelines((prev) => ({ ...prev, [selectedLeadForMatching.id]: true }));
       setSelectedLeadForMatching(null);
-      alert(`🎉 Successfully matched tutor ${tutorName}! Demo status logged and timeline updated.`);
+      alert(`🎉 Successfully assigned tutor ${tutorName}! Tutor updated.`);
     } catch (err) {
       console.error('Failed to assign tutor:', err);
     }
@@ -349,6 +533,38 @@ export default function SuperAdminPage() {
     const now = new Date();
     return d.getTime() < now.setHours(0, 0, 0, 0);
   };
+
+  // Dashboard Month & Year Filtering
+  const [selectedYear, setSelectedYear] = useState<string>('2026');
+  const [selectedMonth, setSelectedMonth] = useState<string>('08');
+
+  const monthFilteredLeads = leads.filter((l) => {
+    const created = new Date(l.createdAt);
+    const leadYear = String(created.getFullYear());
+    const leadMonth = String(created.getMonth() + 1).padStart(2, '0');
+
+    if (selectedYear !== 'ALL' && leadYear !== selectedYear) return false;
+    if (selectedMonth !== 'ALL' && leadMonth !== selectedMonth) return false;
+    return true;
+  });
+
+  const urgentActionCount = monthFilteredLeads.filter(
+    (l) => l.nextFollowupDate && (isToday(l.nextFollowupDate) || isOverdue(l.nextFollowupDate))
+  ).length;
+
+  const freshUncontactedCount = monthFilteredLeads.filter((l) => l.status === 'NEW_LEAD').length;
+
+  const activePipelineCount = monthFilteredLeads.filter((l) =>
+    ['INTERESTED', 'CONTACTED', 'DEMO_SCHEDULED'].includes(l.status)
+  ).length;
+
+  const closedWonCount = monthFilteredLeads.filter((l) => l.status === 'TUITION_CONFIRMED').length;
+  const lostCount = monthFilteredLeads.filter((l) => l.status === 'LOST').length;
+
+  // Active Open Leads (Excluding closed Won/Done and Lost)
+  const activeOpenLeadsCount = leads.filter(
+    (l) => l.status !== 'LOST' && l.status !== 'TUITION_CONFIRMED'
+  ).length;
 
   // Filter calculations
   const filterCounts = {
@@ -387,189 +603,875 @@ export default function SuperAdminPage() {
     return true;
   });
 
+  // Leads Desk Pagination Calculations
+  const totalPages = Math.ceil(filteredLeads.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, filteredLeads.length);
+  const paginatedLeads = filteredLeads.slice(startIndex, endIndex);
+
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'NEW_LEAD':
-        return <span className="badge" style={{ backgroundColor: '#FEF3C7', color: '#92400E', fontWeight: 800 }}>🆕 New Lead</span>;
-      case 'INTERESTED':
-        return <span className="badge" style={{ backgroundColor: '#FEF08A', color: '#854D0E', fontWeight: 800 }}>⭐ Highly Interested</span>;
-      case 'CONTACTED':
-        return <span className="badge" style={{ backgroundColor: '#E0F2FE', color: '#0369A1', fontWeight: 800 }}>📞 Contacted</span>;
-      case 'DEMO_SCHEDULED':
-        return <span className="badge" style={{ backgroundColor: '#DBEAFE', color: '#1E40AF', fontWeight: 800 }}>🎓 Demo Fixed</span>;
-      case 'TUITION_CONFIRMED':
-        return <span className="badge" style={{ backgroundColor: '#DCFCE7', color: '#166534', fontWeight: 800 }}>🏆 Tuition Won</span>;
-      case 'LOST':
-        return <span className="badge" style={{ backgroundColor: '#FEE2E2', color: '#991B1B', fontWeight: 800 }}>❌ Lost</span>;
-      default:
-        return <span className="badge" style={{ backgroundColor: '#F1F5F9', color: '#475569' }}>{status}</span>;
+    const norm = (status || '').toUpperCase().trim();
+    if (norm === 'NEW_LEAD' || norm === 'NEW' || norm === 'PENDING') {
+      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#FEF3C7', color: '#B45309', fontWeight: 700, fontSize: '0.74rem' }}>New Lead</span>;
     }
+    if (norm === 'INTERESTED' || norm === 'HIGHLY_INTERESTED') {
+      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#DCFCE7', color: '#15803D', fontWeight: 700, fontSize: '0.74rem' }}>Interested</span>;
+    }
+    if (norm === 'CONTACTED') {
+      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#DBEAFE', color: '#1E40AF', fontWeight: 700, fontSize: '0.74rem' }}>Contacted</span>;
+    }
+    if (norm === 'DEMO_SCHEDULED' || norm === 'DEMO_FIXED' || norm === 'DEMO') {
+      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#EDE9FE', color: '#6D28D9', fontWeight: 700, fontSize: '0.74rem' }}>Demo Fixed</span>;
+    }
+    if (norm === 'TUITION_CONFIRMED' || norm === 'CONVERTED' || norm === 'ADMISSION_CONFIRMED' || norm === 'WON') {
+      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#CCFBF1', color: '#0F766E', fontWeight: 700, fontSize: '0.74rem' }}>Converted</span>;
+    }
+    if (norm === 'LOST' || norm === 'CANCELLED' || norm === 'DROPPED' || norm === 'NOT_INTERESTED') {
+      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#FFE4E6', color: '#9F1239', fontWeight: 700, fontSize: '0.74rem' }}>Not Interested</span>;
+    }
+    return (
+      <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#F1F5F9', color: '#334155', fontWeight: 700, fontSize: '0.74rem' }}>
+        {status || 'New Lead'}
+      </span>
+    );
   };
 
-  return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)' }}>
-      <Navbar />
-
-      <main style={{ flex: 1, padding: '2.5rem 0 4rem 0' }}>
-        <div className="container">
-          {/* Top Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
-            <div>
-              <div className="badge badge-emerald" style={{ marginBottom: '0.4rem' }}>
-                <ShieldCheck size={14} />
-                <span>SUPER ADMIN COMMAND CENTER • SSSAM ACADEMY</span>
-              </div>
-              <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                Master Business, Counselors & Revenue Hub
-              </h1>
-            </div>
-
-            {/* Admin Tabs */}
-            <div
-              style={{
-                display: 'flex',
-                backgroundColor: '#FFFFFF',
-                border: '1px solid var(--border-hairline)',
-                borderRadius: 'var(--radius-full)',
-                padding: '0.3rem',
-                boxShadow: 'var(--shadow-sm)',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setActiveAdminTab('OVERVIEW')}
-                style={{
-                  padding: '0.5rem 1.25rem',
-                  borderRadius: 'var(--radius-full)',
-                  border: 'none',
-                  backgroundColor: activeAdminTab === 'OVERVIEW' ? 'var(--brand-blue)' : 'transparent',
-                  color: activeAdminTab === 'OVERVIEW' ? '#FFFFFF' : 'var(--text-muted)',
-                  fontWeight: 700,
-                  fontSize: '0.88rem',
-                  cursor: 'pointer',
-                }}
-              >
-                📊 Dashboard & Pricing
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveAdminTab('COUNSELORS')}
-                style={{
-                  padding: '0.5rem 1.25rem',
-                  borderRadius: 'var(--radius-full)',
-                  border: 'none',
-                  backgroundColor: activeAdminTab === 'COUNSELORS' ? 'var(--brand-blue)' : 'transparent',
-                  color: activeAdminTab === 'COUNSELORS' ? '#FFFFFF' : 'var(--text-muted)',
-                  fontWeight: 700,
-                  fontSize: '0.88rem',
-                  cursor: 'pointer',
-                }}
-              >
-                👥 Counselor Team ({counselors.length})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveAdminTab('LEADS')}
-                style={{
-                  padding: '0.5rem 1.25rem',
-                  borderRadius: 'var(--radius-full)',
-                  border: 'none',
-                  backgroundColor: activeAdminTab === 'LEADS' ? 'var(--brand-blue)' : 'transparent',
-                  color: activeAdminTab === 'LEADS' ? '#FFFFFF' : 'var(--text-muted)',
-                  fontWeight: 700,
-                  fontSize: '0.88rem',
-                  cursor: 'pointer',
-                }}
-              >
-                📥 Shared Lead Desk ({leads.length})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveAdminTab('TUTOR_ALLOCATION')}
-                style={{
-                  padding: '0.5rem 1.25rem',
-                  borderRadius: 'var(--radius-full)',
-                  border: 'none',
-                  backgroundColor: activeAdminTab === 'TUTOR_ALLOCATION' ? 'var(--brand-blue)' : 'transparent',
-                  color: activeAdminTab === 'TUTOR_ALLOCATION' ? '#FFFFFF' : 'var(--text-muted)',
-                  fontWeight: 700,
-                  fontSize: '0.88rem',
-                  cursor: 'pointer',
-                }}
-              >
-                👨‍🏫 Tutor Lead Allocator ({VERIFIED_TUTORS.length})
-              </button>
-            </div>
+  if (isAuthenticated === null || !isAuthenticated) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-app)', padding: '2rem 1rem' }}>
+        <div className="apple-card" style={{ padding: '2.5rem', textAlign: 'center', backgroundColor: '#FFFFFF', maxWidth: '420px', borderRadius: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.08)' }}>
+          <div style={{ display: 'inline-flex', padding: '1rem', borderRadius: '16px', backgroundColor: 'var(--brand-blue-light)', color: 'var(--brand-blue)', marginBottom: '1rem' }}>
+            <Lock size={32} />
           </div>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
+            Super Admin Authentication Required
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px', lineHeight: 1.5 }}>
+            Access to SSSAM Academy Command Center is restricted. Please sign in with master admin credentials.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push('/admin/login')}
+            className="btn btn-primary btn-md"
+            style={{ marginTop: '1.25rem', width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-emerald)', fontWeight: 800 }}
+          >
+            <ShieldCheck size={16} />
+            <span>Go to Admin Login Gateway</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-          {counselorSuccessMsg && (
-            <div style={{ marginBottom: '1.5rem', padding: '0.85rem 1.25rem', backgroundColor: 'var(--brand-emerald-light)', color: 'var(--brand-emerald)', borderRadius: '12px', fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <CheckCircle2 size={18} />
-              <span>{counselorSuccessMsg}</span>
-            </div>
-          )}
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F8FAFC' }}>
+      {/* Sleek Top Mini-Header for Portal Status */}
+      <header style={{ backgroundColor: '#0F172A', color: '#F8FAFC', padding: '0.65rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', borderBottom: '1px solid #1E293B', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* Sidebar Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              backgroundColor: '#1E293B',
+              border: '1px solid #334155',
+              color: '#F8FAFC',
+              padding: '0.35rem 0.65rem',
+              borderRadius: '8px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            title={isSidebarOpen ? 'Hide Navigation Sidebar' : 'Show Navigation Sidebar'}
+          >
+            {isSidebarOpen ? <PanelLeftClose size={14} color="#38BDF8" /> : <PanelLeftOpen size={14} color="#38BDF8" />}
+            <span>{isSidebarOpen ? 'Hide Menu' : 'Show Menu'}</span>
+          </button>
 
-          {/* TAB 1: OVERVIEW & PRICING */}
+          <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22C55E' }}></span>
+          <span style={{ fontWeight: 700, letterSpacing: '0.03em' }}>TuitionForHome • Super Admin Command Center</span>
+          <span style={{ color: '#64748B' }}>|</span>
+          <span style={{ color: '#94A3B8' }}>SSSAM Academy, Sector 14 Gurugram</span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <span style={{ color: '#94A3B8' }}>Session Active: <strong style={{ color: '#F8FAFC' }}>{adminUser?.email || 'sudhir@gmail.com'}</strong></span>
+          <a href="/" target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8', fontWeight: 600, textDecoration: 'none', fontSize: '0.78rem' }}>
+            View Public Site ↗
+          </a>
+        </div>
+      </header>
+
+      <main style={{ flex: 1, padding: '1.5rem' }}>
+        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+          {/* Main Grid: Collapsible Left Sidebar + Right Content Area */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isSidebarOpen ? '260px 1fr' : '1fr',
+              gap: '1.5rem',
+              alignItems: 'flex-start',
+              transition: 'grid-template-columns 0.25s ease',
+            }}
+          >
+            
+            {/* LEFT STICKY SIDEBAR (COLLAPSIBLE) */}
+            {isSidebarOpen && (
+              <aside
+                style={{
+                  position: 'sticky',
+                  top: '80px',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '16px',
+                  border: '1px solid #E2E8F0',
+                  padding: '1.25rem',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1.25rem',
+                  animation: 'fadeIn 0.2s ease',
+                }}
+              >
+                {/* Brand Header with Collapse X button */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div className="badge badge-emerald" style={{ marginBottom: '0.35rem', fontSize: '0.7rem' }}>
+                      <ShieldCheck size={12} />
+                      <span>COMMAND CENTER</span>
+                    </div>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                      Admin Portal
+                    </h3>
+                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                      SSSAM Academy Gurugram
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsSidebarOpen(false)}
+                    style={{
+                      border: 'none',
+                      background: '#F1F5F9',
+                      borderRadius: '8px',
+                      width: '28px',
+                      height: '28px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: '#64748B',
+                    }}
+                    title="Hide Sidebar"
+                  >
+                    <PanelLeftClose size={15} />
+                  </button>
+                </div>
+
+                {/* Navigation Menu */}
+                <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem', paddingLeft: '0.5rem' }}>
+                    Navigation Hub
+                  </div>
+
+                  {/* Nav 1: Operational Overview */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveAdminTab('OVERVIEW')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      outline: 'none',
+                      boxShadow: activeAdminTab === 'OVERVIEW' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
+                      backgroundColor: activeAdminTab === 'OVERVIEW' ? '#6366F1' : 'transparent',
+                      color: activeAdminTab === 'OVERVIEW' ? '#FFFFFF' : '#334155',
+                      fontWeight: 700,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <TrendingUp size={16} color={activeAdminTab === 'OVERVIEW' ? '#FFFFFF' : '#6366F1'} />
+                      <span>Operational Overview</span>
+                    </div>
+                  </button>
+
+                  {/* Nav 2: Counselor Team */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveAdminTab('COUNSELORS')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      outline: 'none',
+                      boxShadow: activeAdminTab === 'COUNSELORS' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
+                      backgroundColor: activeAdminTab === 'COUNSELORS' ? '#6366F1' : 'transparent',
+                      color: activeAdminTab === 'COUNSELORS' ? '#FFFFFF' : '#334155',
+                      fontWeight: 700,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <Users size={16} color={activeAdminTab === 'COUNSELORS' ? '#FFFFFF' : '#6366F1'} />
+                      <span>Counselor Team</span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        padding: '1px 6px',
+                        borderRadius: '6px',
+                        backgroundColor: activeAdminTab === 'COUNSELORS' ? 'rgba(255,255,255,0.25)' : '#EFF6FF',
+                        color: activeAdminTab === 'COUNSELORS' ? '#FFFFFF' : '#1D4ED8',
+                      }}
+                    >
+                      {counselors.length} Staff
+                    </span>
+                  </button>
+
+                  {/* Nav 3: Shared Lead Desk */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveAdminTab('LEADS')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      outline: 'none',
+                      boxShadow: activeAdminTab === 'LEADS' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
+                      backgroundColor: activeAdminTab === 'LEADS' ? '#6366F1' : 'transparent',
+                      color: activeAdminTab === 'LEADS' ? '#FFFFFF' : '#334155',
+                      fontWeight: 700,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <Phone size={16} color={activeAdminTab === 'LEADS' ? '#FFFFFF' : '#10B981'} />
+                      <span>Shared Lead Desk</span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        padding: '1px 6px',
+                        borderRadius: '6px',
+                        backgroundColor: activeAdminTab === 'LEADS' ? 'rgba(255,255,255,0.25)' : '#DCFCE7',
+                        color: activeAdminTab === 'LEADS' ? '#FFFFFF' : '#166534',
+                      }}
+                    >
+                      {activeOpenLeadsCount} Active
+                    </span>
+                  </button>
+
+                  {/* Nav 4: Tutor Lead Allocator */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveAdminTab('TUTOR_ALLOCATION')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      outline: 'none',
+                      boxShadow: activeAdminTab === 'TUTOR_ALLOCATION' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
+                      backgroundColor: activeAdminTab === 'TUTOR_ALLOCATION' ? '#6366F1' : 'transparent',
+                      color: activeAdminTab === 'TUTOR_ALLOCATION' ? '#FFFFFF' : '#334155',
+                      fontWeight: 700,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <MapPin size={16} color={activeAdminTab === 'TUTOR_ALLOCATION' ? '#FFFFFF' : '#F59E0B'} />
+                      <span>Tutor Allocator</span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        padding: '1px 6px',
+                        borderRadius: '6px',
+                        backgroundColor: activeAdminTab === 'TUTOR_ALLOCATION' ? 'rgba(255,255,255,0.25)' : '#FEF3C7',
+                        color: activeAdminTab === 'TUTOR_ALLOCATION' ? '#FFFFFF' : '#92400E',
+                      }}
+                    >
+                      {VERIFIED_TUTORS.length} Tutors
+                    </span>
+                  </button>
+
+                  {/* Nav 5: Converted Leads */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveAdminTab('CONVERTED')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      outline: 'none',
+                      boxShadow: activeAdminTab === 'CONVERTED' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
+                      backgroundColor: activeAdminTab === 'CONVERTED' ? '#6366F1' : 'transparent',
+                      color: activeAdminTab === 'CONVERTED' ? '#FFFFFF' : '#334155',
+                      fontWeight: 700,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <CheckCircle2 size={16} color={activeAdminTab === 'CONVERTED' ? '#FFFFFF' : '#15803D'} />
+                      <span>Converted</span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        padding: '1px 6px',
+                        borderRadius: '6px',
+                        backgroundColor: activeAdminTab === 'CONVERTED' ? 'rgba(255,255,255,0.25)' : '#DCFCE7',
+                        color: activeAdminTab === 'CONVERTED' ? '#FFFFFF' : '#15803D',
+                      }}
+                    >
+                      {leads.filter(l => l.status === 'TUITION_CONFIRMED').length}
+                    </span>
+                  </button>
+
+                  {/* Nav 6: Pricing & Campaign Settings */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveAdminTab('PRICING_CAMPAIGNS')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      outline: 'none',
+                      boxShadow: activeAdminTab === 'PRICING_CAMPAIGNS' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
+                      backgroundColor: activeAdminTab === 'PRICING_CAMPAIGNS' ? '#6366F1' : 'transparent',
+                      color: activeAdminTab === 'PRICING_CAMPAIGNS' ? '#FFFFFF' : '#334155',
+                      fontWeight: 700,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <DollarSign size={16} color={activeAdminTab === 'PRICING_CAMPAIGNS' ? '#FFFFFF' : '#6366F1'} />
+                      <span>Pricing &amp; Campaigns</span>
+                    </div>
+                  </button>
+                </nav>
+
+                {/* Admin Profile & Logout Box */}
+                <div
+                  style={{
+                    marginTop: 'auto',
+                    paddingTop: '1rem',
+                    borderTop: '1px solid var(--border-hairline)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '10px',
+                        backgroundColor: 'var(--brand-emerald)',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      S
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {adminUser?.name || 'Sudhir (Super Admin)'}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--brand-emerald)', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        sudhir@gmail.com
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="btn btn-secondary btn-sm"
+                    style={{
+                      width: '100%',
+                      justifyContent: 'center',
+                      color: '#DC2626',
+                      borderColor: '#FCA5A5',
+                      fontWeight: 700,
+                      fontSize: '0.78rem',
+                      backgroundColor: '#FEF2F2',
+                    }}
+                  >
+                    <LogOut size={14} />
+                    <span>Log Out of Admin</span>
+                  </button>
+                </div>
+              </aside>
+            )}
+
+            {/* RIGHT MAIN CONTENT VIEWPORT */}
+            <section style={{ minWidth: 0 }}>
+              {/* Dynamic Header */}
+              <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div>
+                  <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                    {activeAdminTab === 'OVERVIEW' && 'Master Operations & Calling Desks Hub'}
+                    {activeAdminTab === 'COUNSELORS' && 'Counselor Team & Sales Desks'}
+                    {activeAdminTab === 'LEADS' && 'Shared Parent Inquiry Lead Hub'}
+                    {activeAdminTab === 'TUTOR_ALLOCATION' && 'Proximity Student Lead Allocator by Tutor'}
+                    {activeAdminTab === 'PRICING_CAMPAIGNS' && 'Tutor Verification Pricing & Campaigns'}
+                    {activeAdminTab === 'CONVERTED' && 'Converted Leads'}
+                  </h1>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', margin: 0 }}>
+                    {activeAdminTab === 'OVERVIEW' && 'Key operational volume, counselor staffing, and active tutor verification campaigns.'}
+                    {activeAdminTab === 'COUNSELORS' && 'Manage operational calling desks, sales performance, and staff credentials.'}
+                    {activeAdminTab === 'LEADS' && 'Unified parent leads with 8 operational filters, mandatory notes, and history timeline.'}
+                    {activeAdminTab === 'TUTOR_ALLOCATION' && 'Match and dispatch nearby student inquiries based on tutor travel radius.'}
+                    {activeAdminTab === 'PRICING_CAMPAIGNS' && 'Configure base verification fees, 100% waiver drives, and season banner text.'}
+                    {activeAdminTab === 'CONVERTED' && 'All successfully converted parent inquiries with full student details.'}
+                  </p>
+                </div>
+              </div>
+
+              {counselorSuccessMsg && (
+                <div style={{ marginBottom: '1.5rem', padding: '0.85rem 1.25rem', backgroundColor: 'var(--brand-emerald-light)', color: 'var(--brand-emerald)', borderRadius: '12px', fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <CheckCircle2 size={18} />
+                  <span>{counselorSuccessMsg}</span>
+                </div>
+              )}
+
+          {/* TAB 1: OPERATIONAL OVERVIEW & IMPORTANT LEADS SUMMARY */}
           {activeAdminTab === 'OVERVIEW' && (
             <div>
-              {/* Metric KPI Cards */}
+              {/* Clean Top Header with Integrated Month/Year Filter Bar */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '1rem',
+                  marginBottom: '1.75rem',
+                }}
+              >
+                <div>
+                  <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                    Operational Performance
+                  </h2>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, marginTop: '2px' }}>
+                    Showing {monthFilteredLeads.length} leads in selected period
+                  </p>
+                </div>
+
+                {/* Clean Filter Controls Bar */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    backgroundColor: '#FFFFFF',
+                    padding: '0.4rem 0.75rem',
+                    borderRadius: '14px',
+                    border: '1px solid var(--border-hairline)',
+                    boxShadow: 'var(--shadow-sm)',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <Calendar size={15} color="var(--brand-teal)" />
+
+                  {/* Year Select */}
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value)}
+                    style={{
+                      padding: '0.35rem 0.6rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-hairline)',
+                      backgroundColor: 'var(--bg-app)',
+                      color: 'var(--text-main)',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="2026">2026</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="ALL">All Years</option>
+                  </select>
+
+                  {/* Month Select */}
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    style={{
+                      padding: '0.35rem 0.6rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-hairline)',
+                      backgroundColor: 'var(--bg-app)',
+                      color: 'var(--text-main)',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="ALL">All Months</option>
+                    <option value="01">Jan</option>
+                    <option value="02">Feb</option>
+                    <option value="03">Mar</option>
+                    <option value="04">Apr</option>
+                    <option value="05">May</option>
+                    <option value="06">Jun</option>
+                    <option value="07">Jul</option>
+                    <option value="08">Aug</option>
+                    <option value="09">Sep</option>
+                    <option value="10">Oct</option>
+                    <option value="11">Nov</option>
+                    <option value="12">Dec</option>
+                  </select>
+
+                  {/* Quick Preset Buttons */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedYear('2026');
+                      setSelectedMonth('08');
+                    }}
+                    style={{
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: selectedYear === '2026' && selectedMonth === '08' ? 'var(--brand-teal)' : 'transparent',
+                      color: selectedYear === '2026' && selectedMonth === '08' ? '#FFFFFF' : 'var(--text-muted)',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    This Month
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedYear('ALL');
+                      setSelectedMonth('ALL');
+                    }}
+                    style={{
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: selectedYear === 'ALL' && selectedMonth === 'ALL' ? 'var(--brand-teal)' : 'transparent',
+                      color: selectedYear === 'ALL' && selectedMonth === 'ALL' ? '#FFFFFF' : 'var(--text-muted)',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    All Time
+                  </button>
+                </div>
+              </div>
+
+              {/* 4 BALANCED & CLEAN STATUS CARDS */}
               <div
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: '1.5rem',
-                  marginBottom: '2.5rem',
+                  gap: '1.25rem',
+                  marginBottom: '2rem',
                 }}
               >
-                <div className="apple-card" style={{ padding: '1.5rem', backgroundColor: '#FFFFFF' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                    <span>TOTAL REVENUE (THIS MONTH)</span>
-                    <DollarSign size={18} color="var(--brand-emerald)" />
+                {/* CARD 1: Urgent Action (Overdue + Today's Callbacks) */}
+                <div
+                  onClick={() => {
+                    setActiveFilter('TODAY');
+                    setActiveAdminTab('LEADS');
+                  }}
+                  className="apple-card"
+                  style={{
+                    padding: '1.35rem',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid var(--border-hairline)',
+                    cursor: 'pointer',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Action Required
+                    </span>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#DC2626' }}></span>
                   </div>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)' }}>₹2,48,000</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--brand-emerald)', fontWeight: 700, marginTop: '4px' }}>↑ +28% vs last month</div>
+                  <div style={{ fontSize: '2.25rem', fontWeight: 800, color: '#DC2626', lineHeight: 1 }}>
+                    {urgentActionCount}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.65rem' }}>
+                    Overdue &amp; today&apos;s calls
+                  </div>
                 </div>
 
-                <div className="apple-card" style={{ padding: '1.5rem', backgroundColor: '#FFFFFF' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                    <span>ACTIVE VERIFIED TUTORS</span>
-                    <Award size={18} color="var(--brand-blue)" />
+                {/* CARD 2: Fresh Inquiries (Not Contacted) */}
+                <div
+                  onClick={() => {
+                    setActiveFilter('NEW_LEAD');
+                    setActiveAdminTab('LEADS');
+                  }}
+                  className="apple-card"
+                  style={{
+                    padding: '1.35rem',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid var(--border-hairline)',
+                    cursor: 'pointer',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Fresh Leads
+                    </span>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#D97706' }}></span>
                   </div>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)' }}>482</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--brand-blue)', fontWeight: 700, marginTop: '4px' }}>Across 14 Gurgaon Sectors</div>
+                  <div style={{ fontSize: '2.25rem', fontWeight: 800, color: '#D97706', lineHeight: 1 }}>
+                    {freshUncontactedCount}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.65rem' }}>
+                    Awaiting 1st counselor call
+                  </div>
                 </div>
 
-                <div className="apple-card" style={{ padding: '1.5rem', backgroundColor: '#FFFFFF' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                    <span>INBOUND PARENT LEADS</span>
-                    <Users size={18} color="var(--brand-amber)" />
+                {/* CARD 3: Active Pipeline (Demos & Discussions) */}
+                <div
+                  onClick={() => {
+                    setActiveFilter('DEMO_SCHEDULED');
+                    setActiveAdminTab('LEADS');
+                  }}
+                  className="apple-card"
+                  style={{
+                    padding: '1.35rem',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid var(--border-hairline)',
+                    cursor: 'pointer',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Active Demos
+                    </span>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--brand-teal)' }}></span>
                   </div>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)' }}>{leads.length}</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Real-time sync active</div>
+                  <div style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--brand-teal)', lineHeight: 1 }}>
+                    {activePipelineCount}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.65rem' }}>
+                    Trials &amp; in-discussion leads
+                  </div>
                 </div>
 
-                <div className="apple-card" style={{ padding: '1.5rem', backgroundColor: '#FFFFFF' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                    <span>ACTIVE COUNSELORS</span>
-                    <TrendingUp size={18} color="var(--text-main)" />
+                {/* CARD 4: Converted Tuitions Won */}
+                <div
+                  onClick={() => {
+                    setActiveFilter('TUITION_CONFIRMED');
+                    setActiveAdminTab('LEADS');
+                  }}
+                  className="apple-card"
+                  style={{
+                    padding: '1.35rem',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid var(--border-hairline)',
+                    cursor: 'pointer',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Tuitions Won
+                    </span>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--brand-emerald)' }}></span>
                   </div>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)' }}>{counselors.length}</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Operational Desks</div>
+                  <div style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--brand-emerald)', lineHeight: 1 }}>
+                    {closedWonCount}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.65rem' }}>
+                    Successfully closed placements
+                  </div>
                 </div>
               </div>
 
+              {/* Quick Operation Action Hub */}
+              <div className="apple-card" style={{ padding: '1.5rem', marginBottom: '2rem', backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)', borderRadius: '18px' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '0.04em' }}>
+                  Quick Shortcuts
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveAdminTab('LEADS')}
+                    className="apple-card"
+                    style={{
+                      padding: '1.15rem',
+                      textAlign: 'left',
+                      backgroundColor: 'var(--bg-app)',
+                      border: '1px solid var(--border-hairline)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.85rem',
+                      borderRadius: '14px',
+                    }}
+                  >
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#DCFCE7', color: '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Phone size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text-main)' }}>Open Leads Desk</div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>8 filter tabs &amp; timeline history</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveAdminTab('TUTOR_ALLOCATION')}
+                    className="apple-card"
+                    style={{
+                      padding: '1.15rem',
+                      textAlign: 'left',
+                      backgroundColor: 'var(--bg-app)',
+                      border: '1px solid var(--border-hairline)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.85rem',
+                      borderRadius: '14px',
+                    }}
+                  >
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#FEF3C7', color: '#92400E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <MapPin size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text-main)' }}>Proximity Allocator</div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Match tutors within 1.5 KM</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddCounselorModal(true);
+                      setCounselorFormError('');
+                    }}
+                    className="apple-card"
+                    style={{
+                      padding: '1.15rem',
+                      textAlign: 'left',
+                      backgroundColor: 'var(--bg-app)',
+                      border: '1px solid var(--border-hairline)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.85rem',
+                      borderRadius: '14px',
+                    }}
+                  >
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#DBEAFE', color: '#1E40AF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <UserPlus size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text-main)' }}>+ Add Counselor Staff</div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Create telecaller login credentials</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: PRICING & CAMPAIGN CONTROLLER (DEDICATED ON-DEMAND TAB) */}
+          {activeAdminTab === 'PRICING_CAMPAIGNS' && (
+            <div>
               {/* Pricing & Campaign Controller */}
-              <div className="apple-card" style={{ padding: '2.5rem', marginBottom: '2.5rem', backgroundColor: '#FFFFFF' }}>
+              <div className="apple-card" style={{ padding: '2.5rem', marginBottom: '2.5rem', backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border-hairline)', paddingBottom: '1.5rem' }}>
                   <div>
                     <div className="badge badge-blue" style={{ marginBottom: '0.4rem' }}>
                       <Settings size={14} />
                       <span>SITETWAVE CONTROLLER</span>
                     </div>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                       Dynamic Tutor Pricing & Festival Campaign Controller
                     </h2>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginTop: '4px' }}>
@@ -588,7 +1490,7 @@ export default function SuperAdminPage() {
                 <form onSubmit={handleSaveConfig} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
                     <div className="form-group">
-                      <label className="form-label">Base Tutor Verification Fee (₹)</label>
+                      <label className="form-label" style={{ fontWeight: 700 }}>Base Tutor Verification Fee (₹)</label>
                       <input
                         type="number"
                         value={basePrice}
@@ -598,21 +1500,21 @@ export default function SuperAdminPage() {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Active Discount Setting</label>
+                      <label className="form-label" style={{ fontWeight: 700 }}>Active Discount Setting</label>
                       <select
                         value={discountPercent}
                         onChange={(e) => setDiscountPercent(Number(e.target.value))}
                         className="form-control"
                         style={{ fontWeight: 700 }}
                       >
-                        <option value={100}>100% OFF (₹0 Free Registration - Early Launch)</option>
+                        <option value={100}>100% OFF (₹0 Free Registration - Early Launch Drive)</option>
                         <option value={50}>50% OFF (₹499 Promotional Price)</option>
                         <option value={0}>0% OFF (Full Price ₹999)</option>
                       </select>
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Campaign Banner Status</label>
+                      <label className="form-label" style={{ fontWeight: 700 }}>Campaign Banner Status</label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button
                           type="button"
@@ -652,7 +1554,7 @@ export default function SuperAdminPage() {
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
                     <div className="form-group">
-                      <label className="form-label">Campaign Title / Hook</label>
+                      <label className="form-label" style={{ fontWeight: 700 }}>Campaign Title / Hook</label>
                       <input
                         type="text"
                         value={campaignTitle}
@@ -662,7 +1564,7 @@ export default function SuperAdminPage() {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Campaign Subtext</label>
+                      <label className="form-label" style={{ fontWeight: 700 }}>Campaign Subtext</label>
                       <input
                         type="text"
                         value={campaignSubtitle}
@@ -673,7 +1575,7 @@ export default function SuperAdminPage() {
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '1rem', borderTop: '1px solid var(--border-hairline)' }}>
-                    <button type="submit" className="btn btn-primary btn-lg">
+                    <button type="submit" className="btn btn-primary btn-lg" style={{ backgroundColor: 'var(--brand-emerald)', fontWeight: 800 }}>
                       <Save size={18} />
                       <span>Save & Publish Pricing Live</span>
                     </button>
@@ -683,143 +1585,261 @@ export default function SuperAdminPage() {
             </div>
           )}
 
-          {/* TAB 2: COUNSELOR MANAGEMENT */}
+          {/* TAB 2: COUNSELOR MANAGEMENT (CLEAN TABLE LAYOUT) */}
           {activeAdminTab === 'COUNSELORS' && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div>
-                  <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                    Counselor Team & Performance Desk
-                  </h2>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                    Create counselor credentials and monitor follow-ups and revenue generated.
-                  </p>
+              {/* Header & Controls Bar */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '1rem',
+                  marginBottom: '1.5rem',
+                  backgroundColor: '#FFFFFF',
+                  padding: '1.25rem',
+                  borderRadius: '18px',
+                  border: '1px solid var(--border-hairline)',
+                  boxShadow: 'var(--shadow-sm)',
+                }}
+              >
+                <div style={{ position: 'relative', flex: '1', minWidth: '260px' }}>
+                  <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input
+                    type="text"
+                    placeholder="Search counselor by Name, Email, or Phone..."
+                    value={counselorSearch}
+                    onChange={(e) => setCounselorSearch(e.target.value)}
+                    className="form-control"
+                    style={{ paddingLeft: '2.75rem', borderRadius: '12px' }}
+                  />
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddCounselorModal(true);
-                    setCounselorFormError('');
-                  }}
-                  className="btn btn-primary"
-                  style={{ backgroundColor: 'var(--brand-emerald)' }}
-                >
-                  <UserPlus size={16} />
-                  <span>➕ Add New Counselor</span>
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddCounselorModal(true);
+                      setCounselorFormError('');
+                    }}
+                    className="btn btn-primary"
+                    style={{ backgroundColor: 'var(--brand-emerald)', fontWeight: 700 }}
+                  >
+                    <UserPlus size={16} />
+                    <span>➕ Add New Counselor</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Counselor Cards Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
-                {counselors.map((csl, index) => (
-                  <div key={csl.id} className="apple-card" style={{ padding: '1.5rem', backgroundColor: '#FFFFFF', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                        <div>
-                          <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>{csl.name}</h3>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Desk ID: {csl.id}</span>
-                        </div>
-                        <span className="badge badge-emerald">ACTIVE</span>
-                      </div>
+              {/* Counselor Structured Table */}
+              <div className="apple-card" style={{ padding: 0, overflow: 'hidden', backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)', borderRadius: '18px' }}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', minWidth: '920px', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: 'var(--bg-app)', borderBottom: '1px solid var(--border-hairline)', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 800, letterSpacing: '0.04em' }}>
+                        <th style={{ padding: '1rem 1.25rem', width: '25%' }}>Counselor Staff</th>
+                        <th style={{ padding: '1rem 1.25rem', width: '28%' }}>Login Email</th>
+                        <th style={{ padding: '1rem 1.25rem', width: '18%' }}>Phone Number</th>
+                        <th style={{ padding: '1rem 1.25rem', width: '12%' }}>Desk Status</th>
+                        <th style={{ padding: '1rem 1.25rem', width: '17%', textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {counselors
+                        .filter((c) => {
+                          const query = counselorSearch.toLowerCase();
+                          return (
+                            c.name.toLowerCase().includes(query) ||
+                            c.email.toLowerCase().includes(query) ||
+                            (c.phone && c.phone.includes(query))
+                          );
+                        })
+                        .map((csl) => (
+                          <tr
+                            key={csl.id}
+                            style={{
+                              borderBottom: '1px solid var(--border-hairline)',
+                              transition: 'background-color 0.15s ease',
+                            }}
+                          >
+                            {/* Staff Name & Badge */}
+                            <td style={{ padding: '1rem 1.25rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div
+                                  style={{
+                                    width: '38px',
+                                    height: '38px',
+                                    borderRadius: '10px',
+                                    backgroundColor: 'var(--brand-teal-light)',
+                                    color: 'var(--brand-teal)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: 800,
+                                    fontSize: '0.95rem',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {csl.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                  <div style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.92rem', whiteSpace: 'nowrap' }}>
+                                    {csl.name}
+                                  </div>
+                                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                    Desk: <span style={{ fontFamily: 'monospace' }}>{csl.id.startsWith('csl-') ? csl.id : `#${csl.id.slice(0, 8)}`}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <Mail size={14} />
-                          <span>{csl.email}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <Phone size={14} />
-                          <span>+91 {csl.phone || '95174 47689'}</span>
-                        </div>
-                      </div>
-                    </div>
+                            {/* Email */}
+                            <td style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 600 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
+                                <Mail size={14} color="var(--text-muted)" />
+                                <span>{csl.email}</span>
+                              </div>
+                            </td>
 
-                    <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--border-hairline)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', textAlign: 'center', backgroundColor: 'var(--bg-app)', padding: '0.75rem', borderRadius: '10px' }}>
-                      <div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700 }}>CALLS LOGGED</div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>{index === 0 ? '142' : index === 1 ? '118' : '0'}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700 }}>REVENUE CLOSED</div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--brand-blue)' }}>{index === 0 ? '₹1,32,000' : index === 1 ? '₹1,16,000' : '₹0'}</div>
-                      </div>
-                    </div>
+                            {/* Phone */}
+                            <td style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <Phone size={14} color="var(--brand-emerald)" />
+                                <span>+91 {csl.phone || '95174 47689'}</span>
+                              </div>
+                            </td>
+
+                            {/* Status */}
+                            <td style={{ padding: '1rem 1.25rem', whiteSpace: 'nowrap' }}>
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem',
+                                  padding: '0.3rem 0.75rem',
+                                  borderRadius: '8px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 800,
+                                  backgroundColor: '#DCFCE7',
+                                  color: '#166534',
+                                }}
+                              >
+                                🟢 ACTIVE DESK
+                              </span>
+                            </td>
+
+                            {/* Actions */}
+                            <td style={{ padding: '1rem 1.25rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'flex', gap: '0.45rem', justifyContent: 'flex-end' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditCounselor(csl)}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                    padding: '0.45rem 0.85rem',
+                                    borderRadius: '8px',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    border: '1.5px solid var(--brand-blue)',
+                                    color: 'var(--brand-blue)',
+                                    backgroundColor: 'var(--brand-blue-light)',
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  👁️ Edit Details
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditCounselor(csl)}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                    padding: '0.45rem 0.85rem',
+                                    borderRadius: '8px',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    border: '1.5px solid #F59E0B',
+                                    color: '#B45309',
+                                    backgroundColor: '#FEF3C7',
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  🔑 Reset Password
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {counselors.length === 0 && !counselorLoading && (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                    No counselors found. Click &quot;+ Add New Counselor&quot; to create a calling desk.
                   </div>
-                ))}
+                )}
               </div>
             </div>
           )}
 
-          {/* TAB 3: SHARED LEADS & AUDIT TIMELINE */}
+          {/* TAB 3: CRM ENQUIRIES & FULL DETAILS VIEW */}
           {activeAdminTab === 'LEADS' && (
             <div>
-              {/* Search & Filter Bar */}
-              <div className="apple-card" style={{ padding: '1.25rem', marginBottom: '1.5rem', backgroundColor: '#FFFFFF' }}>
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                  <div style={{ position: 'relative', flex: '1', minWidth: '280px' }}>
-                    <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                    <input
-                      type="text"
-                      placeholder="Search leads by Parent Name, Phone, Locality, or Subject..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="form-control"
-                      style={{ paddingLeft: '2.75rem', borderRadius: '12px' }}
-                    />
-                  </div>
+              {selectedLeadForFullView ? (
+                /* IN-PAGE FULL ENQUIRY DETAILS & ACTIVITY TIMELINE VIEW (NO POPUP MODAL) */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {/* Top Bar with Back Navigation & Action Buttons */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '0.75rem',
+                      backgroundColor: '#FFFFFF',
+                      padding: '0.9rem 1.25rem',
+                      borderRadius: '16px',
+                      border: '1px solid var(--border-hairline)',
+                      boxShadow: 'var(--shadow-sm)',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLeadForFullView(null)}
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        fontSize: '1rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        color: 'var(--brand-teal)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                      }}
+                    >
+                      <span>←</span>
+                      <span>Back to Enquiries Desk</span>
+                    </button>
 
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                    Showing <strong>{filteredLeads.length}</strong> of {leads.length} inquiries
-                  </div>
-                </div>
-
-                {/* 8 Operational Filters */}
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-                  {[
-                    { id: 'ALL', label: '📋 All Leads', count: filterCounts.ALL },
-                    { id: 'TODAY', label: '🔔 Today\'s Follow-up', count: filterCounts.TODAY, highlight: true },
-                    { id: 'OVERDUE', label: '⚠️ Pending / Overdue', count: filterCounts.OVERDUE, danger: true },
-                    { id: 'NEW_LEAD', label: '🆕 Not Contacted', count: filterCounts.NEW_LEAD },
-                    { id: 'INTERESTED', label: '⭐ Highly Interested', count: filterCounts.INTERESTED, star: true },
-                    { id: 'CONTACTED', label: '📞 Contacted', count: filterCounts.CONTACTED },
-                    { id: 'DEMO_SCHEDULED', label: '🎓 Demo Scheduled', count: filterCounts.DEMO_SCHEDULED },
-                    { id: 'TUITION_CONFIRMED', label: '🏆 Converted', count: filterCounts.TUITION_CONFIRMED },
-                    { id: 'LOST', label: '❌ Lost', count: filterCounts.LOST },
-                  ].map((tab) => {
-                    const isActive = activeFilter === tab.id;
-                    return (
+                    <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
                       <button
-                        key={tab.id}
                         type="button"
-                        onClick={() => setActiveFilter(tab.id)}
+                        onClick={() => openUpdateModal(selectedLeadForFullView)}
                         style={{
-                          padding: '0.45rem 0.85rem',
+                          padding: '0.55rem 1.15rem',
                           borderRadius: '10px',
-                          border: `1.5px solid ${
-                            isActive
-                              ? 'var(--brand-blue)'
-                              : tab.danger && tab.count > 0
-                              ? '#FCA5A5'
-                              : tab.highlight && tab.count > 0
-                              ? '#93C5FD'
-                              : 'var(--border-hairline)'
-                          }`,
-                          backgroundColor: isActive
-                            ? 'var(--brand-blue)'
-                            : tab.danger && tab.count > 0
-                            ? '#FEF2F2'
-                            : tab.highlight && tab.count > 0
-                            ? '#EFF6FF'
-                            : '#FFFFFF',
-                          color: isActive
-                            ? '#FFFFFF'
-                            : tab.danger && tab.count > 0
-                            ? '#DC2626'
-                            : tab.highlight && tab.count > 0
-                            ? '#1D4ED8'
-                            : 'var(--text-main)',
-                          fontWeight: isActive || (tab.count > 0 && (tab.danger || tab.highlight || tab.star)) ? 700 : 600,
+                          backgroundColor: '#3B82F6',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          fontWeight: 800,
                           fontSize: '0.82rem',
                           cursor: 'pointer',
                           display: 'inline-flex',
@@ -827,259 +1847,1094 @@ export default function SuperAdminPage() {
                           gap: '0.35rem',
                         }}
                       >
-                        <span>{tab.label}</span>
-                        <span
-                          style={{
-                            padding: '0.1rem 0.45rem',
-                            borderRadius: '999px',
-                            backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.06)',
-                            fontSize: '0.75rem',
-                            fontWeight: 800,
-                          }}
-                        >
-                          {tab.count}
-                        </span>
+                        <RotateCcw size={14} />
+                        <span>Update Status / Follow-up</span>
                       </button>
-                    );
-                  })}
-                </div>
-              </div>
 
-              {/* Leads Listing */}
-              {leadsLoading ? (
-                <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  Loading leads and history...
-                </div>
-              ) : filteredLeads.length === 0 ? (
-                <div className="apple-card" style={{ padding: '3rem', textAlign: 'center', backgroundColor: '#FFFFFF' }}>
-                  <FileText size={38} color="var(--text-muted)" style={{ margin: '0 auto 1rem auto' }} />
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>No Leads in this Filter</h3>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  {filteredLeads.map((lead) => {
-                    const isExpanded = !!expandedTimelines[lead.id];
-                    const lastActivity = lead.activities?.[0];
-                    const subjects = Array.isArray(lead.subjectsNeeded)
-                      ? lead.subjectsNeeded.join(', ')
-                      : lead.subjectsNeeded.replace(/[\[\]"]/g, '');
-
-                    const hasOverdueFollowup = lead.nextFollowupDate && isOverdue(lead.nextFollowupDate);
-                    const hasTodayFollowup = lead.nextFollowupDate && isToday(lead.nextFollowupDate);
-
-                    return (
-                      <div
-                        key={lead.id}
-                        className="apple-card"
+                      <button
+                        type="button"
+                        onClick={() => setSelectedLeadForMatching(selectedLeadForFullView)}
                         style={{
-                          padding: '1.5rem',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '1rem',
-                          backgroundColor: '#FFFFFF',
-                          borderLeft: `4px solid ${
-                            lead.status === 'TUITION_CONFIRMED'
-                              ? 'var(--brand-emerald)'
-                              : lead.status === 'DEMO_SCHEDULED'
-                              ? 'var(--brand-blue)'
-                              : lead.status === 'INTERESTED'
-                              ? '#EAB308'
-                              : hasOverdueFollowup
-                              ? '#EF4444'
-                              : 'var(--border-hairline)'
-                          }`,
+                          padding: '0.55rem 1.15rem',
+                          borderRadius: '10px',
+                          backgroundColor: '#059669',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          fontWeight: 800,
+                          fontSize: '0.82rem',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
                         }}
                       >
-                        {/* Top Bar */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <Sparkles size={14} />
+                        <span>Match Nearby Tutor</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Profile Header Card */}
+                  <div
+                    style={{
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: '18px',
+                      padding: '1.5rem',
+                      border: '1px solid var(--border-hairline)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      flexWrap: 'wrap',
+                      gap: '1rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+                      <div
+                        style={{
+                          width: '56px',
+                          height: '56px',
+                          borderRadius: '16px',
+                          backgroundColor: '#3B82F6',
+                          color: '#FFFFFF',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Users size={28} />
+                      </div>
+
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
+                            {selectedLeadForFullView.parentName}
+                          </h2>
+
+                          <a
+                            href={`https://wa.me/91${selectedLeadForFullView.parentPhone}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              width: '30px',
+                              height: '30px',
+                              borderRadius: '8px',
+                              backgroundColor: '#22C55E',
+                              color: '#FFFFFF',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              textDecoration: 'none',
+                            }}
+                            title="WhatsApp Chat"
+                          >
+                            <MessageSquare size={15} fill="#FFFFFF" />
+                          </a>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '5px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--text-main)', fontWeight: 600 }}>
+                            <Phone size={14} color="var(--brand-emerald)" />
+                            <a href={`tel:${selectedLeadForFullView.parentPhone}`} style={{ color: 'var(--text-main)', textDecoration: 'none' }}>
+                              {selectedLeadForFullView.parentPhone}
+                            </a>
+                          </span>
+
+                          {selectedLeadForFullView.parentEmail && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                              <Mail size={14} />
+                              <span>{selectedLeadForFullView.parentEmail}</span>
+                            </span>
+                          )}
+
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--brand-teal)', fontWeight: 700 }}>
+                            <BookOpen size={14} />
+                            <span>
+                              {selectedLeadForFullView.gradeClass} (
+                              {Array.isArray(selectedLeadForFullView.subjectsNeeded)
+                                ? selectedLeadForFullView.subjectsNeeded.join(', ')
+                                : selectedLeadForFullView.subjectsNeeded.replace(/[\[\]"]/g, '')}
+                              )
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      {getStatusBadge(selectedLeadForFullView.status)}
+                    </div>
+                  </div>
+
+                  {/* Details Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                    {/* Basic Details */}
+                    <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid var(--border-hairline)', padding: '1.25rem' }}>
+                      <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Users size={16} color="var(--brand-teal)" />
+                        <span>Basic Details</span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                        <div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 600 }}>Assigned Counselor / Tutor</div>
+                          <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '2px' }}>
+                            {selectedLeadForFullView.assignedTutor ? `Tutor: ${selectedLeadForFullView.assignedTutor}` : 'Priya Sharma (Counselor)'}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 600 }}>Next Scheduled Follow-up</div>
+                          <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '2px' }}>
+                            {selectedLeadForFullView.nextFollowupDate
+                              ? new Date(selectedLeadForFullView.nextFollowupDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                              : 'Not Scheduled'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tuition Preferences */}
+                    <div style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid var(--border-hairline)', padding: '1.25rem' }}>
+                      <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <FileText size={16} color="var(--brand-teal)" />
+                        <span>Tuition Specifics</span>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                        <div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 600 }}>Locality</div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '2px' }}>
+                            📍 {selectedLeadForFullView.locality}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 600 }}>Monthly Budget</div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--brand-teal)', marginTop: '2px' }}>
+                            ₹{selectedLeadForFullView.budgetMonthly?.toLocaleString('en-IN') || 'Negotiable'}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 600 }}>Teaching Mode</div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '2px' }}>
+                            {selectedLeadForFullView.preferredMode === 'OFFLINE_HOME' ? '🏠 Home Tutor' : '💻 Online'}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 600 }}>Created Date</div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '2px' }}>
+                            {new Date(selectedLeadForFullView.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Activity Timeline Card */}
+                  <div style={{ backgroundColor: '#FFFFFF', borderRadius: '18px', border: '1px solid var(--border-hairline)', padding: '1.5rem' }}>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                      <History size={18} color="var(--brand-teal)" />
+                      <span>Activity Timeline &amp; Follow-up History</span>
+                    </div>
+
+                    <div style={{ position: 'relative', paddingLeft: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      {/* Vertical Blue Connecting Line */}
+                      <div style={{ position: 'absolute', left: '7px', top: '10px', bottom: '10px', width: '2px', backgroundColor: '#93C5FD' }} />
+
+                      {selectedLeadForFullView.activities && selectedLeadForFullView.activities.length > 0 ? (
+                        selectedLeadForFullView.activities.map((act) => (
+                          <div key={act.id} style={{ position: 'relative' }}>
+                            {/* Timeline Node Dot */}
                             <div
                               style={{
-                                width: '44px',
-                                height: '44px',
-                                borderRadius: '12px',
-                                backgroundColor: lead.preferredMode === 'OFFLINE_HOME' ? 'var(--brand-blue-light)' : 'var(--brand-emerald-light)',
-                                color: lead.preferredMode === 'OFFLINE_HOME' ? 'var(--brand-blue)' : 'var(--brand-emerald)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
+                                position: 'absolute',
+                                left: '-1.75rem',
+                                top: '4px',
+                                width: '16px',
+                                height: '16px',
+                                borderRadius: '50%',
+                                backgroundColor: '#3B82F6',
+                                border: '3px solid #FFFFFF',
+                                boxShadow: '0 0 0 2px #93C5FD',
                               }}
-                            >
-                              {lead.preferredMode === 'OFFLINE_HOME' ? <Home size={22} /> : <Video size={22} />}
-                            </div>
+                            />
 
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>{lead.parentName}</h3>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>[{lead.id}]</span>
+                            <div style={{ backgroundColor: 'var(--bg-app)', borderRadius: '14px', padding: '1rem 1.25rem', border: '1px solid var(--border-hairline)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                                <span style={{ padding: '0.2rem 0.65rem', borderRadius: '8px', backgroundColor: '#DBEAFE', color: '#1E40AF', fontSize: '0.75rem', fontWeight: 800 }}>
+                                  {act.actionType}
+                                </span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                  {new Date(act.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}, {new Date(act.createdAt).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}
+                                </span>
                               </div>
-                              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                📍 <strong>{lead.locality}</strong> • {lead.gradeClass} ({subjects}) • Budget: <strong style={{ color: 'var(--brand-blue)' }}>₹{lead.budgetMonthly?.toLocaleString('en-IN') || 'Negotiable'}</strong>
+
+                              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
+                                👤 Updated by: <strong style={{ color: 'var(--text-main)' }}>{act.performedBy}</strong>
                               </div>
+
+                              <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-main)', lineHeight: 1.5, fontWeight: 500 }}>
+                                {act.description}
+                              </p>
                             </div>
                           </div>
-
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            {hasOverdueFollowup && (
-                              <span className="badge" style={{ backgroundColor: '#FEE2E2', color: '#DC2626', fontWeight: 800 }}>
-                                ⚠️ Overdue Callback
-                              </span>
-                            )}
-                            {hasTodayFollowup && (
-                              <span className="badge" style={{ backgroundColor: '#EFF6FF', color: '#1D4ED8', fontWeight: 800 }}>
-                                🔔 Callback Today
-                              </span>
-                            )}
-                            {getStatusBadge(lead.status)}
-                          </div>
-                        </div>
-
-                        {/* Note & Performer */}
-                        <div
-                          style={{
-                            backgroundColor: 'var(--bg-app)',
-                            borderRadius: '10px',
-                            padding: '0.75rem 1rem',
-                            fontSize: '0.84rem',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            flexWrap: 'wrap',
-                            gap: '0.5rem',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-main)' }}>
-                            <FileText size={15} color="var(--brand-blue)" />
-                            <strong>Latest Note:</strong>
-                            <span style={{ color: 'var(--text-muted)' }}>{lead.notes || 'No notes yet.'}</span>
-                          </div>
-
-                          {lastActivity && (
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                              🛡️ Last updated by <strong style={{ color: 'var(--text-main)' }}>{lastActivity.performedBy}</strong> ({new Date(lastActivity.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })})
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Actions */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-hairline)' }}>
-                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            <a href={`tel:${lead.parentPhone}`} className="btn btn-secondary btn-sm">
-                              <Phone size={14} color="var(--brand-emerald)" />
-                              <span>+91 {lead.parentPhone}</span>
-                            </a>
-                            <a
-                              href={`https://wa.me/91${lead.parentPhone}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="btn btn-secondary btn-sm"
-                              style={{ borderColor: '#25D366' }}
-                            >
-                              <MessageSquare size={14} color="#25D366" />
-                              <span>WhatsApp</span>
-                            </a>
-                            <button
-                              onClick={() => setSelectedLeadForMatching(lead)}
-                              className="btn btn-emerald btn-sm"
-                              style={{ backgroundColor: 'var(--brand-teal)', color: '#FFFFFF', fontWeight: 700 }}
-                            >
-                              <Sparkles size={14} />
-                              <span>🎯 Match Proximity Tutor</span>
-                            </button>
-                            <button
-                              onClick={() => openUpdateModal(lead)}
-                              className="btn btn-primary btn-sm"
-                              style={{ backgroundColor: 'var(--brand-blue)' }}
-                            >
-                              <Plus size={14} />
-                              <span>Update Note & Status</span>
-                            </button>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => toggleTimeline(lead.id)}
-                            style={{
-                              border: 'none',
-                              background: 'transparent',
-                              color: 'var(--brand-blue)',
-                              fontWeight: 700,
-                              fontSize: '0.82rem',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.3rem',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <History size={14} />
-                            <span>{isExpanded ? 'Hide History' : `View Timeline (${lead.activities?.length || 0})`}</span>
-                            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                          </button>
-                        </div>
-
-                        {/* Audit Timeline */}
-                        {isExpanded && (
+                        ))
+                      ) : (
+                        <div style={{ position: 'relative' }}>
                           <div
                             style={{
-                              marginTop: '0.5rem',
-                              padding: '1.25rem',
-                              borderRadius: '12px',
-                              backgroundColor: 'var(--bg-card-subtle)',
-                              border: '1px solid var(--border-hairline)',
+                              position: 'absolute',
+                              left: '-1.75rem',
+                              top: '4px',
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              backgroundColor: '#3B82F6',
+                              border: '3px solid #FFFFFF',
+                              boxShadow: '0 0 0 2px #93C5FD',
+                            }}
+                          />
+                          <div style={{ backgroundColor: 'var(--bg-app)', borderRadius: '14px', padding: '1rem 1.25rem', border: '1px solid var(--border-hairline)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                              <span style={{ padding: '0.2rem 0.65rem', borderRadius: '8px', backgroundColor: '#DBEAFE', color: '#1E40AF', fontSize: '0.75rem', fontWeight: 800 }}>
+                                Enquiry Created
+                              </span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                {new Date(selectedLeadForFullView.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
+                              👤 Updated by: <strong style={{ color: 'var(--text-main)' }}>System Lead Desk</strong>
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-main)' }}>
+                              {selectedLeadForFullView.notes || 'Inquiry logged into TuitionForHome CRM system.'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* LEADS DESK TABLE VIEW */
+                <div>
+                  {/* Header with Search & Date Filters */}
+                  <div className="apple-card" style={{ padding: '1.25rem 1.5rem', marginBottom: '1.5rem', backgroundColor: '#FFFFFF', borderRadius: '18px', border: '1px solid var(--border-hairline)' }}>
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                      {/* Search Input */}
+                      <div style={{ position: 'relative', flex: '1', minWidth: '280px' }}>
+                        <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                        <input
+                          type="text"
+                          placeholder="Search name, mobile, email or course / subjects..."
+                          value={searchQuery}
+                          onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1);
+                          }}
+                          className="form-control"
+                          style={{ paddingLeft: '2.75rem', borderRadius: '12px', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-hairline)' }}
+                        />
+                      </div>
+
+                      {/* Date Filter & Reset */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery('');
+                            setActiveFilter('ALL');
+                            setCurrentPage(1);
+                          }}
+                          className="btn btn-secondary btn-sm"
+                          style={{ borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700 }}
+                        >
+                          <RotateCcw size={14} />
+                          <span>Reset</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Filter Pills (Matching User's Reference Palette) */}
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+                      {[
+                        { id: 'ALL', label: 'All', count: filterCounts.ALL, icon: <Grid size={12} />, bg: '#283344', text: '#FFFFFF', countBg: 'rgba(255,255,255,0.2)', border: '#1E293B' },
+                        { id: 'TODAY', label: 'Today', count: filterCounts.TODAY, icon: <CalendarClock size={12} />, bg: '#EA580C', text: '#FFFFFF', countBg: 'rgba(0,0,0,0.18)', border: '#C2410C' },
+                        { id: 'OVERDUE', label: 'Pending', count: filterCounts.OVERDUE, icon: <Clock size={12} />, bg: '#D97706', text: '#FFFFFF', countBg: 'rgba(0,0,0,0.18)', border: '#B45309' },
+                        { id: 'NEW_LEAD', label: 'New', count: filterCounts.NEW_LEAD, bg: '#F1F5F9', text: '#334155', countBg: '#E2E8F0', border: '#CBD5E1' },
+                        { id: 'CONTACTED', label: 'Contacted', count: filterCounts.CONTACTED, bg: '#FEF9C3', text: '#854D0E', countBg: '#FDE047', border: '#FACC15' },
+                        { id: 'INTERESTED', label: 'Interested', count: filterCounts.INTERESTED, bg: '#ECFCCB', text: '#3F6212', countBg: '#D9F99D', border: '#BEF264' },
+                        { id: 'DEMO_SCHEDULED', label: 'Demo Fixed', count: filterCounts.DEMO_SCHEDULED, bg: '#EDE9FE', text: '#6D28D9', countBg: '#DDD6FE', border: '#C4B5FD' },
+                        { id: 'LOST', label: 'Not Interested', count: filterCounts.LOST, bg: '#FFE4E6', text: '#9F1239', countBg: '#FECDD3', border: '#FDA4AF' },
+                      ].map((tab) => {
+                        const isActive = activeFilter === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveFilter(tab.id);
+                              setCurrentPage(1);
+                            }}
+                            style={{
+                              padding: '0.32rem 0.7rem',
+                              borderRadius: '8px',
+                              border: `1px solid ${isActive ? '#38BDF8' : tab.border}`,
+                              backgroundColor: tab.bg,
+                              color: tab.text,
+                              boxShadow: isActive ? '0 0 0 2px #38BDF8, 0 2px 8px rgba(0,0,0,0.12)' : '0 1px 2px rgba(0,0,0,0.04)',
+                              fontWeight: 700,
+                              fontSize: '0.74rem',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              transition: 'all 0.15s ease',
+                              lineHeight: 1.2,
+                              opacity: isActive ? 1 : 0.92,
                             }}
                           >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 800, fontSize: '0.9rem', marginBottom: '1rem' }}>
-                              <History size={16} color="var(--brand-blue)" />
-                              <span>Lead Activity & Follow-up History</span>
-                            </div>
+                            {tab.icon && <span>{tab.icon}</span>}
+                            <span>{tab.label}</span>
+                            <span
+                              style={{
+                                padding: '1px 6px',
+                                borderRadius: '999px',
+                                backgroundColor: tab.countBg,
+                                color: tab.text,
+                                fontSize: '0.68rem',
+                                fontWeight: 800,
+                              }}
+                            >
+                              {tab.count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-                            {lead.activities && lead.activities.length > 0 ? (
-                              <div style={{ position: 'relative', paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                                <div style={{ position: 'absolute', left: '6px', top: '8px', bottom: '8px', width: '2px', backgroundColor: 'var(--border-hairline)' }} />
+                  {/* CRM Leads Structured Table Card */}
+                  <div className="apple-card" style={{ padding: 0, overflow: 'visible', backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)', borderRadius: '16px' }}>
+                    <div style={{ overflowX: 'auto', overflowY: 'visible', position: 'relative' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid #CBD5E1', backgroundColor: '#F8FAFC' }}>
+                          <th style={{ padding: '0.55rem 0.75rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Student Details
+                          </th>
+                          <th style={{ padding: '0.55rem 0.75rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Course &amp; Subjects
+                          </th>
+                          <th style={{ padding: '0.55rem 0.75rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Status
+                          </th>
+                          <th style={{ padding: '0.55rem 0.75rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Counselor
+                          </th>
+                          <th style={{ padding: '0.55rem 0.75rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Follow-up Date
+                          </th>
+                          <th style={{ padding: '0.55rem 0.75rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedLeads.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: '#64748B' }}>
+                              No leads found matching current filter.
+                            </td>
+                          </tr>
+                        ) : (
+                          paginatedLeads.map((lead) => {
+                            const subjects = Array.isArray(lead.subjectsNeeded)
+                              ? lead.subjectsNeeded.join(', ')
+                              : lead.subjectsNeeded.replace(/[\[\]"]/g, '');
 
-                                {lead.activities.map((act) => (
-                                  <div key={act.id} style={{ position: 'relative' }}>
+                            const isHovered = hoveredLeadId === lead.id;
+                            const hasOverdue = lead.nextFollowupDate && isOverdue(lead.nextFollowupDate);
+                            const hasToday = lead.nextFollowupDate && isToday(lead.nextFollowupDate);
+
+                            return (
+                              <tr
+                                key={lead.id}
+                                onClick={() => setSelectedLeadForFullView(lead)}
+                                onMouseEnter={() => handleRowMouseEnter(lead.id)}
+                                onMouseLeave={handleRowMouseLeave}
+                                style={{
+                                  borderBottom: '1px solid #E2E8F0',
+                                  backgroundColor: isHovered ? '#F8FAFC' : '#FFFFFF',
+                                  transition: 'background-color 0.15s ease',
+                                  position: 'relative',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {/* Student Details */}
+                                <td style={{ padding: '0.45rem 0.75rem' }}>
+                                  <div>
+                                    <div
+                                      style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.86rem' }}
+                                      title="Click to view details"
+                                    >
+                                      {lead.parentName.toLowerCase()}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.72rem', color: '#64748B', marginTop: '2px', flexWrap: 'wrap' }}>
+                                      <a
+                                        href={`tel:${lead.parentPhone}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                        style={{ color: '#64748B', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
+                                      >
+                                        <Phone size={10} color="#64748B" />
+                                        <span>{lead.parentPhone}</span>
+                                      </a>
+                                      {lead.parentEmail && (
+                                        <span
+                                          onClick={(e) => e.stopPropagation()}
+                                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
+                                        >
+                                          <Mail size={10} color="#64748B" />
+                                          <span>{lead.parentEmail}</span>
+                                        </span>
+                                      )}
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                                        <Calendar size={10} color="#64748B" />
+                                        <span>{new Date(lead.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                                      </span>
+                                    </div>
+                                  </div>
+                                </td>
+
+                                {/* Course / Class & Subjects */}
+                                <td style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem' }}>
+                                  <div style={{ fontWeight: 600, color: '#334155' }}>
+                                    {lead.gradeClass}
+                                  </div>
+                                  <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '1px' }}>
+                                    {subjects}
+                                  </div>
+                                </td>
+
+                                {/* Status */}
+                                <td style={{ padding: '0.45rem 0.75rem' }}>
+                                  <div>
+                                    {getStatusBadge(lead.status)}
+                                  </div>
+                                  <div style={{ fontSize: '0.68rem', color: '#94A3B8', marginTop: '2px' }}>
+                                    Updated {new Date(lead.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                  </div>
+                                </td>
+
+                                {/* Counselor */}
+                                <td style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem', color: '#334155', fontWeight: 500 }}>
+                                  <div>{lead.assignedTutor ? lead.assignedTutor : 'Saloni Rathore'}</div>
+                                </td>
+
+                                {/* Follow-up Date */}
+                                <td style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem', whiteSpace: 'nowrap', color: '#334155' }}>
+                                  {lead.nextFollowupDate ? (
+                                    <div>
+                                      <span style={{ fontWeight: 600 }}>
+                                        {new Date(lead.nextFollowupDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                      </span>
+                                      {hasOverdue && <span style={{ marginLeft: '4px', fontSize: '0.66rem', color: '#DC2626', fontWeight: 800, backgroundColor: '#FEE2E2', padding: '1px 4px', borderRadius: '3px' }}>Overdue</span>}
+                                      {hasToday && <span style={{ marginLeft: '4px', fontSize: '0.66rem', color: '#1D4ED8', fontWeight: 800, backgroundColor: '#EFF6FF', padding: '1px 4px', borderRadius: '3px' }}>Today</span>}
+                                    </div>
+                                  ) : (
+                                    <span style={{ color: '#94A3B8' }}>-</span>
+                                  )}
+                                </td>
+
+                                {/* Actions */}
+                                <td style={{ padding: '0.45rem 0.75rem', textAlign: 'right', whiteSpace: 'nowrap', position: 'relative' }}>
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openUpdateModal(lead);
+                                      }}
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.2rem',
+                                        padding: '0.25rem 0.5rem',
+                                        borderRadius: '6px',
+                                        fontSize: '0.73rem',
+                                        fontWeight: 700,
+                                        border: '1px solid #E0E7FF',
+                                        color: '#4F46E5',
+                                        backgroundColor: '#EEF2FF',
+                                        cursor: 'pointer',
+                                      }}
+                                      title="Log Follow-up & Change Status"
+                                    >
+                                      <RotateCcw size={11} />
+                                      <span>Action</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedLeadForFullView(lead);
+                                      }}
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.2rem',
+                                        padding: '0.25rem 0.5rem',
+                                        borderRadius: '6px',
+                                        fontSize: '0.73rem',
+                                        fontWeight: 700,
+                                        border: '1px solid #E2E8F0',
+                                        color: '#334155',
+                                        backgroundColor: '#F8FAFC',
+                                        cursor: 'pointer',
+                                      }}
+                                      title="View Full Details & Timeline"
+                                    >
+                                      <Eye size={11} />
+                                      <span>View</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedLeadForMatching(lead);
+                                      }}
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.2rem',
+                                        padding: '0.25rem 0.5rem',
+                                        borderRadius: '6px',
+                                        fontSize: '0.73rem',
+                                        fontWeight: 700,
+                                        border: '1px solid #FEF3C7',
+                                        color: '#B45309',
+                                        backgroundColor: '#FFFBEB',
+                                        cursor: 'pointer',
+                                      }}
+                                      title="Match Nearby Tutor"
+                                    >
+                                      <Users size={11} />
+                                      <span>Assign</span>
+                                    </button>
+                                  </div>
+
+                                  {/* Clean Hover Timeline Popover */}
+                                  {isHovered && (
                                     <div
                                       style={{
                                         position: 'absolute',
-                                        left: '-1.5rem',
-                                        top: '3px',
-                                        width: '14px',
-                                        height: '14px',
-                                        borderRadius: '50%',
+                                        right: '0.5rem',
+                                        top: 'calc(100% + 6px)',
+                                        zIndex: 1000,
                                         backgroundColor: '#FFFFFF',
-                                        border: '3px solid var(--brand-blue)',
+                                        color: '#1E293B',
+                                        padding: '0.85rem 1rem',
+                                        borderRadius: '10px',
+                                        border: '1px solid #CBD5E1',
+                                        fontSize: '0.78rem',
+                                        boxShadow: '0 12px 32px rgba(15, 23, 42, 0.16), 0 2px 6px rgba(15, 23, 42, 0.08)',
+                                        width: '460px',
+                                        maxWidth: 'calc(100vw - 40px)',
+                                        textAlign: 'left',
+                                        pointerEvents: 'none',
+                                        whiteSpace: 'normal',
+                                        wordBreak: 'break-word',
+                                        overflowWrap: 'break-word',
+                                        lineHeight: '1.45',
                                       }}
-                                    />
-
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.4rem' }}>
-                                      <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>
-                                        {act.performedBy}
-                                        <span style={{ marginLeft: '0.5rem', padding: '0.1rem 0.4rem', borderRadius: '4px', backgroundColor: '#E2E8F0', fontSize: '0.72rem', color: '#334155' }}>
-                                          {act.actionType}
-                                        </span>
+                                    >
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', borderBottom: '1px solid #F1F5F9', paddingBottom: '6px' }}>
+                                        <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.84rem' }}>
+                                          {lead.parentName}
+                                        </div>
+                                        <div>
+                                          {getStatusBadge(lead.status)}
+                                        </div>
                                       </div>
-                                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                        {new Date(act.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+
+                                      {/* Full Notes Section with Word Wrapping */}
+                                      {lead.notes ? (
+                                        <div style={{ marginBottom: '8px', padding: '6px 8px', borderRadius: '6px', backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
+                                          <div style={{ fontWeight: 700, color: '#92400E', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: '2px' }}>Notes</div>
+                                          <div style={{ color: '#78350F', fontSize: '0.78rem', whiteSpace: 'normal', lineHeight: '1.4' }}>{lead.notes}</div>
+                                        </div>
+                                      ) : null}
+
+                                      {/* Timeline Activity with Full Text */}
+                                      <div style={{ fontWeight: 700, color: '#475569', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: '4px' }}>
+                                        Activity Timeline
+                                      </div>
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', color: '#334155', maxHeight: '180px', overflowY: 'auto' }}>
+                                        {lead.activities && lead.activities.length > 0 ? (
+                                          lead.activities.map((act) => (
+                                            <div key={act.id} style={{ display: 'flex', gap: '0.45rem', fontSize: '0.75rem', alignItems: 'flex-start' }}>
+                                              <span style={{ flexShrink: 0, color: '#64748B', fontWeight: 700, minWidth: '55px' }}>
+                                                {new Date(act.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}:
+                                              </span>
+                                              <span style={{ color: '#334155', whiteSpace: 'normal', flex: 1 }}>{act.description}</span>
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                                            {new Date(lead.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}: Inquiry logged
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
+                                  )}
+                                </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
 
-                                    <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.84rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                                      {act.description}
-                                    </p>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                                No history records for this lead yet.
-                              </div>
-                            )}
+                    {/* Pagination Bar */}
+                    {filteredLeads.length > 0 && (
+                      <div
+                        style={{
+                          padding: '0.75rem 1.25rem',
+                          borderTop: '1px solid #E2E8F0',
+                          backgroundColor: '#FAFAFA',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                          gap: '0.75rem',
+                          fontSize: '0.78rem',
+                          color: '#475569',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                          <span>
+                            Showing <strong>{startIndex + 1}</strong> to <strong>{endIndex}</strong> of <strong>{filteredLeads.length}</strong> enquiries
+                          </span>
+
+                          {/* Rows per page selector */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>Per page:</span>
+                            <select
+                              value={itemsPerPage}
+                              onChange={(e) => {
+                                setItemsPerPage(Number(e.target.value));
+                                setCurrentPage(1);
+                              }}
+                              style={{
+                                padding: '0.2rem 0.5rem',
+                                borderRadius: '6px',
+                                border: '1px solid #CBD5E1',
+                                backgroundColor: '#FFFFFF',
+                                fontSize: '0.76rem',
+                                fontWeight: 700,
+                                color: '#334155',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <option value={5}>5</option>
+                              <option value={10}>10</option>
+                              <option value={20}>20</option>
+                              <option value={50}>50</option>
+                            </select>
                           </div>
-                        )}
+                        </div>
+
+                        {/* Page Number Buttons */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <button
+                            type="button"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            style={{
+                              padding: '0.25rem 0.6rem',
+                              borderRadius: '6px',
+                              border: '1px solid #CBD5E1',
+                              backgroundColor: currentPage === 1 ? '#F1F5F9' : '#FFFFFF',
+                              color: currentPage === 1 ? '#94A3B8' : '#334155',
+                              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                              fontWeight: 700,
+                              fontSize: '0.74rem',
+                            }}
+                          >
+                            ← Prev
+                          </button>
+
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                            const isCurrent = pageNum === currentPage;
+                            return (
+                              <button
+                                key={pageNum}
+                                type="button"
+                                onClick={() => setCurrentPage(pageNum)}
+                                style={{
+                                  padding: '0.25rem 0.55rem',
+                                  borderRadius: '6px',
+                                  border: `1px solid ${isCurrent ? 'var(--brand-teal)' : '#CBD5E1'}`,
+                                  backgroundColor: isCurrent ? 'var(--brand-teal)' : '#FFFFFF',
+                                  color: isCurrent ? '#FFFFFF' : '#334155',
+                                  cursor: 'pointer',
+                                  fontWeight: isCurrent ? 800 : 600,
+                                  fontSize: '0.74rem',
+                                  minWidth: '28px',
+                                }}
+                              >
+                                {pageNum}
+                              </button>
+                            );
+                          })}
+
+                          <button
+                            type="button"
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            style={{
+                              padding: '0.25rem 0.6rem',
+                              borderRadius: '6px',
+                              border: '1px solid #CBD5E1',
+                              backgroundColor: currentPage === totalPages ? '#F1F5F9' : '#FFFFFF',
+                              color: currentPage === totalPages ? '#94A3B8' : '#334155',
+                              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                              fontWeight: 700,
+                              fontSize: '0.74rem',
+                            }}
+                          >
+                            Next →
+                          </button>
+                        </div>
                       </div>
-                    );
-                  })}
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: CONVERTED LEADS */}
+          {activeAdminTab === 'CONVERTED' && (
+            <div>
+              {selectedConverted ? (
+                /* RESPONSIVE FULL IN-PAGE VIEW FOR CONVERTED LEAD */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {/* Top Bar with Back Navigation */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '0.75rem',
+                      backgroundColor: '#FFFFFF',
+                      padding: '0.85rem 1.25rem',
+                      borderRadius: '16px',
+                      border: '1px solid var(--border-hairline)',
+                      boxShadow: 'var(--shadow-sm)',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setSelectedConverted(null)}
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        fontSize: '0.95rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        color: '#15803D',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                      }}
+                    >
+                      <span>←</span>
+                      <span>Back to Converted List</span>
+                    </button>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', fontWeight: 800, padding: '0.3rem 0.8rem', borderRadius: '999px', backgroundColor: '#DCFCE7', color: '#15803D' }}>
+                        <CheckCircle2 size={14} /> Done
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Main Student Details & Tutor Management Card (Full Width) */}
+                  <div className="apple-card" style={{ padding: '1.5rem', backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    {/* Name & Quick Action Links */}
+                    <div style={{ borderBottom: '1px solid #F1F5F9', paddingBottom: '1rem' }}>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#15803D', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
+                        Converted Student / Admission Done
+                      </div>
+                      <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                        {selectedConverted.parentName}
+                      </h2>
+                      <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <a
+                          href={`tel:${selectedConverted.parentPhone}`}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', color: '#334155', textDecoration: 'none', fontWeight: 600, padding: '0.4rem 0.8rem', backgroundColor: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}
+                        >
+                          <Phone size={13} color="#64748B" /> {selectedConverted.parentPhone}
+                        </a>
+                        <a
+                          href={`https://wa.me/91${selectedConverted.parentPhone}`}
+                          target="_blank"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', color: '#15803D', textDecoration: 'none', fontWeight: 700, padding: '0.4rem 0.8rem', backgroundColor: '#DCFCE7', borderRadius: '8px', border: '1px solid #86EFAC' }}
+                        >
+                          <Send size={13} color="#15803D" /> WhatsApp ↗
+                        </a>
+                      </div>
+                      {selectedConverted.parentEmail && (
+                        <div style={{ fontSize: '0.82rem', color: '#64748B', marginTop: '0.4rem' }}>
+                          ✉️ {selectedConverted.parentEmail}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Key Attributes Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+                      {[
+                        { label: 'Class / Grade', value: selectedConverted.gradeClass },
+                        { label: 'Subjects', value: Array.isArray(selectedConverted.subjectsNeeded) ? selectedConverted.subjectsNeeded.join(', ') : selectedConverted.subjectsNeeded.replace(/[\[\]"]/g, '') },
+                        { label: 'Locality', value: `📍 ${selectedConverted.locality}` },
+                        { label: 'Monthly Budget', value: `₹${selectedConverted.budgetMonthly?.toLocaleString('en-IN') || 'Negotiable'}` },
+                        { label: 'Mode', value: selectedConverted.preferredMode === 'OFFLINE_HOME' ? '🏠 Home Tuition' : '💻 Online Live' },
+                        { label: 'Converted Date', value: new Date(selectedConverted.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) },
+                      ].map((item, i) => (
+                        <div key={i} style={{ padding: '0.75rem 0.9rem', borderRadius: '10px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{item.label}</div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E293B', marginTop: '2px' }}>{item.value}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Replace / Match Tutor Section with Smart Proximity Matcher */}
+                    <div style={{ padding: '1.25rem', borderRadius: '12px', backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <div>
+                          <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0369A1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Assigned Home Tutor
+                          </div>
+                          <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginTop: '2px' }}>
+                            {selectedConverted.assignedTutor ? `👨‍🏫 ${selectedConverted.assignedTutor}` : '⚠️ No tutor assigned yet'}
+                          </div>
+                        </div>
+
+                        {/* Button to Launch Full Proximity Tutor Match Modal */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedLeadForMatching(selectedConverted)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.45rem',
+                            padding: '0.55rem 1.15rem',
+                            borderRadius: '10px',
+                            backgroundColor: '#0284C7',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            fontSize: '0.84rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)',
+                          }}
+                        >
+                          <Users size={15} />
+                          <span>Match Nearby Tutors (Proximity AI)</span>
+                        </button>
+                      </div>
+
+                      {/* Or Quick Dropdown Select */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Or select directly:</span>
+                        <select
+                          value=""
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              const updatedLeads = leads.map(l =>
+                                l.id === selectedConverted.id ? { ...l, assignedTutor: e.target.value } : l
+                              );
+                              setLeads(updatedLeads);
+                              setSelectedConverted({ ...selectedConverted, assignedTutor: e.target.value });
+                            }
+                          }}
+                          style={{
+                            flex: 1,
+                            minWidth: '220px',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            padding: '0.45rem 0.75rem',
+                            borderRadius: '8px',
+                            border: '1px solid #7DD3FC',
+                            backgroundColor: '#FFFFFF',
+                            color: '#1E293B',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <option value="">Quick Pick Verified Tutor...</option>
+                          {VERIFIED_TUTORS.map((t) => (
+                            <option key={t.id} value={t.name}>{t.name} — {t.highestDegree} ({t.subjects.join(', ')})</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Counselor Intake Notes */}
+                    {selectedConverted.notes && (
+                      <div>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                          Counselor Intake Notes
+                        </div>
+                        <div style={{ fontSize: '0.86rem', color: '#334155', lineHeight: 1.5, padding: '0.75rem 0.95rem', borderRadius: '10px', backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
+                          {selectedConverted.notes}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Full Activity Timeline Card (At the Bottom - Full Width) */}
+                  <div className="apple-card" style={{ padding: '1.5rem', backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)', borderRadius: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.75rem' }}>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                        Activity &amp; Conversion Timeline
+                      </h3>
+                      <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
+                        {selectedConverted.activities?.length || 1} Events
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {selectedConverted.activities && selectedConverted.activities.length > 0 ? (
+                        selectedConverted.activities.map((act) => (
+                          <div key={act.id} style={{ display: 'flex', gap: '0.75rem', padding: '0.75rem 1rem', backgroundColor: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                            <div style={{ flexShrink: 0, fontSize: '0.78rem', color: '#64748B', fontWeight: 700 }}>
+                              {new Date(act.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </div>
+                            <div style={{ fontSize: '0.84rem', color: '#1E293B', lineHeight: 1.4 }}>
+                              {act.description}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ display: 'flex', gap: '0.75rem', padding: '0.75rem 1rem', backgroundColor: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                          <div style={{ flexShrink: 0, fontSize: '0.78rem', color: '#64748B', fontWeight: 700 }}>
+                            {new Date(selectedConverted.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                          </div>
+                          <div style={{ fontSize: '0.84rem', color: '#1E293B' }}>
+                            Inquiry registered and marked as Converted
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* FULL RESPONSIVE TABLE VIEW */
+                <div className="apple-card" style={{ padding: 0, overflow: 'hidden', backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)', borderRadius: '16px' }}>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid #CBD5E1', backgroundColor: '#F8FAFC' }}>
+                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Student</th>
+                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Contact</th>
+                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Class &amp; Subjects</th>
+                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Location</th>
+                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tutor</th>
+                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Converted On</th>
+                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leads.filter(l => l.status === 'TUITION_CONFIRMED').length === 0 ? (
+                          <tr>
+                            <td colSpan={7} style={{ textAlign: 'center', padding: '3.5rem', color: '#64748B', fontSize: '0.85rem' }}>
+                              No converted leads yet.
+                            </td>
+                          </tr>
+                        ) : (
+                          leads.filter(l => l.status === 'TUITION_CONFIRMED').map((lead) => {
+                            const subjects = Array.isArray(lead.subjectsNeeded)
+                              ? lead.subjectsNeeded.join(', ')
+                              : lead.subjectsNeeded.replace(/[\[\]"]/g, '');
+                            return (
+                              <tr
+                                key={lead.id}
+                                onClick={() => setSelectedConverted(lead)}
+                                style={{
+                                  borderBottom: '1px solid #E2E8F0',
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
+                              >
+                                <td style={{ padding: '0.65rem 0.95rem' }}>
+                                  <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.86rem' }}>
+                                    {lead.parentName}
+                                  </div>
+                                </td>
+                                <td style={{ padding: '0.65rem 0.95rem', fontSize: '0.8rem' }}>
+                                  <a
+                                    href={`tel:${lead.parentPhone}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    style={{ color: '#334155', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                  >
+                                    <Phone size={11} color="#64748B" /> {lead.parentPhone}
+                                  </a>
+                                </td>
+                                <td style={{ padding: '0.65rem 0.95rem', fontSize: '0.8rem' }}>
+                                  <span style={{ fontWeight: 700, color: '#334155' }}>{lead.gradeClass}</span>
+                                  <span style={{ color: '#64748B' }}> ({subjects})</span>
+                                </td>
+                                <td style={{ padding: '0.65rem 0.95rem', fontSize: '0.8rem', color: '#334155' }}>
+                                  📍 {lead.locality}
+                                </td>
+                                <td style={{ padding: '0.65rem 0.95rem', fontSize: '0.8rem', color: '#0369A1', fontWeight: 600 }}>
+                                  {lead.assignedTutor ? `👨‍🏫 ${lead.assignedTutor}` : <span style={{ color: '#94A3B8' }}>Unassigned</span>}
+                                </td>
+                                <td style={{ padding: '0.65rem 0.95rem', fontSize: '0.8rem', color: '#334155' }}>
+                                  {new Date(lead.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </td>
+                                <td style={{ padding: '0.65rem 0.95rem', textAlign: 'right' }}>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedConverted(lead);
+                                    }}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem',
+                                      padding: '0.3rem 0.65rem',
+                                      borderRadius: '6px',
+                                      fontSize: '0.74rem',
+                                      fontWeight: 700,
+                                      border: '1px solid #BBF7D0',
+                                      color: '#15803D',
+                                      backgroundColor: '#F0FDF4',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    <Eye size={12} />
+                                    <span>View</span>
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>
@@ -1330,6 +3185,8 @@ export default function SuperAdminPage() {
               </div>
             </div>
           )}
+            </section>
+          </div>
         </div>
       </main>
 
@@ -1462,121 +3319,187 @@ export default function SuperAdminPage() {
         </div>
       )}
 
-      {/* UPDATE FOLLOW-UP MODAL (ADMIN) */}
+      {/* COMPACT & CLEAN UPDATE FOLLOW-UP MODAL (ADMIN) */}
       {selectedLeadForUpdate && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
             zIndex: 1000,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             padding: '1rem',
+            backdropFilter: 'blur(2px)',
           }}
         >
           <div
-            className="apple-card"
             style={{
               width: '100%',
-              maxWidth: '560px',
+              maxWidth: '430px',
               backgroundColor: '#FFFFFF',
-              padding: '2rem',
-              borderRadius: '20px',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
-              maxHeight: '90vh',
-              overflowY: 'auto',
+              padding: '1.25rem 1.5rem',
+              borderRadius: '16px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
+              border: '1px solid #E2E8F0',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-hairline)', paddingBottom: '1rem' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.75rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>
-                  Update Lead Follow-up (Admin)
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
+                  Update Follow-up
                 </h3>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  Parent: <strong>{selectedLeadForUpdate.parentName}</strong> ({selectedLeadForUpdate.locality})
+                <div style={{ fontSize: '0.76rem', color: '#64748B', marginTop: '2px' }}>
+                  Student: <strong>{selectedLeadForUpdate.parentName}</strong> ({selectedLeadForUpdate.locality})
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedLeadForUpdate(null)}
-                style={{ border: 'none', background: 'transparent', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--text-muted)' }}
+                style={{ border: 'none', background: '#F1F5F9', borderRadius: '6px', width: '26px', height: '26px', fontSize: '0.9rem', cursor: 'pointer', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSaveFollowup} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div className="form-group">
-                <label className="form-label" style={{ fontWeight: 700 }}>
-                  Update Lead Status
+            <form onSubmit={handleSaveFollowup} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+              {/* Status */}
+              <div>
+                <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
+                  Lead Status
                 </label>
                 <select
                   value={updateStatus}
                   onChange={(e) => setUpdateStatus(e.target.value)}
                   className="form-control"
-                  style={{ fontWeight: 700 }}
+                  style={{ fontWeight: 600, fontSize: '0.82rem', padding: '0.42rem 0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1' }}
                 >
-                  <option value="NEW_LEAD">🆕 New Lead (Not Contacted)</option>
-                  <option value="CONTACTED">📞 Contacted (Spoke with parent)</option>
-                  <option value="INTERESTED">⭐ Highly Interested (Ready for tutor)</option>
-                  <option value="DEMO_SCHEDULED">🎓 Demo Scheduled</option>
-                  <option value="TUITION_CONFIRMED">🏆 Tuition Confirmed (Won)</option>
-                  <option value="LOST">❌ Lost / Not Interested</option>
+                  <option value="CONTACTED">Contacted</option>
+                  <option value="INTERESTED">Interested</option>
+                  <option value="DEMO_SCHEDULED">Demo Fixed</option>
+                  <option value="LOST">Not Interested</option>
                 </select>
               </div>
 
-              <div className="form-group">
-                <label className="form-label" style={{ fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Follow-up Note / Call Remarks *</span>
-                  <span style={{ fontSize: '0.75rem', color: '#EF4444' }}>Mandatory</span>
+              {/* Notes */}
+              <div>
+                <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
+                  Notes / Remarks <span style={{ color: '#DC2626' }}>*</span>
                 </label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={updateNotes}
                   onChange={(e) => setUpdateNotes(e.target.value)}
-                  placeholder="Enter detailed update remark e.g. Parent requested weekend demo..."
+                  placeholder="e.g. Spoke to parent, requested demo on Sunday..."
                   className="form-control"
+                  style={{ fontSize: '0.82rem', padding: '0.42rem 0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1', resize: 'vertical' }}
                   required
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label" style={{ fontWeight: 700 }}>
-                  ⏰ Set Next Follow-up Date & Time (Optional)
-                </label>
-                <input
-                  type="datetime-local"
-                  value={updateNextFollowup}
-                  onChange={(e) => setUpdateNextFollowup(e.target.value)}
-                  className="form-control"
-                />
-              </div>
+              {/* Next Follow-up Date (Mandatory for Active Leads, Optional/Hidden for Done & Lost) */}
+              {updateStatus === 'LOST' || updateStatus === 'TUITION_CONFIRMED' ? (
+                <div style={{ padding: '0.45rem 0.7rem', borderRadius: '8px', backgroundColor: '#F8FAFC', border: '1px dashed #CBD5E1', fontSize: '0.74rem', color: '#64748B' }}>
+                  ✓ No follow-up required for {updateStatus === 'LOST' ? 'Not Interested' : 'Converted'}
+                </div>
+              ) : (
+                <div>
+                  <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
+                    Next Follow-up Date <span style={{ color: '#DC2626' }}>*</span>
+                  </label>
+
+                  {/* Date Input */}
+                  <input
+                    type="date"
+                    value={updateNextFollowup ? updateNextFollowup.split('T')[0] : ''}
+                    onChange={(e) => setUpdateNextFollowup(e.target.value)}
+                    className="form-control"
+                    style={{ fontSize: '0.82rem', padding: '0.4rem 0.65rem', borderRadius: '8px', border: '1px solid #CBD5E1', width: '100%' }}
+                    required
+                  />
+
+                  {/* Quick 1-Tap Pickers directly below the input */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem', marginTop: '0.35rem' }}>
+                    {[
+                      { label: '⚡ Today', days: 0 },
+                      { label: '⚡ Tomorrow', days: 1 },
+                      { label: '⚡ In 3 Days', days: 3 },
+                    ].map((preset) => {
+                      const targetD = new Date(Date.now() + preset.days * 86400000).toISOString().split('T')[0];
+                      const isSelected = updateNextFollowup.startsWith(targetD);
+                      return (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => setUpdateNextFollowup(targetD)}
+                          style={{
+                            padding: '0.28rem 0.35rem',
+                            borderRadius: '6px',
+                            border: `1px solid ${isSelected ? '#6366F1' : '#E2E8F0'}`,
+                            backgroundColor: isSelected ? '#EEF2FF' : '#F8FAFC',
+                            color: isSelected ? '#4F46E5' : '#475569',
+                            fontSize: '0.72rem',
+                            fontWeight: isSelected ? 800 : 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            textAlign: 'center',
+                          }}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {noteError && (
-                <div style={{ padding: '0.6rem 0.85rem', borderRadius: '8px', backgroundColor: '#FEE2E2', color: '#DC2626', fontSize: '0.82rem', fontWeight: 700 }}>
+                <div style={{ padding: '0.42rem 0.7rem', borderRadius: '6px', backgroundColor: '#FEE2E2', color: '#DC2626', fontSize: '0.75rem', fontWeight: 700 }}>
                   ⚠️ {noteError}
                 </div>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem', paddingTop: '0.65rem', borderTop: '1px solid #F1F5F9' }}>
                 <button
                   type="button"
                   onClick={() => setSelectedLeadForUpdate(null)}
-                  className="btn btn-secondary"
+                  style={{
+                    padding: '0.38rem 0.8rem',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    backgroundColor: '#FFFFFF',
+                    color: '#475569',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
                   disabled={noteSubmitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary"
                   disabled={noteSubmitting}
-                  style={{ backgroundColor: 'var(--brand-blue)' }}
+                  style={{
+                    padding: '0.38rem 0.95rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: '#6366F1',
+                    color: '#FFFFFF',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    boxShadow: '0 2px 6px rgba(99, 102, 241, 0.3)',
+                  }}
                 >
-                  <Send size={16} />
-                  <span>{noteSubmitting ? 'Saving...' : 'Save & Update Timeline'}</span>
+                  <Send size={13} />
+                  <span>{noteSubmitting ? 'Saving...' : 'Save Update'}</span>
                 </button>
               </div>
             </form>
@@ -1594,7 +3517,161 @@ export default function SuperAdminPage() {
         />
       )}
 
-      <Footer />
+      {/* COUNSELOR DETAIL VIEW, EDIT & RESET PASSWORD MODAL */}
+      {selectedCounselorForEdit && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            className="apple-card"
+            style={{
+              width: '100%',
+              maxWidth: '540px',
+              backgroundColor: '#FFFFFF',
+              padding: '2rem',
+              borderRadius: '20px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-hairline)', paddingBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '12px',
+                    backgroundColor: 'var(--brand-teal-light)',
+                    color: 'var(--brand-teal)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 800,
+                    fontSize: '1.1rem',
+                  }}
+                >
+                  {selectedCounselorForEdit.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
+                    Counselor Profile & Settings
+                  </h3>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    Desk ID: <strong style={{ color: 'var(--brand-blue)' }}>{selectedCounselorForEdit.id}</strong> • Role: <strong>TELECALLER</strong>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedCounselorForEdit(null)}
+                style={{ border: 'none', background: 'transparent', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Edit & Password Reset Form */}
+            <form onSubmit={handleUpdateCounselor} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700 }}>
+                  Counselor Full Name *
+                </label>
+                <input
+                  type="text"
+                  value={editCounselorName}
+                  onChange={(e) => setEditCounselorName(e.target.value)}
+                  className="form-control"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700 }}>
+                  Login Email Address *
+                </label>
+                <input
+                  type="email"
+                  value={editCounselorEmail}
+                  onChange={(e) => setEditCounselorEmail(e.target.value)}
+                  className="form-control"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 700 }}>
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  placeholder="e.g. 9517447689"
+                  value={editCounselorPhone}
+                  onChange={(e) => setEditCounselorPhone(e.target.value)}
+                  className="form-control"
+                />
+              </div>
+
+              {/* Password Reset Section */}
+              <div style={{ padding: '1rem', backgroundColor: '#FEF3C7', borderRadius: '12px', border: '1px solid #FDE68A' }}>
+                <label className="form-label" style={{ fontWeight: 800, color: '#92400E', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                  <Lock size={15} />
+                  <span>Reset / Change Password</span>
+                </label>
+                <input
+                  type="password"
+                  placeholder="Enter new password (or leave empty to keep current)"
+                  value={editCounselorPassword}
+                  onChange={(e) => setEditCounselorPassword(e.target.value)}
+                  className="form-control"
+                  style={{ backgroundColor: '#FFFFFF', borderColor: '#FCD34D' }}
+                />
+                <div style={{ fontSize: '0.72rem', color: '#92400E', marginTop: '4px' }}>
+                  ℹ️ Agar password change nahi karna hai, toh isse khali (empty) chhod dein.
+                </div>
+              </div>
+
+              {editCounselorError && (
+                <div style={{ padding: '0.65rem 0.85rem', borderRadius: '8px', backgroundColor: '#FEE2E2', color: '#DC2626', fontSize: '0.82rem', fontWeight: 700 }}>
+                  ⚠️ {editCounselorError}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-hairline)' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCounselorForEdit(null)}
+                  className="btn btn-secondary"
+                  disabled={editCounselorSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={editCounselorSubmitting}
+                  style={{ backgroundColor: 'var(--brand-emerald)', fontWeight: 800 }}
+                >
+                  <Save size={16} />
+                  <span>{editCounselorSubmitting ? 'Saving...' : 'Save & Update Details'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
