@@ -9,6 +9,8 @@ export async function POST(req: Request) {
       userId,
       teachingMode,
       highestDegree,
+      qualifications, // array: [{ id, degree, institute, year, grade }]
+      experiences,    // array: [{ id, role, organization, startYear, endYear, isCurrent, description }]
       experienceYears,
       subjects,     // string[]
       classes,      // string[]
@@ -44,6 +46,8 @@ export async function POST(req: Request) {
     const profileUpdateData: any = {};
     if (teachingMode !== undefined) profileUpdateData.teachingMode = teachingMode;
     if (highestDegree !== undefined) profileUpdateData.highestDegree = highestDegree;
+    if (qualifications !== undefined) profileUpdateData.qualifications = typeof qualifications === 'string' ? qualifications : JSON.stringify(qualifications);
+    if (experiences !== undefined) profileUpdateData.experiences = typeof experiences === 'string' ? experiences : JSON.stringify(experiences);
     if (experienceYears !== undefined) profileUpdateData.experienceYears = Number(experienceYears);
     
     // Stringify string arrays for subjects, classes, boards, areas
@@ -153,6 +157,8 @@ export async function GET(req: Request) {
       classes: safeParse(profile.classes),
       boards: safeParse(profile.boards),
       serviceAreas: safeParse(profile.serviceAreas),
+      qualifications: safeParse(profile.qualifications),
+      experiences: safeParse(profile.experiences),
     };
 
     return NextResponse.json({

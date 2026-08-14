@@ -81,6 +81,8 @@ model TutorProfile {
   bio               String?      @db.Text
   experienceYears   Int          @default(0)
   highestDegree     String?
+  qualifications    String?      @db.Text // JSON array: [{ id, degree, institute, year, grade }]
+  experiences       String?      @db.Text // JSON array: [{ id, role, organization, startYear, endYear, isCurrent, description }]
   teachingMode      TeachingMode @default(BOTH) // OFFLINE_HOME | ONLINE_LIVE | BOTH
   subjects          String?      // JSON string: ["Mathematics", "Physics"]
   classes           String?      // JSON string: ["Class 9", "Class 10", "Class 11", "Class 12"]
