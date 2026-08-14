@@ -29,31 +29,37 @@ export async function GET() {
       console.warn('Database not reached or table empty, returning mock counselors:', dbErr);
     }
 
-    // Default counselors if DB is empty
-    if (!counselors || counselors.length === 0) {
-      counselors = [
-        {
-          id: 'csl-1',
-          name: 'Pooja Sharma',
-          email: 'pooja.counselor@sssamacademy.com',
-          phone: '9517447689',
-          role: 'TELECALLER',
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 'csl-2',
-          name: 'Karan Mehra',
-          email: 'karan.telecaller@sssamacademy.com',
-          phone: '9217031899',
-          role: 'TELECALLER',
-          createdAt: new Date().toISOString(),
-        },
-      ];
+    // Default baseline counselors
+    const defaultDesks = [
+      {
+        id: 'csl-1',
+        name: 'Pooja Sharma (Lead Desk 1)',
+        email: 'pooja.counselor@sssamacademy.com',
+        phone: '9517447689',
+        role: 'TELECALLER',
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'csl-2',
+        name: 'Karan Mehra (Lead Desk 2)',
+        email: 'karan.telecaller@sssamacademy.com',
+        phone: '9217031899',
+        role: 'TELECALLER',
+        createdAt: new Date().toISOString(),
+      },
+    ];
+
+    // Combine DB counselors with default baseline desks if not already present
+    const combined = [...counselors];
+    for (const desk of defaultDesks) {
+      if (!combined.some((c) => c.email.toLowerCase() === desk.email.toLowerCase())) {
+        combined.push(desk);
+      }
     }
 
     return NextResponse.json({
       success: true,
-      counselors,
+      counselors: combined,
     });
   } catch (error: any) {
     console.error('[ADMIN_GET_COUNSELORS_ERROR]:', error);
