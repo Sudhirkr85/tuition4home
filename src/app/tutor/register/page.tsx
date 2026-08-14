@@ -52,20 +52,25 @@ export default function TutorRegisterLoginPage() {
   const [userEmail, setUserEmail] = useState('');
   
   // Auth Form State (Register)
-  const [regName, setRegName] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPhone, setRegPhone] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regName, setRegName] = useState('Amit Kumar');
+  const [regEmail, setRegEmail] = useState('tutor2@tuitionforhome.com');
+  const [regPhone, setRegPhone] = useState('9876543211');
+  const [regPassword, setRegPassword] = useState('tutor123');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('tutor123');
   
   // Auth Form State (Login - Password)
-  const [loginContact, setLoginContact] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  const [loginContact, setLoginContact] = useState('tutor@tuitionforhome.com');
+  const [loginPassword, setLoginPassword] = useState('tutor123');
   
   // Auth Form State (Login - OTP)
-  const [otpContact, setOtpContact] = useState('');
-  const [otpCode, setOtpCode] = useState('');
+  const [otpContact, setOtpContact] = useState('tutor@tuitionforhome.com');
+  const [otpCode, setOtpCode] = useState('123456');
   const [isOtpSent, setIsOtpSent] = useState(false);
+
+  // Show/Hide Password & Shake Animation States
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [shakeForm, setShakeForm] = useState(false);
 
   // Dynamic rotation for Gurgaon leads
   const [activeLeadIndex, setActiveLeadIndex] = useState(0);
@@ -139,6 +144,11 @@ export default function TutorRegisterLoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
+
+  const triggerShake = () => {
+    setShakeForm(true);
+    setTimeout(() => setShakeForm(false), 500);
+  };
 
   // Auto-save/Draft recovery on load if user is logged in
   useEffect(() => {
@@ -244,6 +254,7 @@ export default function TutorRegisterLoginPage() {
       
       if (!data.success) {
         setErrorMessage(data.error || 'Registration failed.');
+        triggerShake();
       } else {
         const session = { userId: data.userId, name: data.name, email: data.email };
         localStorage.setItem('tutor_session', JSON.stringify(session));
@@ -278,6 +289,7 @@ export default function TutorRegisterLoginPage() {
       
       if (!data.success) {
         setErrorMessage(data.error || 'Login failed.');
+        triggerShake();
       } else {
         const session = { userId: data.userId, name: data.name, email: data.email };
         localStorage.setItem('tutor_session', JSON.stringify(session));
@@ -344,6 +356,7 @@ export default function TutorRegisterLoginPage() {
       
       if (!data.success) {
         setErrorMessage(data.error || 'OTP verification failed.');
+        triggerShake();
       } else {
         const session = { userId: data.userId, name: data.name, email: data.email };
         localStorage.setItem('tutor_session', JSON.stringify(session));
@@ -563,6 +576,22 @@ export default function TutorRegisterLoginPage() {
               .animate-float-slower {
                 animation: float-slower 7s ease-in-out infinite;
               }
+              @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                15%, 45%, 75% { transform: translateX(-6px); }
+                30%, 60%, 90% { transform: translateX(6px); }
+              }
+              .shake-animation {
+                animation: shake 0.45s ease-in-out;
+              }
+              .form-control {
+                transition: all 0.2s ease-in-out !important;
+              }
+              .form-control:focus {
+                border-color: var(--brand-teal) !important;
+                box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.18) !important;
+                outline: none !important;
+              }
               @media (max-width: 900px) {
                 .split-screen-container {
                   flex-direction: column !important;
@@ -719,7 +748,7 @@ export default function TutorRegisterLoginPage() {
             </div>
 
             {/* Right Form Panel */}
-            <div className="split-auth-panel">
+            <div className={`split-auth-panel ${shakeForm ? 'shake-animation' : ''}`}>
               <div style={{ maxWidth: '440px', width: '100%', margin: '0 auto' }}>
                 
                 {/* Tab Header Selector (Sliding Pill Switcher) */}
@@ -831,15 +860,22 @@ export default function TutorRegisterLoginPage() {
                       <label className="form-label">Create Password</label>
                       <div style={{ position: 'relative' }}>
                         <input
-                          type="password"
+                          type={showRegPassword ? 'text' : 'password'}
                           required
                           placeholder="Minimum 6 characters"
                           value={regPassword}
                           onChange={(e) => setRegPassword(e.target.value)}
                           className="form-control"
-                          style={{ paddingLeft: '2.5rem' }}
+                          style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
                         />
                         <Lock size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                        <button
+                          type="button"
+                          onClick={() => setShowRegPassword(!showRegPassword)}
+                          style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-light)', padding: 0 }}
+                        >
+                          {showRegPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
                       </div>
                     </div>
 
@@ -847,15 +883,22 @@ export default function TutorRegisterLoginPage() {
                       <label className="form-label">Confirm Password</label>
                       <div style={{ position: 'relative' }}>
                         <input
-                          type="password"
+                          type={showRegPassword ? 'text' : 'password'}
                           required
                           placeholder="Re-enter password"
                           value={regConfirmPassword}
                           onChange={(e) => setRegConfirmPassword(e.target.value)}
                           className="form-control"
-                          style={{ paddingLeft: '2.5rem' }}
+                          style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
                         />
                         <Lock size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                        <button
+                          type="button"
+                          onClick={() => setShowRegPassword(!showRegPassword)}
+                          style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-light)', padding: 0 }}
+                        >
+                          {showRegPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
                       </div>
                     </div>
 
@@ -931,15 +974,22 @@ export default function TutorRegisterLoginPage() {
                           <label className="form-label">Password</label>
                           <div style={{ position: 'relative' }}>
                             <input
-                              type="password"
+                              type={showLoginPassword ? 'text' : 'password'}
                               required
                               placeholder="Enter your account password"
                               value={loginPassword}
                               onChange={(e) => setLoginPassword(e.target.value)}
                               className="form-control"
-                              style={{ paddingLeft: '2.5rem' }}
+                              style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
                             />
                             <Lock size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                            <button
+                              type="button"
+                              onClick={() => setShowLoginPassword(!showLoginPassword)}
+                              style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-light)', padding: 0 }}
+                            >
+                              {showLoginPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
                           </div>
                         </div>
 
