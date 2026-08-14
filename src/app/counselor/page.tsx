@@ -32,6 +32,8 @@ import {
   FileText,
 } from 'lucide-react';
 
+import TutorMatchModal from '@/components/TutorMatchModal';
+
 interface LeadActivityItem {
   id: string;
   leadId: string;
@@ -77,6 +79,9 @@ export default function CounselorPortal() {
 
   // Expanded Timelines Map { leadId: boolean }
   const [expandedTimelines, setExpandedTimelines] = useState<Record<string, boolean>>({});
+
+  // Proximity Tutor Matching State
+  const [selectedLeadForMatching, setSelectedLeadForMatching] = useState<LeadItem | null>(null);
 
   // Follow-up Modal State
   const [selectedLeadForUpdate, setSelectedLeadForUpdate] = useState<LeadItem | null>(null);
@@ -248,6 +253,56 @@ export default function CounselorPortal() {
       setNoteError('Network error saving follow-up');
     } finally {
       setNoteSubmitting(false);
+    }
+  };
+
+  const handleAssignProximityTutor = async (tutorName: string, tutorId: string, matchNote: string) => {
+    if (!selectedLeadForMatching) return;
+
+    try {
+      const res = await fetch(`/api/leads/${selectedLeadForMatching.id}/followup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'DEMO_SCHEDULED',
+          notes: matchNote,
+          performedBy: currentOperator,
+          actionType: 'DEMO_FIXED',
+        }),
+      });
+
+      const updatedActivities = [
+        {
+          id: `act-${Date.now()}`,
+          leadId: selectedLeadForMatching.id,
+          actionType: 'DEMO_FIXED',
+          description: `[Status: DEMO_SCHEDULED] ${matchNote}`,
+          performedBy: currentOperator,
+          createdAt: new Date().toISOString(),
+        },
+        ...(selectedLeadForMatching.activities || []),
+      ];
+
+      setLeads((prev) =>
+        prev.map((l) =>
+          l.id === selectedLeadForMatching.id
+            ? {
+                ...l,
+                status: 'DEMO_SCHEDULED',
+                assignedTutor: tutorName,
+                notes: matchNote,
+                updatedAt: new Date().toISOString(),
+                activities: updatedActivities,
+              }
+            : l
+        )
+      );
+
+      setExpandedTimelines((prev) => ({ ...prev, [selectedLeadForMatching.id]: true }));
+      setSelectedLeadForMatching(null);
+      alert(`🎉 Successfully matched tutor ${tutorName}! Demo status logged and timeline updated.`);
+    } catch (err) {
+      console.error('Failed to assign tutor:', err);
     }
   };
 
@@ -688,6 +743,15 @@ export default function CounselorPortal() {
                               <MessageSquare size={14} color="#25D366" />
                               <span>WhatsApp</span>
                             </a>
+
+                            <button
+                              onClick={() => setSelectedLeadForMatching(lead)}
+                              className="btn btn-emerald btn-sm"
+                              style={{ backgroundColor: 'var(--brand-teal)', color: '#FFFFFF', fontWeight: 700 }}
+                            >
+                              <Sparkles size={14} />
+                              <span>🎯 Match Proximity Tutor</span>
+                            </button>
 
                             <button
                               onClick={() => openUpdateModal(lead)}
@@ -1183,6 +1247,16 @@ export default function CounselorPortal() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* SMART PROXIMITY TUTOR MATCH MODAL */}
+      {selectedLeadForMatching && (
+        <TutorMatchModal
+          lead={selectedLeadForMatching}
+          currentOperator={currentOperator}
+          onClose={() => setSelectedLeadForMatching(null)}
+          onAssignTutor={(tutorName, tutorId, notes) => handleAssignProximityTutor(tutorName, tutorId, notes)}
+        />
       )}
 
       <Footer />
