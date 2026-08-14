@@ -115,3 +115,56 @@ export async function POST(req: Request) {
     }, { status: 500 });
   }
 }
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get('userId');
+
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'User ID is required.' }, { status: 400 });
+    }
+
+    const profile = await prisma.tutorProfile.findUnique({
+      where: { userId },
+      include: {
+        kycDoc: true,
+        user: true,
+      }
+    });
+
+    if (!profile) {
+      return NextResponse.json({ success: false, error: 'Tutor profile not found.' }, { status: 404 });
+    }
+
+    // Helper to safely parse JSON strings
+    const safeParse = (val: string | null) => {
+      if (!val) return [];
+      try {
+        return JSON.parse(val);
+      } catch (e) {
+        return [];
+      }
+    };
+
+    const parsedProfile = {
+      ...profile,
+      subjects: safeParse(profile.subjects),
+      classes: safeParse(profile.classes),
+      boards: safeParse(profile.boards),
+      serviceAreas: safeParse(profile.serviceAreas),
+    };
+
+    return NextResponse.json({
+      success: true,
+      profile: parsedProfile
+    });
+
+  } catch (error: any) {
+    console.error('[GET_TUTOR_PROFILE_API_ERROR]:', error);
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to retrieve tutor profile.'
+    }, { status: 500 });
+  }
+}

@@ -149,6 +149,16 @@ export default function TutorRegisterLoginPage() {
       setUserName(parsed.name);
       setUserEmail(parsed.email);
       setIsLoggedIn(true);
+
+      // Redirect to settings/profile dashboard if onboarding is already completed
+      fetch(`/api/tutors/profile/setup?userId=${parsed.userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.profile && data.profile.status !== 'DRAFT') {
+            window.location.href = '/tutor/profile';
+          }
+        })
+        .catch(() => {});
       
       // Attempt draft recovery from localStorage
       const draft = localStorage.getItem(`tutor_draft_${parsed.userId}`);
@@ -277,7 +287,7 @@ export default function TutorRegisterLoginPage() {
         setIsLoggedIn(true);
 
         if (data.isOnboardingComplete) {
-          setSubmitted(true);
+          window.location.href = '/tutor/profile';
         } else {
           setCurrentStep(1); // Resume draft setup
         }
@@ -343,7 +353,7 @@ export default function TutorRegisterLoginPage() {
         setIsLoggedIn(true);
 
         if (data.isOnboardingComplete) {
-          setSubmitted(true);
+          window.location.href = '/tutor/profile';
         } else {
           setCurrentStep(1);
         }
@@ -2084,11 +2094,15 @@ export default function TutorRegisterLoginPage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+                  <a href="/tutor/profile" className="btn btn-primary" style={{ backgroundColor: 'var(--brand-teal)' }}>
+                    <span>Go to Profile Dashboard</span>
+                    <ArrowRight size={14} />
+                  </a>
                   <a href="/counselor" className="btn btn-secondary">
                     <span>Counselor Desk (Preview)</span>
                     <ExternalLink size={14} />
                   </a>
-                  <button type="button" onClick={handleLogout} className="btn btn-primary" style={{ backgroundColor: '#B91C1C' }}>
+                  <button type="button" onClick={handleLogout} className="btn btn-secondary" style={{ color: '#B91C1C', borderColor: '#FCA5A5' }}>
                     <span>Log Out</span>
                   </button>
                 </div>
