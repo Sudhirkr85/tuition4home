@@ -80,12 +80,12 @@ model TutorProfile {
   videoThumbnailUrl String?
   bio               String?      @db.Text
   experienceYears   Int          @default(0)
-  highestDegree     String
+  highestDegree     String?
   teachingMode      TeachingMode @default(BOTH) // OFFLINE_HOME | ONLINE_LIVE | BOTH
-  subjects          String       // JSON string: ["Mathematics", "Physics"]
-  classes           String       // JSON string: ["Class 9", "Class 10", "Class 11", "Class 12"]
-  boards            String       // JSON string: ["CBSE", "ICSE", "IB", "IGCSE"]
-  serviceAreas      String       // JSON string: ["DLF Phase 5", "Golf Course Road", "Sector 56"]
+  subjects          String?      // JSON string: ["Mathematics", "Physics"]
+  classes           String?      // JSON string: ["Class 9", "Class 10", "Class 11", "Class 12"]
+  boards            String?      // JSON string: ["CBSE", "ICSE", "IB", "IGCSE"]
+  serviceAreas      String?      // JSON string: ["DLF Phase 5", "Golf Course Road", "Sector 56"]
   travelRadiusKm    Int          @default(5)  // Maximum travel radius in KM for home visits
   latitude          Float?       // Precise GPS from Google Maps
   longitude         Float?
@@ -93,6 +93,10 @@ model TutorProfile {
   availableSlots    String?      // JSON string of weekly availability
   hourlyRateHome    Int?
   hourlyRateOnline  Int?
+  hourlyRateHomeMin Int?
+  hourlyRateHomeMax Int?
+  hourlyRateOnlineMin Int?
+  hourlyRateOnlineMax Int?
   monthlyRateMin    Int?
   status            TutorStatus  @default(PENDING_INTERVIEW)
   isVerified        Boolean      @default(false)
@@ -120,6 +124,7 @@ model TutorKYC {
   tutor            TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
   idType           String       // "AADHAAR_MASKED" | "DRIVING_LICENSE" | "PAN" | "VOTER_ID"
   idLast4          String       // Only store last 4 digits (e.g. "4589") - NEVER plain 12 digits
+  idNumberEncrypted String?      // Secure encrypted full government ID number
   idDocUrl         String       // Secure private encrypted Cloudinary URL
   verificationDate DateTime?
   verifiedByAdmin  String?      // Admin/Caller User ID who verified

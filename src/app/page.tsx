@@ -470,16 +470,15 @@ export default function HomePage() {
 
 
                 {/* 3. Combined Single Unified Bottom White Trust Card */}
-                <div className="apple-card hero-unified-card" style={{
+                <div className="hero-unified-card" style={{
                   position: 'absolute',
                   bottom: '-32px',
                   left: '4%',
                   right: '4%',
                   padding: '0.95rem 1.25rem',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #E8E8ED',
-                  borderRadius: '16px',
-                  boxShadow: '0 12px 32px rgba(0, 0, 0, 0.08)',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  boxShadow: 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',

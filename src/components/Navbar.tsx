@@ -66,22 +66,6 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
           />
         </Link>
         
-        {/* Mobile-only trust branding to fill the empty space */}
-        <div className="mobile-only-flex" style={{
-          flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center',
-          lineHeight: '1.2',
-        }}>
-          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--brand-teal)', letterSpacing: '-0.01em' }}>
-            by SSSAM Academy
-          </span>
-          <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-            Sector 14 Gurugram
-          </span>
-        </div>
-
-
         {/* Desktop Navigation Links */}
         <nav className="desktop-nav" style={{ alignItems: 'center', gap: '1.75rem' }}>
           <Link href="/" style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--brand-teal)' }}>
@@ -120,24 +104,45 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
           </button>
         </div>
 
-        {/* Mobile Hamburger Toggle */}
-        <button
-          type="button"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0.5rem',
-            borderRadius: '8px',
-            border: '1.5px solid var(--border-hairline)',
-            backgroundColor: '#FFFFFF',
-            cursor: 'pointer',
-          }}
-          className="mobile-toggle"
-        >
-          {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        {/* Mobile Actions (Tutor Login + Hamburger Menu Toggle) */}
+        <div className="mobile-only-flex" style={{ alignItems: 'center', gap: '0.75rem' }}>
+          <Link 
+            href="/tutor/register" 
+            className="btn btn-secondary btn-sm" 
+            style={{
+              fontSize: '0.8rem',
+              padding: '0.45rem 0.85rem',
+              fontWeight: 700,
+              alignItems: 'center',
+              gap: '0.35rem',
+              borderRadius: '9999px',
+              whiteSpace: 'nowrap',
+              border: '1.5px solid var(--brand-teal)',
+              color: 'var(--brand-teal)',
+            }}
+          >
+            <UserCheck size={14} />
+            <span>Tutor Login</span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0.5rem',
+              borderRadius: '8px',
+              border: '1.5px solid var(--border-hairline)',
+              backgroundColor: '#FFFFFF',
+              cursor: 'pointer',
+            }}
+            className="mobile-toggle"
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Drawer */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import {
@@ -22,6 +22,7 @@ import {
   Home,
   MapPin,
   Play,
+  Plus,
 } from 'lucide-react';
 
 interface MockLead {
@@ -41,6 +42,7 @@ interface MockLead {
 
 export default function CounselorPortal() {
   const [activeTab, setActiveTab] = useState<'LEADS' | 'INTERVIEWS' | 'INVOICE'>('LEADS');
+  const [dbLoading, setDbLoading] = useState(false);
 
   // Leads State with budget preferences
   const [leads, setLeads] = useState<MockLead[]>([
@@ -85,39 +87,93 @@ export default function CounselorPortal() {
     },
   ]);
 
-  // Pending Tutors for Interview
-  const [pendingTutors, setPendingTutors] = useState<MockTutor[]>([
-    {
-      id: 'tut-pending-1',
-      name: 'Amitabh Mukherjee',
-      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
-      introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-      videoDuration: '1m 20s',
-      highestDegree: 'M.Sc. Physics (IIT Roorkee)',
-      experienceYears: 6,
-      teachingMode: 'BOTH',
-      subjects: ['Physics', 'Mathematics'],
-      classes: ['Class 11 & 12 (Board & JEE/NEET)'],
-      boards: ['CBSE', 'IB'],
-      serviceAreas: ['DLF Phase 2', 'DLF Phase 4', 'Sector 14'],
-      travelRadiusKm: 6,
-      hourlyRateHome: 950,
-      hourlyRateOnline: 700,
-      monthlyRateMin: 8000,
-      isVerified: false,
-      hasPoliceCheck: true,
-      rating: 5.0,
-      totalReviews: 0,
-      bio: 'Physics mentor with 6 years experience specializing in CBSE 12th boards and NEET numerical problem solving.',
-      badge: 'Pending Verification',
-    },
-  ]);
+  // Pending Tutors for Interview (Real DB list with a mock fallback)
+  const [pendingTutors, setPendingTutors] = useState<any[]>([]);
+
+  // Fetch pending tutors from database
+  const fetchPendingTutors = async () => {
+    setDbLoading(true);
+    try {
+      const res = await fetch('/api/counselor/tutors');
+      const data = await res.json();
+      if (data.success) {
+        // Find tutors that are in PENDING_INTERVIEW or DRAFT status
+        const pending = data.tutors.filter((t: any) => t.status === 'PENDING_INTERVIEW' || t.status === 'DRAFT');
+        
+        if (pending.length > 0) {
+          setPendingTutors(pending);
+        } else {
+          // Fallback static mock tutor if the database is clean and has no entries
+          setPendingTutors([
+            {
+              id: 'tut-pending-1',
+              name: 'Amitabh Mukherjee',
+              avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
+              introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+              videoDuration: '1m 20s',
+              highestDegree: 'M.Sc. Physics (IIT Roorkee)',
+              experienceYears: 6,
+              teachingMode: 'BOTH',
+              subjects: ['Physics', 'Mathematics'],
+              classes: ['Class 11 & 12 (Board & JEE/NEET)'],
+              boards: ['CBSE', 'IB'],
+              serviceAreas: ['DLF Phase 2', 'DLF Phase 4', 'Sector 14'],
+              travelRadiusKm: 6,
+              hourlyRateHomeMin: 950,
+              hourlyRateHomeMax: 1500,
+              hourlyRateOnlineMin: 700,
+              hourlyRateOnlineMax: 1200,
+              status: 'PENDING_INTERVIEW',
+              isVerified: false,
+              rating: 5.0,
+              bio: 'Physics mentor with 6 years experience specializing in CBSE 12th boards and NEET numerical problem solving.',
+              kycDoc: {
+                idType: 'AADHAAR_MASKED',
+                idLast4: '4589',
+                idNumberDecrypted: '1234-5678-4589',
+                idDocUrl: 'https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?w=600&auto=format&fit=crop&q=80'
+              }
+            }
+          ]);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to retrieve tutor list:', err);
+    } finally {
+      setDbLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingTutors();
+  }, []);
 
   const [selectedInvoiceLead, setSelectedInvoiceLead] = useState<MockLead>(leads[2]);
 
-  const handleApproveTutor = (tutorId: string) => {
-    alert('🎉 Tutor Interview Cleared! Verified Badge Activated & Profile is now Live in Gurgaon search catalog.');
-    setPendingTutors(pendingTutors.filter((t) => t.id !== tutorId));
+  const handleApproveTutor = async (tutorId: string) => {
+    // If it's the static mock tutor, handle locally
+    if (tutorId === 'tut-pending-1') {
+      alert('🎉 Mock Tutor Interview Cleared! Verified Badge Activated.');
+      setPendingTutors(pendingTutors.filter((t) => t.id !== tutorId));
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/counselor/tutors/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tutorId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('🎉 Tutor Interview Cleared! Verified Badge Activated & Profile is now Live.');
+        setPendingTutors(pendingTutors.filter((t) => t.id !== tutorId));
+      } else {
+        alert('Failed to approve tutor: ' + (data.error || 'Server error'));
+      }
+    } catch (err) {
+      alert('Network error approving tutor.');
+    }
   };
 
   return (
@@ -305,30 +361,65 @@ export default function CounselorPortal() {
               {pendingTutors.length > 0 ? (
                 pendingTutors.map((tutor) => (
                   <div key={tutor.id} className="apple-card" style={{ padding: '2rem', marginBottom: '1.5rem' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', alignItems: 'center' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', alignItems: 'flex-start' }}>
                       <div>
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={tutor.avatarUrl} alt={tutor.name} style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }} />
                           <div>
                             <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{tutor.name}</h3>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--brand-blue)', fontWeight: 600 }}>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--brand-teal)', fontWeight: 700 }}>
                               {tutor.highestDegree} • {tutor.experienceYears} Yrs Exp
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              📞 Mobile: {tutor.phone} | ✉️ {tutor.email}
                             </div>
                           </div>
                         </div>
 
-                        <div style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.25rem', lineHeight: 1.5 }}>
-                          {tutor.bio}
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem', lineHeight: 1.6 }}>
+                          <div style={{ marginBottom: '0.4rem' }}>
+                            <strong>Subjects:</strong> {Array.isArray(tutor.subjects) ? tutor.subjects.join(', ') : 'Not Specified'}
+                          </div>
+                          <div style={{ marginBottom: '0.4rem' }}>
+                            <strong>Classes:</strong> {Array.isArray(tutor.classes) ? tutor.classes.join(', ') : 'Not Specified'}
+                          </div>
+                          <div style={{ marginBottom: '0.4rem' }}>
+                            <strong> Gurgaon Sectors:</strong> {Array.isArray(tutor.serviceAreas) ? tutor.serviceAreas.join(', ') : 'Not Specified'} (Radius: {tutor.travelRadiusKm} KM)
+                          </div>
+                          <div>
+                            <strong>Hourly Rates Range:</strong>
+                            <ul style={{ paddingLeft: '1.25rem', marginTop: '0.2rem' }}>
+                              <li>Home Visit: ₹{tutor.hourlyRateHomeMin} - ₹{tutor.hourlyRateHomeMax}/hr</li>
+                              <li>Online 1-on-1: ₹{tutor.hourlyRateOnlineMin} - ₹{tutor.hourlyRateOnlineMax}/hr</li>
+                            </ul>
+                          </div>
                         </div>
 
-                        <div style={{ padding: '0.85rem', backgroundColor: 'var(--brand-blue-light)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--brand-blue)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <Play size={15} fill="var(--brand-blue)" />
-                            <span>Watch 60s Video Intro Submission</span>
-                          </span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--brand-blue)' }}>{tutor.videoDuration}</span>
-                        </div>
+                        {tutor.introVideoUrl && (
+                          <a
+                            href={tutor.introVideoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ 
+                              padding: '0.85rem', 
+                              backgroundColor: 'var(--brand-teal-light)', 
+                              borderRadius: '12px', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'space-between',
+                              color: 'var(--brand-teal)',
+                              fontWeight: 700,
+                              fontSize: '0.85rem'
+                            }}
+                          >
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <Play size={15} fill="var(--brand-teal)" />
+                              <span>Watch 60s Video Intro Submission</span>
+                            </span>
+                            <span style={{ fontSize: '0.75rem' }}>View Video ↗</span>
+                          </a>
+                        )}
                       </div>
 
                       {/* Scorecard */}
@@ -351,16 +442,37 @@ export default function CounselorPortal() {
                             <span>Subject Conceptual Depth:</span>
                             <strong style={{ color: 'var(--brand-emerald)' }}>High (Verified)</strong>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Aadhaar Last 4 Digits:</span>
-                            <strong>XXXX-4589 (Checked)</strong>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'column', gap: '0.2rem', padding: '0.5rem 0', borderTop: '1px solid var(--border-hairline)' }}>
+                            <span style={{ fontWeight: 700 }}>Government Verification (KYC):</span>
+                            <div>ID Type: <strong>{tutor.kycDoc ? tutor.kycDoc.idType : 'N/A'}</strong></div>
+                            <div>Full ID Number (Decrypted): <strong style={{ color: 'var(--brand-teal)' }}>{tutor.kycDoc ? tutor.kycDoc.idNumberDecrypted : 'N/A'}</strong></div>
+                            
+                            {tutor.kycDoc?.idDocUrl && (
+                              <a
+                                href={tutor.kycDoc.idDocUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.25rem',
+                                  color: 'var(--brand-teal)',
+                                  textDecoration: 'underline',
+                                  fontWeight: 700,
+                                  fontSize: '0.8rem',
+                                  marginTop: '0.25rem'
+                                }}
+                              >
+                                👁️ View Secure Uploaded ID Document ↗
+                              </a>
+                            )}
                           </div>
                         </div>
 
                         <button
                           onClick={() => handleApproveTutor(tutor.id)}
                           className="btn btn-emerald"
-                          style={{ width: '100%', justifyContent: 'center' }}
+                          style={{ width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-teal)' }}
                         >
                           <CheckCircle2 size={16} />
                           <span>Approve & Activate Badge</span>
@@ -371,7 +483,7 @@ export default function CounselorPortal() {
                 ))
               ) : (
                 <div style={{ padding: '4rem', textAlign: 'center', backgroundColor: '#FFFFFF', borderRadius: '20px' }}>
-                  <CheckCircle2 size={48} color="var(--brand-emerald)" style={{ margin: '0 auto 1rem auto' }} />
+                  <CheckCircle2 size={48} color="var(--brand-teal)" style={{ margin: '0 auto 1rem auto' }} />
                   <h3 style={{ fontSize: '1.35rem', fontWeight: 800 }}>All Tutor Interviews Cleared!</h3>
                   <p style={{ color: 'var(--text-muted)' }}>No pending tutors in the interview queue.</p>
                 </div>
