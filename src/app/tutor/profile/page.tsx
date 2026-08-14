@@ -414,223 +414,57 @@ export default function TutorProfileDashboard() {
     setShowPreviewModal(true);
   };
 
-  // Direct 1-Click High Resolution Image Card Download (Zero Popups)
+  // Direct 1-Click High Resolution Image Card Download (Always Standard Desktop Layout on Phone/Tablet/PC)
   const handleDirectDownloadCard = async () => {
+    const cardElement = document.getElementById('tutor-digital-visiting-card');
+    if (!cardElement) return;
+
     try {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      setSuccessMsg('Generating your official HD desktop-standard visiting card...');
+      const html2canvas = (await import('html2canvas')).default;
 
-      // High Resolution 2x Canvas (1000px x 560px)
-      canvas.width = 1000;
-      canvas.height = 560;
+      // Clone card into fixed 480px desktop viewport to guarantee desktop layout on phones and tablets
+      const clone = cardElement.cloneNode(true) as HTMLElement;
+      clone.style.position = 'fixed';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.width = '480px';
+      clone.style.minWidth = '480px';
+      clone.style.maxWidth = '480px';
+      clone.style.padding = '1.5rem';
+      clone.style.zIndex = '-9999';
+      clone.style.transform = 'none';
+      clone.style.margin = '0';
+      clone.style.boxSizing = 'border-box';
 
-      // Rounded Card Background
-      const r = 36;
-      ctx.beginPath();
-      ctx.moveTo(r, 0);
-      ctx.lineTo(1000 - r, 0);
-      ctx.quadraticCurveTo(1000, 0, 1000, r);
-      ctx.lineTo(1000, 560 - r);
-      ctx.quadraticCurveTo(1000, 560, 1000 - r, 560);
-      ctx.lineTo(r, 560);
-      ctx.quadraticCurveTo(0, 560, 0, 560 - r);
-      ctx.lineTo(0, r);
-      ctx.quadraticCurveTo(0, 0, r, 0);
-      ctx.closePath();
+      document.body.appendChild(clone);
 
-      // Background Gradient Fill
-      const grad = ctx.createLinearGradient(0, 0, 1000, 560);
-      grad.addColorStop(0, '#0F172A');
-      grad.addColorStop(0.65, '#115E59');
-      grad.addColorStop(1, '#0F172A');
-      ctx.fillStyle = grad;
-      ctx.fill();
+      // Brief wait for layout render
+      await new Promise((r) => setTimeout(r, 120));
 
-      // Metallic Border
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-      ctx.stroke();
-
-      // Top Header: Logo Pill
-      ctx.fillStyle = '#FFFFFF';
-      ctx.beginPath();
-      ctx.roundRect(40, 36, 185, 44, 10);
-      ctx.fill();
-
-      ctx.fillStyle = '#0F172A';
-      ctx.font = 'bold 18px sans-serif';
-      ctx.fillText('TuitionForHome', 58, 64);
-
-      // Top Header: ID Badge
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-      ctx.beginPath();
-      ctx.roundRect(580, 36, 170, 38, 8);
-      ctx.fill();
-
-      ctx.fillStyle = '#E2E8F0';
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillText(`ID: TFH-${userId ? userId.slice(0, 6).toUpperCase() : 'GUR01'}`, 595, 61);
-
-      // Top Header: SSSAM Verified Badge
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-      ctx.beginPath();
-      ctx.roundRect(765, 36, 195, 38, 999);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(252, 211, 77, 0.4)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      ctx.fillStyle = '#FCD34D';
-      ctx.font = 'bold 13px sans-serif';
-      ctx.fillText('🛡️ SSSAM VERIFIED', 785, 60);
-
-      // Top Header Divider Line
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(40, 105);
-      ctx.lineTo(960, 105);
-      ctx.stroke();
-
-      // Avatar Circle
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(95, 205, 55, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
-
-      if (avatarUrl) {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = avatarUrl;
-        await new Promise((resolve) => {
-          img.onload = () => {
-            ctx.drawImage(img, 40, 150, 110, 110);
-            resolve(null);
-          };
-          img.onerror = () => {
-            ctx.fillStyle = '#0D9488';
-            ctx.fillRect(40, 150, 110, 110);
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 44px sans-serif';
-            ctx.fillText(userName.charAt(0), 78, 220);
-            resolve(null);
-          };
-        });
-      } else {
-        ctx.fillStyle = '#0D9488';
-        ctx.fillRect(40, 150, 110, 110);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 44px sans-serif';
-        ctx.fillText(userName.charAt(0), 78, 220);
-      }
-      ctx.restore();
-
-      // Avatar Teal Outline Ring
-      ctx.beginPath();
-      ctx.arc(95, 205, 55, 0, Math.PI * 2);
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = '#2DD4BF';
-      ctx.stroke();
-
-      // Tutor Name
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 30px sans-serif';
-      ctx.fillText(userName, 175, 185);
-
-      // Degree / Specialization
-      ctx.fillStyle = '#2DD4BF';
-      ctx.font = 'bold 17px sans-serif';
-      ctx.fillText((highestDegree || 'Verified Educator').toUpperCase(), 175, 218);
-
-      // Mode & Classes
-      ctx.fillStyle = '#CBD5E1';
-      ctx.font = '15px sans-serif';
-      const modeText = `${teachingMode === 'BOTH' ? '🏠 Home Visit & Online' : teachingMode === 'OFFLINE_HOME' ? '🏠 Home Visit Tuition' : '💻 Online Live Classes'} • ${selectedClasses.length > 0 ? selectedClasses.slice(0, 2).join(', ') : `${experienceYears || 3}+ Yrs Exp`}`;
-      ctx.fillText(modeText, 175, 248);
-
-      // QR Code Drawing
-      const qrImg = new Image();
-      qrImg.crossOrigin = 'anonymous';
-      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(reviewLink || `https://tuitionforhome.com/tutor/review/${userId}`)}`;
-      
-      await new Promise((resolve) => {
-        qrImg.onload = () => {
-          ctx.fillStyle = '#FFFFFF';
-          ctx.beginPath();
-          ctx.roundRect(790, 135, 150, 155, 14);
-          ctx.fill();
-
-          ctx.drawImage(qrImg, 805, 145, 120, 120);
-
-          ctx.fillStyle = '#64748B';
-          ctx.font = 'bold 10px sans-serif';
-          ctx.fillText('SCAN TO VIEW', 825, 280);
-          resolve(null);
-        };
-        qrImg.onerror = () => resolve(null);
+      const canvas = await html2canvas(clone, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: null,
+        width: 480,
+        windowWidth: 1280,
+        logging: false,
       });
 
-      // Bottom Divider
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(40, 420);
-      ctx.lineTo(960, 420);
-      ctx.stroke();
+      document.body.removeChild(clone);
 
-      // Bottom Subject Pills
-      let curX = 40;
-      const subjectsToDraw = selectedSubjects.slice(0, 3);
-      for (const sub of subjectsToDraw) {
-        ctx.font = 'bold 14px sans-serif';
-        const textWidth = ctx.measureText(sub).width;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-        ctx.beginPath();
-        ctx.roundRect(curX, 450, textWidth + 24, 38, 8);
-        ctx.fill();
-
-        ctx.fillStyle = '#E2E8F0';
-        ctx.fillText(sub, curX + 12, 474);
-        curX += textWidth + 36;
-      }
-
-      if (selectedBoards.length > 0) {
-        const board = selectedBoards[0];
-        ctx.font = 'bold 14px sans-serif';
-        const textWidth = ctx.measureText(board).width;
-        ctx.fillStyle = 'rgba(45, 212, 191, 0.2)';
-        ctx.beginPath();
-        ctx.roundRect(curX, 450, textWidth + 24, 38, 8);
-        ctx.fill();
-
-        ctx.fillStyle = '#2DD4BF';
-        ctx.fillText(board, curX + 12, 474);
-      }
-
-      // Location at Bottom Right
-      const locText = `📍 ${serviceAreas.length > 0 ? serviceAreas.slice(0, 2).join(', ') : 'Gurgaon'} (${travelRadiusKm} KM)`;
-      ctx.fillStyle = '#CBD5E1';
-      ctx.font = '15px sans-serif';
-      const locWidth = ctx.measureText(locText).width;
-      ctx.fillText(locText, 960 - locWidth, 474);
-
-      // Instant 1-Click File Download
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `TuitionForHome-VisitingCard-${userName.replace(/\s+/g, '_')}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        setSuccessMsg('🎉 Official visiting card downloaded directly to your device!');
-      }, 'image/png');
-    } catch {
-      setErrorMsg('Unable to direct download card. Please try again.');
+      const dataUrl = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `TuitionForHome-VisitingCard-${userName.replace(/\s+/g, '_')}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setSuccessMsg('🎉 Official visiting card downloaded successfully in HD desktop format!');
+    } catch (err) {
+      console.error('Error generating card image:', err);
+      setErrorMsg('Unable to download card directly. Please try again.');
     }
   };
 
@@ -1202,29 +1036,67 @@ export default function TutorProfileDashboard() {
                       <div style={{ position: 'absolute', left: '-30px', top: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%)', filter: 'blur(8px)', pointerEvents: 'none' }} />
 
                       {/* Top Header of Card */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.85rem', marginBottom: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: '0.3rem 0.65rem', borderRadius: '8px' }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '0.6rem',
+                        borderBottom: '1px solid rgba(255,255,255,0.12)',
+                        paddingBottom: '0.85rem',
+                        marginBottom: '1rem'
+                      }}>
+                        {/* Left: Brand Logo Pill */}
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                          padding: '0.3rem 0.65rem',
+                          borderRadius: '8px',
+                          flexShrink: 0
+                        }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src="/tuitionforhome.png" alt="Logo" style={{ height: '18px', width: 'auto' }} />
-                          <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#0F172A', letterSpacing: '-0.02em' }}>TuitionForHome</span>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#0F172A', letterSpacing: '-0.02em' }}>TuitionForHome</span>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        {/* Right: ID & SSSAM Verification Badges (Guaranteed No Overlap) */}
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          flexWrap: 'nowrap',
+                          flexShrink: 0
+                        }}>
                           <span style={{
-                            fontSize: '0.66rem',
+                            fontSize: '0.64rem',
                             fontWeight: 800,
                             color: '#E2E8F0',
-                            letterSpacing: '0.04em',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            padding: '0.2rem 0.55rem',
+                            letterSpacing: '0.03em',
+                            backgroundColor: 'rgba(255,255,255,0.12)',
+                            padding: '0.22rem 0.55rem',
                             borderRadius: '6px',
-                            border: '1px solid rgba(255,255,255,0.15)'
+                            border: '1px solid rgba(255,255,255,0.18)',
+                            whiteSpace: 'nowrap'
                           }}>
                             ID: TFH-{userId ? userId.slice(0, 6).toUpperCase() : 'GUR01'}
                           </span>
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.68rem', fontWeight: 800, color: '#FCD34D', backgroundColor: 'rgba(0,0,0,0.3)', padding: '0.2rem 0.55rem', borderRadius: '999px', border: '1px solid rgba(252, 211, 77, 0.3)' }}>
-                            <ShieldCheck size={13} />
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            fontSize: '0.64rem',
+                            fontWeight: 800,
+                            color: '#FCD34D',
+                            backgroundColor: 'rgba(0,0,0,0.35)',
+                            padding: '0.22rem 0.55rem',
+                            borderRadius: '999px',
+                            border: '1px solid rgba(252, 211, 77, 0.35)',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            <ShieldCheck size={12} />
                             <span>SSSAM VERIFIED</span>
                           </div>
                         </div>
