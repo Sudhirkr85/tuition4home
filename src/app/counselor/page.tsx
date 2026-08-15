@@ -98,6 +98,14 @@ export default function CounselorPortal() {
   // Tutor Interviews State
   const [pendingTutors, setPendingTutors] = useState<any[]>([]);
 
+  // Centered Alert/Toast Modal State
+  const [counselorToast, setCounselorToast] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type?: 'success' | 'error' | 'info';
+  } | null>(null);
+
   // Fetch leads from database / API
   const fetchLeads = async () => {
     setLeadsLoading(true);
@@ -310,7 +318,12 @@ export default function CounselorPortal() {
 
       setExpandedTimelines((prev) => ({ ...prev, [selectedLeadForMatching.id]: true }));
       setSelectedLeadForMatching(null);
-      alert(`🎉 Successfully matched tutor ${tutorName}! Demo status logged and timeline updated.`);
+      setCounselorToast({
+        isOpen: true,
+        title: 'Tutor Matched Successfully',
+        message: `🎉 Successfully matched tutor ${tutorName}! Demo status logged and timeline updated.`,
+        type: 'success',
+      });
     } catch (err) {
       console.error('Failed to assign tutor:', err);
     }
@@ -318,7 +331,12 @@ export default function CounselorPortal() {
 
   const handleApproveTutor = async (tutorId: string) => {
     if (tutorId === 'tut-pending-1') {
-      alert('🎉 Mock Tutor Interview Cleared! Verified Badge Activated.');
+      setCounselorToast({
+        isOpen: true,
+        title: 'Tutor Verified',
+        message: '🎉 Mock Tutor Interview Cleared! Verified Badge Activated & Profile is now Live.',
+        type: 'success',
+      });
       setPendingTutors(pendingTutors.filter((t) => t.id !== tutorId));
       return;
     }
@@ -331,13 +349,28 @@ export default function CounselorPortal() {
       });
       const data = await res.json();
       if (data.success) {
-        alert('🎉 Tutor Interview Cleared! Verified Badge Activated & Profile is now Live.');
+        setCounselorToast({
+          isOpen: true,
+          title: 'Tutor Verified & Live',
+          message: '🎉 Tutor Interview Cleared! Verified Badge Activated & Profile is now Live.',
+          type: 'success',
+        });
         setPendingTutors(pendingTutors.filter((t) => t.id !== tutorId));
       } else {
-        alert('Failed to approve tutor: ' + (data.error || 'Server error'));
+        setCounselorToast({
+          isOpen: true,
+          title: 'Approval Failed',
+          message: 'Failed to approve tutor: ' + (data.error || 'Server error'),
+          type: 'error',
+        });
       }
     } catch (err) {
-      alert('Network error approving tutor.');
+      setCounselorToast({
+        isOpen: true,
+        title: 'Network Error',
+        message: 'Network error occurred while approving tutor.',
+        type: 'error',
+      });
     }
   };
 
@@ -1686,6 +1719,82 @@ export default function CounselorPortal() {
           onClose={() => setSelectedLeadForMatching(null)}
           onAssignTutor={(tutorName, tutorId, notes) => handleAssignProximityTutor(tutorName, tutorId, notes)}
         />
+      )}
+
+      {/* CUSTOM CENTERED NOTIFICATION MODAL */}
+      {counselorToast && counselorToast.isOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '400px',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '20px',
+              padding: '1.75rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.85rem',
+            }}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: counselorToast.type === 'error' ? '#FEE2E2' : '#DCFCE7',
+                color: counselorToast.type === 'error' ? '#DC2626' : '#166534',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {counselorToast.type === 'error' ? <AlertCircle size={24} /> : <CheckCircle2 size={24} />}
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                {counselorToast.title}
+              </h3>
+              <p style={{ fontSize: '0.86rem', color: '#64748B', marginTop: '0.35rem', lineHeight: 1.45, margin: 0 }}>
+                {counselorToast.message}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setCounselorToast(null)}
+              style={{
+                width: '100%',
+                padding: '0.65rem 1rem',
+                borderRadius: '10px',
+                border: 'none',
+                backgroundColor: '#0F172A',
+                color: '#FFFFFF',
+                fontSize: '0.86rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                marginTop: '0.4rem',
+              }}
+            >
+              OK, Got It
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -332,7 +332,7 @@ export default function TutorRegisterLoginPage() {
         setErrorMessage(data.error || 'Failed to send OTP.');
       } else {
         setIsOtpSent(true);
-        alert(`OTP has been sent to ${otpContact}. For local testing, please check the system terminal logs!`);
+        setErrorMessage('');
       }
     } catch (err) {
       setErrorMessage('Failed to send OTP.');
@@ -430,7 +430,7 @@ export default function TutorRegisterLoginPage() {
 
   const handleFinalSubmit = async () => {
     if (!agreeTerms) {
-      alert('Please read and agree to the Terms & Conditions and Privacy Policy first.');
+      setErrorMessage('Please read and agree to the Terms & Conditions and Privacy Policy first.');
       return;
     }
     setLoading(true);
@@ -2051,22 +2051,23 @@ export default function TutorRegisterLoginPage() {
                         onClick={() => {
                           // Basic validation per step
                           if (currentStep === 1 && (!degree || !experienceYears)) {
-                            alert('Please enter your highest degree and experience.');
+                            setErrorMessage('Please enter your highest degree and experience.');
                             return;
                           }
                           if (currentStep === 2 && (selectedSubjects.length === 0 || selectedClasses.length === 0 || selectedBoards.length === 0)) {
-                            alert('Please select at least one subject, class, and board.');
+                            setErrorMessage('Please select at least one subject, class, and board.');
                             return;
                           }
                           if (currentStep === 3 && serviceAreas.length === 0) {
-                            alert('Please select at least one preferred sector.');
+                            setErrorMessage('Please select at least one preferred sector.');
                             return;
                           }
                           if (currentStep === 6 && (!idNumber || !idDocUrl)) {
-                            alert('Please input your government ID number and upload the ID document photo.');
+                            setErrorMessage('Please input your government ID number and upload the ID document photo.');
                             return;
                           }
 
+                          setErrorMessage('');
                           setCurrentStep(currentStep + 1);
                         }}
                         className="btn btn-primary"

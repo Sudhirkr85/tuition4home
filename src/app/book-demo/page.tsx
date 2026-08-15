@@ -13,15 +13,17 @@ export default function BookDemoPage() {
   const [locality, setLocality] = useState(GURGAON_LOCALITIES[0].name);
   const [parentName, setParentName] = useState('');
   const [phone, setPhone] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone || phone.length < 10) {
-      alert('Please enter a valid 10-digit mobile number for demo confirmation.');
+      setPhoneError('Please enter a valid 10-digit mobile number for demo confirmation.');
       return;
     }
+    setPhoneError('');
 
     setLoading(true);
     try {
@@ -213,6 +215,12 @@ export default function BookDemoPage() {
                     required
                   />
                 </div>
+
+                {phoneError && (
+                  <div style={{ padding: '0.6rem 0.85rem', borderRadius: '8px', backgroundColor: '#FEE2E2', color: '#DC2626', fontSize: '0.82rem', fontWeight: 700 }}>
+                    ⚠️ {phoneError}
+                  </div>
+                )}
 
                 <button
                   type="submit"

@@ -45,6 +45,11 @@ import {
   Grid,
   CalendarClock,
   Clock,
+  Pencil,
+  Trash2,
+  Key,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { SSSAM_OFFICE_DETAILS, VERIFIED_TUTORS, MockTutor } from '@/lib/data';
 import TutorMatchModal from '@/components/TutorMatchModal';
@@ -121,6 +126,10 @@ export default function SuperAdminPage() {
   const [counselorFormSubmitting, setCounselorFormSubmitting] = useState(false);
   const [counselorSuccessMsg, setCounselorSuccessMsg] = useState('');
 
+  // Counselor Pagination State
+  const [counselorCurrentPage, setCounselorCurrentPage] = useState(1);
+  const [counselorsPerPage, setCounselorsPerPage] = useState(5);
+
   // Counselor Edit & Password Reset State
   const [selectedCounselorForEdit, setSelectedCounselorForEdit] = useState<Counselor | null>(null);
   const [editCounselorName, setEditCounselorName] = useState('');
@@ -129,6 +138,17 @@ export default function SuperAdminPage() {
   const [editCounselorPassword, setEditCounselorPassword] = useState('');
   const [editCounselorSubmitting, setEditCounselorSubmitting] = useState(false);
   const [editCounselorError, setEditCounselorError] = useState('');
+
+  // Centered Confirmation Dialog State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    type?: 'danger' | 'info' | 'warning';
+    onConfirm: () => void;
+  } | null>(null);
 
   // Sidebar Collapse & Mobile Drawer State
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -347,6 +367,36 @@ export default function SuperAdminPage() {
     }
   };
 
+  const handleDeleteCounselor = (id: string, name: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Remove Counselor Desk',
+      message: `Are you sure you want to remove counselor "${name}" from active calling desks?`,
+      confirmText: 'Remove Desk',
+      cancelText: 'Cancel',
+      type: 'danger',
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const res = await fetch(`/api/admin/counselors?id=${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            setCounselors((prev) => prev.filter((c) => c.id !== id));
+            setCounselorSuccessMsg(`Counselor "${name}" removed successfully.`);
+            setTimeout(() => setCounselorSuccessMsg(''), 4000);
+          } else {
+            setCounselorSuccessMsg(`⚠️ ${data.error || 'Failed to remove counselor'}`);
+            setTimeout(() => setCounselorSuccessMsg(''), 4000);
+          }
+        } catch {
+          setCounselors((prev) => prev.filter((c) => c.id !== id));
+          setCounselorSuccessMsg(`Counselor "${name}" removed.`);
+          setTimeout(() => setCounselorSuccessMsg(''), 4000);
+        }
+      },
+    });
+  };
+
   const toggleTimeline = (leadId: string) => {
     setExpandedTimelines((prev) => ({
       ...prev,
@@ -513,7 +563,8 @@ export default function SuperAdminPage() {
 
       setExpandedTimelines((prev) => ({ ...prev, [selectedLeadForMatching.id]: true }));
       setSelectedLeadForMatching(null);
-      alert(`🎉 Successfully assigned tutor ${tutorName}! Tutor updated.`);
+      setCounselorSuccessMsg(`🎉 Successfully assigned tutor ${tutorName}! Lead status and timeline updated.`);
+      setTimeout(() => setCounselorSuccessMsg(''), 4000);
     } catch (err) {
       console.error('Failed to assign tutor:', err);
     }
@@ -609,6 +660,20 @@ export default function SuperAdminPage() {
   const endIndex = Math.min(startIndex + itemsPerPage, filteredLeads.length);
   const paginatedLeads = filteredLeads.slice(startIndex, endIndex);
 
+  // Counselor Desk Pagination Calculations
+  const filteredCounselors = counselors.filter((c) => {
+    const query = counselorSearch.toLowerCase();
+    return (
+      c.name.toLowerCase().includes(query) ||
+      c.email.toLowerCase().includes(query) ||
+      (c.phone && c.phone.includes(query))
+    );
+  });
+  const counselorTotalPages = Math.ceil(filteredCounselors.length / counselorsPerPage) || 1;
+  const counselorStartIndex = (counselorCurrentPage - 1) * counselorsPerPage;
+  const counselorEndIndex = Math.min(counselorStartIndex + counselorsPerPage, filteredCounselors.length);
+  const paginatedCounselors = filteredCounselors.slice(counselorStartIndex, counselorEndIndex);
+
   const getStatusBadge = (status: string) => {
     const norm = (status || '').toUpperCase().trim();
     if (norm === 'NEW_LEAD' || norm === 'NEW' || norm === 'PENDING') {
@@ -666,8 +731,21 @@ export default function SuperAdminPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F8FAFC' }}>
       {/* Sleek Top Mini-Header for Portal Status */}
-      <header style={{ backgroundColor: '#0F172A', color: '#F8FAFC', padding: '0.65rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', borderBottom: '1px solid #1E293B', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <header
+        style={{
+          backgroundColor: '#0F172A',
+          color: '#F8FAFC',
+          padding: '0.65rem 1.25rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '0.82rem',
+          borderBottom: '1px solid #1E293B',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
           {/* Sidebar Toggle Button */}
           <button
             type="button"
@@ -675,38 +753,42 @@ export default function SuperAdminPage() {
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.4rem',
+              gap: '0.35rem',
               backgroundColor: '#1E293B',
               border: '1px solid #334155',
               color: '#F8FAFC',
               padding: '0.35rem 0.65rem',
               borderRadius: '8px',
-              fontSize: '0.78rem',
+              fontSize: '0.76rem',
               fontWeight: 700,
               cursor: 'pointer',
               transition: 'all 0.15s ease',
             }}
             title={isSidebarOpen ? 'Hide Navigation Sidebar' : 'Show Navigation Sidebar'}
           >
-            {isSidebarOpen ? <PanelLeftClose size={14} color="#38BDF8" /> : <PanelLeftOpen size={14} color="#38BDF8" />}
-            <span>{isSidebarOpen ? 'Hide Menu' : 'Show Menu'}</span>
+            {isSidebarOpen ? <PanelLeftClose size={13} color="#38BDF8" /> : <PanelLeftOpen size={13} color="#38BDF8" />}
+            <span>{isSidebarOpen ? 'Menu' : 'Menu'}</span>
           </button>
 
-          <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22C55E' }}></span>
-          <span style={{ fontWeight: 700, letterSpacing: '0.03em' }}>TuitionForHome • Super Admin Command Center</span>
-          <span style={{ color: '#64748B' }}>|</span>
-          <span style={{ color: '#94A3B8' }}>SSSAM Academy, Sector 14 Gurugram</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#22C55E' }}></span>
+            <span style={{ fontWeight: 700, letterSpacing: '0.02em', fontSize: '0.84rem' }}>TuitionForHome Admin</span>
+          </div>
+          <span className="hide-on-mobile" style={{ color: '#64748B' }}>|</span>
+          <span className="hide-on-mobile" style={{ color: '#94A3B8', fontSize: '0.78rem' }}>SSSAM Academy Sector 14</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ color: '#94A3B8' }}>Session Active: <strong style={{ color: '#F8FAFC' }}>{adminUser?.email || 'sudhir@gmail.com'}</strong></span>
-          <a href="/" target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8', fontWeight: 600, textDecoration: 'none', fontSize: '0.78rem' }}>
-            View Public Site ↗
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <span style={{ color: '#94A3B8', fontSize: '0.76rem' }}>
+            Active: <strong style={{ color: '#F8FAFC' }}>{adminUser?.email || 'admin@tuitionforhome.com'}</strong>
+          </span>
+          <a href="/" target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8', fontWeight: 600, textDecoration: 'none', fontSize: '0.76rem' }}>
+            Public Site ↗
           </a>
         </div>
       </header>
 
-      <main style={{ flex: 1, padding: '1.5rem' }}>
+      <main className="admin-main-container">
         <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
           {/* Main Grid: Collapsible Left Sidebar + Right Content Area */}
           <div
@@ -1585,77 +1667,100 @@ export default function SuperAdminPage() {
             </div>
           )}
 
-          {/* TAB 2: COUNSELOR MANAGEMENT (CLEAN TABLE LAYOUT) */}
+          {/* TAB 2: COUNSELOR MANAGEMENT (CLEAN, MINIMALIST TABLE LAYOUT) */}
           {activeAdminTab === 'COUNSELORS' && (
             <div>
               {/* Header & Controls Bar */}
               <div
+                className="admin-search-bar-row"
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   flexWrap: 'wrap',
-                  gap: '1rem',
-                  marginBottom: '1.5rem',
+                  gap: '0.75rem',
+                  marginBottom: '1.25rem',
                   backgroundColor: '#FFFFFF',
-                  padding: '1.25rem',
-                  borderRadius: '18px',
+                  padding: '1rem 1.25rem',
+                  borderRadius: '16px',
                   border: '1px solid var(--border-hairline)',
                   boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                <div style={{ position: 'relative', flex: '1', minWidth: '260px' }}>
-                  <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <div style={{ position: 'relative', flex: '1', minWidth: '220px' }}>
+                  <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
                     type="text"
-                    placeholder="Search counselor by Name, Email, or Phone..."
+                    placeholder="Search counselor by name, email, or phone..."
                     value={counselorSearch}
-                    onChange={(e) => setCounselorSearch(e.target.value)}
+                    onChange={(e) => {
+                      setCounselorSearch(e.target.value);
+                      setCounselorCurrentPage(1);
+                    }}
                     className="form-control"
-                    style={{ paddingLeft: '2.75rem', borderRadius: '12px' }}
+                    style={{
+                      paddingLeft: '2.5rem',
+                      borderRadius: '10px',
+                      fontSize: '0.88rem',
+                      borderColor: 'var(--border-hairline)',
+                      backgroundColor: '#F8FAFC',
+                    }}
                   />
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddCounselorModal(true);
-                      setCounselorFormError('');
-                    }}
-                    className="btn btn-primary"
-                    style={{ backgroundColor: 'var(--brand-emerald)', fontWeight: 700 }}
-                  >
-                    <UserPlus size={16} />
-                    <span>➕ Add New Counselor</span>
-                  </button>
-                </div>
+                {/* HIGH-CONTRAST, CRYSTAL-CLEAR ADD COUNSELOR BUTTON */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddCounselorModal(true);
+                    setCounselorFormError('');
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: '10px',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    backgroundColor: '#0F172A',
+                    color: '#FFFFFF',
+                    border: '1px solid #1E293B',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.25)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <UserPlus size={16} color="#38BDF8" />
+                  <span style={{ color: '#FFFFFF', letterSpacing: '0.01em' }}>Add New Counselor</span>
+                </button>
               </div>
 
-              {/* Counselor Structured Table */}
-              <div className="apple-card" style={{ padding: 0, overflow: 'hidden', backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)', borderRadius: '18px' }}>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', minWidth: '920px', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                      <tr style={{ backgroundColor: 'var(--bg-app)', borderBottom: '1px solid var(--border-hairline)', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 800, letterSpacing: '0.04em' }}>
-                        <th style={{ padding: '1rem 1.25rem', width: '25%' }}>Counselor Staff</th>
-                        <th style={{ padding: '1rem 1.25rem', width: '28%' }}>Login Email</th>
-                        <th style={{ padding: '1rem 1.25rem', width: '18%' }}>Phone Number</th>
-                        <th style={{ padding: '1rem 1.25rem', width: '12%' }}>Desk Status</th>
-                        <th style={{ padding: '1rem 1.25rem', width: '17%', textAlign: 'right' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {counselors
-                        .filter((c) => {
-                          const query = counselorSearch.toLowerCase();
-                          return (
-                            c.name.toLowerCase().includes(query) ||
-                            c.email.toLowerCase().includes(query) ||
-                            (c.phone && c.phone.includes(query))
-                          );
-                        })
-                        .map((csl) => (
+              {/* Counselor Structured Container */}
+              <div
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid var(--border-hairline)',
+                  borderRadius: '16px',
+                  boxShadow: 'var(--shadow-sm)',
+                  overflow: 'hidden',
+                }}
+              >
+                {/* 1. DESKTOP VIEW: Clean 4-Column Table */}
+                <div className="desktop-only-table">
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid var(--border-hairline)', fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 800, letterSpacing: '0.05em' }}>
+                          <th style={{ padding: '0.85rem 1.25rem', width: '36%' }}>Counselor Staff</th>
+                          <th style={{ padding: '0.85rem 1.25rem', width: '32%' }}>Login Email</th>
+                          <th style={{ padding: '0.85rem 1.25rem', width: '18%' }}>Phone Number</th>
+                          <th style={{ padding: '0.85rem 1.25rem', width: '14%', textAlign: 'right' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedCounselors.map((csl) => (
                           <tr
                             key={csl.id}
                             style={{
@@ -1663,75 +1768,54 @@ export default function SuperAdminPage() {
                               transition: 'background-color 0.15s ease',
                             }}
                           >
-                            {/* Staff Name & Badge */}
-                            <td style={{ padding: '1rem 1.25rem' }}>
+                            {/* Staff Name */}
+                            <td style={{ padding: '0.9rem 1.25rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                 <div
                                   style={{
-                                    width: '38px',
-                                    height: '38px',
-                                    borderRadius: '10px',
-                                    backgroundColor: 'var(--brand-teal-light)',
-                                    color: 'var(--brand-teal)',
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '50%',
+                                    backgroundColor: '#F1F5F9',
+                                    border: '1px solid var(--border-hairline)',
+                                    color: 'var(--brand-navy)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     fontWeight: 800,
-                                    fontSize: '0.95rem',
+                                    fontSize: '0.9rem',
                                     flexShrink: 0,
                                   }}
                                 >
                                   {csl.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div>
-                                  <div style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.92rem', whiteSpace: 'nowrap' }}>
+                                  <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
                                     {csl.name}
-                                  </div>
-                                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                                    Desk: <span style={{ fontFamily: 'monospace' }}>{csl.id.startsWith('csl-') ? csl.id : `#${csl.id.slice(0, 8)}`}</span>
                                   </div>
                                 </div>
                               </div>
                             </td>
 
                             {/* Email */}
-                            <td style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 600 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
-                                <Mail size={14} color="var(--text-muted)" />
-                                <span>{csl.email}</span>
+                            <td style={{ padding: '0.9rem 1.25rem', fontSize: '0.84rem', color: 'var(--text-main)' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', whiteSpace: 'nowrap' }}>
+                                <Mail size={13} color="var(--text-muted)" />
+                                <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{csl.email}</span>
                               </div>
                             </td>
 
                             {/* Phone */}
-                            <td style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <Phone size={14} color="var(--brand-emerald)" />
-                                <span>+91 {csl.phone || '95174 47689'}</span>
+                            <td style={{ padding: '0.9rem 1.25rem', fontSize: '0.84rem', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                                <Phone size={13} color="var(--text-muted)" />
+                                <span style={{ fontWeight: 600 }}>+91 {csl.phone || '95174 47689'}</span>
                               </div>
                             </td>
 
-                            {/* Status */}
-                            <td style={{ padding: '1rem 1.25rem', whiteSpace: 'nowrap' }}>
-                              <span
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.35rem',
-                                  padding: '0.3rem 0.75rem',
-                                  borderRadius: '8px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: 800,
-                                  backgroundColor: '#DCFCE7',
-                                  color: '#166534',
-                                }}
-                              >
-                                🟢 ACTIVE DESK
-                              </span>
-                            </td>
-
                             {/* Actions */}
-                            <td style={{ padding: '1rem 1.25rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                              <div style={{ display: 'flex', gap: '0.45rem', justifyContent: 'flex-end' }}>
+                            <td style={{ padding: '0.9rem 1.25rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end', alignItems: 'center' }}>
                                 <button
                                   type="button"
                                   onClick={() => handleOpenEditCounselor(csl)}
@@ -1739,19 +1823,22 @@ export default function SuperAdminPage() {
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: '0.3rem',
-                                    padding: '0.45rem 0.85rem',
+                                    padding: '0.35rem 0.65rem',
                                     borderRadius: '8px',
-                                    fontSize: '0.78rem',
-                                    fontWeight: 700,
-                                    border: '1.5px solid var(--brand-blue)',
-                                    color: 'var(--brand-blue)',
-                                    backgroundColor: 'var(--brand-blue-light)',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 600,
+                                    border: '1px solid var(--border-hairline)',
+                                    color: 'var(--text-main)',
+                                    backgroundColor: '#FFFFFF',
                                     cursor: 'pointer',
-                                    whiteSpace: 'nowrap',
+                                    transition: 'all 0.15s ease',
                                   }}
+                                  title="Edit counselor details"
                                 >
-                                  👁️ Edit Details
+                                  <Pencil size={12} color="var(--text-muted)" />
+                                  <span>Edit</span>
                                 </button>
+
                                 <button
                                   type="button"
                                   onClick={() => handleOpenEditCounselor(csl)}
@@ -1759,30 +1846,289 @@ export default function SuperAdminPage() {
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: '0.3rem',
-                                    padding: '0.45rem 0.85rem',
+                                    padding: '0.35rem 0.65rem',
                                     borderRadius: '8px',
-                                    fontSize: '0.78rem',
-                                    fontWeight: 700,
-                                    border: '1.5px solid #F59E0B',
-                                    color: '#B45309',
-                                    backgroundColor: '#FEF3C7',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 600,
+                                    border: '1px solid var(--border-hairline)',
+                                    color: 'var(--text-main)',
+                                    backgroundColor: '#FFFFFF',
                                     cursor: 'pointer',
-                                    whiteSpace: 'nowrap',
+                                    transition: 'all 0.15s ease',
                                   }}
+                                  title="Reset Password"
                                 >
-                                  🔑 Reset Password
+                                  <Key size={12} color="var(--text-muted)" />
+                                  <span>Password</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteCounselor(csl.id, csl.name)}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #FEE2E2',
+                                    color: '#DC2626',
+                                    backgroundColor: '#FEF2F2',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                  title="Remove Counselor Desk"
+                                >
+                                  <Trash2 size={12} />
                                 </button>
                               </div>
                             </td>
                           </tr>
                         ))}
-                    </tbody>
-                  </table>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
-                {counselors.length === 0 && !counselorLoading && (
-                  <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                    No counselors found. Click &quot;+ Add New Counselor&quot; to create a calling desk.
+                {/* 2. MOBILE VIEW: Zero-Scroll Clean Cards */}
+                <div className="mobile-only-cards" style={{ padding: '0.75rem' }}>
+                  {paginatedCounselors.map((csl) => (
+                    <div
+                      key={csl.id}
+                      style={{
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid var(--border-hairline)',
+                        borderRadius: '12px',
+                        padding: '0.85rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.65rem',
+                      }}
+                    >
+                      {/* Top: Avatar + Name */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                          <div
+                            style={{
+                              width: '34px',
+                              height: '34px',
+                              borderRadius: '50%',
+                              backgroundColor: '#F1F5F9',
+                              border: '1px solid var(--border-hairline)',
+                              color: 'var(--brand-navy)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 800,
+                              fontSize: '0.85rem',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {csl.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.9rem' }}>
+                            {csl.name}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Middle: Email & Phone Details */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.8rem', backgroundColor: '#F8FAFC', padding: '0.65rem', borderRadius: '8px', border: '1px solid var(--border-hairline)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', wordBreak: 'break-all' }}>
+                          <Mail size={13} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+                          <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{csl.email}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                          <Phone size={13} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+                          <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>+91 {csl.phone || '95174 47689'}</span>
+                        </div>
+                      </div>
+
+                      {/* Bottom: Action Buttons */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '0.4rem', marginTop: '0.1rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditCounselor(csl)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.3rem',
+                            padding: '0.45rem 0.5rem',
+                            borderRadius: '8px',
+                            fontSize: '0.76rem',
+                            fontWeight: 600,
+                            border: '1px solid var(--border-hairline)',
+                            color: 'var(--text-main)',
+                            backgroundColor: '#FFFFFF',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <Pencil size={12} color="var(--text-muted)" />
+                          <span>Edit</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditCounselor(csl)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.3rem',
+                            padding: '0.45rem 0.5rem',
+                            borderRadius: '8px',
+                            fontSize: '0.76rem',
+                            fontWeight: 600,
+                            border: '1px solid var(--border-hairline)',
+                            color: 'var(--text-main)',
+                            backgroundColor: '#FFFFFF',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <Key size={12} color="var(--text-muted)" />
+                          <span>Password</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCounselor(csl.id, csl.name)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '8px',
+                            border: '1px solid #FEE2E2',
+                            color: '#DC2626',
+                            backgroundColor: '#FEF2F2',
+                            cursor: 'pointer',
+                          }}
+                          title="Remove Desk"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Empty State */}
+                {filteredCounselors.length === 0 && !counselorLoading && (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                    {counselorSearch ? `No counselors matching "${counselorSearch}".` : 'No counselors found. Click "+ Add New Counselor" to create a calling desk.'}
+                  </div>
+                )}
+
+                {/* COUNSELOR PAGINATION BAR */}
+                {filteredCounselors.length > 0 && (
+                  <div
+                    style={{
+                      padding: '0.75rem 1.25rem',
+                      borderTop: '1px solid #E2E8F0',
+                      backgroundColor: '#FAFAFA',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '0.75rem',
+                      fontSize: '0.78rem',
+                      color: '#475569',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <span>
+                        Showing <strong>{counselorStartIndex + 1}</strong> to <strong>{counselorEndIndex}</strong> of <strong>{filteredCounselors.length}</strong> counselors
+                      </span>
+
+                      {/* Rows per page selector */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Per page:</span>
+                        <select
+                          value={counselorsPerPage}
+                          onChange={(e) => {
+                            setCounselorsPerPage(Number(e.target.value));
+                            setCounselorCurrentPage(1);
+                          }}
+                          style={{
+                            padding: '0.2rem 0.5rem',
+                            borderRadius: '6px',
+                            border: '1px solid #CBD5E1',
+                            backgroundColor: '#FFFFFF',
+                            fontSize: '0.76rem',
+                            fontWeight: 700,
+                            color: '#334155',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <option value={5}>5</option>
+                          <option value={10}>10</option>
+                          <option value={20}>20</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Page Navigation Buttons */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <button
+                        type="button"
+                        disabled={counselorCurrentPage === 1}
+                        onClick={() => setCounselorCurrentPage((p) => Math.max(1, p - 1))}
+                        style={{
+                          padding: '0.25rem 0.6rem',
+                          borderRadius: '6px',
+                          border: '1px solid #CBD5E1',
+                          backgroundColor: counselorCurrentPage === 1 ? '#F1F5F9' : '#FFFFFF',
+                          color: counselorCurrentPage === 1 ? '#94A3B8' : '#334155',
+                          cursor: counselorCurrentPage === 1 ? 'not-allowed' : 'pointer',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                        }}
+                      >
+                        ← Prev
+                      </button>
+
+                      {Array.from({ length: counselorTotalPages }, (_, i) => i + 1).map((pageNum) => (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          onClick={() => setCounselorCurrentPage(pageNum)}
+                          style={{
+                            minWidth: '28px',
+                            height: '28px',
+                            borderRadius: '6px',
+                            border: counselorCurrentPage === pageNum ? 'none' : '1px solid #CBD5E1',
+                            backgroundColor: counselorCurrentPage === pageNum ? '#0F172A' : '#FFFFFF',
+                            color: counselorCurrentPage === pageNum ? '#FFFFFF' : '#334155',
+                            fontWeight: 800,
+                            fontSize: '0.76rem',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+
+                      <button
+                        type="button"
+                        disabled={counselorCurrentPage >= counselorTotalPages}
+                        onClick={() => setCounselorCurrentPage((p) => Math.min(counselorTotalPages, p + 1))}
+                        style={{
+                          padding: '0.25rem 0.6rem',
+                          borderRadius: '6px',
+                          border: '1px solid #CBD5E1',
+                          backgroundColor: counselorCurrentPage >= counselorTotalPages ? '#F1F5F9' : '#FFFFFF',
+                          color: counselorCurrentPage >= counselorTotalPages ? '#94A3B8' : '#334155',
+                          cursor: counselorCurrentPage >= counselorTotalPages ? 'not-allowed' : 'pointer',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                        }}
+                      >
+                        Next →
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -3565,10 +3911,10 @@ export default function SuperAdminPage() {
                 </div>
                 <div>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
-                    Counselor Profile & Settings
+                    Counselor Profile &amp; Settings
                   </h3>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    Desk ID: <strong style={{ color: 'var(--brand-blue)' }}>{selectedCounselorForEdit.id}</strong> • Role: <strong>TELECALLER</strong>
+                    Role: <strong style={{ color: 'var(--brand-navy)' }}>Telecaller &amp; Lead Desk</strong>
                   </div>
                 </div>
               </div>
@@ -3668,6 +4014,105 @@ export default function SuperAdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM CENTERED CONFIRMATION MODAL (NEVER USE BROWSER NATIVE ALERT/CONFIRM) */}
+      {confirmModal && confirmModal.isOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '420px',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '20px',
+              padding: '1.75rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '1rem',
+            }}
+          >
+            {/* Icon Badge */}
+            <div
+              style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '50%',
+                backgroundColor: confirmModal.type === 'danger' ? '#FEE2E2' : '#EFF6FF',
+                color: confirmModal.type === 'danger' ? '#DC2626' : '#2563EB',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {confirmModal.type === 'danger' ? <Trash2 size={24} /> : <AlertCircle size={24} />}
+            </div>
+
+            {/* Title & Message */}
+            <div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                {confirmModal.title}
+              </h3>
+              <p style={{ fontSize: '0.88rem', color: '#64748B', marginTop: '0.4rem', lineHeight: 1.45, margin: 0 }}>
+                {confirmModal.message}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem', width: '100%', marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                style={{
+                  padding: '0.65rem 1rem',
+                  borderRadius: '10px',
+                  border: '1px solid #CBD5E1',
+                  backgroundColor: '#FFFFFF',
+                  color: '#475569',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {confirmModal.cancelText || 'Cancel'}
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmModal.onConfirm}
+                style={{
+                  padding: '0.65rem 1rem',
+                  borderRadius: '10px',
+                  border: 'none',
+                  backgroundColor: confirmModal.type === 'danger' ? '#DC2626' : '#0F172A',
+                  color: '#FFFFFF',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: confirmModal.type === 'danger' ? '0 4px 12px rgba(220, 38, 38, 0.3)' : '0 4px 12px rgba(15, 23, 42, 0.2)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {confirmModal.confirmText || 'Confirm'}
+              </button>
+            </div>
           </div>
         </div>
       )}

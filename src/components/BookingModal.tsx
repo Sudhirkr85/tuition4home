@@ -23,6 +23,7 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
   const [locality, setLocality] = useState(GURGAON_LOCALITIES[0].name);
   const [parentName, setParentName] = useState('');
   const [phone, setPhone] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -31,9 +32,10 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone || phone.length < 10) {
-      alert('Please enter a valid 10-digit mobile number.');
+      setPhoneError('Please enter a valid 10-digit mobile number.');
       return;
     }
+    setPhoneError('');
     setLoading(true);
     try {
       await fetch('/api/leads', {
@@ -278,6 +280,12 @@ export default function BookingModal({ isOpen, onClose, initialData }: BookingMo
                 <ShieldCheck size={15} />
                 <span>100% free. Zero advance payment. Counselor calls within 30 min.</span>
               </div>
+
+              {phoneError && (
+                <div style={{ padding: '0.6rem 0.85rem', borderRadius: '8px', backgroundColor: '#FEE2E2', color: '#DC2626', fontSize: '0.82rem', fontWeight: 700 }}>
+                  ⚠️ {phoneError}
+                </div>
+              )}
 
               {/* Submit */}
               <button

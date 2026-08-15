@@ -158,14 +158,15 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
         },
         (error) => {
           setIsDetecting(false);
-          console.error('Error fetching GPS:', error);
-          alert('GPS permission denied or timeout. Defaulting to Gurgaon Sector 14.');
+          console.warn('GPS location unavailable, defaulting to Gurgaon Sector 14:', error);
+          setDetectedAddress('Sector 14, Old DLF Colony, Gurugram');
         },
         { enableHighAccuracy: true, timeout: 8000 }
       );
     } else {
       setIsDetecting(false);
-      alert('Geolocation is not supported by your browser.');
+      console.warn('Geolocation not supported by browser.');
+      setDetectedAddress('Sector 14, Old DLF Colony, Gurugram');
     }
   };
 

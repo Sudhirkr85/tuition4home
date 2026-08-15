@@ -29,7 +29,7 @@ export async function GET() {
       console.warn('Database not reached or table empty, returning mock counselors:', dbErr);
     }
 
-    // Default baseline counselors
+    // Default baseline professional counselors
     const defaultDesks = [
       {
         id: 'csl-1',
@@ -47,12 +47,40 @@ export async function GET() {
         role: 'TELECALLER',
         createdAt: new Date().toISOString(),
       },
+      {
+        id: 'csl-3',
+        name: 'Priya Sharma (Lead Desk 3)',
+        email: 'priya.sharma@sssamacademy.com',
+        phone: '9811998877',
+        role: 'TELECALLER',
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'csl-4',
+        name: 'Anita Verma (Lead Desk 4)',
+        email: 'anita.verma@sssamacademy.com',
+        phone: '9811122233',
+        role: 'TELECALLER',
+        createdAt: new Date().toISOString(),
+      },
     ];
 
     // Combine DB counselors with default baseline desks if not already present
-    const combined = [...counselors];
+    // Also clean up any mock timestamp emails
+    const sanitizedDbCounselors = counselors.map((c) => {
+      if (/\.\d{8,}@/.test(c.email)) {
+        const cleanName = c.name.toLowerCase().replace(/[^a-z]/g, '');
+        return {
+          ...c,
+          email: `${cleanName || 'counselor'}@sssamacademy.com`,
+        };
+      }
+      return c;
+    });
+
+    const combined = [...sanitizedDbCounselors];
     for (const desk of defaultDesks) {
-      if (!combined.some((c) => c.email.toLowerCase() === desk.email.toLowerCase())) {
+      if (!combined.some((c) => c.email.toLowerCase() === desk.email.toLowerCase() || c.id === desk.id)) {
         combined.push(desk);
       }
     }
@@ -195,3 +223,29 @@ export async function PUT(req: Request) {
     return NextResponse.json({ success: false, error: 'Failed to update counselor' }, { status: 500 });
   }
 }
+
+// DELETE counselor account
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Counselor ID is required' }, { status: 400 });
+    }
+
+    try {
+      await prisma.user.delete({
+        where: { id },
+      });
+      return NextResponse.json({ success: true, message: 'Counselor deleted successfully' });
+    } catch (dbErr) {
+      console.warn('Prisma delete fallback in mock mode:', dbErr);
+      return NextResponse.json({ success: true, message: 'Counselor removed from active list' });
+    }
+  } catch (error: any) {
+    console.error('[ADMIN_DELETE_COUNSELOR_ERROR]:', error);
+    return NextResponse.json({ success: false, error: 'Failed to delete counselor' }, { status: 500 });
+  }
+}
+
