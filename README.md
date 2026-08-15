@@ -1,410 +1,436 @@
 # 🎓 TuitionForHome — Hybrid Home & Online Tuition Platform (Gurgaon, Delhi NCR & Pan-India)
 
-> **High-Converting, SEO-Dominant Home & Online Tuition Mediation Platform with In-House Telecalling CRM, Tutor Interview Verification, and Automated Lead Distribution.**
+> **High-Converting, SEO-Dominant Home & Online Tuition Mediation Platform with In-House Telecalling CRM, Rapido-Style Tutor Radar Matchmaking, Tutor KYC & Video Verification, and Automated Lead Distribution.**  
 > **Operated & Verified by SSSAM Academy (M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001).**
 
 ---
 
-## 📌 1. Executive Summary & Business Blueprint
+## 📑 Table of Contents
 
-### 1.1 The Business Concept & Dual Mode Delivery (Offline Home + Online Live)
-**TuitionForHome** is an end-to-end mediator platform connecting **Parents/Students** with **Verified Educators** through two flexible learning modes:
-1. 🏡 **Offline 1-on-1 Home Tuition:** Tutors visit the student's home across Gurgaon & Delhi NCR (DLF Phase 1–5, Golf Course Rd, Sohna Rd, Nirvana Country, Sector 56, etc.).
-2. 💻 **Online 1-on-1 Live Tuition:** Tutors conduct live interactive classes over Google Meet / Zoom for students across Delhi NCR, Pan-India, and NRI curriculums (CBSE, ICSE, IB, IGCSE).
-3. 🏫 **Center Demo / Classroom Option:** Option to take demos or classes at our established physical institute (**SSSAM Academy, Sector 14, Old DLF, Gurugram**).
+1. [Executive Summary & Core Concept](#-1-executive-summary--core-concept)
+2. [Key Highlights & Differentiators](#-2-key-highlights--differentiators)
+3. [Interactive Map & Rapido-Style Matchmaking](#-3-interactive-map--rapido-style-matchmaking)
+4. [Monetization & Profit Engine](#-4-monetization--profit-engine)
+5. [User Portals & Feature Breakdown](#-5-user-portals--feature-breakdown)
+   - [A. Parent & Student Interface](#a-parent--student-interface)
+   - [B. Tutor Portal & Lifecycle](#b-tutor-portal--lifecycle)
+   - [C. Counselor / Telecaller Operations CRM](#c-counselor--telecaller-operations-crm)
+   - [D. Super Admin Command Center](#d-super-admin-command-center)
+6. [Hyper-Local Programmatic SEO Engine](#-6-hyper-local-programmatic-seo-engine)
+7. [Security, Encryption & DPDP Act 2023 Compliance](#-7-security-encryption--dpdp-act-2023-compliance)
+8. [Technology Stack & System Integrations](#-8-technology-stack--system-integrations)
+9. [Database Architecture & Prisma Schema](#-9-database-architecture--prisma-schema)
+10. [REST API Reference](#-10-rest-api-reference)
+11. [Project Directory & File Structure](#-11-project-directory--file-structure)
+12. [Local Setup & Installation Guide](#-12-local-setup--installation-guide)
+13. [Testing & System Verification](#-13-testing--system-verification)
+14. [Production Deployment Guide](#-14-production-deployment-guide)
+15. [Official Center & Operation Verification](#-15-official-center--operation-verification)
+16. [Continuous Feature Tracker & Roadmap](#-16-continuous-feature-tracker--roadmap)
+
+---
+
+## 📌 1. Executive Summary & Core Concept
+
+**TuitionForHome** is an enterprise-grade tuition mediation ecosystem engineered to bridge the gap between quality educators and students across **Gurgaon, Delhi NCR, and Pan-India**. The platform is backed by the physical infrastructure and academic authority of **SSSAM Academy (Sector 14, Gurugram)**.
+
+### 1.1 Dual Delivery Architecture
+The platform supports three distinct learning models:
+1. 🏡 **Offline 1-on-1 Home Tuition:** Verified educators travel to the student's residence across all prime Gurgaon sectors (DLF Phase 1–5, Golf Course Road, Sohna Road, Nirvana Country, Sector 56/57, New Gurgaon, etc.).
+2. 💻 **Online 1-on-1 Live Interactive Classes:** Conducted via Google Meet / Zoom with digital whiteboarding for Delhi NCR, Pan-India, and international/NRI curriculums (CBSE, ICSE, IB DP/MYP, Cambridge IGCSE).
+3. 🏫 **Center Demo / Physical Hybrid Option:** Parents and students have the confidence to meet tutors or attend classes at our physical center (**SSSAM Academy, Sector 14, Gurugram**).
 
 ```
-   [ Parent / Student Request ]                      [ Tutor Registration ]
-   (Choice: Home / Online / Both)                  (Choice: Home / Online / Both)
-                 │                                                │
-                 ▼                                                ▼
-       [ Counselor Lead Queue ]                      [ Status: PENDING REVIEW ]
-                 │                                                │
-                 │                                  [ Video & KYC Interview Check ]
-                 │                                                │
-                 │                                   [ Status: ACTIVE & VERIFIED ]
-                 │                                                │
-                 └──────────────► [ SMART MATCH ] ◄───────────────┘
+   ┌──────────────────────────────┐              ┌──────────────────────────────┐
+   │    Parent / Student Lead     │              │    Tutor Profile Creator     │
+   │ (Home / Online / Both Modes) │              │  (Video + KYC + Preferences) │
+   └──────────────┬───────────────┘              └──────────────┬───────────────┘
+                  │                                             │
+                  ▼                                             ▼
+   ┌──────────────────────────────┐              ┌──────────────────────────────┐
+   │   Counselor Inbound Queue    │              │  Status: PENDING INTERVIEW   │
+   │     (Real-time Telegram)     │              └──────────────┬───────────────┘
+   └──────────────┬───────────────┘                             │
+                  │                              ┌──────────────▼───────────────┐
+                  │                              │ Counselor Video/KYC Review   │
+                  │                              │   & Verification Scorecard   │
+                  │                              └──────────────┬───────────────┘
+                  │                                             │
+                  │                              ┌──────────────▼───────────────┐
+                  │                              │  Status: ACTIVE & VERIFIED   │
+                  │                              └──────────────┬───────────────┘
+                  │                                             │
+                  └──────────────► [ SMART MATCH ] ◄────────────┘
                                          │
-                             [ Demo Scheduled (Home/Live) ]
+                         ┌───────────────▼───────────────┐
+                         │   Demo Scheduled & WhatsApp   │
+                         │   Digital Demo Pass Issued    │
+                         └───────────────┬───────────────┘
                                          │
-                                [ Tuition Confirmed ]
+                         ┌───────────────▼───────────────┐
+                         │   Tuition Confirmed by Parent │
+                         └───────────────┬───────────────┘
                                          │
-                          [ 💰 1st-Month Commission Collected ]
+                         ┌───────────────▼───────────────┐
+                         │ 💰 1st-Month Commission (UPI) │
+                         │    Collected via QR Invoice   │
+                         └───────────────────────────────┘
 ```
 
 ---
 
-## 💰 2. Monetization & Profit Strategy (How You Make Money)
+## ⚡ 2. Key Highlights & Differentiators
 
-| Revenue Stream | How It Works | Typical Market Pricing (Gurgaon & NCR) |
+* 🗺️ **Rapido-Style Live Matchmaking Radar:** Interactive Leaflet map displaying active tutor density across Gurgaon sectors with instant real-time matching animations.
+* 🛡️ **100% Replacement Guarantee & Physical Center Trust:** Backed by SSSAM Academy's physical institute; parents can replace tutors with a single click if unsatisfied with the demo.
+* 🎥 **60-Second Video Introductions:** Tutors upload or link concise video intros allowing parents and counselors to evaluate communication skills, pronunciation, and subject depth before demo booking.
+* 🔒 **AES-256 Encrypted KYC Vault:** Government IDs (Aadhaar, Driving License, PAN) are encrypted at rest with AES-256-CBC, storing only masked last 4 digits publicly.
+* 🏷️ **Dynamic Festival Promotion Engine:** Super Admin can adjust the ₹999 verification badge fee to ₹0 (100% Free Waiver) or custom promotional pricing in real-time.
+* 📱 **Telecaller Operations Desk:** 1-Click WhatsApp (`wa.me`) message dispatch, phone dialers, digital WhatsApp demo slips, and UPI QR invoice generation.
+* 📈 **Programmatic Locality & Subject SEO Matrix:** Dynamic pre-rendered landing pages for 20+ Gurgaon localities and high-ticket subjects (NEET, JEE, CBSE 10/12, IB Diploma, Python/Coding).
+
+---
+
+## 📍 3. Interactive Map & Rapido-Style Matchmaking
+
+The platform integrates a dynamic, interactive map experience (`RapidoStyleMap.tsx` and `TutorMatchModal.tsx`) built using **Leaflet** with custom pulsing radar animations:
+* **Sector Density Clusters:** Visualizes live tutor availability across DLF Phase 1–5, Golf Course Road, Sohna Road, Nirvana Country, Sector 56, and Sector 14.
+* **Simulated Matchmaking Radar:** When a parent submits a requirement, a full-screen radar searches verified educators in the background and returns the top 3 proximity matches within seconds.
+* **Instant Demo Booking:** Parents can review the matched tutor's video, qualifications, and hourly/monthly rates, then confirm a free demo immediately.
+
+---
+
+## 💰 4. Monetization & Profit Engine
+
+| Revenue Stream | Mechanism | Market Rate (Gurgaon & NCR) |
 | :--- | :--- | :--- |
-| **1. First Month Placement Commission (Primary)** | You charge the tutor 50% to 100% of the first month's agreed tuition fee once the student confirms after the demo. | **₹2,500 – ₹12,000+ per student** |
-| **2. 2-Split Commission Option (High-Ticket)** | For large fees (₹12,000+), tutor pays 50% on Day 2 and 50% on Day 15 to eliminate tutor payment friction. | **₹6,000 – ₹15,000 per placement** |
-| **3. Tutor Verification Badge Fee (Price Anchored)** | Displayed as ~~₹999~~ with **Dynamic Festival / Session Waiver (₹0 Free or Full Price set by Admin)**. Creates high perceived value and urgency. | **~~₹999~~ ₹0 (Seasonal Offer)** |
-| **4. Tutor Premium "Lead Pass" Subscription** | Tutors purchase monthly packages to receive instant direct WhatsApp alerts for high-paying leads in their sector. | **₹799 – ₹1,999/month** |
-| **5. High-Ticket Board & NEET Crash Course Packages** | 45-day intensive revision packages for Board Exams & NEET (₹15,000–₹25,000 lump sum). | **₹7,500 – ₹12,500 upfront profit** |
-| **6. Coding & AI Home Mentorship (SSSAM Academy Synergy)** | School coding/Python/Web Dev tuitions commanding premium rates (₹1,200–₹2,000/hr). | **High-Margin Tech Niche** |
+| **1. First Month Placement Commission** *(Primary)* | Charged to the tutor (50% to 100% of 1st month tuition fee) upon successful confirmation after the free demo. | **₹2,500 – ₹12,000+ per student** |
+| **2. 2-Split Installment Commission** *(High-Ticket)* | For fees above ₹12,000, tutors pay 50% on Day 2 and 50% on Day 15 to eliminate cashflow friction. | **₹6,000 – ₹15,000 per placement** |
+| **3. Verification Badge Fee** *(Price-Anchored)* | Anchored at ~~₹999~~ with dynamic seasonal waivers (₹0 Free or 50% Off) controlled by the Super Admin. | **~~₹999~~ ₹0 (Seasonal Waiver)** |
+| **4. Tutor Lead Pass Subscription** | Monthly priority access pass for tutors to receive direct sector-specific WhatsApp lead pings. | **₹799 – ₹1,999 / month** |
+| **5. Crash Course Revision Bundles** | 45-day high-intensity Board Exam & NEET revision packages (₹15,000–₹25,000 lump sum). | **₹7,500 – ₹12,500 net margin** |
+| **6. School Coding & AI Mentorship** | Premium 1-on-1 coding tuitions powered by SSSAM Academy (Python, Web Dev, Scratch, AI). | **₹1,000 – ₹2,000 / hour** |
 
 ---
 
-## 🚀 3. Hyper-Local Programmatic SEO Engine (Gurgaon & Delhi NCR)
+## 👥 5. User Portals & Feature Breakdown
 
-To dominate Google organic rankings and local search, the platform uses a **Programmatic Matrix Architecture** combining **[Mode] + [Subject] + [Grade/Board] + [Locality]**:
+### A. Parent & Student Interface
+1. **Interactive Search & Hero Filters:** Filter by Mode (Home / Online), Gurgaon Locality, Grade (Class 1–12, IB/IGCSE, NEET/JEE), and Subject.
+2. **Interactive Fee Estimator Widget (`FeeEstimator.tsx`):** 4-step dynamic calculator providing instant monthly budget estimations based on Class, Subject, Mode, and Weekly Frequency.
+3. **Instant Booking Modal (`BookingModal.tsx` & `/book-demo`):** Step-by-step parent requirement capture with locality selection and telephone validation.
+4. **Parent Dashboard (`/parent/dashboard`):** Secure login (`/parent/login`) allowing parents to monitor active tuition requests, scheduled demos, counselor notes, and submit tutor replacement requests.
+5. **Verified Tutor Public Review System (`/tutor/review/[tutorId]`):** Public parent review submission with star ratings, detailed feedback, and automated tutor score recalculation.
 
-### 3.1 Gurgaon Key Localities Matrix
-* **Premium Golf Course & DLF Belts:** DLF Phase 1, 2, 3, 4, 5, Golf Course Road, Golf Course Extension Road, Sushant Lok 1, 2 & 3.
-* **Sohna Road & Central Gurgaon:** Nirvana Country, Malibu Town, South City 1 & 2, Sector 47, Sector 48, Sector 49, Sector 50, Sector 56, Sector 57.
-* **New Gurgaon & Emerging Hubs:** Sector 81, 82, 83, 84, 85, 86, 90, Sector 65, 66, 67, Sector 70, 71, 72, Dwarka Expressway.
-* **Old Gurgaon & Educational Hubs:** Sector 14, Sector 15, Sector 21, Sector 22, Sector 23, Palam Vihar, Civil Lines.
-* **Expanded NCR Zones:** South Delhi (Saket, Vasant Kunj, GK), Dwarka, Noida, Faridabad.
+### B. Tutor Portal & Lifecycle
+1. **7-Step Registration Flow (`/tutor/register`):**
+   - **Step 1:** Personal details, profile photo, and teaching mode (Home, Online, or Both).
+   - **Step 2:** 60-Second Video Introduction (YouTube unlisted embed or direct MP4 upload).
+   - **Step 3:** Academic qualifications & university degrees.
+   - **Step 4:** Teaching specifications (Classes 1–12, CBSE, ICSE, IB, IGCSE, State Boards).
+   - **Step 5:** Dual-Location Preferences (Pinpoint GPS coordinate + Travel Radius in KM or specific Gurgaon sector selection).
+   - **Step 6:** Hourly & monthly fee expectations.
+   - **Step 7:** KYC government document upload (Aadhaar, Driving License, PAN, or Degree).
+2. **Tutor Dashboard & Profile Hub (`/tutor/profile`):**
+   - **Digital Verified Educator ID Card:** Downloadable ID card with verified seal and QR verification pass.
+   - **Lead Pipeline:** View assigned student inquiries, demo dates, and student locations.
+   - **Weekly Availability Matrix:** Set customized morning/evening time slots.
+   - **Earnings & Commission Ledger:** Track closed tuitions and commission payment statuses.
 
-### 3.2 Programmatic SEO URL Structure
-- `/home-tutors-in-gurgaon` *(City Pillar Page)*
-- `/home-tutors-in-gurgaon/dlf-phase-5` *(Locality Page)*
-- `/online-tutors-in-gurgaon` *(Online Mode Pillar Page)*
-- `/cbse-class-10-maths-home-tutor-in-dlf-phase-5-gurgaon` *(Long-Tail Transactional Landing Page)*
-- `/physics-tutor-for-neet-in-golf-course-road-gurgaon` *(High-Ticket Specialty Page)*
-- `/ib-igcse-maths-tutor-in-gurgaon` *(Elite International Board Page)*
-- `/python-coding-tutor-for-school-students-gurgaon` *(Tech Specialty Page)*
+### C. Counselor / Telecaller Operations CRM (`/counselor`)
+1. **Inbound Lead Management Desk:** Real-time queue of parent inquiries categorized by status (`NEW_LEAD`, `DEMO_SCHEDULED`, `TUITION_CONFIRMED`, `COMMISSION_RECEIVED`, `LOST`).
+2. **1-Click WhatsApp & Phone Dialer:** Instant WhatsApp message dispatch using pre-filled communication templates (`Tutor Profile Pitch`, `Demo Confirmation`, `Post-Demo Feedback`).
+3. **Tutor Interview & KYC Verification Desk:** Review pending tutor profiles, play 60-second video introductions, inspect private KYC documents, record interview scorecard ratings (1–10), and approve/reject with 1 click.
+4. **Smart Proximity Matchmaker:** Automatically computes distance between student's sector and verified educators.
+5. **Digital Demo Pass & Commission QR Generator:** Generates branded WhatsApp demo cards and UPI QR payment invoices for 1st-month commission collection.
 
-### 3.3 Google Schema.org Structured Data
-* `LocalBusiness` & `EducationalOrganization` Schema with exact geo-coordinates (`28.4703° N, 77.0418° E`) and address (`M24 Sector 14 Gurugram`).
-* `AggregateRating` Schema to display star ratings in Google search snippets.
-* `FAQPage` Schema on every locality page to capture Google PAA (People Also Ask).
-* `Person` Schema for Verified Tutor profiles (contact numbers masked for privacy).
-
----
-
-## 🎨 4. Apple-Inspired Premium Design System
-
-* **Philosophy:** Minimalist, clean, high-trust, fast, and legible. Zero clutter, concise line-by-line hierarchy.
-* **Typography:** Modern geometric sans-serif (**Outfit** + System UI font stack) for an ultra-premium, crisp aesthetic.
-* **Color Palette:**
-  - **Primary Base:** Deep Slate / Royal Black (`#0B132B` / `#0F172A`) — Authority & Stability
-  - **Accent / CTA:** Electric Academic Blue (`#2563EB` / `#3B82F6`) — Action & Technology
-  - **Verified Trust Badge:** Emerald Glow (`#10B981` / `#059669`) — Safety & Credibility
-  - **Review Stars & Ratings:** Warm Golden Amber (`#F59E0B`)
-  - **Background & Cards:** Pure Crisp White (`#FFFFFF`) & Subtle Porcelain (`#F8FAFC`) with subtle 1px border (`#E2E8F0`)
-* **Components:** Crisp cards, subtle glassmorphic modals, smooth micro-interactions, clean mobile-first responsiveness.
-* **Physical Office & Trust Seal:**
-  - **Operating Institute:** SSSAM Academy
-  - **Address:** M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001
-  - **Geo-Coordinates:** `28.4703° N, 77.0418° E`
-  - **Direct Counselor Desks:** `+91 95174 47689` / `+91 92170 31899`
+### D. Super Admin Command Center (`/admin`)
+1. **Executive KPI Dashboard:** Real-time metrics on Total Verified Tutors, Today's Inbound Leads, Active Tuitions, and Gross Commission Revenue.
+2. **Dynamic Pricing & Festival Controller:** Adjust base verification fees, toggle 100% Free waivers, and customize festival campaign headlines.
+3. **Counselor Performance Tracker:** Track total calls logged, demos booked, and revenue converted per counselor.
+4. **Locality SEO & Pincode Registry:** Manage Gurgaon sectors, SEO meta tags, and local FAQ content.
+5. **Commission Ledger:** Monitor payment reconciliation, 2-split installment balances, and receipts.
 
 ---
 
-## 🛠️ 5. Technology Stack & Integrations
+## 🚀 6. Hyper-Local Programmatic SEO Engine
 
-| Layer | Recommended Technology | Rationale |
+The platform is designed to dominate organic Google rankings across Gurgaon and Delhi NCR through programmatic routes and JSON-LD structured data:
+
+### 6.1 Programmatic URL Architecture
+* **City Pillar Route:** `/home-tutors-in-gurgaon`
+* **Locality Dynamic Matrix:** `/home-tutors-in-gurgaon/[locality]` (20+ sectors pre-rendered: `dlf-phase-5`, `golf-course-road`, `sohna-road`, `nirvana-country`, `sector-56`, `sector-14`, `palam-vihar`, etc.)
+* **Subject Dynamic Matrix:** `/tuition/[subject]` (`maths-home-tutor-in-gurgaon`, `physics-home-tutor-in-gurgaon`, `chemistry-home-tutor-in-gurgaon`, `computer-science-python-tutor-in-gurgaon`, `accounts-commerce-home-tutor-in-gurgaon`, `ib-igcse-tutors-in-gurgaon`)
+* **XML Sitemap & Robots:** Dynamic `/sitemap.xml` and `/robots.txt` generated via Next.js App Router.
+
+### 6.2 Schema.org Structured Data
+Each locality and subject page automatically injects rich JSON-LD:
+* `LocalBusiness` & `EducationalOrganization` with exact geo-coordinates (`28.4703° N, 77.0418° E`) and SSSAM Academy address.
+* `AggregateRating` for Google 5-star rich search snippets.
+* `FAQPage` schema on every locality landing page to capture Google's "People Also Ask" (PAA) boxes.
+* `Person` schema for verified tutor profiles (personal contact details masked for privacy).
+
+---
+
+## 🔒 7. Security, Encryption & DPDP Act 2023 Compliance
+
+1. **AES-256-CBC Encryption (`src/lib/crypto.ts`):** Sensitive government ID numbers are encrypted at rest using AES-256-CBC with SHA-256 derived keys.
+2. **Masked Aadhaar / ID Display:** Only the last 4 digits (e.g., `XXXX-XXXX-4589`) are ever rendered on screens or transmitted in public payloads.
+3. **Authenticated KYC Vault:** Uploaded KYC proofs are stored in private Cloudinary storage, accessible solely by authenticated counselors and administrators via temporary signed URLs.
+4. **Public Privacy Shield:** Tutor and parent phone numbers and exact street addresses are strictly hidden on public routes to prevent unauthorized disintermediation.
+
+---
+
+## 🛠️ 8. Technology Stack & System Integrations
+
+| Layer | Technology | Purpose / Justification |
 | :--- | :--- | :--- |
-| **Frontend & Fullstack** | **Next.js 14 / 15 (App Router + React)** | Lightning-fast Server-Side Rendering (SSR) & Dynamic SEO for 100+ Gurgaon locality pages. |
-| **Database** | **MySQL (v8.0+)** | World-class relational reliability, ACID compliance, easy hosting (Local, VPS, cPanel, PlanetScale, AWS RDS). |
-| **ORM** | **Prisma ORM (MySQL Provider)** | Type-safe queries, automated schema migrations, zero SQL injection risks, fast relationships. |
-| **Styling & UI** | **Vanilla Modern CSS / CSS Modules** | Apple-inspired clean luxury design system with Outfit typography, zero bloat, high performance. |
-| **Authentication** | **NextAuth.js / Auth.js** | Google OAuth 2.0 + Brevo Email OTP + Secure Password Login. Ready for future Mobile OTP. |
-| **Email Service & OTP** | **Brevo (formerly Sendinblue)** | Fast transactional Email OTP delivery, welcome emails, and tutor status notifications. |
-| **Media & Photos** | **Cloudinary (Auto WebP & Compression)** | Auto-compressed, WebP converted, CDN delivery for fast loading tutor headshots. |
-| **Intro Videos (60-90s)** | **YouTube Unlisted Embed + Cloudinary Video** | Dual option: 100% Free YouTube unlisted video embed (zero buffering & zero hosting costs) or direct MP4 upload. |
-| **KYC Document Vault** | **Cloudinary Authenticated / Private Storage** | Secure private mode (`type: "authenticated"`) for Aadhaar/PAN/Degree proofs, accessible only via time-limited signed URLs by Admins/Callers. |
-| **Maps & Geolocation** | **Google Maps Places API & Geocoding** | Pinpoint address autocomplete for parents & tutors + automatic radius/distance matchmaking (e.g. 5km travel radius). |
-| **Internal Staff Alerts** | **Telegram Lead Alert Bot** | 100% Free instant 0.5s notification to counselor group with 1-tap call & WhatsApp buttons. |
-| **Customer Web Push** | **Firebase Cloud Messaging (FCM)** | 100% Free native Web Push Notifications on phone lock screens & browser desktop for Admins, Callers & Tutors. |
-| **Communication** | **WhatsApp Integration (`wa.me` / Cloud API)** | Instant 1-click lead matching and WhatsApp communication for telecallers. |
+| **Frontend Framework** | **Next.js 14 (App Router) + React 18** | High-performance Server-Side Rendering (SSR), Server Components, and Dynamic SEO metadata generation. |
+| **Language** | **TypeScript 5.5** | End-to-end type safety across database models, API payloads, and UI components. |
+| **Database** | **MySQL 8.0+** | Enterprise ACID compliance, relational integrity, foreign key constraints, and fast index scans. |
+| **ORM** | **Prisma 5.18** | Type-safe queries, schema migrations, and declarative database modeling. |
+| **Styling & Design System** | **Vanilla CSS & CSS Modules** | Ultra-clean Apple-inspired design system with Outfit typography, custom tokens, and zero CSS runtime overhead. |
+| **Maps & Geospatial** | **Leaflet 1.9 & React-Leaflet** | Interactive tutor radar maps with pulsing sector markers and distance calculation. |
+| **Authentication** | **NextAuth.js & Custom OTP** | Passwordless Email OTP (Brevo), Bcrypt password hashing, and Google OAuth 2.0. |
+| **Email & Transactional** | **Brevo (Sendinblue API)** | Transactional OTP delivery, parent inquiry acknowledgments, and tutor status notifications. |
+| **Media & Video Vault** | **Cloudinary CDN** | Auto-compressed WebP avatar delivery, video intro streaming, and authenticated KYC document storage. |
+| **UI Icons & Visuals** | **Lucide-React & Canvas-Confetti** | Modern feather-light iconography and interactive celebratory micro-animations. |
 
 ---
 
-## 👥 6. User Roles & Complete Feature Breakdown
+## 🗄️ 9. Database Architecture & Prisma Schema
 
-### 👨‍🏫 A. Tutor Portal
-1. **Registration & Multi-Step Profile Builder:**
-   - **Teaching Mode Selection:** `[✔] Home Tuition (Offline)` | `[✔] Online 1-on-1 Live` | `[✔] Both`.
-   - **Profile Picture:** High-resolution professional headshot (Cloudinary CDN).
-   - **60–90s Video Introduction:** (Direct upload or YouTube/Shorts link) showing communication, teaching philosophy, and subject depth.
-   - **Personal Details:** (Name, Bio, Gender, Age, Languages Spoken).
-   - **Dual Location Preferences (For Home Tuition):**
-     - **Option A (GPS + Radius):** Pin exact location via Google Maps / "Use Current GPS Location" + Travel Radius (`3 km`, `5 km`, `8 km`, `10 km`).
-     - **Option B (Specific Service Areas):** Multi-select specific preferred Gurgaon Sectors/Societies (e.g., *DLF Phase 5, Golf Course Road, Nirvana Country, Sector 56*).
-   - **Academic Qualifications:** (Degrees, College, Certifications).
-   - **Teaching Specs:** (Subjects, Classes: 1st-5th, 6th-8th, 9th-10th, 11th-12th, Boards: CBSE / ICSE / IB / IGCSE / Cambridge / State).
-   - **Fee Expectations:** (Hourly / Monthly rate range for Home vs. Online).
-   - **Availability Time-Slots:** Weekly schedule picker (e.g., *Mon/Wed/Fri 4 PM–8 PM*).
-   - **KYC Document Upload:** (Masked Aadhaar, Driving License, PAN, or Degree).
-2. **Verification Progress Tracker:**
-   - Status transitions: `Draft` ➔ `Pending Interview` ➔ `Interview Scheduled` ➔ `Active & Verified` / `Rejected`.
-3. **Tutor Dashboard:**
-   - View assigned student leads (Home & Online).
-   - Downloadable **Digital Verified Educator ID Card** with QR verification code.
-   - Profile performance stats (Views, Inquiries, Video plays).
+The application uses Prisma ORM connected to MySQL. Below is an overview of the core schema models:
 
-### 👨‍👩‍👧 B. Parent / Student Interface (Public Facing)
-1. **Instant Tutor Finder / Search Engine:**
-   - Mode Toggle: **Home Tuition (At My Home)** vs. **Online 1-on-1 Live**.
-   - Filter by: Gurgaon Locality/Sector, Subject, Grade/Class, Board (CBSE/ICSE/IB), Gender Preference, Budget.
-2. **Verified Tutor Profiles:**
-   - Experience, qualifications, verified badge, subjects taught, parent reviews, rating, and 60s video intro.
-   - **Privacy Shield:** Personal contact numbers are masked; inquiries route to the caller mediation desk.
-3. **Interactive Fee Estimator Widget:**
-   - 3-click slider: Select Grade + Subject + Mode (Home/Online) + Days/week ➔ Instant monthly fee estimate.
-4. **Quick "Post Tuition Requirement" Widget & Booking Modal:**
-   - 3-step form with Google Maps Places autocomplete for exact society/sector.
-5. **1-Click Tutor Replacement Button:**
-   - Self-service button to request a different tutor if not satisfied after demo.
+```mermaid
+erDiagram
+    User ||--o| TutorProfile : "has profile"
+    User ||--o{ Lead : "creates (Parent)"
+    User ||--o{ Lead : "manages (Caller)"
+    User ||--o{ Review : "writes"
+    TutorProfile ||--o| TutorKYC : "submits"
+    TutorProfile ||--o{ Lead : "assigned to"
+    TutorProfile ||--o{ Review : "receives"
+    Lead ||--o{ LeadActivity : "logs"
 
-### 📞 C. Counselor / Telecaller Operations Portal (Lead & Interview Desk)
-1. **Inbound Parent Lead Manager:**
-   - Real-time stream of parent inquiries with mode badge (`Home Tuition` vs `Online Live`).
-   - Lead Status: `New` ➔ `Assigned` ➔ `Tutor Shortlisted` ➔ `Demo Scheduled` ➔ `Demo Feedback` ➔ `Tuition Confirmed` ➔ `Closed`.
-2. **Tutor Interview & Verification Desk:**
-   - Queue of newly registered tutors.
-   - Video player and secure private KYC document viewer.
-   - Interview Scorecard (Communication rating, subject depth, location range, background notes).
-   - 1-Click Actions: `Approve & Activate Badge`, `Request Document Re-upload`, `Reject`.
-3. **Smart Proximity Matchmaker:**
-   - Calculates shortest distance between student's sector and verified home tutors.
-4. **1-Click WhatsApp & Calling Actions:**
-   - Pre-filled WhatsApp templates (`Send Tutor Profile`, `Demo Reminder`, `Post-Demo Feedback Call`).
-5. **Digital Demo Slip & Invoice Generator:**
-   - Generates branded WhatsApp demo confirmation card.
-   - Generates 1-click 1st-month commission payment slip with bureau UPI QR code.
+    User {
+        string id PK
+        string name
+        string email UK
+        string phone UK
+        enum role
+        datetime createdAt
+    }
 
-### 👑 D. Super Admin Control Panel (Master Oversight & Business Management)
-1. **Master Business & Revenue Dashboard:**
-   - Real-time KPIs: Total Verified Tutors, Today's Inbound Leads, Active Tuitions (Home & Online), Total Commission Revenue.
-2. **Dynamic Pricing & Festival Campaign Controller:**
-   - Change Verification Fee (e.g. ₹999), 1-click Festival Discount Toggle (100% Free / ₹0, 50% Off), and custom banner titles (*"Diwali Mega Offer"*, *"Academic Session Drive"*).
-3. **Counselor Team Management & Performance:**
-   - Create/Manage Counselor accounts and track conversions per counselor.
-4. **Programmatic SEO & Locality Manager:**
-   - Add/edit Gurgaon localities, pincodes, SEO meta titles, and localized FAQs.
-5. **Commission & Accounts Ledger:**
-   - Track 1st-month mediation fees collected, 2-split installment balances, and receipts.
-6. **Platform & API Settings:**
-   - Manage Brevo Email OTP, Cloudinary credentials, Google OAuth, and Telegram/Firebase keys.
+    TutorProfile {
+        string id PK
+        string userId FK
+        string avatarUrl
+        string introVideoUrl
+        enum teachingMode
+        string subjects
+        string classes
+        string boards
+        string serviceAreas
+        int travelRadiusKm
+        float rating
+        int reliabilityScore
+        enum status
+        boolean isVerified
+    }
 
----
+    TutorKYC {
+        string id PK
+        string tutorId FK
+        string idType
+        string idLast4
+        string idNumberEncrypted
+        string idDocUrl
+        datetime verificationDate
+    }
 
-## 🗄️ 7. Core Database Schema Overview (MySQL + Prisma)
+    Lead {
+        string id PK
+        string parentName
+        string parentPhone
+        string locality
+        string gradeClass
+        string subjectsNeeded
+        enum preferredMode
+        enum status
+        int commissionAmount
+        boolean isTwoSplit
+    }
 
-```prisma
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
+    Review {
+        string id PK
+        string tutorId FK
+        string parentName
+        int rating
+        string comment
+        boolean isApproved
+    }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-enum Role {
-  SUPER_ADMIN
-  TELECALLER
-  TUTOR
-  PARENT
-}
-
-enum TeachingMode {
-  OFFLINE_HOME
-  ONLINE_LIVE
-  BOTH
-}
-
-enum TutorStatus {
-  DRAFT
-  PENDING_INTERVIEW
-  INTERVIEW_SCHEDULED
-  ACTIVE_VERIFIED
-  SUSPENDED
-  REJECTED
-}
-
-enum LeadStatus {
-  NEW_LEAD
-  CALL_SCHEDULED
-  TUTOR_MATCHED
-  DEMO_SCHEDULED
-  DEMO_COMPLETED
-  TUITION_CONFIRMED
-  COMMISSION_RECEIVED
-  LOST
-}
-
-model User {
-  id            String       @id @default(uuid())
-  name          String
-  email         String       @unique
-  emailVerified DateTime?
-  passwordHash  String?      // Bcrypt hash for password login
-  phone         String?      @unique
-  image         String?
-  role          Role         @default(PARENT)
-  createdAt     DateTime     @default(now())
-  tutorProfile  TutorProfile?
-  leads         Lead[]
-}
-
-model EmailOtpToken {
-  id        String   @id @default(uuid())
-  email     String
-  otpCode   String   // 6-digit Brevo OTP
-  type      String   @default("LOGIN_REGISTER") // "LOGIN_REGISTER" | "PASSWORD_RESET"
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  @@index([email])
-}
-
-model TutorProfile {
-  id                String       @id @default(uuid())
-  userId            String       @unique
-  user              User         @relation(fields: [userId], references: [id])
-  avatarUrl         String?      // Profile Photo
-  introVideoUrl     String?      // 60-90s Intro Video (Direct upload or YouTube/Vimeo embed)
-  videoThumbnailUrl String?
-  bio               String?
-  experienceYears   Int          @default(0)
-  highestDegree     String
-  teachingMode      TeachingMode @default(BOTH) // OFFLINE_HOME | ONLINE_LIVE | BOTH
-  subjects          String       // JSON string: ["Mathematics", "Physics"]
-  classes           String       // JSON string: ["Class 9", "Class 10", "Class 11", "Class 12"]
-  boards            String       // JSON string: ["CBSE", "ICSE", "IB", "IGCSE"]
-  serviceAreas      String       // JSON string: ["DLF Phase 5", "Golf Course Road", "Sector 56"]
-  travelRadiusKm    Int          @default(5)  // Maximum travel radius in KM for home visits
-  latitude          Float?       // Precise GPS from Google Maps
-  longitude         Float?
-  formattedAddress  String?
-  availableSlots    String?      // JSON string of weekly availability
-  hourlyRateHome    Int?
-  hourlyRateOnline  Int?
-  monthlyRateMin    Int?
-  status            TutorStatus  @default(PENDING_INTERVIEW)
-  isVerified        Boolean      @default(false)
-  hasPoliceCheck    Boolean      @default(false) // Gold background checked badge
-  interviewNotes    String?
-  rating            Float        @default(5.0)
-  totalReviews      Int          @default(0)
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-}
-
-model Lead {
-  id               String       @id @default(uuid())
-  studentName      String?
-  parentName       String
-  parentPhone      String
-  preferredMode    TeachingMode @default(OFFLINE_HOME) // OFFLINE_HOME | ONLINE_LIVE | BOTH
-  locality         String       // e.g. "DLF Phase 4, Gurgaon"
-  formattedAddress String?      // Exact Google Maps Address
-  latitude         Float?
-  longitude        Float?
-  gradeClass       String       // e.g. "Class 10"
-  subjectsNeeded   String       // JSON string: ["Mathematics"]
-  board            String       // e.g. "CBSE"
-  budgetMonthly    Int?
-  genderPreference String?      // "Any" | "Male" | "Female"
-  status           LeadStatus   @default(NEW_LEAD)
-  assignedCallerId String?
-  assignedTutorId  String?
-  demoDate         DateTime?
-  commissionAmount Int?
-  isTwoSplit       Boolean      @default(false) // 50% Day 2 + 50% Day 15 option
-  notes            String?
-  createdAt        DateTime     @default(now())
-}
-
-model LocalitySEO {
-  id            String   @id @default(uuid())
-  slug          String   @unique // e.g. "dlf-phase-5-gurgaon"
-  name          String   // "DLF Phase 5"
-  city          String   @default("Gurgaon")
-  pincode       String?
-  metaTitle     String
-  metaDesc      String
-  h1Heading     String
-  contentBody   String?
-  isActive      Boolean  @default(true)
-}
-
-model PlatformConfig {
-  id                   String   @id @default("global_config")
-  baseVerificationFee  Int      @default(999)      // Base price e.g. 999
-  isOfferActive        Boolean  @default(true)     // Toggle offer ON/OFF
-  offerDiscountPercent Int      @default(100)      // 100 = 100% OFF (₹0), 50 = ₹499, 0 = Full Price
-  offerTitle           String   @default("Academic Session Special Drive")
-  offerSubtext         String   @default("100% Verification Fee Waiver for Gurgaon Educators")
-  updatedAt            DateTime @updatedAt
-}
-
-model TutorKYC {
-  id               String   @id @default(uuid())
-  tutorId          String   @unique
-  idType           String   // "AADHAAR_MASKED" | "DRIVING_LICENSE" | "PAN" | "VOTER_ID"
-  idLast4          String   // Only store last 4 digits (e.g. "4589") - NEVER plain 12 digits
-  idDocUrl         String   // Secure private encrypted Cloudinary URL
-  verificationDate DateTime?
-  verifiedByAdmin  String?  // Admin/Caller User ID who verified
-}
+    PlatformConfig {
+        string id PK
+        int baseVerificationFee
+        boolean isOfferActive
+        int offerDiscountPercent
+        string offerTitle
+    }
 ```
 
 ---
 
-## 🛡️ 8. Anti-Disintermediation, Privacy & DPDP Act 2023 Compliance
+## 🌐 10. REST API Reference
 
-1. **Masked Aadhaar Only:** Only store the **last 4 digits** (e.g., `XXXX-XXXX-4589`). Full 12-digit plain numbers are never stored in the database.
-2. **Encrypted Private Document Vault:** Uploaded KYC proofs are stored in Cloudinary Authenticated Mode (`type: "authenticated"`), accessible only to logged-in Admins/Callers via temporary signed links.
-3. **Public Privacy Shield:** Tutor and Parent phone numbers/addresses are **never exposed** on public URLs or client-side code.
-4. **Pre-Demo Mediator Agreement:** Digital terms stating bypass leads to profile blacklisting and forfeiture of security deposit.
-5. **Demo Escrow & 30-Min Post-Demo Protocol:** Telecaller calls the parent immediately after the demo class to collect feedback and confirm billing.
+### 10.1 Lead Management Endpoints
+* **`POST /api/leads`**
+  - **Description:** Creates a new parent tuition inquiry from the homepage or booking modal.
+  - **Payload:** `{ parentName, parentPhone, parentEmail?, preferredMode, locality, gradeClass, subjectsNeeded, board?, budgetMonthly?, notes? }`
+  - **Response:** `{ success: true, lead: { id, status, ... } }`
+
+* **`GET /api/leads`**
+  - **Description:** Retrieves lead queue for counselors with status filters.
+  - **Query Params:** `?status=NEW_LEAD&locality=dlf-phase-5`
+
+* **`PATCH /api/leads/[leadId]`**
+  - **Description:** Updates lead status, assigns counselor/tutor, or schedules demo.
+  - **Payload:** `{ status, assignedTutorId, demoDate, commissionAmount, isTwoSplit, notes }`
+
+* **`GET /api/leads/list`**
+  - **Description:** Fast summary lead list for admin KPIs.
+
+### 10.2 Tutor Lifecycle Endpoints
+* **`POST /api/tutors/register`**
+  - **Description:** Handles multi-step tutor registration, video URL, KYC encryption, and profile creation.
+  - **Payload:** `{ name, email, phone, bio, highestDegree, experienceYears, teachingMode, subjects, classes, boards, serviceAreas, travelRadiusKm, hourlyRateHome, hourlyRateOnline, introVideoUrl, idType, idLast4, idNumber, idDocUrl }`
+
+* **`GET /api/tutors/profile`**
+  - **Description:** Retrieves the authenticated tutor's full profile, ID card data, active leads, and review feed.
+
+* **`POST /api/tutors/reviews`**
+  - **Description:** Submits a parent review for a verified tutor and recalculates the tutor's average rating.
+  - **Payload:** `{ tutorId, parentName, rating, comment }`
+
+* **`GET /api/tutors/reviews?tutorId=[tutorId]`**
+  - **Description:** Fetches public approved reviews for a specific tutor.
+
+### 10.3 Administration & Counselor Endpoints
+* **`GET /api/admin/counselors`**
+  - **Description:** Lists all telecallers with assigned lead counts and conversion metrics.
+
+* **`POST /api/admin/counselors`**
+  - **Description:** Creates a new telecaller/counselor user account.
+
+* **`POST /api/auth/parent`**
+  - **Description:** Passwordless / OTP authentication for parent dashboard access.
 
 ---
 
-## 💡 9. The 16 Growth & Automation Engines
+## 📁 11. Project Directory & File Structure
 
-1. **5-Minute Lead Speed (100% Free Telegram Staff Bot):** Real-time 0.5s lead ping to counselor phone group with 1-tap `[📞 Call]` & `[💬 WhatsApp]` buttons.
-2. **Floating Sticky "Call / WhatsApp Counselor" Mobile Widget:** Captures 40% of busy Gurgaon parents instantly.
-3. **Parent 100% Satisfaction Guarantee:** 1 Free Demo + Guaranteed Free Replacement if not satisfied.
-4. **Automated Post-Demo 1-Click WhatsApp Feedback:** Parent clicks `Confirm Tuition` / `Need 1 More Demo` / `Cancel` via WhatsApp.
-5. **Tutor Reliability Score (Gamification):** Top punctual tutors get first priority for DLF & Golf Course Road leads.
-6. **Interactive Fee Estimator Widget:** 3-click slider on homepage estimating monthly tuition.
-7. **Digital WhatsApp Demo Confirmation Slip:** Sleek branded digital pass sent to parents to eliminate demo cancellations.
-8. **1-Click Tutor Commission Invoice & QR Code Generator:** Bureau UPI QR code with 48-hour payment countdown.
-9. **Tutor Availability Time-Slot Picker:** Eliminates scheduling conflicts.
-10. **Parent 1-Click Tutor Replacement Engine:** Retains 90% of unhappy students.
-11. **Seasonal Board Exam & NEET Crash Course Bundles:** High-margin 45-day revision packages (₹15,000–₹25,000).
-12. **Downloadable Verified Tutor Digital ID Card (QR Verified):** Tutors show this on their phone at the student's door for safety.
-13. **Automated Google 5-Star Review Generator:** WhatsApp review prompt sent to parents after 30 days of active tuition to dominate Google 3-Pack Maps.
-14. **IB / IGCSE / Cambridge International Elite Filter:** High-fee international school filter (₹15,000–₹30,000/mo).
-15. **Optional "Police / Background Checked" Gold Badge:** For luxury gated societies (Aralias, Magnolias, Camellias).
-16. **2-Split Commission Option for High-Ticket Tuitions:** 50% Day 2 + 50% Day 15 for large commissions.
+```
+tuitionforhome/
+├── prisma/
+│   ├── schema.prisma             # Complete MySQL relational database schema
+│   └── seed.js                   # Database seeder (Localities, Tutors, Config)
+├── public/                       # Static public assets, icons, logos
+├── scripts/
+│   └── verify-test.js            # Automated DB & API verification script
+├── src/
+│   ├── app/
+│   │   ├── admin/                # Super Admin Command Center & Login
+│   │   │   ├── login/page.tsx
+│   │   │   └── page.tsx
+│   │   ├── api/                  # Next.js App Router API Routes
+│   │   │   ├── admin/
+│   │   │   ├── auth/
+│   │   │   ├── counselor/
+│   │   │   ├── leads/
+│   │   │   ├── parent/
+│   │   │   └── tutors/
+│   │   ├── book-demo/page.tsx    # Standalone demo booking landing page
+│   │   ├── counselor/page.tsx    # Counselor / Telecaller Operations CRM Desk
+│   │   ├── home-tutors-in-gurgaon/
+│   │   │   └── [locality]/page.tsx # Programmatic 20+ Gurgaon Locality SEO Matrix
+│   │   ├── parent/               # Parent Login & Management Dashboard
+│   │   │   ├── dashboard/page.tsx
+│   │   │   └── login/page.tsx
+│   │   ├── tuition/
+│   │   │   └── [subject]/page.tsx  # High-ticket subject SEO pillar pages
+│   │   ├── tutor/                # Tutor registration, profile & review pages
+│   │   │   ├── profile/page.tsx
+│   │   │   ├── register/page.tsx
+│   │   │   └── review/[tutorId]/page.tsx
+│   │   ├── globals.css           # Apple-inspired luxury CSS design system
+│   │   ├── layout.tsx            # Global Root Layout with Outfit Google Font
+│   │   ├── page.tsx              # High-converting Homepage
+│   │   ├── robots.ts             # Dynamic search engine robots generator
+│   │   └── sitemap.ts            # Programmatic XML sitemap generator
+│   ├── components/               # Modular UI Component Library
+│   │   ├── BookingModal.tsx      # Multi-step demo booking popup
+│   │   ├── FeeEstimator.tsx      # 4-step dynamic pricing & fee slider widget
+│   │   ├── Footer.tsx            # Global footer with SSSAM Academy trust seal
+│   │   ├── HowItWorks.tsx        # Step-by-step guidance & guarantee pillars
+│   │   ├── Navbar.tsx            # Global responsive header with mode switcher
+│   │   ├── RapidoStyleMap.tsx    # Interactive Leaflet radar map with pulse animations
+│   │   ├── StickyMobileBar.tsx   # Mobile floating 1-tap call & WhatsApp bar
+│   │   ├── TutorMatchModal.tsx   # Real-time radar matchmaking simulation modal
+│   │   └── VideoModal.tsx        # Lightbox 60s video intro player
+│   └── lib/                      # Core utilities & static datasets
+│       ├── crypto.ts             # AES-256-CBC encryption & decryption utility
+│       ├── data.ts               # Gurgaon localities, mock tutors & office data
+│       ├── prisma.ts             # Singleton Prisma client instance
+│       └── seo-data.ts           # Subject SEO metadata & localized FAQ dictionary
+├── .env.local                    # Environment keys & configuration
+├── next.config.mjs               # Next.js build & image domain configuration
+├── package.json                  # Project dependencies & scripts
+├── task.md                       # Master implementation roadmap & task list
+└── tsconfig.json                 # TypeScript compiler configuration
+```
 
 ---
 
-## 🔑 10. Environment Configuration Checklist (`.env.local`)
+## 💻 12. Local Setup & Installation Guide
 
+### Prerequisites
+* **Node.js:** v18.17.0 or newer (v20+ recommended)
+* **MySQL:** v8.0 or newer (Local instance or cloud connection via PlanetScale / AWS RDS)
+* **Package Manager:** npm (v9+)
+
+### Step 1: Clone & Install Dependencies
+```bash
+git clone https://github.com/Sudhirkr85/tuition4home.git
+cd tuitionforhome
+npm install
+```
+
+### Step 2: Configure Environment Variables
+Create `.env.local` in the root directory and populate required keys:
 ```env
-# Database (MySQL)
+# Database Connection (MySQL)
 DATABASE_URL="mysql://root:password@localhost:3306/tuitionforhome"
 
 # NextAuth Authentication
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your_nextauth_secret_key"
+NEXTAUTH_SECRET="tuitionforhome_super_secret_jwt_key_2026"
 GOOGLE_CLIENT_ID="your_google_oauth_client_id"
 GOOGLE_CLIENT_SECRET="your_google_oauth_client_secret"
 
-# Brevo Email Service (OTP & Alerts)
+# Brevo Transactional Email Service (OTP & Alerts)
 BREVO_API_KEY="your_brevo_api_key"
 BREVO_SENDER_EMAIL="support@tuitionforhome.com"
 
-# Cloudinary (Media, Videos & Private KYC Documents)
+# Cloudinary (Avatars, Videos & Authenticated KYC Documents)
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your_cloud_name"
 CLOUDINARY_API_KEY="your_cloudinary_api_key"
 CLOUDINARY_API_SECRET="your_cloudinary_api_secret"
 
-# Google Maps API (Places Autocomplete & Geocoding)
+# Google Maps API (Optional for production geocoding)
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="your_google_maps_api_key"
 
-# Telegram Bot (Internal Staff Lead Alerts)
+# Telegram Bot (Instant Counselor Staff Notifications)
 TELEGRAM_BOT_TOKEN="your_telegram_bot_token"
 TELEGRAM_CHAT_ID="your_telegram_group_chat_id"
 
@@ -415,13 +441,102 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="your_sender_id"
 NEXT_PUBLIC_FIREBASE_APP_ID="your_app_id"
 ```
 
+### Step 3: Initialize Database & Push Schema
+```bash
+# Generate Prisma Client
+npm run prisma:generate
+
+# Push schema directly to MySQL
+npm run prisma:push
+
+# (Optional) Seed initial data (Localities, default settings)
+node prisma/seed.js
+```
+
+### Step 4: Run Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+
 ---
 
-## 📞 11. Official Center & Operation Verification
+## 🧪 13. Testing & System Verification
+
+Run the automated verification script to validate MySQL connectivity, Platform Config, Locality SEO entries, and Lead generation pipeline:
+
+```bash
+node scripts/verify-test.js
+```
+
+**Expected Output:**
+```
+🧪 Starting Full System & Database Tests for TuitionForHome...
+
+✅ [TEST 1] MySQL DB Connection: PASS
+   - Active Campaign: "Academic Session Special Drive"
+   - Base Price: ₹999 (Discount: 100% OFF)
+   - Operating Institute: M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001
+
+✅ [TEST 2] Locality SEO Matrix: PASS (14 Gurgaon Sectors Seeded)
+
+✅ [TEST 3] Lead Insertion & DB Relation: PASS (Lead ID: 8a7b9c...)
+   - Test lead cleanup completed.
+
+🎉 ALL DATABASE AND ROUTE TESTS PASSED WITH ZERO ERRORS!
+```
+
+---
+
+## 🚀 14. Production Deployment Guide
+
+### Option A: Vercel (Recommended for Next.js App Router)
+1. Push your repository to GitHub / GitLab.
+2. Import project into Vercel Dashboard.
+3. Configure all environment variables in Vercel Project Settings.
+4. Set the build command to: `prisma generate && next build`.
+5. Deploy.
+
+### Option B: VPS / Dedicated Server (Ubuntu + PM2 + Nginx)
+```bash
+# Build the production bundle
+npm run build
+
+# Start with PM2 process manager
+pm2 start npm --name "tuitionforhome" -- start
+
+# Configure Nginx Reverse Proxy
+sudo nano /etc/nginx/sites-available/tuitionforhome
+# Point proxy_pass to http://127.0.0.1:3000
+```
+
+---
+
+## 🏢 15. Official Center & Operation Verification
 
 * **Platform Name:** **TuitionForHome**
 * **Operating Institute:** **SSSAM Academy**
 * **Address:** M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001
-* **Coordinates:** `28.4703° N, 77.0418° E`
-* **Direct Helpline:** `+91 95174 47689` / `+91 92170 31899`
-* **Support Email:** `info@sssamacademy.com` / `support@tuitionforhome.com`
+* **Geographical Coordinates:** `28.4703° N, 77.0418° E`
+* **Direct Counselor Helplines:** `+91 92170 31899` / `+91 95174 47689`
+* **Official Emails:**
+  - Support & Queries: `support@tuitionforhome.com`
+  - General Info: `info@tuitionforhome.com` / `contact@tuitionforhome.com`
+  - Educator Relations: `tutors@tuitionforhome.com` / `info@sssamacademy.com`
+* **Operating Hours:** Monday – Sunday, 9:00 AM – 9:00 PM IST
+
+---
+
+## 📌 16. Continuous Feature Tracker & Roadmap
+
+All discussions, new features, and technical enhancements are actively logged and tracked in [`task.md`](file:///d:/Work/tuitionforhome/task.md) and documented here in [`README.md`](file:///d:/Work/tuitionforhome/README.md).
+
+Whenever a new module, workflow, or modification is discussed:
+1. It is logged with an actionable item in [`task.md`](file:///d:/Work/tuitionforhome/task.md) (Phase 9).
+2. Technical specifications, API routes, and schema modifications are updated in this document.
+3. Verification and testing checkpoints are executed to ensure build stability.
+
+---
+
+*TuitionForHome © 2026. Operated by SSSAM Academy. All Rights Reserved.*
+

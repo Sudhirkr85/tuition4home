@@ -91,3 +91,11 @@
 - [x] **Task 8.2:** Test end-to-end Parent Lead Submission flow with instant confirmation.
 - [x] **Task 8.3:** Test end-to-end Tutor Registration & Counselor Approval flow.
 - [x] **Task 8.4:** Verify responsive mobile UI, micro-animations, and fast page load speeds.
+
+---
+
+## 📌 Phase 9: Continuous Feature Roadmap & Discussion Tracker
+> *Any new feature, improvement, or requirement discussed will be logged here and documented in `README.md` immediately.*
+
+- [ ] *(Upcoming features and enhancements discussed with the user will be logged here with status checkpoints).*
+
