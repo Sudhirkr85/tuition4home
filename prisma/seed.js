@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
@@ -20,7 +21,7 @@ const GURGAON_LOCALITIES = [
 ];
 
 async function main() {
-  console.log('Seeding initial platform configuration and Gurgaon localities...');
+  console.log('🚀 Initializing & Seeding Complete Database...');
 
   // 1. Seed Global Platform Config
   await prisma.platformConfig.upsert({
@@ -58,7 +59,43 @@ async function main() {
     });
   }
 
-  console.log('✅ Database seeded successfully with Platform Config and Locality SEO records!');
+  // 3. Seed Default Admin User
+  const defaultPasswordHash = await bcrypt.hash('admin123', 10);
+  await prisma.user.upsert({
+    where: { email: 'admin@sssamacademy.com' },
+    update: {},
+    create: {
+      name: 'Super Admin',
+      email: 'admin@sssamacademy.com',
+      passwordHash: defaultPasswordHash,
+      phone: '+91 95174 47689',
+      role: 'SUPER_ADMIN',
+    },
+  });
+
+  // 4. Seed Counselor Accounts
+  const counselors = [
+    { name: 'Pooja Sharma', email: 'pooja.sharma@sssamacademy.com', phone: '+91 98112 34567', role: 'TELECALLER' },
+    { name: 'Amit Kumar', email: 'amit.kumar@sssamacademy.com', phone: '+91 98765 43210', role: 'TELECALLER' },
+    { name: 'Sneha Verma', email: 'sneha.verma@sssamacademy.com', phone: '+91 99887 76655', role: 'TELECALLER' },
+    { name: 'Rahul Dev', email: 'rahul.dev@sssamacademy.com', phone: '+91 97110 09988', role: 'TELECALLER' },
+  ];
+
+  for (const c of counselors) {
+    await prisma.user.upsert({
+      where: { email: c.email },
+      update: {},
+      create: {
+        name: c.name,
+        email: c.email,
+        passwordHash: defaultPasswordHash,
+        phone: c.phone,
+        role: 'TELECALLER',
+      },
+    });
+  }
+
+  console.log('✅ Database completely initialized and seeded with all tables and records!');
 }
 
 main()
