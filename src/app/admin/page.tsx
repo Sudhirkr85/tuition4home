@@ -52,6 +52,12 @@ import {
   Key,
   Copy,
   Check,
+  CreditCard,
+  Receipt,
+  Wallet,
+  Banknote,
+  ArrowDownLeft,
+  ArrowUpRight,
 } from 'lucide-react';
 import { SSSAM_OFFICE_DETAILS, VERIFIED_TUTORS, MockTutor } from '@/lib/data';
 import TutorMatchModal from '@/components/TutorMatchModal';
@@ -99,13 +105,53 @@ interface LeadItem {
   activities?: LeadActivityItem[];
 }
 
+interface FeeLedgerItem {
+  id: string;
+  leadId: string;
+  parentName: string;
+  parentPhone: string;
+  gradeClass: string;
+  subjects: string;
+  locality: string;
+  monthlyFee: number;
+  parentStatus: 'PENDING' | 'RECEIVED';
+  parentPaidAmount?: number;
+  parentPaidDate?: string;
+  parentPaymentMode?: string;
+  parentTxnRef?: string;
+  commissionRate: number;
+  commissionAmount: number;
+  tutorName: string;
+  tutorPhone: string;
+  tutorPayoutAmount: number;
+  tutorStatus: 'PENDING' | 'PAID';
+  tutorPaidDate?: string;
+  tutorPaymentMode?: string;
+  tutorTxnRef?: string;
+}
+
 export default function SuperAdminPage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [adminUser, setAdminUser] = useState<any>(null);
 
-  const [activeAdminTab, setActiveAdminTab] = useState<'OVERVIEW' | 'COUNSELORS' | 'LEADS' | 'TUTOR_ALLOCATION' | 'COORDINATION' | 'PRICING_CAMPAIGNS' | 'CONVERTED'>('OVERVIEW');
+  const [activeAdminTab, setActiveAdminTab] = useState<'OVERVIEW' | 'COUNSELORS' | 'LEADS' | 'TUTOR_ALLOCATION' | 'PARENTS' | 'COORDINATION' | 'FEES_PAYOUTS' | 'PRICING_CAMPAIGNS'>('OVERVIEW');
   const [selectedTutorForLeads, setSelectedTutorForLeads] = useState<MockTutor>(VERIFIED_TUTORS[0]);
+
+  // Parent & Student Master Directory State (1,000+ Capacity)
+  const [parentSearchText, setParentSearchText] = useState('');
+  const [parentGradeFilter, setParentGradeFilter] = useState<string>('ALL');
+  const [parentStatusFilter, setParentStatusFilter] = useState<'ALL' | 'ACTIVE_TUITION' | 'DEMO_DUE' | 'ENQUIRY_OPEN' | 'FEE_DUE'>('ALL');
+  const [parentCurrentPage, setParentCurrentPage] = useState(1);
+  const [parentsPerPage, setParentsPerPage] = useState(10);
+  const [activeParent360, setActiveParent360] = useState<LeadItem | null>(null);
+  const [activeParent360Tab, setActiveParent360Tab] = useState<'OVERVIEW' | 'TUTOR' | 'BILLING' | 'NOTES'>('OVERVIEW');
+  const [parentFollowUpNotes, setParentFollowUpNotes] = useState<{ [leadId: string]: { id: string; text: string; date: string; author: string }[] }>({
+    'LD-101': [
+      { id: 'pn-1', text: 'Parent requested Maths classes Mon, Wed, Fri 5:00 PM. Rohit Sharma assigned.', date: 'Today, 10:30 AM', author: 'Pooja (Counselor)' }
+    ]
+  });
+  const [newParentNoteText, setNewParentNoteText] = useState('');
 
   // Coordination Desk State (Tutor ⟷ Parent Communication Hub)
   const [coordSearch, setCoordSearch] = useState('');
@@ -117,6 +163,105 @@ export default function SuperAdminPage() {
     'LD-102': '1ST_SESSION_DONE',
     'LD-104': 'FEE_PAID',
   });
+
+  // Fees & Payouts Ledger State
+  const [feeRecords, setFeeRecords] = useState<FeeLedgerItem[]>([
+    {
+      id: 'FEE-101',
+      leadId: 'LD-101',
+      parentName: 'Mrs. Ritu Verma',
+      parentPhone: '+91 98100 12345',
+      gradeClass: 'Class 10 CBSE',
+      subjects: 'Mathematics',
+      locality: 'DLF Phase 5, Gurgaon',
+      monthlyFee: 8000,
+      parentStatus: 'RECEIVED',
+      parentPaidAmount: 8000,
+      parentPaidDate: '12 Aug 2026',
+      parentPaymentMode: 'UPI (Google Pay)',
+      parentTxnRef: 'UPI-99201948201',
+      commissionRate: 25,
+      commissionAmount: 2000,
+      tutorName: 'Rohit Sharma',
+      tutorPhone: '+91 98111 22334',
+      tutorPayoutAmount: 6000,
+      tutorStatus: 'PENDING',
+    },
+    {
+      id: 'FEE-102',
+      leadId: 'LD-102',
+      parentName: 'Mr. Arvind Kapoor',
+      parentPhone: '+91 98111 23456',
+      gradeClass: 'Class 12 CBSE',
+      subjects: 'Physics, Chemistry',
+      locality: 'Golf Course Road, Gurgaon',
+      monthlyFee: 10000,
+      parentStatus: 'PENDING',
+      commissionRate: 25,
+      commissionAmount: 2500,
+      tutorName: 'Ananya Deshmukh',
+      tutorPhone: '+91 98222 33445',
+      tutorPayoutAmount: 7500,
+      tutorStatus: 'PENDING',
+    },
+    {
+      id: 'FEE-104',
+      leadId: 'LD-104',
+      parentName: 'Col. Rajesh Bakshi',
+      parentPhone: '+91 98333 45678',
+      gradeClass: 'Class 9 ICSE',
+      subjects: 'Science, Mathematics',
+      locality: 'Sohna Road (Sector 48), Gurgaon',
+      monthlyFee: 9000,
+      parentStatus: 'RECEIVED',
+      parentPaidAmount: 9000,
+      parentPaidDate: '10 Aug 2026',
+      parentPaymentMode: 'Bank IMPS',
+      parentTxnRef: 'IMPS-88492019',
+      commissionRate: 25,
+      commissionAmount: 2250,
+      tutorName: 'Dr. Priya Sharma',
+      tutorPhone: '+91 98333 44556',
+      tutorPayoutAmount: 6750,
+      tutorStatus: 'PAID',
+      tutorPaidDate: '14 Aug 2026',
+      tutorPaymentMode: 'UPI (PhonePe)',
+      tutorTxnRef: 'UPI-4491028301',
+    },
+    {
+      id: 'FEE-105',
+      leadId: 'LD-105',
+      parentName: 'Meenakshi Iyer',
+      parentPhone: '+91 98444 56789',
+      gradeClass: 'Class 11 CBSE',
+      subjects: 'Commerce, Economics',
+      locality: 'Sector 54, Gurgaon',
+      monthlyFee: 7500,
+      parentStatus: 'PENDING',
+      commissionRate: 25,
+      commissionAmount: 1875,
+      tutorName: 'Deepak Singhal',
+      tutorPhone: '+91 98444 55667',
+      tutorPayoutAmount: 5625,
+      tutorStatus: 'PENDING',
+    },
+  ]);
+
+  const [feeSearch, setFeeSearch] = useState('');
+  const [feeStatusFilter, setFeeStatusFilter] = useState<'ALL' | 'PARENT_PENDING' | 'PARENT_PAID' | 'TUTOR_DUE' | 'SETTLED'>('ALL');
+  const [feeCurrentPage, setFeeCurrentPage] = useState(1);
+  const [feePerPage, setFeePerPage] = useState(6);
+
+  // Record Payment Dialog Modals
+  const [parentPaymentModalItem, setParentPaymentModalItem] = useState<FeeLedgerItem | null>(null);
+  const [parentPayAmountInput, setParentPayAmountInput] = useState(0);
+  const [parentPayModeInput, setParentPayModeInput] = useState('UPI (Google Pay / PhonePe)');
+  const [parentPayTxnInput, setParentPayTxnInput] = useState('');
+
+  const [tutorPayoutModalItem, setTutorPayoutModalItem] = useState<FeeLedgerItem | null>(null);
+  const [tutorPayoutAmountInput, setTutorPayoutAmountInput] = useState(0);
+  const [tutorPayoutModeInput, setTutorPayoutModeInput] = useState('UPI Transfer');
+  const [tutorPayoutTxnInput, setTutorPayoutTxnInput] = useState('');
 
   // Pricing & campaign config state
   const [basePrice, setBasePrice] = useState(999);
@@ -1045,7 +1190,49 @@ export default function SuperAdminPage() {
                       {VERIFIED_TUTORS.length} Tutors
                     </span>
                   </button>
-                               {/* Nav 4.5: Tutor-Parent Coordination Desk */}
+                  {/* Nav 4.2: Parent & Student Directory */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveAdminTab('PARENTS')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      outline: 'none',
+                      boxShadow: activeAdminTab === 'PARENTS' ? '0 4px 12px rgba(14, 165, 233, 0.25)' : 'none',
+                      backgroundColor: activeAdminTab === 'PARENTS' ? '#0EA5E9' : 'transparent',
+                      color: activeAdminTab === 'PARENTS' ? '#FFFFFF' : '#334155',
+                      fontWeight: 700,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <GraduationCap size={16} color={activeAdminTab === 'PARENTS' ? '#FFFFFF' : '#0EA5E9'} />
+                      <span>Parent Directory</span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        padding: '1px 6px',
+                        borderRadius: '6px',
+                        backgroundColor: activeAdminTab === 'PARENTS' ? 'rgba(255,255,255,0.25)' : '#E0F2FE',
+                        color: activeAdminTab === 'PARENTS' ? '#FFFFFF' : '#0369A1',
+                      }}
+                    >
+                      {leads.length}
+                    </span>
+                  </button>
+
+                  {/* Nav 4.5: Tutor-Parent Coordination Desk */}
                   <button
                     type="button"
                     onClick={() => setActiveAdminTab('COORDINATION')}
@@ -1087,10 +1274,10 @@ export default function SuperAdminPage() {
                     </span>
                   </button>
 
-                  {/* Nav 5: Converted Leads */}
+                  {/* Nav 4.8: Fees & Payouts Ledger */}
                   <button
                     type="button"
-                    onClick={() => setActiveAdminTab('CONVERTED')}
+                    onClick={() => setActiveAdminTab('FEES_PAYOUTS')}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -1100,9 +1287,9 @@ export default function SuperAdminPage() {
                       borderRadius: '10px',
                       border: 'none',
                       outline: 'none',
-                      boxShadow: activeAdminTab === 'CONVERTED' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
-                      backgroundColor: activeAdminTab === 'CONVERTED' ? '#6366F1' : 'transparent',
-                      color: activeAdminTab === 'CONVERTED' ? '#FFFFFF' : '#334155',
+                      boxShadow: activeAdminTab === 'FEES_PAYOUTS' ? '0 4px 12px rgba(16, 185, 129, 0.25)' : 'none',
+                      backgroundColor: activeAdminTab === 'FEES_PAYOUTS' ? '#10B981' : 'transparent',
+                      color: activeAdminTab === 'FEES_PAYOUTS' ? '#FFFFFF' : '#334155',
                       fontWeight: 700,
                       fontSize: '0.84rem',
                       cursor: 'pointer',
@@ -1112,8 +1299,8 @@ export default function SuperAdminPage() {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                      <CheckCircle2 size={16} color={activeAdminTab === 'CONVERTED' ? '#FFFFFF' : '#15803D'} />
-                      <span>Converted</span>
+                      <CreditCard size={16} color={activeAdminTab === 'FEES_PAYOUTS' ? '#FFFFFF' : '#10B981'} />
+                      <span>Fees &amp; Payouts</span>
                     </div>
                     <span
                       style={{
@@ -1121,11 +1308,11 @@ export default function SuperAdminPage() {
                         fontWeight: 800,
                         padding: '1px 6px',
                         borderRadius: '6px',
-                        backgroundColor: activeAdminTab === 'CONVERTED' ? 'rgba(255,255,255,0.25)' : '#DCFCE7',
-                        color: activeAdminTab === 'CONVERTED' ? '#FFFFFF' : '#15803D',
+                        backgroundColor: activeAdminTab === 'FEES_PAYOUTS' ? 'rgba(255,255,255,0.25)' : '#FEF3C7',
+                        color: activeAdminTab === 'FEES_PAYOUTS' ? '#FFFFFF' : '#92400E',
                       }}
                     >
-                      {leads.filter(l => l.status === 'TUITION_CONFIRMED').length}
+                      {feeRecords.filter(f => f.parentStatus === 'PENDING' || f.tutorStatus === 'PENDING').length} Due
                     </span>
                   </button>
 
@@ -1230,18 +1417,20 @@ export default function SuperAdminPage() {
                     {activeAdminTab === 'COUNSELORS' && 'Counselor Team & Sales Desks'}
                     {activeAdminTab === 'LEADS' && 'Shared Parent Inquiry Lead Hub'}
                     {activeAdminTab === 'TUTOR_ALLOCATION' && 'Proximity Student Lead Allocator by Tutor'}
+                    {activeAdminTab === 'PARENTS' && 'Parent & Student Master Directory'}
                     {activeAdminTab === 'COORDINATION' && 'Tutor-Parent Connect & Coordination Desk'}
+                    {activeAdminTab === 'FEES_PAYOUTS' && 'Tuition Fees, Advance & Tutor Payouts Ledger'}
                     {activeAdminTab === 'PRICING_CAMPAIGNS' && 'Tutor Verification Pricing & Campaigns'}
-                    {activeAdminTab === 'CONVERTED' && 'Converted Leads'}
                   </h1>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', margin: 0 }}>
                     {activeAdminTab === 'OVERVIEW' && 'Key operational volume, counselor staffing, and active tutor verification campaigns.'}
                     {activeAdminTab === 'COUNSELORS' && 'Manage operational calling desks, sales performance, and staff credentials.'}
                     {activeAdminTab === 'LEADS' && 'Unified parent leads with 8 operational filters, mandatory notes, and history timeline.'}
                     {activeAdminTab === 'TUTOR_ALLOCATION' && 'Match and dispatch nearby student inquiries based on tutor travel radius.'}
+                    {activeAdminTab === 'PARENTS' && 'Search, filter, and inspect registered parents, child grades, and active assignments.'}
                     {activeAdminTab === 'COORDINATION' && 'Direct 2-way & 3-way communication between parents and assigned verified tutors.'}
+                    {activeAdminTab === 'FEES_PAYOUTS' && 'Track advance collections from parents, academy margin, and tutor payouts.'}
                     {activeAdminTab === 'PRICING_CAMPAIGNS' && 'Configure base verification fees, 100% waiver drives, and season banner text.'}
-                    {activeAdminTab === 'CONVERTED' && 'All successfully converted parent inquiries with full student details.'}
                   </p>
                 </div>
               </div>
@@ -3040,327 +3229,922 @@ export default function SuperAdminPage() {
             </div>
           )}
 
-          {/* TAB: CONVERTED LEADS */}
-          {activeAdminTab === 'CONVERTED' && (
-            <div>
-              {selectedConverted ? (
-                /* RESPONSIVE FULL IN-PAGE VIEW FOR CONVERTED LEAD */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  {/* Top Bar with Back Navigation */}
+          {/* TAB 4.2: PARENT & STUDENT MASTER DIRECTORY (1,000+ CAPACITY) */}
+          {activeAdminTab === 'PARENTS' && (() => {
+            // Filter parents / leads
+            const filteredParents = leads.filter((lead) => {
+              // Status Filter
+              if (parentStatusFilter === 'ACTIVE_TUITION' && lead.status !== 'TUITION_CONFIRMED') return false;
+              if (parentStatusFilter === 'DEMO_DUE' && lead.status !== 'DEMO_SCHEDULED') return false;
+              if (parentStatusFilter === 'ENQUIRY_OPEN' && (lead.status === 'TUITION_CONFIRMED' || lead.status === 'DEMO_SCHEDULED')) return false;
+
+              // Grade Filter
+              if (parentGradeFilter !== 'ALL') {
+                const g = (lead.gradeClass || '').toLowerCase();
+                if (parentGradeFilter === 'CLASS_1_5' && !g.match(/class\s*[1-5]|grade\s*[1-5]|kg|primary/i)) return false;
+                if (parentGradeFilter === 'CLASS_6_8' && !g.match(/class\s*[6-8]|grade\s*[6-8]|middle/i)) return false;
+                if (parentGradeFilter === 'CLASS_9_10' && !g.match(/class\s*(9|10)|grade\s*(9|10)|10th|9th/i)) return false;
+                if (parentGradeFilter === 'CLASS_11_12' && !g.match(/class\s*(11|12)|grade\s*(11|12)|11th|12th/i)) return false;
+                if (parentGradeFilter === 'IIT_NEET' && !g.match(/jee|neet|competitive|medical|foundation/i)) return false;
+                if (parentGradeFilter === 'IB_CAMBRIDGE' && !g.match(/ib|cambridge|igcse/i)) return false;
+              }
+
+              // Search Text Filter
+              if (parentSearchText.trim()) {
+                const q = parentSearchText.toLowerCase();
+                const subjects = Array.isArray(lead.subjectsNeeded)
+                  ? lead.subjectsNeeded.join(' ')
+                  : (lead.subjectsNeeded || '').replace(/[\[\]"]/g, '');
+
+                const matches =
+                  lead.parentName.toLowerCase().includes(q) ||
+                  lead.parentPhone.includes(q) ||
+                  (lead.parentEmail || '').toLowerCase().includes(q) ||
+                  (lead.gradeClass || '').toLowerCase().includes(q) ||
+                  subjects.toLowerCase().includes(q) ||
+                  lead.locality.toLowerCase().includes(q) ||
+                  (lead.assignedTutor || '').toLowerCase().includes(q);
+
+                if (!matches) return false;
+              }
+
+              return true;
+            });
+
+            // Pagination calculation
+            const totalParentPages = Math.ceil(filteredParents.length / parentsPerPage) || 1;
+            const parentStartIndex = (parentCurrentPage - 1) * parentsPerPage;
+            const parentEndIndex = Math.min(parentStartIndex + parentsPerPage, filteredParents.length);
+            const paginatedParents = filteredParents.slice(parentStartIndex, parentEndIndex);
+
+            return (
+              <div>
+                {/* 4 Summary Stat Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>REGISTERED PARENTS</span>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#E0F2FE', color: '#0369A1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Users size={16} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#0F172A', marginTop: '0.35rem' }}>
+                      {leads.length}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                      Gurgaon &amp; NCR student inquiries
+                    </div>
+                  </div>
+
+                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #DCFCE7' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#166534', textTransform: 'uppercase' }}>ACTIVE TUITIONS</span>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#DCFCE7', color: '#15803D', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <CheckCircle2 size={16} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#15803D', marginTop: '0.35rem' }}>
+                      {leads.filter((l) => l.status === 'TUITION_CONFIRMED').length}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#166534', marginTop: '2px' }}>
+                      Ongoing confirmed classes
+                    </div>
+                  </div>
+
+                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #FEF3C7' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#92400E', textTransform: 'uppercase' }}>DEMO SCHEDULED</span>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FEF3C7', color: '#B45309', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <CalendarClock size={16} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#B45309', marginTop: '0.35rem' }}>
+                      {leads.filter((l) => l.status === 'DEMO_SCHEDULED').length}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#92400E', marginTop: '2px' }}>
+                      Educator matched &amp; demo pending
+                    </div>
+                  </div>
+
+                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>OPEN INQUIRIES</span>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#F1F5F9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <BookOpen size={16} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#0284C7', marginTop: '0.35rem' }}>
+                      {leads.filter((l) => l.status !== 'TUITION_CONFIRMED' && l.status !== 'DEMO_SCHEDULED').length}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                      Awaiting counselor matching
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter Toolbar */}
+                <div className="apple-card" style={{ padding: '1.25rem', marginBottom: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid var(--border-hairline)' }}>
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                    {/* Live Search */}
+                    <div style={{ position: 'relative', flex: '1', minWidth: '260px' }}>
+                      <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                      <input
+                        type="text"
+                        placeholder="Search by parent name, phone, student grade, subject, or sector..."
+                        value={parentSearchText}
+                        onChange={(e) => {
+                          setParentSearchText(e.target.value);
+                          setParentCurrentPage(1);
+                        }}
+                        className="form-control"
+                        style={{ paddingLeft: '2.4rem', borderRadius: '10px', backgroundColor: '#F8FAFC', fontSize: '0.86rem', border: '1px solid var(--border-hairline)' }}
+                      />
+                    </div>
+
+                    {/* Grade Level Dropdown Filter */}
+                    <div style={{ minWidth: '200px' }}>
+                      <select
+                        value={parentGradeFilter}
+                        onChange={(e) => {
+                          setParentGradeFilter(e.target.value);
+                          setParentCurrentPage(1);
+                        }}
+                        className="form-control"
+                        style={{ borderRadius: '10px', backgroundColor: '#F8FAFC', fontSize: '0.86rem', border: '1px solid var(--border-hairline)' }}
+                      >
+                        <option value="ALL">All Grade Levels</option>
+                        <option value="CLASS_1_5">Class 1 – 5 (Primary)</option>
+                        <option value="CLASS_6_8">Class 6 – 8 (Middle)</option>
+                        <option value="CLASS_9_10">Class 9 – 10 (Secondary)</option>
+                        <option value="CLASS_11_12">Class 11 – 12 (Sr Secondary)</option>
+                        <option value="IIT_NEET">IIT-JEE / NEET Foundation</option>
+                        <option value="IB_CAMBRIDGE">IB / Cambridge / IGCSE</option>
+                      </select>
+                    </div>
+
+                    {/* Per Page Dropdown */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: '#64748B' }}>
+                      <span>Show:</span>
+                      <select
+                        value={parentsPerPage}
+                        onChange={(e) => {
+                          setParentsPerPage(Number(e.target.value));
+                          setParentCurrentPage(1);
+                        }}
+                        className="form-control"
+                        style={{ width: '70px', padding: '0.3rem 0.5rem', borderRadius: '8px', fontSize: '0.78rem' }}
+                      >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Status Pills */}
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {[
+                      { id: 'ALL', label: 'All Parents', count: leads.length },
+                      { id: 'ACTIVE_TUITION', label: '🟢 Active Tuitions', count: leads.filter((l) => l.status === 'TUITION_CONFIRMED').length },
+                      { id: 'DEMO_DUE', label: '🟡 Demo Scheduled', count: leads.filter((l) => l.status === 'DEMO_SCHEDULED').length },
+                      { id: 'ENQUIRY_OPEN', label: '🔵 Open Inquiries', count: leads.filter((l) => l.status !== 'TUITION_CONFIRMED' && l.status !== 'DEMO_SCHEDULED').length },
+                    ].map((pill) => {
+                      const isActive = parentStatusFilter === pill.id;
+                      return (
+                        <button
+                          key={pill.id}
+                          type="button"
+                          onClick={() => {
+                            setParentStatusFilter(pill.id as any);
+                            setParentCurrentPage(1);
+                          }}
+                          style={{
+                            padding: '0.35rem 0.75rem',
+                            borderRadius: '8px',
+                            border: `1.5px solid ${isActive ? '#0F172A' : '#E2E8F0'}`,
+                            backgroundColor: isActive ? '#0F172A' : '#FFFFFF',
+                            color: isActive ? '#FFFFFF' : '#334155',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <span>{pill.label}</span>
+                          <span
+                            style={{
+                              padding: '1px 6px',
+                              borderRadius: '10px',
+                              fontSize: '0.7rem',
+                              fontWeight: 800,
+                              backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : '#F1F5F9',
+                              color: isActive ? '#FFFFFF' : '#64748B',
+                            }}
+                          >
+                            {pill.count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* HIGH CAPACITY TABLE VIEW (DESKTOP) */}
+                <div className="desktop-only-table apple-card" style={{ padding: 0, overflow: 'hidden', backgroundColor: '#FFFFFF', borderRadius: '18px', border: '1px solid var(--border-hairline)', marginBottom: '1.25rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                        <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Parent &amp; Student</th>
+                        <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Grade &amp; Subjects</th>
+                        <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Locality &amp; Mode</th>
+                        <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Assigned Educator</th>
+                        <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Status</th>
+                        <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedParents.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: '#64748B' }}>
+                            No parent records found matching current search and filter.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedParents.map((lead) => {
+                          const subjects = Array.isArray(lead.subjectsNeeded)
+                            ? lead.subjectsNeeded.join(', ')
+                            : (lead.subjectsNeeded || '').replace(/[\[\]"]/g, '');
+
+                          const isConfirmed = lead.status === 'TUITION_CONFIRMED';
+                          const isDemo = lead.status === 'DEMO_SCHEDULED';
+
+                          return (
+                            <tr
+                              key={lead.id}
+                              style={{
+                                borderBottom: '1px solid #F1F5F9',
+                                transition: 'background-color 0.12s ease',
+                                cursor: 'pointer',
+                              }}
+                              onClick={() => {
+                                setActiveParent360(lead);
+                                setActiveParent360Tab('OVERVIEW');
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F8FAFC'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF'; }}
+                            >
+                              {/* 1. Parent & Contact */}
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.9rem' }}>{lead.parentName}</div>
+                                <div style={{ fontSize: '0.76rem', color: '#64748B', marginTop: '1px' }}>
+                                  📞 {lead.parentPhone}
+                                </div>
+                              </td>
+
+                              {/* 2. Grade & Subjects */}
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <div style={{ fontWeight: 700, color: '#334155' }}>{lead.gradeClass}</div>
+                                <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '1px' }}>
+                                  📚 {subjects}
+                                </div>
+                              </td>
+
+                              {/* 3. Locality & Mode */}
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <div style={{ color: '#0F172A', fontWeight: 600 }}>📍 {lead.locality}</div>
+                                <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '1px' }}>
+                                  {lead.preferredMode === 'OFFLINE_HOME' ? '🏠 Home Visit' : '💻 Online Live'}
+                                </div>
+                              </td>
+
+                              {/* 4. Assigned Educator */}
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                {lead.assignedTutor ? (
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', backgroundColor: '#E0F2FE', color: '#0369A1', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, fontSize: '0.76rem' }}>
+                                    <span>👨‍🏫 {lead.assignedTutor}</span>
+                                  </div>
+                                ) : (
+                                  <span style={{ fontSize: '0.74rem', color: '#94A3B8', fontWeight: 600 }}>⏳ Unassigned</span>
+                                )}
+                              </td>
+
+                              {/* 5. Status */}
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                {isConfirmed ? (
+                                  <span style={{ fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', backgroundColor: '#DCFCE7', color: '#166534' }}>
+                                    🟢 Active Tuition
+                                  </span>
+                                ) : isDemo ? (
+                                  <span style={{ fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', backgroundColor: '#FEF3C7', color: '#92400E' }}>
+                                    🟡 Demo Scheduled
+                                  </span>
+                                ) : (
+                                  <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', backgroundColor: '#F1F5F9', color: '#475569' }}>
+                                    🔵 {lead.status.replace(/_/g, ' ')}
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* 6. Actions */}
+                              <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveParent360(lead);
+                                    setActiveParent360Tab('OVERVIEW');
+                                  }}
+                                  style={{
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#0EA5E9',
+                                    color: '#FFFFFF',
+                                    border: 'none',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                    boxShadow: '0 2px 6px rgba(14, 165, 233, 0.25)',
+                                  }}
+                                >
+                                  <Eye size={12} />
+                                  <span>Parent 360°</span>
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* MOBILE RESPONSIVE STACKED CARDS */}
+                <div className="mobile-only-cards" style={{ display: 'none', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.25rem' }}>
+                  {paginatedParents.map((lead) => {
+                    const subjects = Array.isArray(lead.subjectsNeeded)
+                      ? lead.subjectsNeeded.join(', ')
+                      : (lead.subjectsNeeded || '').replace(/[\[\]"]/g, '');
+
+                    return (
+                      <div
+                        key={lead.id}
+                        className="apple-card"
+                        onClick={() => {
+                          setActiveParent360(lead);
+                          setActiveParent360Tab('OVERVIEW');
+                        }}
+                        style={{
+                          padding: '1.1rem',
+                          backgroundColor: '#FFFFFF',
+                          borderRadius: '14px',
+                          border: '1px solid #E2E8F0',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.65rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div>
+                            <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#0F172A' }}>{lead.parentName}</div>
+                            <div style={{ fontSize: '0.76rem', color: '#64748B' }}>
+                              {lead.gradeClass} • 📍 {lead.locality}
+                            </div>
+                          </div>
+                          <span
+                            style={{
+                              fontSize: '0.7rem',
+                              fontWeight: 800,
+                              padding: '2px 7px',
+                              borderRadius: '5px',
+                              backgroundColor: lead.status === 'TUITION_CONFIRMED' ? '#DCFCE7' : '#FEF3C7',
+                              color: lead.status === 'TUITION_CONFIRMED' ? '#166534' : '#92400E',
+                            }}
+                          >
+                            {lead.status === 'TUITION_CONFIRMED' ? 'Active' : 'In Progress'}
+                          </span>
+                        </div>
+
+                        <div style={{ fontSize: '0.78rem', color: '#334155' }}>
+                          📚 {subjects}
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '0.5rem', fontSize: '0.76rem' }}>
+                          <span style={{ color: '#0369A1', fontWeight: 700 }}>
+                            {lead.assignedTutor ? `👨‍🏫 ${lead.assignedTutor}` : '⏳ No Tutor Assigned'}
+                          </span>
+                          <span style={{ color: '#0EA5E9', fontWeight: 800 }}>View 360° →</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Pagination Toolbar */}
+                {filteredParents.length > 0 && (
                   <div
                     style={{
+                      padding: '0.75rem 1.25rem',
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: '14px',
+                      border: '1px solid var(--border-hairline)',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       flexWrap: 'wrap',
-                      gap: '0.75rem',
-                      backgroundColor: '#FFFFFF',
-                      padding: '0.85rem 1.25rem',
-                      borderRadius: '16px',
-                      border: '1px solid var(--border-hairline)',
-                      boxShadow: 'var(--shadow-sm)',
+                      gap: '0.5rem',
+                      fontSize: '0.78rem',
+                      color: '#475569',
                     }}
                   >
-                    <button
-                      type="button"
-                      onClick={() => setSelectedConverted(null)}
-                      style={{
-                        border: 'none',
-                        background: 'transparent',
-                        fontSize: '0.95rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        color: '#15803D',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                      }}
-                    >
-                      <span>←</span>
-                      <span>Back to Converted List</span>
-                    </button>
+                    <div>
+                      Showing <strong>{parentStartIndex + 1}</strong> to <strong>{parentEndIndex}</strong> of <strong>{filteredParents.length}</strong> parents
+                    </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', fontWeight: 800, padding: '0.3rem 0.8rem', borderRadius: '999px', backgroundColor: '#DCFCE7', color: '#15803D' }}>
-                        <CheckCircle2 size={14} /> Done
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <button
+                        type="button"
+                        disabled={parentCurrentPage === 1}
+                        onClick={() => setParentCurrentPage((p) => Math.max(1, p - 1))}
+                        style={{
+                          padding: '0.25rem 0.55rem',
+                          borderRadius: '6px',
+                          border: '1px solid #CBD5E1',
+                          backgroundColor: parentCurrentPage === 1 ? '#F1F5F9' : '#FFFFFF',
+                          color: parentCurrentPage === 1 ? '#94A3B8' : '#334155',
+                          cursor: parentCurrentPage === 1 ? 'not-allowed' : 'pointer',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                        }}
+                      >
+                        ← Prev
+                      </button>
+
+                      {Array.from({ length: totalParentPages }, (_, i) => i + 1).map((pageNum) => (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          onClick={() => setParentCurrentPage(pageNum)}
+                          style={{
+                            minWidth: '26px',
+                            height: '26px',
+                            borderRadius: '6px',
+                            border: parentCurrentPage === pageNum ? 'none' : '1px solid #CBD5E1',
+                            backgroundColor: parentCurrentPage === pageNum ? '#0F172A' : '#FFFFFF',
+                            color: parentCurrentPage === pageNum ? '#FFFFFF' : '#334155',
+                            fontWeight: 800,
+                            fontSize: '0.76rem',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+
+                      <button
+                        type="button"
+                        disabled={parentCurrentPage >= totalParentPages}
+                        onClick={() => setParentCurrentPage((p) => Math.min(totalParentPages, p + 1))}
+                        style={{
+                          padding: '0.25rem 0.55rem',
+                          borderRadius: '6px',
+                          border: '1px solid #CBD5E1',
+                          backgroundColor: parentCurrentPage >= totalParentPages ? '#F1F5F9' : '#FFFFFF',
+                          color: parentCurrentPage >= totalParentPages ? '#94A3B8' : '#334155',
+                          cursor: parentCurrentPage >= totalParentPages ? 'not-allowed' : 'pointer',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                        }}
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* PARENT 360° SLIDE-OVER RIGHT DRAWER */}
+          {activeParent360 && (
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: 'rgba(15, 23, 42, 0.45)',
+                backdropFilter: 'blur(3px)',
+                zIndex: 1150,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                animation: 'fadeIn 0.2s ease',
+              }}
+              onClick={() => setActiveParent360(null)}
+            >
+              <div
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  width: '100%',
+                  maxWidth: '540px',
+                  height: '100vh',
+                  backgroundColor: '#FFFFFF',
+                  boxShadow: '-8px 0 35px rgba(0,0,0,0.18)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  animation: 'slideInRight 0.25s ease',
+                  overflowY: 'auto',
+                }}
+              >
+                {/* Sticky Drawer Header */}
+                <div
+                  style={{
+                    position: 'sticky',
+                    top: 0,
+                    backgroundColor: '#FFFFFF',
+                    zIndex: 10,
+                    padding: '1.25rem 1.5rem',
+                    borderBottom: '1px solid var(--border-hairline)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', backgroundColor: '#E0F2FE', color: '#0369A1' }}>
+                        PARENT 360° PROFILE
                       </span>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', backgroundColor: activeParent360.status === 'TUITION_CONFIRMED' ? '#DCFCE7' : '#FEF3C7', color: activeParent360.status === 'TUITION_CONFIRMED' ? '#166534' : '#92400E' }}>
+                        {activeParent360.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                      {activeParent360.parentName}
+                    </h2>
+                    <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '2px' }}>
+                      📍 {activeParent360.locality} • 📚 {activeParent360.gradeClass}
                     </div>
                   </div>
 
-                  {/* Main Student Details & Tutor Management Card (Full Width) */}
-                  <div className="apple-card" style={{ padding: '1.5rem', backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    {/* Name & Quick Action Links */}
-                    <div style={{ borderBottom: '1px solid #F1F5F9', paddingBottom: '1rem' }}>
-                      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#15803D', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
-                        Converted Student / Admission Done
+                  <button
+                    type="button"
+                    onClick={() => setActiveParent360(null)}
+                    style={{
+                      border: 'none',
+                      background: '#F1F5F9',
+                      borderRadius: '8px',
+                      width: '32px',
+                      height: '32px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: '#64748B',
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {/* Direct Contact Action Bar */}
+                <div style={{ padding: '0.85rem 1.5rem', backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <a
+                    href={`tel:${activeParent360.parentPhone}`}
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      backgroundColor: '#FFFFFF',
+                      color: '#334155',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                    }}
+                  >
+                    <Phone size={13} color="#0284C7" />
+                    <span>Call Parent</span>
+                  </a>
+
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(
+                      `Namaste ${activeParent360.parentName},\n` +
+                      `This is SSSAM Academy (TuitionForHome) following up on your tuition requirement for *${activeParent360.gradeClass}* in *${activeParent360.locality}*.\n\n` +
+                      `How can we assist you today?`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      borderRadius: '8px',
+                      border: '1px solid #86EFAC',
+                      backgroundColor: '#F0FDF4',
+                      color: '#15803D',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                    }}
+                  >
+                    <MessageSquare size={13} color="#15803D" />
+                    <span>WhatsApp</span>
+                  </a>
+                </div>
+
+                {/* Drawer Tab Navigation */}
+                <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', padding: '0 1.5rem', backgroundColor: '#FFFFFF' }}>
+                  {[
+                    { id: 'OVERVIEW', label: '📋 Student & Need' },
+                    { id: 'TUTOR', label: '🎓 Assigned Tutor' },
+                    { id: 'BILLING', label: '💰 Fee Ledger' },
+                    { id: 'NOTES', label: '📞 Call CRM' },
+                  ].map((tab) => {
+                    const isActive = activeParent360Tab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveParent360Tab(tab.id as any)}
+                        style={{
+                          padding: '0.75rem 0.85rem',
+                          border: 'none',
+                          borderBottom: `2.5px solid ${isActive ? '#0EA5E9' : 'transparent'}`,
+                          backgroundColor: 'transparent',
+                          color: isActive ? '#0F172A' : '#64748B',
+                          fontWeight: isActive ? 800 : 600,
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Drawer Tab Body */}
+                <div style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {/* TAB 1: STUDENT & REQUIREMENTS */}
+                  {activeParent360Tab === 'OVERVIEW' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
+                        <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                          Academic Requirements
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', fontSize: '0.82rem' }}>
+                          <div>
+                            <div style={{ color: '#64748B' }}>Grade &amp; Board:</div>
+                            <div style={{ fontWeight: 800, color: '#0F172A' }}>{activeParent360.gradeClass}</div>
+                          </div>
+                          <div>
+                            <div style={{ color: '#64748B' }}>Preferred Mode:</div>
+                            <div style={{ fontWeight: 800, color: '#0F172A' }}>
+                              {activeParent360.preferredMode === 'OFFLINE_HOME' ? '🏠 Home Visit' : '💻 Online Live'}
+                            </div>
+                          </div>
+                          <div style={{ gridColumn: 'span 2' }}>
+                            <div style={{ color: '#64748B' }}>Subjects Needed:</div>
+                            <div style={{ fontWeight: 800, color: '#0369A1' }}>
+                              {Array.isArray(activeParent360.subjectsNeeded)
+                                ? activeParent360.subjectsNeeded.join(', ')
+                                : (activeParent360.subjectsNeeded || '').replace(/[\[\]"]/g, '')}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                        {selectedConverted.parentName}
-                      </h2>
-                      <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                        <a
-                          href={`tel:${selectedConverted.parentPhone}`}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', color: '#334155', textDecoration: 'none', fontWeight: 600, padding: '0.4rem 0.8rem', backgroundColor: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}
-                        >
-                          <Phone size={13} color="#64748B" /> {selectedConverted.parentPhone}
-                        </a>
-                        <a
-                          href={`https://wa.me/91${selectedConverted.parentPhone}`}
-                          target="_blank"
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', color: '#15803D', textDecoration: 'none', fontWeight: 700, padding: '0.4rem 0.8rem', backgroundColor: '#DCFCE7', borderRadius: '8px', border: '1px solid #86EFAC' }}
-                        >
-                          <Send size={13} color="#15803D" /> WhatsApp ↗
-                        </a>
+
+                      <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
+                        <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                          Residence &amp; Budget
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem' }}>
+                          <div>
+                            <span style={{ color: '#64748B' }}>Locality Address: </span>
+                            <strong>📍 {activeParent360.locality}</strong>
+                          </div>
+                          <div>
+                            <span style={{ color: '#64748B' }}>Estimated Monthly Budget: </span>
+                            <strong style={{ color: '#15803D' }}>
+                              ₹{activeParent360.budgetMonthly ? activeParent360.budgetMonthly.toLocaleString('en-IN') : '8,000 - 10,000'} / month
+                            </strong>
+                          </div>
+                        </div>
                       </div>
-                      {selectedConverted.parentEmail && (
-                        <div style={{ fontSize: '0.82rem', color: '#64748B', marginTop: '0.4rem' }}>
-                          ✉️ {selectedConverted.parentEmail}
+                    </div>
+                  )}
+
+                  {/* TAB 2: ASSIGNED EDUCATOR */}
+                  {activeParent360Tab === 'TUTOR' && (
+                    <div>
+                      {activeParent360.assignedTutor ? (
+                        <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '14px', border: '1px solid #E0F2FE' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                              <span style={{ fontSize: '0.7rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', backgroundColor: '#DCFCE7', color: '#166534' }}>
+                                ✓ VERIFIED ASSIGNED EDUCATOR
+                              </span>
+                              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: '0.4rem 0 0 0' }}>
+                                {activeParent360.assignedTutor}
+                              </h3>
+                              <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>
+                                Specialist for {activeParent360.gradeClass}
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedLeadForMatching(activeParent360);
+                                setActiveParent360(null);
+                              }}
+                              style={{
+                                padding: '0.35rem 0.65rem',
+                                borderRadius: '8px',
+                                border: '1px solid #CBD5E1',
+                                backgroundColor: '#FFFFFF',
+                                color: '#334155',
+                                fontSize: '0.76rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                              }}
+                            >
+                              <RotateCcw size={12} />
+                              <span>Change Tutor</span>
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ textAlign: 'center', padding: '2.5rem 1rem', backgroundColor: '#F8FAFC', borderRadius: '14px', border: '1px dashed #CBD5E1' }}>
+                          <GraduationCap size={36} color="#94A3B8" style={{ margin: '0 auto 0.75rem auto', display: 'block' }} />
+                          <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem' }}>No Tutor Assigned Yet</div>
+                          <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '4px', maxWidth: '320px', margin: '4px auto 1rem auto' }}>
+                            Match this parent with verified subject experts located within their travel radius.
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedLeadForMatching(activeParent360);
+                              setActiveParent360(null);
+                            }}
+                            style={{
+                              padding: '0.55rem 1.25rem',
+                              borderRadius: '10px',
+                              backgroundColor: '#0F172A',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              fontSize: '0.84rem',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            ⚡ Match &amp; Assign Tutor Now
+                          </button>
                         </div>
                       )}
                     </div>
+                  )}
 
-                    {/* Key Attributes Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
-                      {[
-                        { label: 'Class / Grade', value: selectedConverted.gradeClass },
-                        { label: 'Subjects', value: Array.isArray(selectedConverted.subjectsNeeded) ? selectedConverted.subjectsNeeded.join(', ') : selectedConverted.subjectsNeeded.replace(/[\[\]"]/g, '') },
-                        { label: 'Locality', value: `📍 ${selectedConverted.locality}` },
-                        { label: 'Monthly Budget', value: `₹${selectedConverted.budgetMonthly?.toLocaleString('en-IN') || 'Negotiable'}` },
-                        { label: 'Mode', value: selectedConverted.preferredMode === 'OFFLINE_HOME' ? '🏠 Home Tuition' : '💻 Online Live' },
-                        { label: 'Converted Date', value: new Date(selectedConverted.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) },
-                      ].map((item, i) => (
-                        <div key={i} style={{ padding: '0.75rem 0.9rem', borderRadius: '10px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{item.label}</div>
-                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E293B', marginTop: '2px' }}>{item.value}</div>
+                  {/* TAB 3: BILLING & ADVANCE FEE LEDGER */}
+                  {activeParent360Tab === 'BILLING' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
+                        <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                          Monthly Fee Status
                         </div>
-                      ))}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#15803D' }}>
+                              ₹{activeParent360.budgetMonthly ? activeParent360.budgetMonthly.toLocaleString('en-IN') : '8,000'}
+                              <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}> / month</span>
+                            </div>
+                            <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                              Advance payment cycle
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveAdminTab('FEES_PAYOUTS');
+                              setActiveParent360(null);
+                            }}
+                            style={{
+                              padding: '0.45rem 0.85rem',
+                              borderRadius: '8px',
+                              backgroundColor: '#10B981',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              fontSize: '0.76rem',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Go to Fees Desk →
+                          </button>
+                        </div>
+                      </div>
                     </div>
+                  )}
 
-                    {/* Replace / Match Tutor Section with Smart Proximity Matcher */}
-                    <div style={{ padding: '1.25rem', borderRadius: '12px', backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        <div>
-                          <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0369A1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                            Assigned Home Tutor
-                          </div>
-                          <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginTop: '2px' }}>
-                            {selectedConverted.assignedTutor ? `👨‍🏫 ${selectedConverted.assignedTutor}` : '⚠️ No tutor assigned yet'}
-                          </div>
-                        </div>
-
-                        {/* Button to Launch Full Proximity Tutor Match Modal */}
+                  {/* TAB 4: COUNSELOR NOTES & CALL LOG */}
+                  {activeParent360Tab === 'NOTES' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {/* Add Note Input */}
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (!newParentNoteText.trim()) return;
+                          const leadId = activeParent360.id;
+                          const newNote = {
+                            id: `note-${Date.now()}`,
+                            text: newParentNoteText.trim(),
+                            date: 'Today, Just now',
+                            author: adminUser?.name || 'Admin',
+                          };
+                          setParentFollowUpNotes((prev) => ({
+                            ...prev,
+                            [leadId]: [newNote, ...(prev[leadId] || [])],
+                          }));
+                          setNewParentNoteText('');
+                        }}
+                        style={{ display: 'flex', gap: '0.5rem' }}
+                      >
+                        <input
+                          type="text"
+                          placeholder="Log parent call note or timing preference..."
+                          value={newParentNoteText}
+                          onChange={(e) => setNewParentNoteText(e.target.value)}
+                          className="form-control"
+                          style={{ borderRadius: '10px', fontSize: '0.84rem' }}
+                        />
                         <button
-                          type="button"
-                          onClick={() => setSelectedLeadForMatching(selectedConverted)}
+                          type="submit"
                           style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.45rem',
-                            padding: '0.55rem 1.15rem',
+                            padding: '0.5rem 0.85rem',
                             borderRadius: '10px',
-                            backgroundColor: '#0284C7',
+                            backgroundColor: '#0F172A',
                             color: '#FFFFFF',
                             border: 'none',
-                            fontSize: '0.84rem',
                             fontWeight: 800,
+                            fontSize: '0.8rem',
                             cursor: 'pointer',
-                            boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)',
+                            flexShrink: 0,
                           }}
                         >
-                          <Users size={15} />
-                          <span>Match Nearby Tutors (Proximity AI)</span>
+                          Save Note
                         </button>
-                      </div>
+                      </form>
 
-                      {/* Or Quick Dropdown Select */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Or select directly:</span>
-                        <select
-                          value=""
-                          onChange={(e) => {
-                            if (e.target.value) {
-                              const updatedLeads = leads.map(l =>
-                                l.id === selectedConverted.id ? { ...l, assignedTutor: e.target.value } : l
-                              );
-                              setLeads(updatedLeads);
-                              setSelectedConverted({ ...selectedConverted, assignedTutor: e.target.value });
-                            }
-                          }}
-                          style={{
-                            flex: 1,
-                            minWidth: '220px',
-                            fontSize: '0.82rem',
-                            fontWeight: 600,
-                            padding: '0.45rem 0.75rem',
-                            borderRadius: '8px',
-                            border: '1px solid #7DD3FC',
-                            backgroundColor: '#FFFFFF',
-                            color: '#1E293B',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <option value="">Quick Pick Verified Tutor...</option>
-                          {VERIFIED_TUTORS.map((t) => (
-                            <option key={t.id} value={t.name}>{t.name} — {t.highestDegree} ({t.subjects.join(', ')})</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Counselor Intake Notes */}
-                    {selectedConverted.notes && (
-                      <div>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                          Counselor Intake Notes
-                        </div>
-                        <div style={{ fontSize: '0.86rem', color: '#334155', lineHeight: 1.5, padding: '0.75rem 0.95rem', borderRadius: '10px', backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
-                          {selectedConverted.notes}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Full Activity Timeline Card (At the Bottom - Full Width) */}
-                  <div className="apple-card" style={{ padding: '1.5rem', backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)', borderRadius: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.75rem' }}>
-                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                        Activity &amp; Conversion Timeline
-                      </h3>
-                      <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
-                        {selectedConverted.activities?.length || 1} Events
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {selectedConverted.activities && selectedConverted.activities.length > 0 ? (
-                        selectedConverted.activities.map((act) => (
-                          <div key={act.id} style={{ display: 'flex', gap: '0.75rem', padding: '0.75rem 1rem', backgroundColor: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
-                            <div style={{ flexShrink: 0, fontSize: '0.78rem', color: '#64748B', fontWeight: 700 }}>
-                              {new Date(act.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                            </div>
-                            <div style={{ fontSize: '0.84rem', color: '#1E293B', lineHeight: 1.4 }}>
-                              {act.description}
-                            </div>
+                      {/* Notes Timeline */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                        {(parentFollowUpNotes[activeParent360.id] || []).length === 0 ? (
+                          <div style={{ fontSize: '0.8rem', color: '#94A3B8', textAlign: 'center', padding: '1.5rem' }}>
+                            No notes logged yet for this parent inquiry.
                           </div>
-                        ))
-                      ) : (
-                        <div style={{ display: 'flex', gap: '0.75rem', padding: '0.75rem 1rem', backgroundColor: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
-                          <div style={{ flexShrink: 0, fontSize: '0.78rem', color: '#64748B', fontWeight: 700 }}>
-                            {new Date(selectedConverted.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                          </div>
-                          <div style={{ fontSize: '0.84rem', color: '#1E293B' }}>
-                            Inquiry registered and marked as Converted
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                /* FULL RESPONSIVE TABLE VIEW */
-                <div className="apple-card" style={{ padding: 0, overflow: 'hidden', backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)', borderRadius: '16px' }}>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '2px solid #CBD5E1', backgroundColor: '#F8FAFC' }}>
-                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Student</th>
-                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Contact</th>
-                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Class &amp; Subjects</th>
-                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Location</th>
-                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tutor</th>
-                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Converted On</th>
-                          <th style={{ padding: '0.65rem 0.95rem', fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {leads.filter(l => l.status === 'TUITION_CONFIRMED').length === 0 ? (
-                          <tr>
-                            <td colSpan={7} style={{ textAlign: 'center', padding: '3.5rem', color: '#64748B', fontSize: '0.85rem' }}>
-                              No converted leads yet.
-                            </td>
-                          </tr>
                         ) : (
-                          leads.filter(l => l.status === 'TUITION_CONFIRMED').map((lead) => {
-                            const subjects = Array.isArray(lead.subjectsNeeded)
-                              ? lead.subjectsNeeded.join(', ')
-                              : lead.subjectsNeeded.replace(/[\[\]"]/g, '');
-                            return (
-                              <tr
-                                key={lead.id}
-                                onClick={() => setSelectedConverted(lead)}
-                                style={{
-                                  borderBottom: '1px solid #E2E8F0',
-                                  cursor: 'pointer',
-                                  transition: 'background-color 0.15s ease',
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
-                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
-                              >
-                                <td style={{ padding: '0.65rem 0.95rem' }}>
-                                  <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.86rem' }}>
-                                    {lead.parentName}
-                                  </div>
-                                </td>
-                                <td style={{ padding: '0.65rem 0.95rem', fontSize: '0.8rem' }}>
-                                  <a
-                                    href={`tel:${lead.parentPhone}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                    style={{ color: '#334155', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                                  >
-                                    <Phone size={11} color="#64748B" /> {lead.parentPhone}
-                                  </a>
-                                </td>
-                                <td style={{ padding: '0.65rem 0.95rem', fontSize: '0.8rem' }}>
-                                  <span style={{ fontWeight: 700, color: '#334155' }}>{lead.gradeClass}</span>
-                                  <span style={{ color: '#64748B' }}> ({subjects})</span>
-                                </td>
-                                <td style={{ padding: '0.65rem 0.95rem', fontSize: '0.8rem', color: '#334155' }}>
-                                  📍 {lead.locality}
-                                </td>
-                                <td style={{ padding: '0.65rem 0.95rem', fontSize: '0.8rem', color: '#0369A1', fontWeight: 600 }}>
-                                  {lead.assignedTutor ? `👨‍🏫 ${lead.assignedTutor}` : <span style={{ color: '#94A3B8' }}>Unassigned</span>}
-                                </td>
-                                <td style={{ padding: '0.65rem 0.95rem', fontSize: '0.8rem', color: '#334155' }}>
-                                  {new Date(lead.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                </td>
-                                <td style={{ padding: '0.65rem 0.95rem', textAlign: 'right' }}>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedConverted(lead);
-                                    }}
-                                    style={{
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: '0.25rem',
-                                      padding: '0.3rem 0.65rem',
-                                      borderRadius: '6px',
-                                      fontSize: '0.74rem',
-                                      fontWeight: 700,
-                                      border: '1px solid #BBF7D0',
-                                      color: '#15803D',
-                                      backgroundColor: '#F0FDF4',
-                                      cursor: 'pointer',
-                                    }}
-                                  >
-                                    <Eye size={12} />
-                                    <span>View</span>
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })
+                          (parentFollowUpNotes[activeParent360.id] || []).map((note) => (
+                            <div
+                              key={note.id}
+                              style={{
+                                padding: '0.75rem 1rem',
+                                backgroundColor: '#F8FAFC',
+                                borderRadius: '10px',
+                                border: '1px solid #E2E8F0',
+                                fontSize: '0.82rem',
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B', fontSize: '0.72rem', marginBottom: '3px' }}>
+                                <strong>{note.author}</strong>
+                                <span>{note.date}</span>
+                              </div>
+                              <div style={{ color: '#0F172A', fontWeight: 500 }}>{note.text}</div>
+                            </div>
+                          ))
                         )}
-                      </tbody>
-                    </table>
-                  </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           )}
-
-          {/* TAB 4: TUTOR ALLOCATION & MANAGEMENT HUB (1,000+ CAPACITY) */}
           {activeAdminTab === 'TUTOR_ALLOCATION' && (() => {
             // Filter Tutors
             const filteredTutorList = VERIFIED_TUTORS.filter((tut) => {
@@ -5018,10 +5802,912 @@ export default function SuperAdminPage() {
               </div>
             );
           })()}
+
+          {/* TAB 4.8: TUITION FEES & TUTOR PAYOUTS LEDGER */}
+          {activeAdminTab === 'FEES_PAYOUTS' && (() => {
+            const totalCollected = feeRecords
+              .filter((f) => f.parentStatus === 'RECEIVED')
+              .reduce((sum, f) => sum + (f.parentPaidAmount || f.monthlyFee), 0);
+
+            const parentPendingTotal = feeRecords
+              .filter((f) => f.parentStatus === 'PENDING')
+              .reduce((sum, f) => sum + f.monthlyFee, 0);
+
+            const netCommissionTotal = feeRecords
+              .filter((f) => f.parentStatus === 'RECEIVED')
+              .reduce((sum, f) => sum + f.commissionAmount, 0);
+
+            const tutorPayoutDueTotal = feeRecords
+              .filter((f) => f.parentStatus === 'RECEIVED' && f.tutorStatus === 'PENDING')
+              .reduce((sum, f) => sum + f.tutorPayoutAmount, 0);
+
+            // Filter records
+            const filteredFees = feeRecords.filter((rec) => {
+              if (feeStatusFilter === 'PARENT_PENDING' && rec.parentStatus !== 'PENDING') return false;
+              if (feeStatusFilter === 'PARENT_PAID' && rec.parentStatus !== 'RECEIVED') return false;
+              if (feeStatusFilter === 'TUTOR_DUE' && (rec.parentStatus !== 'RECEIVED' || rec.tutorStatus !== 'PENDING')) return false;
+              if (feeStatusFilter === 'SETTLED' && (rec.parentStatus !== 'RECEIVED' || rec.tutorStatus !== 'PAID')) return false;
+
+              if (feeSearch.trim()) {
+                const q = feeSearch.toLowerCase();
+                const matches =
+                  rec.parentName.toLowerCase().includes(q) ||
+                  rec.tutorName.toLowerCase().includes(q) ||
+                  rec.locality.toLowerCase().includes(q) ||
+                  rec.gradeClass.toLowerCase().includes(q) ||
+                  rec.subjects.toLowerCase().includes(q) ||
+                  rec.parentPhone.includes(q) ||
+                  (rec.parentTxnRef || '').toLowerCase().includes(q);
+                if (!matches) return false;
+              }
+
+              return true;
+            });
+
+            // Pagination
+            const totalFeePages = Math.ceil(filteredFees.length / feePerPage) || 1;
+            const feeStartIndex = (feeCurrentPage - 1) * feePerPage;
+            const feeEndIndex = Math.min(feeStartIndex + feePerPage, filteredFees.length);
+            const paginatedFees = filteredFees.slice(feeStartIndex, feeEndIndex);
+
+            return (
+              <div>
+                {/* 4 Financial KPI Summary Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                  {/* Card 1: Total Collections */}
+                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>FEE RECEIVED (ADVANCE)</span>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#DCFCE7', color: '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <ArrowDownLeft size={16} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#15803D', marginTop: '0.35rem' }}>
+                      ₹{totalCollected.toLocaleString('en-IN')}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                      Advance received in bank/UPI
+                    </div>
+                  </div>
+
+                  {/* Card 2: Advance Due from Parents */}
+                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #FDE68A' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#92400E', textTransform: 'uppercase' }}>ADVANCE FEE DUE</span>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FEF3C7', color: '#B45309', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Clock size={16} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#B45309', marginTop: '0.35rem' }}>
+                      ₹{parentPendingTotal.toLocaleString('en-IN')}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#92400E', marginTop: '2px' }}>
+                      Awaiting parent advance payment
+                    </div>
+                  </div>
+
+                  {/* Card 3: Academy Revenue (Margin) */}
+                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E0F2FE' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0369A1', textTransform: 'uppercase' }}>ACADEMY COMMISSION</span>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#E0F2FE', color: '#0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Wallet size={16} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#0284C7', marginTop: '0.35rem' }}>
+                      ₹{netCommissionTotal.toLocaleString('en-IN')}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#0369A1', marginTop: '2px' }}>
+                      Bureau retained 25% margin
+                    </div>
+                  </div>
+
+                  {/* Card 4: Tutor Payouts Pending */}
+                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>TUTOR PAYOUTS DUE</span>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#F1F5F9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <ArrowUpRight size={16} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#0F172A', marginTop: '0.35rem' }}>
+                      ₹{tutorPayoutDueTotal.toLocaleString('en-IN')}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                      Payable to verified educators
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter Toolbar */}
+                <div className="apple-card" style={{ padding: '1rem 1.25rem', marginBottom: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid var(--border-hairline)' }}>
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                    <div style={{ position: 'relative', flex: '1', minWidth: '260px' }}>
+                      <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                      <input
+                        type="text"
+                        placeholder="Search by parent, tutor, locality, or transaction ID..."
+                        value={feeSearch}
+                        onChange={(e) => {
+                          setFeeSearch(e.target.value);
+                          setFeeCurrentPage(1);
+                        }}
+                        className="form-control"
+                        style={{ paddingLeft: '2.4rem', borderRadius: '10px', backgroundColor: '#F8FAFC', fontSize: '0.86rem', border: '1px solid var(--border-hairline)' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Status Pills */}
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {[
+                      { id: 'ALL', label: 'All Ledgers', count: feeRecords.length },
+                      { id: 'PARENT_PENDING', label: '🟡 Advance Due from Parent', count: feeRecords.filter((f) => f.parentStatus === 'PENDING').length },
+                      { id: 'PARENT_PAID', label: '🟢 Fee Received', count: feeRecords.filter((f) => f.parentStatus === 'RECEIVED').length },
+                      { id: 'TUTOR_DUE', label: '⏳ Tutor Payout Due', count: feeRecords.filter((f) => f.parentStatus === 'RECEIVED' && f.tutorStatus === 'PENDING').length },
+                      { id: 'SETTLED', label: '✓ Settled (Both Paid)', count: feeRecords.filter((f) => f.parentStatus === 'RECEIVED' && f.tutorStatus === 'PAID').length },
+                    ].map((pill) => {
+                      const isActive = feeStatusFilter === pill.id;
+                      return (
+                        <button
+                          key={pill.id}
+                          type="button"
+                          onClick={() => {
+                            setFeeStatusFilter(pill.id as any);
+                            setFeeCurrentPage(1);
+                          }}
+                          style={{
+                            padding: '0.35rem 0.75rem',
+                            borderRadius: '8px',
+                            border: `1.5px solid ${isActive ? '#0F172A' : '#E2E8F0'}`,
+                            backgroundColor: isActive ? '#0F172A' : '#FFFFFF',
+                            color: isActive ? '#FFFFFF' : '#334155',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <span>{pill.label}</span>
+                          <span
+                            style={{
+                              padding: '1px 6px',
+                              borderRadius: '10px',
+                              fontSize: '0.7rem',
+                              fontWeight: 800,
+                              backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : '#F1F5F9',
+                              color: isActive ? '#FFFFFF' : '#64748B',
+                            }}
+                          >
+                            {pill.count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2-WAY FINANCE LEDGER TABLE (DESKTOP) */}
+                <div className="desktop-only-table apple-card" style={{ padding: 0, overflow: 'hidden', backgroundColor: '#FFFFFF', borderRadius: '18px', border: '1px solid var(--border-hairline)', marginBottom: '1.25rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                        <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Tuition &amp; Parent</th>
+                        <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Parent Advance Fee</th>
+                        <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Academy (25%)</th>
+                        <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Tutor Net Payout</th>
+                        <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedFees.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: '#64748B' }}>
+                            No fee records found matching current filter.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedFees.map((rec) => {
+                          const isParentPaid = rec.parentStatus === 'RECEIVED';
+                          const isTutorPaid = rec.tutorStatus === 'PAID';
+
+                          return (
+                            <tr
+                              key={rec.id}
+                              style={{
+                                borderBottom: '1px solid #F1F5F9',
+                                transition: 'background-color 0.12s ease',
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F8FAFC'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF'; }}
+                            >
+                              {/* 1. Parent & Student */}
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <div>
+                                  <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.9rem' }}>{rec.parentName}</div>
+                                  <div style={{ fontSize: '0.76rem', color: '#475569', marginTop: '1px' }}>
+                                    📚 <strong>{rec.gradeClass}</strong> ({rec.subjects})
+                                  </div>
+                                  <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '1px' }}>
+                                    📍 {rec.locality}
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* 2. Parent Advance Fee */}
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: isParentPaid ? '#15803D' : '#B45309' }}>
+                                  ₹{rec.monthlyFee.toLocaleString('en-IN')}
+                                </div>
+                                <div style={{ marginTop: '3px' }}>
+                                  {isParentPaid ? (
+                                    <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', backgroundColor: '#DCFCE7', color: '#166534' }}>
+                                      ✓ Paid ({rec.parentPaidDate || 'Received'})
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', backgroundColor: '#FEF3C7', color: '#92400E' }}>
+                                      🟡 Advance Due
+                                    </span>
+                                  )}
+                                </div>
+                                {rec.parentTxnRef && (
+                                  <div style={{ fontSize: '0.68rem', color: '#64748B', marginTop: '2px' }}>
+                                    Ref: {rec.parentTxnRef}
+                                  </div>
+                                )}
+                              </td>
+
+                              {/* 3. Academy Margin */}
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0284C7' }}>
+                                  ₹{rec.commissionAmount.toLocaleString('en-IN')}
+                                </div>
+                                <div style={{ fontSize: '0.7rem', color: '#64748B' }}>
+                                  ({rec.commissionRate}% retained)
+                                </div>
+                              </td>
+
+                              {/* 4. Tutor Net Payout */}
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.86rem' }}>
+                                  {rec.tutorName}
+                                </div>
+                                <div style={{ fontSize: '0.84rem', fontWeight: 800, color: isTutorPaid ? '#15803D' : '#0F172A', marginTop: '1px' }}>
+                                  ₹{rec.tutorPayoutAmount.toLocaleString('en-IN')}
+                                </div>
+                                <div style={{ marginTop: '2px' }}>
+                                  {isTutorPaid ? (
+                                    <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', backgroundColor: '#DCFCE7', color: '#166534' }}>
+                                      ✓ Payout Settled
+                                    </span>
+                                  ) : isParentPaid ? (
+                                    <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', backgroundColor: '#FEF3C7', color: '#92400E' }}>
+                                      ⏳ Payout Pending
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', backgroundColor: '#F1F5F9', color: '#64748B' }}>
+                                      ⏸️ Awaiting Parent Fee
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+
+                              {/* 5. Actions */}
+                              <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                  {!isParentPaid ? (
+                                    <>
+                                      {/* WhatsApp Fee Reminder */}
+                                      <a
+                                        href={`https://wa.me/?text=${encodeURIComponent(
+                                          `*SSSAM Academy (TuitionForHome) - Advance Fee Reminder*\n\n` +
+                                          `Dear ${rec.parentName},\n` +
+                                          `This is a gentle reminder regarding the monthly advance tuition fee of *₹${rec.monthlyFee.toLocaleString('en-IN')}* for *${rec.gradeClass} (${rec.subjects})* in *${rec.locality}*.\n\n` +
+                                          `Assigned Educator: *${rec.tutorName}*\n\n` +
+                                          `Kindly deposit via UPI to: *${SSSAM_OFFICE_DETAILS.phones[0]}@upi* and reply with the screenshot.\n\n` +
+                                          `Thank you,\nSSSAM Academy Accounts Desk`
+                                        )}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                          padding: '0.35rem 0.65rem',
+                                          borderRadius: '7px',
+                                          border: '1px solid #86EFAC',
+                                          backgroundColor: '#F0FDF4',
+                                          color: '#15803D',
+                                          fontSize: '0.74rem',
+                                          fontWeight: 700,
+                                          textDecoration: 'none',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '0.25rem',
+                                        }}
+                                      >
+                                        <MessageSquare size={12} color="#15803D" />
+                                        <span>Reminder</span>
+                                      </a>
+
+                                      {/* Receive Fee Button */}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setParentPaymentModalItem(rec);
+                                          setParentPayAmountInput(rec.monthlyFee);
+                                          setParentPayTxnInput('');
+                                        }}
+                                        style={{
+                                          padding: '0.35rem 0.65rem',
+                                          borderRadius: '7px',
+                                          backgroundColor: '#10B981',
+                                          color: '#FFFFFF',
+                                          border: 'none',
+                                          fontSize: '0.74rem',
+                                          fontWeight: 800,
+                                          cursor: 'pointer',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '0.25rem',
+                                        }}
+                                      >
+                                        <CreditCard size={12} />
+                                        <span>Receive Advance</span>
+                                      </button>
+                                    </>
+                                  ) : !isTutorPaid ? (
+                                    <>
+                                      {/* WhatsApp Receipt to Parent */}
+                                      <a
+                                        href={`https://wa.me/?text=${encodeURIComponent(
+                                          `*SSSAM Academy - Payment Receipt Confirmation*\n\n` +
+                                          `Dear ${rec.parentName},\n` +
+                                          `We have received your advance tuition payment of *₹${(rec.parentPaidAmount || rec.monthlyFee).toLocaleString('en-IN')}* for *${rec.gradeClass} (${rec.subjects})*.\n\n` +
+                                          `Assigned Educator: *${rec.tutorName}*\n` +
+                                          `Payment Mode: *${rec.parentPaymentMode || 'UPI'}*\n` +
+                                          `Transaction Ref: *${rec.parentTxnRef || 'CONFIRMED'}*\n\n` +
+                                          `Thank you for choosing SSSAM Academy!`
+                                        )}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                          padding: '0.35rem 0.65rem',
+                                          borderRadius: '7px',
+                                          border: '1px solid #CBD5E1',
+                                          backgroundColor: '#FFFFFF',
+                                          color: '#334155',
+                                          fontSize: '0.74rem',
+                                          fontWeight: 700,
+                                          textDecoration: 'none',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '0.25rem',
+                                        }}
+                                      >
+                                        <Receipt size={12} color="#0284C7" />
+                                        <span>Parent Receipt</span>
+                                      </a>
+
+                                      {/* Settle Tutor Payout Button */}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setTutorPayoutModalItem(rec);
+                                          setTutorPayoutAmountInput(rec.tutorPayoutAmount);
+                                          setTutorPayoutTxnInput('');
+                                        }}
+                                        style={{
+                                          padding: '0.35rem 0.65rem',
+                                          borderRadius: '7px',
+                                          backgroundColor: '#0F172A',
+                                          color: '#FFFFFF',
+                                          border: 'none',
+                                          fontSize: '0.74rem',
+                                          fontWeight: 800,
+                                          cursor: 'pointer',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '0.25rem',
+                                        }}
+                                      >
+                                        <Banknote size={12} />
+                                        <span>Pay Tutor</span>
+                                      </button>
+                                    </>
+                                  ) : (
+                                    /* Fully Settled WhatsApp Slip to Tutor */
+                                    <a
+                                      href={`https://wa.me/?text=${encodeURIComponent(
+                                        `*SSSAM Academy - Tutor Payout Slip*\n\n` +
+                                        `Dear ${rec.tutorName} Sir/Ma'am,\n` +
+                                        `Your net payout of *₹${rec.tutorPayoutAmount.toLocaleString('en-IN')}* for student *${rec.parentName} (${rec.gradeClass})* has been processed.\n\n` +
+                                        `Mode: *${rec.tutorPaymentMode || 'UPI Transfer'}*\n` +
+                                        `Ref/UTR: *${rec.tutorTxnRef || 'CREDITED'}*\n` +
+                                        `Date: *${rec.tutorPaidDate || 'Today'}*\n\n` +
+                                        `Best regards,\nSSSAM Academy Finance Desk`
+                                      )}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{
+                                        padding: '0.35rem 0.65rem',
+                                        borderRadius: '7px',
+                                        border: '1px solid #86EFAC',
+                                        backgroundColor: '#F0FDF4',
+                                        color: '#15803D',
+                                        fontSize: '0.74rem',
+                                        fontWeight: 800,
+                                        textDecoration: 'none',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.25rem',
+                                      }}
+                                    >
+                                      <Check size={12} color="#15803D" />
+                                      <span>Tutor Payout Slip</span>
+                                    </a>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* MOBILE RESPONSIVE CARDS */}
+                <div className="mobile-only-cards" style={{ display: 'none', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.25rem' }}>
+                  {paginatedFees.map((rec) => {
+                    const isParentPaid = rec.parentStatus === 'RECEIVED';
+                    const isTutorPaid = rec.tutorStatus === 'PAID';
+
+                    return (
+                      <div
+                        key={rec.id}
+                        className="apple-card"
+                        style={{
+                          padding: '1rem',
+                          backgroundColor: '#FFFFFF',
+                          borderRadius: '14px',
+                          border: '1px solid #E2E8F0',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.65rem',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div>
+                            <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#0F172A' }}>{rec.parentName}</div>
+                            <div style={{ fontSize: '0.76rem', color: '#64748B' }}>
+                              {rec.gradeClass} ({rec.subjects}) • 📍 {rec.locality}
+                            </div>
+                          </div>
+                          <span
+                            style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              padding: '2px 7px',
+                              borderRadius: '5px',
+                              backgroundColor: isParentPaid ? '#DCFCE7' : '#FEF3C7',
+                              color: isParentPaid ? '#166534' : '#92400E',
+                            }}
+                          >
+                            {isParentPaid ? 'Fee Received' : 'Advance Due'}
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', backgroundColor: '#F8FAFC', padding: '0.65rem', borderRadius: '10px', fontSize: '0.76rem' }}>
+                          <div>
+                            <div style={{ color: '#64748B' }}>Parent Fee:</div>
+                            <div style={{ fontWeight: 800, color: '#15803D' }}>₹{rec.monthlyFee}</div>
+                          </div>
+                          <div>
+                            <div style={{ color: '#64748B' }}>Tutor ({rec.tutorName}):</div>
+                            <div style={{ fontWeight: 800, color: isTutorPaid ? '#15803D' : '#0F172A' }}>
+                              ₹{rec.tutorPayoutAmount} ({isTutorPaid ? 'Paid' : 'Pending'})
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Pagination */}
+                {filteredFees.length > 0 && (
+                  <div
+                    style={{
+                      padding: '0.75rem 1.25rem',
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: '14px',
+                      border: '1px solid var(--border-hairline)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '0.5rem',
+                      fontSize: '0.78rem',
+                      color: '#475569',
+                    }}
+                  >
+                    <div>
+                      Showing <strong>{feeStartIndex + 1}</strong> to <strong>{feeEndIndex}</strong> of <strong>{filteredFees.length}</strong> ledgers
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <button
+                        type="button"
+                        disabled={feeCurrentPage === 1}
+                        onClick={() => setFeeCurrentPage((p) => Math.max(1, p - 1))}
+                        style={{
+                          padding: '0.25rem 0.55rem',
+                          borderRadius: '6px',
+                          border: '1px solid #CBD5E1',
+                          backgroundColor: feeCurrentPage === 1 ? '#F1F5F9' : '#FFFFFF',
+                          color: feeCurrentPage === 1 ? '#94A3B8' : '#334155',
+                          cursor: feeCurrentPage === 1 ? 'not-allowed' : 'pointer',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                        }}
+                      >
+                        ← Prev
+                      </button>
+
+                      {Array.from({ length: totalFeePages }, (_, i) => i + 1).map((pageNum) => (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          onClick={() => setFeeCurrentPage(pageNum)}
+                          style={{
+                            minWidth: '26px',
+                            height: '26px',
+                            borderRadius: '6px',
+                            border: feeCurrentPage === pageNum ? 'none' : '1px solid #CBD5E1',
+                            backgroundColor: feeCurrentPage === pageNum ? '#0F172A' : '#FFFFFF',
+                            color: feeCurrentPage === pageNum ? '#FFFFFF' : '#334155',
+                            fontWeight: 800,
+                            fontSize: '0.76rem',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+
+                      <button
+                        type="button"
+                        disabled={feeCurrentPage >= totalFeePages}
+                        onClick={() => setFeeCurrentPage((p) => Math.min(totalFeePages, p + 1))}
+                        style={{
+                          padding: '0.25rem 0.55rem',
+                          borderRadius: '6px',
+                          border: '1px solid #CBD5E1',
+                          backgroundColor: feeCurrentPage >= totalFeePages ? '#F1F5F9' : '#FFFFFF',
+                          color: feeCurrentPage >= totalFeePages ? '#94A3B8' : '#334155',
+                          cursor: feeCurrentPage >= totalFeePages ? 'not-allowed' : 'pointer',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                        }}
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
             </section>
           </div>
         </div>
       </main>
+
+      {/* MODAL: RECORD PARENT ADVANCE PAYMENT */}
+      {parentPaymentModalItem && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.55)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 1200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+          onClick={() => setParentPaymentModalItem(null)}
+        >
+          <div
+            className="apple-card"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '20px',
+              padding: '1.75rem',
+              boxShadow: '0 20px 45px rgba(0,0,0,0.2)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
+                  Record Parent Advance Fee
+                </h3>
+                <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '2px' }}>
+                  {parentPaymentModalItem.parentName} • {parentPaymentModalItem.gradeClass}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setParentPaymentModalItem(null)}
+                style={{ border: 'none', background: '#F1F5F9', borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer' }}
+              >
+                <X size={15} color="#64748B" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setFeeRecords((prev) =>
+                  prev.map((f) =>
+                    f.id === parentPaymentModalItem.id
+                      ? {
+                          ...f,
+                          parentStatus: 'RECEIVED',
+                          parentPaidAmount: parentPayAmountInput || f.monthlyFee,
+                          parentPaidDate: 'Today',
+                          parentPaymentMode: parentPayModeInput,
+                          parentTxnRef: parentPayTxnInput.trim() || `UPI-${Date.now().toString().slice(-8)}`,
+                        }
+                      : f
+                  )
+                );
+                setCounselorSuccessMsg(`🎉 Recorded advance payment of ₹${parentPayAmountInput} from ${parentPaymentModalItem.parentName}!`);
+                setTimeout(() => setCounselorSuccessMsg(''), 4000);
+                setParentPaymentModalItem(null);
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+            >
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Amount Received (₹)
+                </label>
+                <input
+                  type="number"
+                  value={parentPayAmountInput}
+                  onChange={(e) => setParentPayAmountInput(Number(e.target.value))}
+                  className="form-control"
+                  style={{ borderRadius: '10px', fontWeight: 800, fontSize: '1.1rem', color: '#15803D' }}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Payment Method
+                </label>
+                <select
+                  value={parentPayModeInput}
+                  onChange={(e) => setParentPayModeInput(e.target.value)}
+                  className="form-control"
+                  style={{ borderRadius: '10px', fontSize: '0.85rem' }}
+                >
+                  <option value="UPI (Google Pay / PhonePe / Paytm)">UPI (Google Pay / PhonePe / Paytm)</option>
+                  <option value="Bank IMPS / NEFT Transfer">Bank IMPS / NEFT Transfer</option>
+                  <option value="Cash Payment">Cash Payment</option>
+                  <option value="Cheque Deposit">Cheque Deposit</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Transaction ID / UTR / Reference
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. UPI-998822001 or Cash Receipt #12"
+                  value={parentPayTxnInput}
+                  onChange={(e) => setParentPayTxnInput(e.target.value)}
+                  className="form-control"
+                  style={{ borderRadius: '10px', fontSize: '0.85rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setParentPaymentModalItem(null)}
+                  style={{
+                    flex: 1,
+                    padding: '0.65rem',
+                    borderRadius: '10px',
+                    border: '1px solid #CBD5E1',
+                    backgroundColor: '#FFFFFF',
+                    color: '#334155',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    flex: 2,
+                    padding: '0.65rem',
+                    borderRadius: '10px',
+                    backgroundColor: '#10B981',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                  }}
+                >
+                  ✓ Confirm Payment Received
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: RECORD TUTOR PAYOUT */}
+      {tutorPayoutModalItem && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.55)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 1200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+          onClick={() => setTutorPayoutModalItem(null)}
+        >
+          <div
+            className="apple-card"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '20px',
+              padding: '1.75rem',
+              boxShadow: '0 20px 45px rgba(0,0,0,0.2)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
+                  Record Educator Payout
+                </h3>
+                <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '2px' }}>
+                  Educator: <strong>{tutorPayoutModalItem.tutorName}</strong> (Student: {tutorPayoutModalItem.parentName})
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTutorPayoutModalItem(null)}
+                style={{ border: 'none', background: '#F1F5F9', borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer' }}
+              >
+                <X size={15} color="#64748B" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setFeeRecords((prev) =>
+                  prev.map((f) =>
+                    f.id === tutorPayoutModalItem.id
+                      ? {
+                          ...f,
+                          tutorStatus: 'PAID',
+                          tutorPayoutAmount: tutorPayoutAmountInput || f.tutorPayoutAmount,
+                          tutorPaidDate: 'Today',
+                          tutorPaymentMode: tutorPayoutModeInput,
+                          tutorTxnRef: tutorPayoutTxnInput.trim() || `UTR-${Date.now().toString().slice(-8)}`,
+                        }
+                      : f
+                  )
+                );
+                setCounselorSuccessMsg(`🎉 Successfully recorded payout of ₹${tutorPayoutAmountInput} to ${tutorPayoutModalItem.tutorName}!`);
+                setTimeout(() => setCounselorSuccessMsg(''), 4000);
+                setTutorPayoutModalItem(null);
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+            >
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Net Payout Amount (₹)
+                </label>
+                <input
+                  type="number"
+                  value={tutorPayoutAmountInput}
+                  onChange={(e) => setTutorPayoutAmountInput(Number(e.target.value))}
+                  className="form-control"
+                  style={{ borderRadius: '10px', fontWeight: 800, fontSize: '1.1rem', color: '#0F172A' }}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Payout Transfer Mode
+                </label>
+                <select
+                  value={tutorPayoutModeInput}
+                  onChange={(e) => setTutorPayoutModeInput(e.target.value)}
+                  className="form-control"
+                  style={{ borderRadius: '10px', fontSize: '0.85rem' }}
+                >
+                  <option value="UPI Transfer (GPay / PhonePe)">UPI Transfer (GPay / PhonePe)</option>
+                  <option value="Direct Bank NEFT / IMPS">Direct Bank NEFT / IMPS</option>
+                  <option value="Cash Settlement">Cash Settlement</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Bank UTR / Transaction Reference No.
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. UTR-491028301 or UPI Ref"
+                  value={tutorPayoutTxnInput}
+                  onChange={(e) => setTutorPayoutTxnInput(e.target.value)}
+                  className="form-control"
+                  style={{ borderRadius: '10px', fontSize: '0.85rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setTutorPayoutModalItem(null)}
+                  style={{
+                    flex: 1,
+                    padding: '0.65rem',
+                    borderRadius: '10px',
+                    border: '1px solid #CBD5E1',
+                    backgroundColor: '#FFFFFF',
+                    color: '#334155',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    flex: 2,
+                    padding: '0.65rem',
+                    borderRadius: '10px',
+                    backgroundColor: '#0F172A',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.25)',
+                  }}
+                >
+                  ✓ Confirm Payout Settled
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ADD COUNSELOR MODAL */}
       {showAddCounselorModal && (
