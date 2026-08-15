@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Calendar,
   Sparkles,
-  QrCode,
   UserCheck,
   Video,
   Home,
@@ -30,10 +29,19 @@ import {
   FileText,
   Grid,
   CalendarClock,
+  GraduationCap,
+  Users,
+  RotateCcw,
+  Eye,
+  X,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Check,
+  BookOpen,
 } from 'lucide-react';
 
 import TutorMatchModal from '@/components/TutorMatchModal';
-import { VERIFIED_TUTORS, MockTutor } from '@/lib/data';
+import { VERIFIED_TUTORS, MockTutor, SSSAM_OFFICE_DETAILS } from '@/lib/data';
 
 interface LeadActivityItem {
   id: string;
@@ -66,15 +74,11 @@ interface LeadItem {
 }
 
 export default function CounselorPortal() {
-  const [activeTab, setActiveTab] = useState<'LEADS' | 'TUTOR_ALLOCATION' | 'INTERVIEWS' | 'INVOICE'>('LEADS');
-  const [dbLoading, setDbLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'LEADS' | 'TUTOR_ALLOCATION' | 'PARENTS' | 'COORDINATION'>('LEADS');
   const [leadsLoading, setLeadsLoading] = useState(false);
 
   // Active counselor identity
   const [currentOperator, setCurrentOperator] = useState('Counselor Pooja');
-
-  // Selected tutor for lead allocation desk
-  const [selectedTutorForLeads, setSelectedTutorForLeads] = useState<MockTutor>(VERIFIED_TUTORS[0]);
 
   // Leads State
   const [leads, setLeads] = useState<LeadItem[]>([]);
@@ -95,8 +99,51 @@ export default function CounselorPortal() {
   const [noteSubmitting, setNoteSubmitting] = useState(false);
   const [noteError, setNoteError] = useState('');
 
-  // Tutor Interviews State
-  const [pendingTutors, setPendingTutors] = useState<any[]>([]);
+  // 1,000+ Scalable Tutor Directory State
+  const [tutorSearch, setTutorSearch] = useState('');
+  const [tutorSubjectFilter, setTutorSubjectFilter] = useState('ALL');
+  const [tutorLocalityFilter, setTutorLocalityFilter] = useState('ALL');
+  const [tutorCurrentPage, setTutorCurrentPage] = useState(1);
+  const [tutorsPerPage, setTutorsPerPage] = useState(10);
+  const [activeTutor360, setActiveTutor360] = useState<MockTutor | null>(null);
+  const [activeTutor360Tab, setActiveTutor360Tab] = useState<'LEADS' | 'VIDEO_KYC' | 'NOTES'>('LEADS');
+
+  // Parent & Student Master Directory State
+  const [parentSearchText, setParentSearchText] = useState('');
+  const [parentGradeFilter, setParentGradeFilter] = useState<string>('ALL');
+  const [parentStatusFilter, setParentStatusFilter] = useState<'ALL' | 'ACTIVE_TUITION' | 'DEMO_DUE' | 'ENQUIRY_OPEN'>('ALL');
+  const [parentCurrentPage, setParentCurrentPage] = useState(1);
+  const [parentsPerPage, setParentsPerPage] = useState(10);
+  const [activeParent360, setActiveParent360] = useState<LeadItem | null>(null);
+  const [activeParent360Tab, setActiveParent360Tab] = useState<'OVERVIEW' | 'TUTOR' | 'NOTES'>('OVERVIEW');
+  const [parentFollowUpNotes, setParentFollowUpNotes] = useState<{ [leadId: string]: { id: string; text: string; date: string; author: string }[] }>({
+    'LD-101': [
+      { id: 'pn-1', text: 'Parent requested Maths classes Mon, Wed, Fri 5:00 PM. Rohit Sharma assigned.', date: 'Today, 10:30 AM', author: 'Counselor Pooja' },
+    ],
+  });
+  const [newParentNoteText, setNewParentNoteText] = useState('');
+
+  // Coordination Desk State
+  const [coordSearch, setCoordSearch] = useState('');
+  const [coordMilestoneFilter, setCoordMilestoneFilter] = useState<'ALL' | '1ST_SESSION_PENDING' | '1ST_SESSION_DONE' | 'REPLACE_REQ'>('ALL');
+  const [coordCurrentPage, setCoordCurrentPage] = useState(1);
+  const [coordPerPage, setCoordPerPage] = useState(6);
+  const [leadCoordMilestones, setLeadCoordMilestones] = useState<{ [leadId: string]: string }>({
+    'LD-101': '1ST_SESSION_PENDING',
+    'LD-102': '1ST_SESSION_DONE',
+    'LD-104': '1ST_SESSION_DONE',
+  });
+
+  // Direct Assignment Confirmation Modal State
+  const [directAssignModal, setDirectAssignModal] = useState<{
+    isOpen: boolean;
+    lead: LeadItem | null;
+    tutor: MockTutor | null;
+  }>({
+    isOpen: false,
+    lead: null,
+    tutor: null,
+  });
 
   // Centered Alert/Toast Modal State
   const [counselorToast, setCounselorToast] = useState<{
@@ -122,60 +169,8 @@ export default function CounselorPortal() {
     }
   };
 
-  // Fetch pending tutors from database
-  const fetchPendingTutors = async () => {
-    setDbLoading(true);
-    try {
-      const res = await fetch('/api/counselor/tutors');
-      const data = await res.json();
-      if (data.success) {
-        const pending = data.tutors.filter((t: any) => t.status === 'PENDING_INTERVIEW' || t.status === 'DRAFT');
-        if (pending.length > 0) {
-          setPendingTutors(pending);
-        } else {
-          setPendingTutors([
-            {
-              id: 'tut-pending-1',
-              name: 'Amitabh Mukherjee',
-              avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
-              introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-              videoDuration: '1m 20s',
-              highestDegree: 'M.Sc. Physics (IIT Roorkee)',
-              experienceYears: 6,
-              teachingMode: 'BOTH',
-              subjects: ['Physics', 'Mathematics'],
-              classes: ['Class 11 & 12 (Board & JEE/NEET)'],
-              boards: ['CBSE', 'IB'],
-              serviceAreas: ['DLF Phase 2', 'DLF Phase 4', 'Sector 14'],
-              travelRadiusKm: 6,
-              hourlyRateHomeMin: 950,
-              hourlyRateHomeMax: 1500,
-              hourlyRateOnlineMin: 700,
-              hourlyRateOnlineMax: 1200,
-              status: 'PENDING_INTERVIEW',
-              isVerified: false,
-              rating: 5.0,
-              bio: 'Physics mentor with 6 years experience specializing in CBSE 12th boards and NEET numerical problem solving.',
-              kycDoc: {
-                idType: 'AADHAAR_MASKED',
-                idLast4: '4589',
-                idNumberDecrypted: '1234-5678-4589',
-                idDocUrl: 'https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?w=600&auto=format&fit=crop&q=80',
-              },
-            },
-          ]);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to retrieve tutor list:', err);
-    } finally {
-      setDbLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchLeads();
-    fetchPendingTutors();
   }, []);
 
   const toggleTimeline = (leadId: string) => {
@@ -261,7 +256,6 @@ export default function CounselorPortal() {
           )
         );
 
-        // Keep timeline expanded for the updated lead
         setExpandedTimelines((prev) => ({ ...prev, [selectedLeadForUpdate.id]: true }));
         setSelectedLeadForUpdate(null);
       } else {
@@ -274,103 +268,59 @@ export default function CounselorPortal() {
     }
   };
 
-  const handleAssignProximityTutor = async (tutorName: string, tutorId: string, matchNote: string) => {
-    if (!selectedLeadForMatching) return;
+  const handleConfirmDirectAssignment = async () => {
+    const { lead, tutor } = directAssignModal;
+    if (!lead || !tutor) return;
 
     try {
-      const res = await fetch(`/api/leads/${selectedLeadForMatching.id}/followup`, {
+      const res = await fetch('/api/counselor/leads/assign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status: 'DEMO_SCHEDULED',
-          notes: matchNote,
-          performedBy: currentOperator,
-          actionType: 'DEMO_FIXED',
+          leadId: lead.id,
+          tutorId: tutor.id,
+          tutorName: tutor.name,
+          assignedBy: currentOperator,
+          matchNote: `Direct assignment via Counselor Portal by ${currentOperator}`,
         }),
       });
 
-      const updatedActivities = [
-        {
-          id: `act-${Date.now()}`,
-          leadId: selectedLeadForMatching.id,
-          actionType: 'DEMO_FIXED',
-          description: `[Status: DEMO_SCHEDULED] ${matchNote}`,
-          performedBy: currentOperator,
-          createdAt: new Date().toISOString(),
-        },
-        ...(selectedLeadForMatching.activities || []),
-      ];
-
-      setLeads((prev) =>
-        prev.map((l) =>
-          l.id === selectedLeadForMatching.id
-            ? {
-                ...l,
-                status: 'DEMO_SCHEDULED',
-                assignedTutor: tutorName,
-                notes: matchNote,
-                updatedAt: new Date().toISOString(),
-                activities: updatedActivities,
-              }
-            : l
-        )
-      );
-
-      setExpandedTimelines((prev) => ({ ...prev, [selectedLeadForMatching.id]: true }));
-      setSelectedLeadForMatching(null);
-      setCounselorToast({
-        isOpen: true,
-        title: 'Tutor Matched Successfully',
-        message: `🎉 Successfully matched tutor ${tutorName}! Demo status logged and timeline updated.`,
-        type: 'success',
-      });
-    } catch (err) {
-      console.error('Failed to assign tutor:', err);
-    }
-  };
-
-  const handleApproveTutor = async (tutorId: string) => {
-    if (tutorId === 'tut-pending-1') {
-      setCounselorToast({
-        isOpen: true,
-        title: 'Tutor Verified',
-        message: '🎉 Mock Tutor Interview Cleared! Verified Badge Activated & Profile is now Live.',
-        type: 'success',
-      });
-      setPendingTutors(pendingTutors.filter((t) => t.id !== tutorId));
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/counselor/tutors/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tutorId }),
-      });
       const data = await res.json();
       if (data.success) {
+        setLeads((prev) =>
+          prev.map((l) =>
+            l.id === lead.id
+              ? {
+                  ...l,
+                  assignedTutor: tutor.name,
+                  status: 'DEMO_SCHEDULED',
+                  updatedAt: new Date().toISOString(),
+                  activities: [
+                    {
+                      id: `act-${Date.now()}`,
+                      leadId: lead.id,
+                      actionType: 'TUTOR_ASSIGNED',
+                      description: `Assigned verified educator ${tutor.name} (${tutor.highestDegree}) for ${lead.gradeClass}`,
+                      performedBy: currentOperator,
+                      createdAt: new Date().toISOString(),
+                    },
+                    ...(l.activities || []),
+                  ],
+                }
+              : l
+          )
+        );
+
+        setDirectAssignModal({ isOpen: false, lead: null, tutor: null });
         setCounselorToast({
           isOpen: true,
-          title: 'Tutor Verified & Live',
-          message: '🎉 Tutor Interview Cleared! Verified Badge Activated & Profile is now Live.',
+          title: 'Educator Assigned Successfully',
+          message: `🎉 ${tutor.name} has been assigned to ${lead.parentName}. Status updated to Demo Scheduled.`,
           type: 'success',
-        });
-        setPendingTutors(pendingTutors.filter((t) => t.id !== tutorId));
-      } else {
-        setCounselorToast({
-          isOpen: true,
-          title: 'Approval Failed',
-          message: 'Failed to approve tutor: ' + (data.error || 'Server error'),
-          type: 'error',
         });
       }
     } catch (err) {
-      setCounselorToast({
-        isOpen: true,
-        title: 'Network Error',
-        message: 'Network error occurred while approving tutor.',
-        type: 'error',
-      });
+      console.error('Failed to assign educator:', err);
     }
   };
 
@@ -386,7 +336,6 @@ export default function CounselorPortal() {
     if (!dateStr) return false;
     const d = new Date(dateStr);
     const now = new Date();
-    // Prior to today midnight
     return d.getTime() < now.setHours(0, 0, 0, 0);
   };
 
@@ -405,7 +354,6 @@ export default function CounselorPortal() {
 
   // Filtered Leads
   const filteredLeads = leads.filter((l) => {
-    // Search query
     const subjects = l.subjectsNeeded || '';
     const matchesSearch =
       l.parentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -428,40 +376,13 @@ export default function CounselorPortal() {
     return true;
   });
 
-  const getStatusBadge = (status: string) => {
-    const norm = (status || '').toUpperCase().trim();
-    if (norm === 'NEW_LEAD' || norm === 'NEW' || norm === 'PENDING') {
-      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#FEF3C7', color: '#B45309', fontWeight: 700, fontSize: '0.74rem' }}>New Lead</span>;
-    }
-    if (norm === 'INTERESTED' || norm === 'HIGHLY_INTERESTED') {
-      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#DCFCE7', color: '#15803D', fontWeight: 700, fontSize: '0.74rem' }}>Interested</span>;
-    }
-    if (norm === 'CONTACTED') {
-      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#DBEAFE', color: '#1E40AF', fontWeight: 700, fontSize: '0.74rem' }}>Contacted</span>;
-    }
-    if (norm === 'DEMO_SCHEDULED' || norm === 'DEMO_FIXED' || norm === 'DEMO') {
-      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#EDE9FE', color: '#6D28D9', fontWeight: 700, fontSize: '0.74rem' }}>Demo Fixed</span>;
-    }
-    if (norm === 'TUITION_CONFIRMED' || norm === 'CONVERTED' || norm === 'ADMISSION_CONFIRMED' || norm === 'WON') {
-      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#CCFBF1', color: '#0F766E', fontWeight: 700, fontSize: '0.74rem' }}>Converted</span>;
-    }
-    if (norm === 'LOST' || norm === 'CANCELLED' || norm === 'DROPPED' || norm === 'NOT_INTERESTED') {
-      return <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#FFE4E6', color: '#9F1239', fontWeight: 700, fontSize: '0.74rem' }}>Not Interested</span>;
-    }
-    return (
-      <span style={{ display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '999px', backgroundColor: '#F1F5F9', color: '#334155', fontWeight: 700, fontSize: '0.74rem' }}>
-        {status || 'New Lead'}
-      </span>
-    );
-  };
-
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F8FAFC' }}>
-      {/* Sleek Top Mini-Header for Portal Status */}
+      {/* Top Header */}
       <header style={{ backgroundColor: '#0F172A', color: '#F8FAFC', padding: '0.65rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', borderBottom: '1px solid #1E293B' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#38BDF8' }}></span>
-          <span style={{ fontWeight: 700, letterSpacing: '0.03em' }}>TuitionForHome • Counselor & Operations Portal</span>
+          <span style={{ fontWeight: 700, letterSpacing: '0.03em' }}>TuitionForHome • Counselor Calling &amp; Allocation Desk</span>
           <span style={{ color: '#64748B' }}>|</span>
           <span style={{ color: '#94A3B8' }}>SSSAM Academy Gurugram</span>
         </div>
@@ -470,7 +391,7 @@ export default function CounselorPortal() {
             Current Desk: <strong style={{ color: '#38BDF8' }}>{currentOperator}</strong>
           </span>
           <a href="/" target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8', fontWeight: 600, textDecoration: 'none', fontSize: '0.78rem' }}>
-            View Public Site ↗
+            Public Site ↗
           </a>
         </div>
       </header>
@@ -499,44 +420,52 @@ export default function CounselorPortal() {
               <div>
                 <div className="badge badge-emerald" style={{ marginBottom: '0.4rem', fontSize: '0.72rem' }}>
                   <ShieldCheck size={13} />
-                  <span>COUNSELOR DESK</span>
+                  <span>COUNSELOR WORKSTATION</span>
                 </div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                   Operations Hub
                 </h3>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  Calling & Lead Allocations
+                  Calling &amp; Allocation Suite
                 </div>
               </div>
 
-              {/* Active Desk Selector */}
+              {/* Active Operator Switcher */}
               <div style={{ padding: '0.85rem', backgroundColor: 'var(--bg-app)', borderRadius: '12px', border: '1px solid var(--border-hairline)' }}>
                 <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-                  Operator Desk
+                  Active Counselor Desk
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <User size={15} color="var(--brand-teal)" />
                   <select
                     value={currentOperator}
                     onChange={(e) => setCurrentOperator(e.target.value)}
-                    className="form-control form-control-sm"
-                    style={{ fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px', border: '1px solid #CBD5E1' }}
+                    style={{
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      fontWeight: 700,
+                      color: 'var(--text-main)',
+                      fontSize: '0.84rem',
+                      outline: 'none',
+                      cursor: 'pointer',
+                      width: '100%',
+                    }}
                   >
-                    <option value="Counselor Pooja">Pooja (Senior Telecaller)</option>
-                    <option value="Counselor Amit">Amit (Admission Specialist)</option>
-                    <option value="Counselor Rahul">Rahul (Academic Lead)</option>
-                    <option value="Admin Team">Admin Team (Super Desk)</option>
+                    <option value="Counselor Pooja">Pooja (Sr. Counselor)</option>
+                    <option value="Counselor Amit">Amit (Admission Desk)</option>
+                    <option value="Counselor Sneha">Sneha (Parent Relations)</option>
+                    <option value="Counselor Rahul">Rahul (Tutor Dispatch)</option>
                   </select>
                 </div>
               </div>
 
-              {/* Navigation Menu */}
-              <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              {/* Navigation Menu (4 Pure Operational Desks) */}
+              <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem', paddingLeft: '0.5rem' }}>
-                  Navigation Desk
+                  Operational Desks
                 </div>
 
-                {/* Nav 1: Shared Leads */}
+                {/* Nav 1: Calling Lead Desk */}
                 <button
                   type="button"
                   onClick={() => setActiveTab('LEADS')}
@@ -549,8 +478,8 @@ export default function CounselorPortal() {
                     borderRadius: '10px',
                     border: 'none',
                     outline: 'none',
-                    boxShadow: activeTab === 'LEADS' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
-                    backgroundColor: activeTab === 'LEADS' ? '#6366F1' : 'transparent',
+                    boxShadow: activeTab === 'LEADS' ? '0 4px 12px rgba(14, 165, 233, 0.25)' : 'none',
+                    backgroundColor: activeTab === 'LEADS' ? '#0EA5E9' : 'transparent',
                     color: activeTab === 'LEADS' ? '#FFFFFF' : '#334155',
                     fontWeight: 700,
                     fontSize: '0.84rem',
@@ -560,8 +489,8 @@ export default function CounselorPortal() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <Phone size={16} color={activeTab === 'LEADS' ? '#FFFFFF' : '#10B981'} />
-                    <span>Shared Leads Desk</span>
+                    <Phone size={16} color={activeTab === 'LEADS' ? '#FFFFFF' : '#0EA5E9'} />
+                    <span>Calling Lead Desk</span>
                   </div>
                   <span
                     style={{
@@ -569,15 +498,15 @@ export default function CounselorPortal() {
                       fontWeight: 800,
                       padding: '1px 6px',
                       borderRadius: '6px',
-                      backgroundColor: activeTab === 'LEADS' ? 'rgba(255,255,255,0.25)' : '#DCFCE7',
-                      color: activeTab === 'LEADS' ? '#FFFFFF' : '#166534',
+                      backgroundColor: activeTab === 'LEADS' ? 'rgba(255,255,255,0.25)' : '#E0F2FE',
+                      color: activeTab === 'LEADS' ? '#FFFFFF' : '#0369A1',
                     }}
                   >
                     {leads.length}
                   </span>
                 </button>
 
-                {/* Nav 2: Tutor Lead Allocator */}
+                {/* Nav 2: Tutor Allocator */}
                 <button
                   type="button"
                   onClick={() => setActiveTab('TUTOR_ALLOCATION')}
@@ -590,8 +519,8 @@ export default function CounselorPortal() {
                     borderRadius: '10px',
                     border: 'none',
                     outline: 'none',
-                    boxShadow: activeTab === 'TUTOR_ALLOCATION' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
-                    backgroundColor: activeTab === 'TUTOR_ALLOCATION' ? '#6366F1' : 'transparent',
+                    boxShadow: activeTab === 'TUTOR_ALLOCATION' ? '0 4px 12px rgba(245, 158, 11, 0.25)' : 'none',
+                    backgroundColor: activeTab === 'TUTOR_ALLOCATION' ? '#F59E0B' : 'transparent',
                     color: activeTab === 'TUTOR_ALLOCATION' ? '#FFFFFF' : '#334155',
                     fontWeight: 700,
                     fontSize: '0.84rem',
@@ -618,10 +547,10 @@ export default function CounselorPortal() {
                   </span>
                 </button>
 
-                {/* Nav 3: Tutor Interviews & KYC */}
+                {/* Nav 3: Parent Directory */}
                 <button
                   type="button"
-                  onClick={() => setActiveTab('INTERVIEWS')}
+                  onClick={() => setActiveTab('PARENTS')}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -631,9 +560,9 @@ export default function CounselorPortal() {
                     borderRadius: '10px',
                     border: 'none',
                     outline: 'none',
-                    boxShadow: activeTab === 'INTERVIEWS' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
-                    backgroundColor: activeTab === 'INTERVIEWS' ? '#6366F1' : 'transparent',
-                    color: activeTab === 'INTERVIEWS' ? '#FFFFFF' : '#334155',
+                    boxShadow: activeTab === 'PARENTS' ? '0 4px 12px rgba(14, 165, 233, 0.25)' : 'none',
+                    backgroundColor: activeTab === 'PARENTS' ? '#0EA5E9' : 'transparent',
+                    color: activeTab === 'PARENTS' ? '#FFFFFF' : '#334155',
                     fontWeight: 700,
                     fontSize: '0.84rem',
                     cursor: 'pointer',
@@ -642,8 +571,8 @@ export default function CounselorPortal() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <UserCheck size={16} color={activeTab === 'INTERVIEWS' ? '#FFFFFF' : '#6366F1'} />
-                    <span>Tutor Interviews</span>
+                    <GraduationCap size={16} color={activeTab === 'PARENTS' ? '#FFFFFF' : '#0EA5E9'} />
+                    <span>Parent Directory</span>
                   </div>
                   <span
                     style={{
@@ -651,18 +580,18 @@ export default function CounselorPortal() {
                       fontWeight: 800,
                       padding: '1px 6px',
                       borderRadius: '6px',
-                      backgroundColor: activeTab === 'INTERVIEWS' ? 'rgba(255,255,255,0.25)' : '#F1F5F9',
-                      color: activeTab === 'INTERVIEWS' ? '#FFFFFF' : '#64748B',
+                      backgroundColor: activeTab === 'PARENTS' ? 'rgba(255,255,255,0.25)' : '#E0F2FE',
+                      color: activeTab === 'PARENTS' ? '#FFFFFF' : '#0369A1',
                     }}
                   >
-                    {pendingTutors.length}
+                    {leads.length}
                   </span>
                 </button>
 
-                {/* Nav 4: Commission Generator */}
+                {/* Nav 4: Coordination Desk */}
                 <button
                   type="button"
-                  onClick={() => setActiveTab('INVOICE')}
+                  onClick={() => setActiveTab('COORDINATION')}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -672,9 +601,9 @@ export default function CounselorPortal() {
                     borderRadius: '10px',
                     border: 'none',
                     outline: 'none',
-                    boxShadow: activeTab === 'INVOICE' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
-                    backgroundColor: activeTab === 'INVOICE' ? '#6366F1' : 'transparent',
-                    color: activeTab === 'INVOICE' ? '#FFFFFF' : '#334155',
+                    boxShadow: activeTab === 'COORDINATION' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
+                    backgroundColor: activeTab === 'COORDINATION' ? '#6366F1' : 'transparent',
+                    color: activeTab === 'COORDINATION' ? '#FFFFFF' : '#334155',
                     fontWeight: 700,
                     fontSize: '0.84rem',
                     cursor: 'pointer',
@@ -683,530 +612,166 @@ export default function CounselorPortal() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <QrCode size={16} color={activeTab === 'INVOICE' ? '#FFFFFF' : '#10B981'} />
-                    <span>Commission Generator</span>
+                    <Users size={16} color={activeTab === 'COORDINATION' ? '#FFFFFF' : '#6366F1'} />
+                    <span>Coordination</span>
                   </div>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      padding: '1px 6px',
+                      borderRadius: '6px',
+                      backgroundColor: activeTab === 'COORDINATION' ? 'rgba(255,255,255,0.25)' : '#E0F2FE',
+                      color: activeTab === 'COORDINATION' ? '#FFFFFF' : '#0369A1',
+                    }}
+                  >
+                    {leads.filter(l => Boolean(l.assignedTutor) || l.status === 'DEMO_SCHEDULED' || l.status === 'TUITION_CONFIRMED').length}
+                  </span>
                 </button>
               </nav>
+
+              {/* Quick Daily Target Summary */}
+              <div style={{ marginTop: 'auto', padding: '1rem', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                  Daily Calling Target
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.78rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#64748B' }}>Today's Due:</span>
+                    <strong style={{ color: '#0F172A' }}>{filterCounts.TODAY} Calls</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#64748B' }}>Overdue:</span>
+                    <strong style={{ color: '#DC2626' }}>{filterCounts.OVERDUE} Calls</strong>
+                  </div>
+                </div>
+              </div>
             </aside>
 
             {/* RIGHT MAIN CONTENT VIEWPORT */}
             <section style={{ minWidth: 0 }}>
               {/* Dynamic Header */}
-              <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                  {activeTab === 'LEADS' && 'Calling Lead Desk & Parent CRM'}
+                  {activeTab === 'TUTOR_ALLOCATION' && 'Tutor Directory & Lead Allocator'}
+                  {activeTab === 'PARENTS' && 'Parent & Student Master Directory'}
+                  {activeTab === 'COORDINATION' && 'Tutor-Parent Coordination Desk'}
+                </h1>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', margin: 0 }}>
+                  {activeTab === 'LEADS' && 'Follow up on fresh parent inquiries, log mandatory call remarks, and match tutors.'}
+                  {activeTab === 'TUTOR_ALLOCATION' && 'Search 1,000+ verified educators, inspect intro videos, and assign to nearby students.'}
+                  {activeTab === 'PARENTS' && 'Filter and inspect registered parents, child grade levels, and assigned teachers.'}
+                  {activeTab === 'COORDINATION' && '3-way WhatsApp introductions and 1st session milestone management.'}
+                </p>
+              </div>
+
+              {/* 4 Operational Summary Counters */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                <div className="apple-card" style={{ padding: '1rem 1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>TODAY'S CALLS DUE</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', marginTop: '2px' }}>{filterCounts.TODAY}</div>
+                  <div style={{ fontSize: '0.72rem', color: '#64748B' }}>Scheduled follow-ups</div>
+                </div>
+
+                <div className="apple-card" style={{ padding: '1rem 1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #FDE68A' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#92400E', textTransform: 'uppercase' }}>DEMOS SCHEDULED</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#B45309', marginTop: '2px' }}>{filterCounts.DEMO_SCHEDULED}</div>
+                  <div style={{ fontSize: '0.72rem', color: '#92400E' }}>Awaiting 1st trial session</div>
+                </div>
+
+                <div className="apple-card" style={{ padding: '1rem 1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #DCFCE7' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#166534', textTransform: 'uppercase' }}>ACTIVE TUITIONS</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#15803D', marginTop: '2px' }}>{filterCounts.TUITION_CONFIRMED}</div>
+                  <div style={{ fontSize: '0.72rem', color: '#166534' }}>Ongoing running classes</div>
+                </div>
+
+                <div className="apple-card" style={{ padding: '1rem 1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E0F2FE' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0369A1', textTransform: 'uppercase' }}>VERIFIED EDUCATORS</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0284C7', marginTop: '2px' }}>{VERIFIED_TUTORS.length}</div>
+                  <div style={{ fontSize: '0.72rem', color: '#0369A1' }}>Ready for dispatch</div>
+                </div>
+              </div>
+
+              {/* TAB 1: CALLING LEAD DESK */}
+              {activeTab === 'LEADS' && (
                 <div>
-                  <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                    {activeTab === 'LEADS' && 'Shared Lead Follow-up & Matchmaking Desk'}
-                    {activeTab === 'TUTOR_ALLOCATION' && 'Proximity Student Lead Allocator by Tutor'}
-                    {activeTab === 'INTERVIEWS' && 'Tutor Screening & Video Evaluation'}
-                    {activeTab === 'INVOICE' && 'Tuition Confirmation & Placement Fee Generator'}
-                  </h1>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', margin: 0 }}>
-                    {activeTab === 'LEADS' && '8 operational filters with live counts, mandatory remarks, and double-call timeline.'}
-                    {activeTab === 'TUTOR_ALLOCATION' && 'Match and dispatch nearby student inquiries based on tutor travel radius.'}
-                    {activeTab === 'INTERVIEWS' && 'Review KYC documents, conduct subject interviews, and activate verified educator badge.'}
-                    {activeTab === 'INVOICE' && 'Generate 50% 1st-month placement fee invoice with instant UPI QR code.'}
-                  </p>
-                </div>
-              </div>
+                  {/* Search & Filter Toolbar */}
+                  <div className="apple-card" style={{ padding: '1rem 1.25rem', marginBottom: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid var(--border-hairline)' }}>
+                    <div style={{ position: 'relative', marginBottom: '0.85rem' }}>
+                      <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                      <input
+                        type="text"
+                        placeholder="Search lead by parent name, phone, locality, subject, or class..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="form-control"
+                        style={{ paddingLeft: '2.4rem', borderRadius: '10px', backgroundColor: '#F8FAFC', fontSize: '0.86rem', border: '1px solid var(--border-hairline)' }}
+                      />
+                    </div>
 
-          {/* TAB 1: SHARED LEADS & FOLLOW-UP TIMELINE */}
-          {activeTab === 'LEADS' && (
-            <div>
-              {/* Search & Filter Bar */}
-              <div className="apple-card" style={{ padding: '1.25rem', marginBottom: '1.5rem', backgroundColor: '#FFFFFF' }}>
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                  <div style={{ position: 'relative', flex: '1', minWidth: '280px' }}>
-                    <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                    <input
-                      type="text"
-                      placeholder="Search by Parent Name, Phone, Locality, Grade or Subject..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="form-control"
-                      style={{ paddingLeft: '2.75rem', borderRadius: '12px' }}
-                    />
-                  </div>
-
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                    Showing <strong>{filteredLeads.length}</strong> of {leads.length} total inquiries
-                  </div>
-                </div>
-
-                {/* Filter Pills (Matching User's Reference Palette) */}
-                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-                  {[
-                    { id: 'ALL', label: 'All', count: filterCounts.ALL, icon: <Grid size={12} />, bg: '#283344', text: '#FFFFFF', countBg: 'rgba(255,255,255,0.2)', border: '#1E293B' },
-                    { id: 'TODAY', label: 'Today', count: filterCounts.TODAY, icon: <CalendarClock size={12} />, bg: '#EA580C', text: '#FFFFFF', countBg: 'rgba(0,0,0,0.18)', border: '#C2410C' },
-                    { id: 'OVERDUE', label: 'Pending', count: filterCounts.OVERDUE, icon: <Clock size={12} />, bg: '#D97706', text: '#FFFFFF', countBg: 'rgba(0,0,0,0.18)', border: '#B45309' },
-                    { id: 'NEW_LEAD', label: 'New', count: filterCounts.NEW_LEAD, bg: '#F1F5F9', text: '#334155', countBg: '#E2E8F0', border: '#CBD5E1' },
-                    { id: 'CONTACTED', label: 'Contacted', count: filterCounts.CONTACTED, bg: '#FEF9C3', text: '#854D0E', countBg: '#FDE047', border: '#FACC15' },
-                    { id: 'INTERESTED', label: 'Interested', count: filterCounts.INTERESTED, bg: '#ECFCCB', text: '#3F6212', countBg: '#D9F99D', border: '#BEF264' },
-                    { id: 'DEMO_SCHEDULED', label: 'Demo Fixed', count: filterCounts.DEMO_SCHEDULED, bg: '#EDE9FE', text: '#6D28D9', countBg: '#DDD6FE', border: '#C4B5FD' },
-                    { id: 'LOST', label: 'Not Interested', count: filterCounts.LOST, bg: '#FFE4E6', text: '#9F1239', countBg: '#FECDD3', border: '#FDA4AF' },
-                  ].map((tab) => {
-                    const isActive = activeFilter === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setActiveFilter(tab.id)}
-                        style={{
-                          padding: '0.32rem 0.7rem',
-                          borderRadius: '8px',
-                          border: `1px solid ${isActive ? '#38BDF8' : tab.border}`,
-                          backgroundColor: tab.bg,
-                          color: tab.text,
-                          boxShadow: isActive ? '0 0 0 2px #38BDF8, 0 2px 8px rgba(0,0,0,0.12)' : '0 1px 2px rgba(0,0,0,0.04)',
-                          fontWeight: 700,
-                          fontSize: '0.74rem',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          transition: 'all 0.15s ease',
-                          lineHeight: 1.2,
-                          opacity: isActive ? 1 : 0.92,
-                        }}
-                      >
-                        {tab.icon && <span>{tab.icon}</span>}
-                        <span>{tab.label}</span>
-                        <span
-                          style={{
-                            padding: '1px 6px',
-                            borderRadius: '999px',
-                            backgroundColor: tab.countBg,
-                            color: tab.text,
-                            fontSize: '0.68rem',
-                            fontWeight: 800,
-                          }}
-                        >
-                          {tab.count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Leads Listing */}
-              {leadsLoading ? (
-                <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  Loading shared leads and timeline...
-                </div>
-              ) : filteredLeads.length === 0 ? (
-                <div className="apple-card" style={{ padding: '3.5rem', textAlign: 'center', backgroundColor: '#FFFFFF' }}>
-                  <FileText size={42} color="var(--text-muted)" style={{ margin: '0 auto 1rem auto' }} />
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>No Leads in this Filter</h3>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-                    Try selecting another filter or clear your search term.
-                  </p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  {filteredLeads.map((lead) => {
-                    const isExpanded = !!expandedTimelines[lead.id];
-                    const lastActivity = lead.activities?.[0];
-                    const subjects = Array.isArray(lead.subjectsNeeded)
-                      ? lead.subjectsNeeded.join(', ')
-                      : lead.subjectsNeeded.replace(/[\[\]"]/g, '');
-
-                    const hasOverdueFollowup = lead.nextFollowupDate && isOverdue(lead.nextFollowupDate);
-                    const hasTodayFollowup = lead.nextFollowupDate && isToday(lead.nextFollowupDate);
-
-                    return (
-                      <div
-                        key={lead.id}
-                        className="apple-card"
-                        style={{
-                          padding: '1.5rem',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '1rem',
-                          backgroundColor: '#FFFFFF',
-                          borderLeft: `4px solid ${
-                            lead.status === 'TUITION_CONFIRMED'
-                              ? 'var(--brand-emerald)'
-                              : lead.status === 'DEMO_SCHEDULED'
-                              ? 'var(--brand-blue)'
-                              : lead.status === 'INTERESTED'
-                              ? '#EAB308'
-                              : hasOverdueFollowup
-                              ? '#EF4444'
-                              : 'var(--border-hairline)'
-                          }`,
-                        }}
-                      >
-                        {/* Top Bar: Parent Info + Badges */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <div
-                              style={{
-                                width: '44px',
-                                height: '44px',
-                                borderRadius: '12px',
-                                backgroundColor: lead.preferredMode === 'OFFLINE_HOME' ? 'var(--brand-blue-light)' : 'var(--brand-emerald-light)',
-                                color: lead.preferredMode === 'OFFLINE_HOME' ? 'var(--brand-blue)' : 'var(--brand-emerald)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              {lead.preferredMode === 'OFFLINE_HOME' ? <Home size={22} /> : <Video size={22} />}
-                            </div>
-
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>{lead.parentName}</h3>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>[{lead.id}]</span>
-                              </div>
-                              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                📍 <strong>{lead.locality}</strong> • {lead.gradeClass} ({subjects}) • Budget: <strong style={{ color: 'var(--brand-blue)' }}>₹{lead.budgetMonthly?.toLocaleString('en-IN') || 'Negotiable'}</strong>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            {hasOverdueFollowup && (
-                              <span className="badge" style={{ backgroundColor: '#FEE2E2', color: '#DC2626', fontWeight: 800 }}>
-                                ⚠️ Overdue Callback
-                              </span>
-                            )}
-                            {hasTodayFollowup && (
-                              <span className="badge" style={{ backgroundColor: '#EFF6FF', color: '#1D4ED8', fontWeight: 800 }}>
-                                🔔 Callback Today
-                              </span>
-                            )}
-                            {getStatusBadge(lead.status)}
-                          </div>
-                        </div>
-
-                        {/* Middle: Latest Note & Collision Safety */}
-                        <div
-                          style={{
-                            backgroundColor: 'var(--bg-app)',
-                            borderRadius: '10px',
-                            padding: '0.75rem 1rem',
-                            fontSize: '0.84rem',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            flexWrap: 'wrap',
-                            gap: '0.5rem',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-main)' }}>
-                            <FileText size={15} color="var(--brand-blue)" />
-                            <strong>Latest Note:</strong>
-                            <span style={{ color: 'var(--text-muted)' }}>{lead.notes || 'No notes entered yet.'}</span>
-                          </div>
-
-                          {lastActivity && (
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                              🛡️ Last updated by <strong style={{ color: 'var(--text-main)' }}>{lastActivity.performedBy}</strong> ({new Date(lastActivity.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })})
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Action Bar */}
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '0.75rem',
-                            paddingTop: '0.75rem',
-                            borderTop: '1px solid var(--border-hairline)',
-                          }}
-                        >
-                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                            <a href={`tel:${lead.parentPhone}`} className="btn btn-secondary btn-sm">
-                              <Phone size={14} color="var(--brand-emerald)" />
-                              <span>+91 {lead.parentPhone}</span>
-                            </a>
-
-                            <a
-                              href={`https://wa.me/91${lead.parentPhone}?text=${encodeURIComponent(
-                                `Hello ${lead.parentName}, this is TuitionForHome support (SSSAM Academy). We have shortlisted top verified home tutors for ${lead.gradeClass} (${subjects}) in ${lead.locality}. When can we schedule your trial class?`
-                              )}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="btn btn-secondary btn-sm"
-                              style={{ borderColor: '#25D366' }}
-                            >
-                              <MessageSquare size={14} color="#25D366" />
-                              <span>WhatsApp</span>
-                            </a>
-
-                            <button
-                              onClick={() => setSelectedLeadForMatching(lead)}
-                              className="btn btn-emerald btn-sm"
-                              style={{ backgroundColor: 'var(--brand-teal)', color: '#FFFFFF', fontWeight: 700 }}
-                            >
-                              <Sparkles size={14} />
-                              <span>🎯 Match Proximity Tutor</span>
-                            </button>
-
-                            <button
-                              onClick={() => openUpdateModal(lead)}
-                              className="btn btn-primary btn-sm"
-                              style={{ backgroundColor: 'var(--brand-blue)' }}
-                            >
-                              <Plus size={14} />
-                              <span>Update Status & Note</span>
-                            </button>
-                          </div>
-
-                          {/* Timeline Toggle Button */}
+                    {/* Status Filter Pills */}
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      {[
+                        { id: 'ALL', label: 'All Leads', count: filterCounts.ALL },
+                        { id: 'NEW_LEAD', label: '🟡 New Leads', count: filterCounts.NEW_LEAD },
+                        { id: 'TODAY', label: '📅 Today Due', count: filterCounts.TODAY },
+                        { id: 'OVERDUE', label: '⚠️ Overdue', count: filterCounts.OVERDUE },
+                        { id: 'INTERESTED', label: '🔥 Interested', count: filterCounts.INTERESTED },
+                        { id: 'CONTACTED', label: '📞 Contacted', count: filterCounts.CONTACTED },
+                        { id: 'DEMO_SCHEDULED', label: '⏳ Demo Fixed', count: filterCounts.DEMO_SCHEDULED },
+                        { id: 'TUITION_CONFIRMED', label: '✓ Confirmed', count: filterCounts.TUITION_CONFIRMED },
+                      ].map((pill) => {
+                        const isActive = activeFilter === pill.id;
+                        return (
                           <button
+                            key={pill.id}
                             type="button"
-                            onClick={() => toggleTimeline(lead.id)}
+                            onClick={() => setActiveFilter(pill.id)}
                             style={{
-                              border: 'none',
-                              background: 'transparent',
-                              color: 'var(--brand-blue)',
+                              padding: '0.35rem 0.75rem',
+                              borderRadius: '8px',
+                              border: `1.5px solid ${isActive ? '#0F172A' : '#E2E8F0'}`,
+                              backgroundColor: isActive ? '#0F172A' : '#FFFFFF',
+                              color: isActive ? '#FFFFFF' : '#334155',
+                              fontSize: '0.78rem',
                               fontWeight: 700,
-                              fontSize: '0.82rem',
+                              cursor: 'pointer',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '0.3rem',
-                              cursor: 'pointer',
+                              gap: '0.4rem',
                             }}
                           >
-                            <History size={14} />
-                            <span>{isExpanded ? 'Hide History' : `View Timeline (${lead.activities?.length || 0})`}</span>
-                            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                            <span>{pill.label}</span>
+                            <span
+                              style={{
+                                padding: '1px 6px',
+                                borderRadius: '10px',
+                                fontSize: '0.7rem',
+                                fontWeight: 800,
+                                backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : '#F1F5F9',
+                                color: isActive ? '#FFFFFF' : '#64748B',
+                              }}
+                            >
+                              {pill.count}
+                            </span>
                           </button>
-                        </div>
-
-                        {/* Interactive Audit Timeline View */}
-                        {isExpanded && (
-                          <div
-                            style={{
-                              marginTop: '0.5rem',
-                              padding: '1.25rem',
-                              borderRadius: '12px',
-                              backgroundColor: 'var(--bg-card-subtle)',
-                              border: '1px solid var(--border-hairline)',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 800, fontSize: '0.9rem', marginBottom: '1rem', color: 'var(--text-main)' }}>
-                              <History size={16} color="var(--brand-blue)" />
-                              <span>Lead Follow-up & Activity Timeline</span>
-                            </div>
-
-                            {lead.activities && lead.activities.length > 0 ? (
-                              <div style={{ position: 'relative', paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                                {/* Vertical timeline line */}
-                                <div style={{ position: 'absolute', left: '6px', top: '8px', bottom: '8px', width: '2px', backgroundColor: 'var(--border-hairline)' }} />
-
-                                {lead.activities.map((act) => (
-                                  <div key={act.id} style={{ position: 'relative' }}>
-                                    {/* Circle dot on line */}
-                                    <div
-                                      style={{
-                                        position: 'absolute',
-                                        left: '-1.5rem',
-                                        top: '3px',
-                                        width: '14px',
-                                        height: '14px',
-                                        borderRadius: '50%',
-                                        backgroundColor: '#FFFFFF',
-                                        border: '3px solid var(--brand-blue)',
-                                      }}
-                                    />
-
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.4rem' }}>
-                                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                                        {act.performedBy}
-                                        <span style={{ marginLeft: '0.5rem', padding: '0.1rem 0.4rem', borderRadius: '4px', backgroundColor: '#E2E8F0', fontSize: '0.72rem', color: '#334155' }}>
-                                          {act.actionType}
-                                        </span>
-                                      </div>
-                                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                        {new Date(act.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
-                                      </div>
-                                    </div>
-
-                                    <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.84rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                                      {act.description}
-                                    </p>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                                No history records available for this lead yet.
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 2: TUTOR LEAD ALLOCATOR (MATCH NEARBY STUDENTS PER TUTOR) */}
-          {activeTab === 'TUTOR_ALLOCATION' && (
-            <div>
-              {/* Top Banner */}
-              <div className="apple-card" style={{ padding: '1.5rem', marginBottom: '1.5rem', backgroundColor: '#FFFFFF' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-                  <div>
-                    <div className="badge badge-emerald" style={{ marginBottom: '0.35rem' }}>
-                      <MapPin size={13} />
-                      <span>PROXIMITY STUDENT ALLOCATION DESK</span>
-                    </div>
-                    <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
-                      Assign Nearby Parent Leads by Tutor
-                    </h2>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', margin: 0 }}>
-                      Select a verified educator to view all nearby parent inquiries matching their subjects and travel radius.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Tutor Selector & Matched Leads Container */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', alignItems: 'flex-start' }}>
-                {/* Left: Tutors List */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Select Verified Tutor ({VERIFIED_TUTORS.length})
-                  </div>
-
-                  {VERIFIED_TUTORS.map((tut) => {
-                    const isSelected = selectedTutorForLeads.id === tut.id;
-                    // Count matching open leads for this tutor
-                    const matchingLeadsCount = leads.filter((l) => {
-                      const subjects = l.subjectsNeeded || '';
-                      const matchesSubject = tut.subjects.some((s) => subjects.toLowerCase().includes(s.toLowerCase()));
-                      return matchesSubject && l.status !== 'TUITION_CONFIRMED' && l.status !== 'LOST';
-                    }).length;
-
-                    return (
-                      <div
-                        key={tut.id}
-                        onClick={() => setSelectedTutorForLeads(tut)}
-                        style={{
-                          padding: '1.15rem',
-                          borderRadius: '16px',
-                          backgroundColor: isSelected ? 'var(--brand-blue-light)' : '#FFFFFF',
-                          border: `2px solid ${isSelected ? 'var(--brand-blue)' : 'var(--border-hairline)'}`,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.85rem',
-                          transition: 'all 0.15s ease',
-                          boxShadow: isSelected ? 'var(--shadow-sm)' : 'none',
-                        }}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={tut.avatarUrl}
-                          alt={tut.name}
-                          style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover' }}
-                        />
-
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>{tut.name}</h4>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#D97706' }}>⭐ {tut.rating}</span>
-                          </div>
-
-                          <div style={{ fontSize: '0.78rem', color: 'var(--brand-teal)', fontWeight: 700, marginTop: '2px' }}>
-                            {tut.highestDegree} • {tut.experienceYears} Yrs Exp
-                          </div>
-
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            📍 {tut.serviceAreas.slice(0, 2).join(', ')} (Radius: {tut.travelRadiusKm} KM)
-                          </div>
-                        </div>
-
-                        <span
-                          className="badge"
-                          style={{
-                            backgroundColor: matchingLeadsCount > 0 ? '#DCFCE7' : '#F1F5F9',
-                            color: matchingLeadsCount > 0 ? '#166534' : '#64748B',
-                            fontWeight: 800,
-                            fontSize: '0.72rem',
-                          }}
-                        >
-                          {matchingLeadsCount} Leads
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Right: Available Student Leads for Selected Tutor */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {/* Selected Tutor Spotlight Banner */}
-                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', border: '1.5px solid var(--border-hairline)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={selectedTutorForLeads.avatarUrl}
-                          alt={selectedTutorForLeads.name}
-                          style={{ width: '52px', height: '52px', borderRadius: '14px', objectFit: 'cover' }}
-                        />
-                        <div>
-                          <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
-                            {selectedTutorForLeads.name}
-                          </h3>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                            Base: <strong>{selectedTutorForLeads.serviceAreas[0]}</strong> • Travel Radius: <strong>{selectedTutorForLeads.travelRadiusKm} KM</strong> • Home Rate: <strong style={{ color: 'var(--brand-blue)' }}>₹{selectedTutorForLeads.hourlyRateHome}/hr</strong>
-                          </div>
-                        </div>
-                      </div>
-
-                      <a
-                        href={`https://wa.me/?text=${encodeURIComponent(`Hello ${selectedTutorForLeads.name}, this is SSSAM Academy / TuitionForHome Counselor desk regarding active student leads in your sector.`)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-secondary btn-sm"
-                        style={{ borderColor: '#25D366', color: '#15803D' }}
-                      >
-                        <MessageSquare size={14} color="#25D366" />
-                        <span>Chat with Tutor</span>
-                      </a>
+                        );
+                      })}
                     </div>
                   </div>
 
-                  {/* Nearby Open Parent Leads List */}
+                  {/* Leads List */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Available Student Leads for {selectedTutorForLeads.name}
-                    </div>
-
-                    {leads
-                      .filter((l) => l.status !== 'TUITION_CONFIRMED' && l.status !== 'LOST')
-                      .map((lead) => {
+                    {filteredLeads.length === 0 ? (
+                      <div className="apple-card" style={{ padding: '3rem', textAlign: 'center', color: '#64748B', backgroundColor: '#FFFFFF', borderRadius: '16px' }}>
+                        No leads found matching current filter.
+                      </div>
+                    ) : (
+                      filteredLeads.map((lead) => {
                         const subjects = Array.isArray(lead.subjectsNeeded)
                           ? lead.subjectsNeeded.join(', ')
-                          : lead.subjectsNeeded.replace(/[\[\]"]/g, '');
-
-                        const matchesSubject = selectedTutorForLeads.subjects.some((s) => subjects.toLowerCase().includes(s.toLowerCase()));
-
-                        // Calculate distance from this tutor's service areas
-                        const normLeadLoc = lead.locality.toLowerCase();
-                        let estDist = 5.2;
-                        for (const area of selectedTutorForLeads.serviceAreas) {
-                          if (normLeadLoc.includes(area.toLowerCase()) || area.toLowerCase().includes(normLeadLoc)) {
-                            estDist = 1.2;
-                            break;
-                          }
-                        }
-                        if (estDist > 2.0 && (normLeadLoc.includes('dlf') || normLeadLoc.includes('golf course'))) {
-                          estDist = 2.4;
-                        }
-
-                        const isWithinRadius = estDist <= selectedTutorForLeads.travelRadiusKm;
+                          : (lead.subjectsNeeded || '').replace(/[\[\]"]/g, '');
 
                         return (
                           <div
@@ -1215,7 +780,8 @@ export default function CounselorPortal() {
                             style={{
                               padding: '1.25rem',
                               backgroundColor: '#FFFFFF',
-                              borderLeft: `4px solid ${matchesSubject && isWithinRadius ? 'var(--brand-emerald)' : 'var(--border-hairline)'}`,
+                              borderRadius: '16px',
+                              border: '1px solid #E2E8F0',
                               display: 'flex',
                               flexDirection: 'column',
                               gap: '0.75rem',
@@ -1223,464 +789,717 @@ export default function CounselorPortal() {
                           >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
                               <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                  <h4 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}>{lead.parentName}</h4>
-                                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>[{lead.id}]</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                                    {lead.parentName}
+                                  </h3>
+                                  <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', backgroundColor: lead.status === 'TUITION_CONFIRMED' ? '#DCFCE7' : '#FEF3C7', color: lead.status === 'TUITION_CONFIRMED' ? '#166534' : '#92400E' }}>
+                                    {lead.status.replace(/_/g, ' ')}
+                                  </span>
                                 </div>
-                                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                  📍 <strong>{lead.locality}</strong> • {lead.gradeClass} ({subjects}) • Budget: <strong style={{ color: 'var(--brand-blue)' }}>₹{lead.budgetMonthly?.toLocaleString('en-IN') || 'Negotiable'}</strong>
+                                <div style={{ fontSize: '0.82rem', color: '#475569', marginTop: '3px' }}>
+                                  📚 <strong>{lead.gradeClass}</strong> ({subjects}) • 📍 {lead.locality}
                                 </div>
                               </div>
 
-                              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                                <span
-                                  className="badge"
+                              {/* Lead Action Buttons */}
+                              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                <a
+                                  href={`tel:${lead.parentPhone}`}
                                   style={{
-                                    backgroundColor: isWithinRadius ? '#DCFCE7' : '#FEF3C7',
-                                    color: isWithinRadius ? '#166534' : '#92400E',
-                                    fontWeight: 800,
-                                    fontSize: '0.75rem',
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#F8FAFC',
+                                    border: '1px solid #CBD5E1',
+                                    color: '#0F172A',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    textDecoration: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
                                   }}
                                 >
-                                  ~{estDist} KM AWAY
-                                </span>
-                                {getStatusBadge(lead.status)}
-                              </div>
-                            </div>
+                                  <Phone size={13} color="#0284C7" />
+                                  <span>{lead.parentPhone}</span>
+                                </a>
 
-                            {/* Action Buttons for Counselor */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-hairline)' }}>
-                              <div style={{ display: 'flex', gap: '0.4rem' }}>
                                 <a
                                   href={`https://wa.me/?text=${encodeURIComponent(
-                                    `*TuitionForHome (SSSAM Academy) - Student Lead Offer*\n\n` +
-                                    `Hello ${selectedTutorForLeads.name},\n` +
-                                    `We have an immediate student inquiry in *${lead.locality}* (~${estDist} KM from your sector):\n` +
-                                    `👤 *Student/Parent:* ${lead.parentName}\n` +
-                                    `📚 *Class & Subject:* ${lead.gradeClass} (${subjects})\n` +
-                                    `🎯 *Mode:* ${lead.preferredMode === 'OFFLINE_HOME' ? 'Home Visit' : 'Online Live'}\n` +
-                                    `💰 *Parent Budget:* ₹${lead.budgetMonthly || 8000}/month\n\n` +
-                                    `Please confirm if you are available to take this trial class.`
+                                    `Namaste ${lead.parentName},\n` +
+                                    `This is ${currentOperator} from SSSAM Academy regarding your home tuition requirement for ${lead.gradeClass} (${subjects}) in ${lead.locality}.\n\n` +
+                                    `When is a good time for a quick 2-minute call?`
                                   )}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="btn btn-secondary btn-sm"
-                                  style={{ borderColor: '#25D366', color: '#15803D', fontSize: '0.78rem' }}
+                                  style={{
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#F0FDF4',
+                                    border: '1px solid #86EFAC',
+                                    color: '#15803D',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    textDecoration: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                  }}
                                 >
-                                  <MessageSquare size={13} color="#25D366" />
-                                  <span>Dispatch to Tutor (WhatsApp)</span>
+                                  <MessageSquare size={13} color="#15803D" />
+                                  <span>WhatsApp</span>
                                 </a>
 
-                                <a href={`tel:${lead.parentPhone}`} className="btn btn-secondary btn-sm" style={{ fontSize: '0.78rem' }}>
-                                  <Phone size={13} color="var(--brand-emerald)" />
-                                  <span>Call Parent</span>
-                                </a>
+                                <button
+                                  type="button"
+                                  onClick={() => openUpdateModal(lead)}
+                                  style={{
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#0F172A',
+                                    color: '#FFFFFF',
+                                    border: 'none',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                  }}
+                                >
+                                  <Clock size={13} />
+                                  <span>Log Follow-up</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedLeadForMatching(lead)}
+                                  style={{
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#0284C7',
+                                    color: '#FFFFFF',
+                                    border: 'none',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                    boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)',
+                                  }}
+                                >
+                                  <MapPin size={13} />
+                                  <span>Match Tutor</span>
+                                </button>
                               </div>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedLeadForMatching(lead);
-                                }}
-                                className="btn btn-primary btn-sm"
-                                style={{ backgroundColor: 'var(--brand-blue)', fontSize: '0.78rem' }}
-                              >
-                                <CheckCircle2 size={13} />
-                                <span>Assign to this Tutor</span>
-                              </button>
                             </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
-          {/* TAB 3: TUTOR INTERVIEWS */}
-          {activeTab === 'INTERVIEWS' && (
-            <div>
-              {pendingTutors.length > 0 ? (
-                pendingTutors.map((tutor) => (
-                  <div key={tutor.id} className="apple-card" style={{ padding: '2rem', marginBottom: '1.5rem', backgroundColor: '#FFFFFF' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', alignItems: 'flex-start' }}>
-                      <div>
-                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={tutor.avatarUrl} alt={tutor.name} style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }} />
-                          <div>
-                            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{tutor.name}</h3>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--brand-teal)', fontWeight: 700 }}>
-                              {tutor.highestDegree} • {tutor.experienceYears} Yrs Exp
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                              📞 Mobile: {tutor.phone} | ✉️ {tutor.email}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem', lineHeight: 1.6 }}>
-                          <div style={{ marginBottom: '0.4rem' }}>
-                            <strong>Subjects:</strong> {Array.isArray(tutor.subjects) ? tutor.subjects.join(', ') : 'Not Specified'}
-                          </div>
-                          <div style={{ marginBottom: '0.4rem' }}>
-                            <strong>Classes:</strong> {Array.isArray(tutor.classes) ? tutor.classes.join(', ') : 'Not Specified'}
-                          </div>
-                          <div style={{ marginBottom: '0.4rem' }}>
-                            <strong>Gurgaon Sectors:</strong> {Array.isArray(tutor.serviceAreas) ? tutor.serviceAreas.join(', ') : 'Not Specified'} (Radius: {tutor.travelRadiusKm} KM)
-                          </div>
-                          <div>
-                            <strong>Hourly Rates Range:</strong>
-                            <ul style={{ paddingLeft: '1.25rem', marginTop: '0.2rem' }}>
-                              <li>Home Visit: ₹{tutor.hourlyRateHomeMin} - ₹{tutor.hourlyRateHomeMax}/hr</li>
-                              <li>Online 1-on-1: ₹{tutor.hourlyRateOnlineMin} - ₹{tutor.hourlyRateOnlineMax}/hr</li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        {tutor.introVideoUrl && (
-                          <a
-                            href={tutor.introVideoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              padding: '0.85rem',
-                              backgroundColor: 'var(--brand-teal-light)',
-                              borderRadius: '12px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              color: 'var(--brand-teal)',
-                              fontWeight: 700,
-                              fontSize: '0.85rem',
-                            }}
-                          >
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                              <Play size={15} fill="var(--brand-teal)" />
-                              <span>Watch 60s Video Intro Submission</span>
-                            </span>
-                            <span style={{ fontSize: '0.75rem' }}>View Video ↗</span>
-                          </a>
-                        )}
-                      </div>
-
-                      {/* Scorecard */}
-                      <div
-                        style={{
-                          backgroundColor: 'var(--bg-card-subtle)',
-                          border: '1px solid var(--border-hairline)',
-                          borderRadius: '16px',
-                          padding: '1.5rem',
-                        }}
-                      >
-                        <h4 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--text-main)' }}>
-                          Academic Interview Scorecard
-                        </h4>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Communication:</span>
-                            <strong style={{ color: 'var(--brand-emerald)' }}>9 / 10 (Clear)</strong>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Subject Conceptual Depth:</span>
-                            <strong style={{ color: 'var(--brand-emerald)' }}>High (Verified)</strong>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'column', gap: '0.2rem', padding: '0.5rem 0', borderTop: '1px solid var(--border-hairline)' }}>
-                            <span style={{ fontWeight: 700 }}>Government Verification (KYC):</span>
-                            <div>ID Type: <strong>{tutor.kycDoc ? tutor.kycDoc.idType : 'N/A'}</strong></div>
-                            <div>Full ID Number (Decrypted): <strong style={{ color: 'var(--brand-teal)' }}>{tutor.kycDoc ? tutor.kycDoc.idNumberDecrypted : 'N/A'}</strong></div>
-
-                            {tutor.kycDoc?.idDocUrl && (
-                              <a
-                                href={tutor.kycDoc.idDocUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.25rem',
-                                  color: 'var(--brand-teal)',
-                                  textDecoration: 'underline',
-                                  fontWeight: 700,
-                                  fontSize: '0.8rem',
-                                  marginTop: '0.25rem',
-                                }}
-                              >
-                                👁️ View Secure Uploaded ID Document ↗
-                              </a>
+                            {/* Assigned Tutor Status Strip */}
+                            {lead.assignedTutor && (
+                              <div style={{ padding: '0.5rem 0.75rem', backgroundColor: '#F0F9FF', borderRadius: '8px', border: '1px solid #BAE6FD', fontSize: '0.78rem', color: '#0369A1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span>👨‍🏫 Assigned Educator: <strong>{lead.assignedTutor}</strong></span>
+                                <span style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                                  {new Date(lead.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                </span>
+                              </div>
                             )}
                           </div>
-                        </div>
-
-                        <button
-                          onClick={() => handleApproveTutor(tutor.id)}
-                          className="btn btn-emerald"
-                          style={{ width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-teal)' }}
-                        >
-                          <CheckCircle2 size={16} />
-                          <span>Approve & Activate Badge</span>
-                        </button>
-                      </div>
-                    </div>
+                        );
+                      })
+                    )}
                   </div>
-                ))
-              ) : (
-                <div style={{ padding: '4rem', textAlign: 'center', backgroundColor: '#FFFFFF', borderRadius: '20px' }}>
-                  <CheckCircle2 size={48} color="var(--brand-teal)" style={{ margin: '0 auto 1rem auto' }} />
-                  <h3 style={{ fontSize: '1.35rem', fontWeight: 800 }}>All Tutor Interviews Cleared!</h3>
-                  <p style={{ color: 'var(--text-muted)' }}>No pending tutors in the interview queue.</p>
                 </div>
               )}
-            </div>
-          )}
 
-          {/* TAB 3: COMMISSION INVOICE */}
-          {activeTab === 'INVOICE' && (
-            <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-              <div className="apple-card" style={{ padding: '2.5rem', backgroundColor: '#FFFFFF' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-hairline)', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
+              {/* TAB 2: TUTOR ALLOCATION (1,000+ CAPACITY TABLE VIEW) */}
+              {activeTab === 'TUTOR_ALLOCATION' && (() => {
+                const filteredTutors = VERIFIED_TUTORS.filter((tut) => {
+                  if (tutorSubjectFilter !== 'ALL' && !tut.subjects.some((s) => s.toLowerCase().includes(tutorSubjectFilter.toLowerCase()))) return false;
+                  if (tutorLocalityFilter !== 'ALL' && !tut.serviceAreas.some((a) => a.toLowerCase().includes(tutorLocalityFilter.toLowerCase()))) return false;
+
+                  if (tutorSearch.trim()) {
+                    const q = tutorSearch.toLowerCase();
+                    const matches =
+                      tut.name.toLowerCase().includes(q) ||
+                      tut.highestDegree.toLowerCase().includes(q) ||
+                      tut.subjects.some((s) => s.toLowerCase().includes(q)) ||
+                      tut.serviceAreas.some((a) => a.toLowerCase().includes(q));
+                    if (!matches) return false;
+                  }
+                  return true;
+                });
+
+                const totalTutorPages = Math.ceil(filteredTutors.length / tutorsPerPage) || 1;
+                const tutorStartIndex = (tutorCurrentPage - 1) * tutorsPerPage;
+                const tutorEndIndex = Math.min(tutorStartIndex + tutorsPerPage, filteredTutors.length);
+                const paginatedTutors = filteredTutors.slice(tutorStartIndex, tutorEndIndex);
+
+                return (
                   <div>
-                    <h3 style={{ fontSize: '1.35rem', fontWeight: 800 }}>1st-Month Bureau Fee Invoice</h3>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Issued by SSSAM Academy Gurugram</div>
-                  </div>
-                  <span className="badge badge-emerald">TUITION CONFIRMED</span>
-                </div>
+                    {/* Filter Toolbar */}
+                    <div className="apple-card" style={{ padding: '1.25rem', marginBottom: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid var(--border-hairline)' }}>
+                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                        <div style={{ position: 'relative', flex: '1', minWidth: '260px' }}>
+                          <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                          <input
+                            type="text"
+                            placeholder="Search tutors by name, qualification, subject, or sector..."
+                            value={tutorSearch}
+                            onChange={(e) => {
+                              setTutorSearch(e.target.value);
+                              setTutorCurrentPage(1);
+                            }}
+                            className="form-control"
+                            style={{ paddingLeft: '2.4rem', borderRadius: '10px', backgroundColor: '#F8FAFC', fontSize: '0.86rem', border: '1px solid var(--border-hairline)' }}
+                          />
+                        </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.75rem', fontSize: '0.9rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Student & Parent:</span>
-                    <strong>{leads[2]?.parentName || 'Sanjay Singhania'} ({leads[2]?.locality || 'Sector 54'})</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Subject / Grade:</span>
-                    <strong>{leads[2]?.gradeClass || 'IB Maths HL'}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Assigned Tutor:</span>
-                    <strong>Rohit Sharma</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.75rem', borderTop: '1px dashed var(--border-hairline)' }}>
-                    <span style={{ fontSize: '1.1rem', fontWeight: 800 }}>Bureau 50% Placement Fee:</span>
-                    <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--brand-blue)' }}>
-                      ₹{leads[2]?.commissionAmount?.toLocaleString('en-IN') || '7,500'}
-                    </span>
-                  </div>
-                </div>
+                        <div style={{ minWidth: '180px' }}>
+                          <select
+                            value={tutorSubjectFilter}
+                            onChange={(e) => {
+                              setTutorSubjectFilter(e.target.value);
+                              setTutorCurrentPage(1);
+                            }}
+                            className="form-control"
+                            style={{ borderRadius: '10px', backgroundColor: '#F8FAFC', fontSize: '0.86rem', border: '1px solid var(--border-hairline)' }}
+                          >
+                            <option value="ALL">All Subjects</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Physics">Physics</option>
+                            <option value="Chemistry">Chemistry</option>
+                            <option value="Biology">Biology / NEET</option>
+                            <option value="Coding">Coding &amp; AI</option>
+                            <option value="Commerce">Commerce &amp; Accounts</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
 
-                <div
-                  style={{
-                    backgroundColor: 'var(--bg-card-subtle)',
-                    border: '1.5px solid var(--border-hairline)',
-                    borderRadius: '16px',
-                    padding: '1.5rem',
-                    textAlign: 'center',
-                    marginBottom: '1.75rem',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '140px',
-                      height: '140px',
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid var(--border-hairline)',
-                      borderRadius: '12px',
-                      margin: '0 auto 1rem auto',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text-main)',
-                    }}
-                  >
-                    <QrCode size={90} />
+                    {/* Tutor Table View */}
+                    <div className="desktop-only-table apple-card" style={{ padding: 0, overflow: 'hidden', backgroundColor: '#FFFFFF', borderRadius: '18px', border: '1px solid var(--border-hairline)', marginBottom: '1.25rem' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+                        <thead>
+                          <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                            <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Tutor &amp; Degree</th>
+                            <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Subjects</th>
+                            <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Service Areas</th>
+                            <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Experience &amp; Rating</th>
+                            <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase', textAlign: 'right' }}>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paginatedTutors.map((tut) => (
+                            <tr
+                              key={tut.id}
+                              style={{ borderBottom: '1px solid #F1F5F9', cursor: 'pointer' }}
+                              onClick={() => {
+                                setActiveTutor360(tut);
+                                setActiveTutor360Tab('LEADS');
+                              }}
+                            >
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.9rem' }}>{tut.name}</div>
+                                <div style={{ fontSize: '0.74rem', color: '#64748B' }}>🎓 {tut.highestDegree}</div>
+                              </td>
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <div style={{ fontWeight: 700, color: '#0284C7' }}>{tut.subjects.join(', ')}</div>
+                              </td>
+                              <td style={{ padding: '0.85rem 1rem', fontSize: '0.78rem', color: '#334155' }}>
+                                📍 {tut.serviceAreas.join(', ')} ({tut.travelRadiusKm} km radius)
+                              </td>
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <div style={{ fontWeight: 700, color: '#0F172A' }}>{tut.experienceYears} yrs exp</div>
+                                <div style={{ fontSize: '0.72rem', color: '#D97706', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                  <Star size={11} fill="#D97706" /> {tut.rating} rating
+                                </div>
+                              </td>
+                              <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveTutor360(tut);
+                                    setActiveTutor360Tab('LEADS');
+                                  }}
+                                  style={{
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#0F172A',
+                                    color: '#FFFFFF',
+                                    border: 'none',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                  }}
+                                >
+                                  <Eye size={12} />
+                                  <span>Tutor 360°</span>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                    Scan & Pay via UPI / GPay / PhonePe / Paytm
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    UPI ID: <strong>sssamacademy@okaxis</strong>
-                  </div>
-                </div>
+                );
+              })()}
 
-                <a
-                  href={`https://wa.me/?text=${encodeURIComponent(
-                    `*TuitionForHome (SSSAM Academy) - Commission Invoice*\nParent: ${leads[2]?.parentName || 'Sanjay Singhania'}\nGrade: ${leads[2]?.gradeClass || 'IB Maths'}\nAmount: ₹${leads[2]?.commissionAmount || '7,500'}\nUPI ID: sssamacademy@okaxis\nPlease clear within 48 hours to maintain your Verified Tutor Pro Badge.`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-primary"
-                  style={{ width: '100%', justifyContent: 'center' }}
-                >
-                  <MessageSquare size={16} />
-                  <span>Send WhatsApp Invoice to Tutor</span>
-                </a>
-              </div>
-            </div>
-          )}
+              {/* TAB 3: PARENT DIRECTORY */}
+              {activeTab === 'PARENTS' && (() => {
+                const filteredParents = leads.filter((lead) => {
+                  if (parentStatusFilter === 'ACTIVE_TUITION' && lead.status !== 'TUITION_CONFIRMED') return false;
+                  if (parentStatusFilter === 'DEMO_DUE' && lead.status !== 'DEMO_SCHEDULED') return false;
+                  if (parentStatusFilter === 'ENQUIRY_OPEN' && (lead.status === 'TUITION_CONFIRMED' || lead.status === 'DEMO_SCHEDULED')) return false;
+
+                  if (parentGradeFilter !== 'ALL') {
+                    const g = (lead.gradeClass || '').toLowerCase();
+                    if (parentGradeFilter === 'CLASS_1_5' && !g.match(/class\s*[1-5]|grade\s*[1-5]|kg|primary/i)) return false;
+                    if (parentGradeFilter === 'CLASS_6_8' && !g.match(/class\s*[6-8]|grade\s*[6-8]|middle/i)) return false;
+                    if (parentGradeFilter === 'CLASS_9_10' && !g.match(/class\s*(9|10)|grade\s*(9|10)|10th|9th/i)) return false;
+                    if (parentGradeFilter === 'CLASS_11_12' && !g.match(/class\s*(11|12)|grade\s*(11|12)|11th|12th/i)) return false;
+                  }
+
+                  if (parentSearchText.trim()) {
+                    const q = parentSearchText.toLowerCase();
+                    const matches =
+                      lead.parentName.toLowerCase().includes(q) ||
+                      lead.parentPhone.includes(q) ||
+                      lead.locality.toLowerCase().includes(q) ||
+                      lead.gradeClass.toLowerCase().includes(q);
+                    if (!matches) return false;
+                  }
+                  return true;
+                });
+
+                return (
+                  <div>
+                    {/* Parent Filter Toolbar */}
+                    <div className="apple-card" style={{ padding: '1.25rem', marginBottom: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid var(--border-hairline)' }}>
+                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                        <div style={{ position: 'relative', flex: '1', minWidth: '260px' }}>
+                          <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                          <input
+                            type="text"
+                            placeholder="Search parents by name, phone, grade, or sector..."
+                            value={parentSearchText}
+                            onChange={(e) => setParentSearchText(e.target.value)}
+                            className="form-control"
+                            style={{ paddingLeft: '2.4rem', borderRadius: '10px', backgroundColor: '#F8FAFC', fontSize: '0.86rem', border: '1px solid var(--border-hairline)' }}
+                          />
+                        </div>
+
+                        <div style={{ minWidth: '180px' }}>
+                          <select
+                            value={parentGradeFilter}
+                            onChange={(e) => setParentGradeFilter(e.target.value)}
+                            className="form-control"
+                            style={{ borderRadius: '10px', backgroundColor: '#F8FAFC', fontSize: '0.86rem', border: '1px solid var(--border-hairline)' }}
+                          >
+                            <option value="ALL">All Grade Levels</option>
+                            <option value="CLASS_1_5">Class 1 – 5 (Primary)</option>
+                            <option value="CLASS_6_8">Class 6 – 8 (Middle)</option>
+                            <option value="CLASS_9_10">Class 9 – 10 (Secondary)</option>
+                            <option value="CLASS_11_12">Class 11 – 12 (Sr Secondary)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Parents Table View */}
+                    <div className="desktop-only-table apple-card" style={{ padding: 0, overflow: 'hidden', backgroundColor: '#FFFFFF', borderRadius: '18px', border: '1px solid var(--border-hairline)', marginBottom: '1.25rem' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+                        <thead>
+                          <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                            <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Parent &amp; Contact</th>
+                            <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Grade &amp; Subjects</th>
+                            <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Locality</th>
+                            <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase' }}>Assigned Educator</th>
+                            <th style={{ padding: '0.85rem 1rem', color: '#475569', fontWeight: 800, fontSize: '0.74rem', textTransform: 'uppercase', textAlign: 'right' }}>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredParents.map((lead) => (
+                            <tr
+                              key={lead.id}
+                              style={{ borderBottom: '1px solid #F1F5F9', cursor: 'pointer' }}
+                              onClick={() => {
+                                setActiveParent360(lead);
+                                setActiveParent360Tab('OVERVIEW');
+                              }}
+                            >
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.9rem' }}>{lead.parentName}</div>
+                                <div style={{ fontSize: '0.76rem', color: '#64748B' }}>📞 {lead.parentPhone}</div>
+                              </td>
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                <div style={{ fontWeight: 700, color: '#334155' }}>{lead.gradeClass}</div>
+                              </td>
+                              <td style={{ padding: '0.85rem 1rem', fontSize: '0.8rem', color: '#0F172A' }}>
+                                📍 {lead.locality}
+                              </td>
+                              <td style={{ padding: '0.85rem 1rem' }}>
+                                {lead.assignedTutor ? (
+                                  <span style={{ fontWeight: 700, color: '#0369A1' }}>👨‍🏫 {lead.assignedTutor}</span>
+                                ) : (
+                                  <span style={{ color: '#94A3B8' }}>⏳ Unassigned</span>
+                                )}
+                              </td>
+                              <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveParent360(lead);
+                                    setActiveParent360Tab('OVERVIEW');
+                                  }}
+                                  style={{
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#0EA5E9',
+                                    color: '#FFFFFF',
+                                    border: 'none',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                  }}
+                                >
+                                  <Eye size={12} />
+                                  <span>Parent 360°</span>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* TAB 4: COORDINATION DESK */}
+              {activeTab === 'COORDINATION' && (() => {
+                const assignedPairs = leads.filter(
+                  (l) => Boolean(l.assignedTutor) || l.status === 'DEMO_SCHEDULED' || l.status === 'TUITION_CONFIRMED'
+                );
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {assignedPairs.map((lead) => (
+                        <div
+                          key={lead.id}
+                          className="apple-card"
+                          style={{
+                            padding: '1.25rem',
+                            backgroundColor: '#FFFFFF',
+                            borderRadius: '16px',
+                            border: '1px solid #E2E8F0',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            <div>
+                              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#6366F1', textTransform: 'uppercase' }}>
+                                Active Coordination Pair
+                              </div>
+                              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: '2px 0 0 0' }}>
+                                {lead.parentName} ⟷ {lead.assignedTutor || 'Assigned Tutor'}
+                              </h3>
+                              <div style={{ fontSize: '0.8rem', color: '#64748B' }}>
+                                {lead.gradeClass} • 📍 {lead.locality}
+                              </div>
+                            </div>
+
+                            {/* 3-Way WhatsApp Intro Action */}
+                            <a
+                              href={`https://wa.me/?text=${encodeURIComponent(
+                                `*SSSAM Academy - 3-Way Tuition Coordination Introduction*\n\n` +
+                                `Namaste ${lead.parentName} and ${lead.assignedTutor || 'Educator'},\n` +
+                                `This is ${currentOperator} from SSSAM Academy connecting you both for *${lead.gradeClass}* classes in *${lead.locality}*.\n\n` +
+                                `Kindly connect to coordinate the exact class schedule and timings.\n\n` +
+                                `Best regards,\nSSSAM Academy Coordination Desk`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                padding: '0.5rem 1rem',
+                                borderRadius: '10px',
+                                backgroundColor: '#10B981',
+                                color: '#FFFFFF',
+                                fontSize: '0.82rem',
+                                fontWeight: 800,
+                                textDecoration: 'none',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+                              }}
+                            >
+                              <MessageSquare size={15} />
+                              <span>🤝 Send 3-Way WhatsApp Intro</span>
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </section>
           </div>
         </div>
       </main>
 
-      {/* COMPACT & CLEAN UPDATE FOLLOW-UP MODAL (COUNSELOR) */}
-      {selectedLeadForUpdate && (
+      {/* TUTOR 360° RIGHT SLIDE-OVER DRAWER */}
+      {activeTutor360 && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
             backgroundColor: 'rgba(15, 23, 42, 0.45)',
-            zIndex: 1000,
+            backdropFilter: 'blur(3px)',
+            zIndex: 1150,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            animation: 'fadeIn 0.2s ease',
+          }}
+          onClick={() => setActiveTutor360(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '540px',
+              height: '100vh',
+              backgroundColor: '#FFFFFF',
+              boxShadow: '-8px 0 35px rgba(0,0,0,0.18)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflowY: 'auto',
+            }}
+          >
+            {/* Header */}
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>{activeTutor360.name}</h3>
+                <div style={{ fontSize: '0.8rem', color: '#64748B' }}>🎓 {activeTutor360.highestDegree}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTutor360(null)}
+                style={{ border: 'none', background: '#F1F5F9', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ padding: '1rem', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                  Teaching Specialty &amp; Radius
+                </div>
+                <div style={{ fontWeight: 700, color: '#0284C7' }}>{activeTutor360.subjects.join(', ')}</div>
+                <div style={{ fontSize: '0.78rem', color: '#475569', marginTop: '2px' }}>
+                  📍 {activeTutor360.serviceAreas.join(', ')} ({activeTutor360.travelRadiusKm} km travel radius)
+                </div>
+              </div>
+
+              {/* Bio & Video Intro */}
+              <div style={{ padding: '1rem', backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                  Educator Profile Bio
+                </div>
+                <p style={{ fontSize: '0.84rem', color: '#334155', lineHeight: 1.5, margin: 0 }}>
+                  {activeTutor360.bio}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PARENT 360° RIGHT SLIDE-OVER DRAWER */}
+      {activeParent360 && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 1150,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            animation: 'fadeIn 0.2s ease',
+          }}
+          onClick={() => setActiveParent360(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '540px',
+              height: '100vh',
+              backgroundColor: '#FFFFFF',
+              boxShadow: '-8px 0 35px rgba(0,0,0,0.18)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflowY: 'auto',
+            }}
+          >
+            {/* Header */}
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>{activeParent360.parentName}</h3>
+                <div style={{ fontSize: '0.8rem', color: '#64748B' }}>📚 {activeParent360.gradeClass} • 📍 {activeParent360.locality}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveParent360(null)}
+                style={{ border: 'none', background: '#F1F5F9', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ padding: '1rem', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                  Student Requirements
+                </div>
+                <div style={{ fontWeight: 800, color: '#0F172A' }}>{activeParent360.gradeClass}</div>
+                <div style={{ fontSize: '0.82rem', color: '#0369A1', marginTop: '2px' }}>
+                  {Array.isArray(activeParent360.subjectsNeeded)
+                    ? activeParent360.subjectsNeeded.join(', ')
+                    : (activeParent360.subjectsNeeded || '').replace(/[\[\]"]/g, '')}
+                </div>
+              </div>
+
+              {activeParent360.assignedTutor && (
+                <div style={{ padding: '1rem', backgroundColor: '#F0FDF4', borderRadius: '12px', border: '1px solid #BBF7D0' }}>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#15803D', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                    Assigned Educator
+                  </div>
+                  <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '1.05rem' }}>{activeParent360.assignedTutor}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FOLLOW-UP NOTE MODAL */}
+      {selectedLeadForUpdate && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.55)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 1200,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             padding: '1rem',
-            backdropFilter: 'blur(2px)',
           }}
+          onClick={() => setSelectedLeadForUpdate(null)}
         >
           <div
+            className="apple-card"
+            onClick={(e) => e.stopPropagation()}
             style={{
               width: '100%',
-              maxWidth: '430px',
+              maxWidth: '480px',
               backgroundColor: '#FFFFFF',
-              padding: '1.25rem 1.5rem',
-              borderRadius: '16px',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
-              border: '1px solid #E2E8F0',
+              borderRadius: '20px',
+              padding: '1.75rem',
+              boxShadow: '0 20px 45px rgba(0,0,0,0.2)',
             }}
           >
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
-                  Update Follow-up
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
+                  Log Call Remarks &amp; Next Action
                 </h3>
-                <div style={{ fontSize: '0.76rem', color: '#64748B', marginTop: '2px' }}>
-                  Student: <strong>{selectedLeadForUpdate.parentName}</strong> ({selectedLeadForUpdate.locality})
+                <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '2px' }}>
+                  {selectedLeadForUpdate.parentName} ({selectedLeadForUpdate.parentPhone})
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedLeadForUpdate(null)}
-                style={{ border: 'none', background: '#F1F5F9', borderRadius: '6px', width: '26px', height: '26px', fontSize: '0.9rem', cursor: 'pointer', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ border: 'none', background: '#F1F5F9', borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer' }}
               >
-                ✕
+                <X size={15} color="#64748B" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveFollowup} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-              {/* Status Selector */}
+            <form onSubmit={handleSaveFollowup} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {noteError && (
+                <div style={{ padding: '0.65rem', backgroundColor: '#FEE2E2', color: '#DC2626', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700 }}>
+                  {noteError}
+                </div>
+              )}
+
               <div>
-                <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
-                  Lead Status
+                <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Call Disposition Status
                 </label>
                 <select
                   value={updateStatus}
                   onChange={(e) => setUpdateStatus(e.target.value)}
                   className="form-control"
-                  style={{ fontWeight: 600, fontSize: '0.82rem', padding: '0.42rem 0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1' }}
+                  style={{ borderRadius: '10px', fontSize: '0.85rem' }}
                 >
-                  <option value="CONTACTED">Contacted</option>
-                  <option value="INTERESTED">Interested</option>
-                  <option value="DEMO_SCHEDULED">Demo Fixed</option>
-                  <option value="LOST">Not Interested</option>
+                  <option value="CONTACTED">📞 Contacted / Spoke with Parent</option>
+                  <option value="INTERESTED">🔥 Interested / Ready for Demo</option>
+                  <option value="DEMO_SCHEDULED">⏳ Demo Fixed with Teacher</option>
+                  <option value="TUITION_CONFIRMED">✓ Tuition Confirmed / Ongoing</option>
+                  <option value="LOST">❌ Not Interested / Dropped</option>
                 </select>
               </div>
 
-              {/* Notes / Remarks */}
               <div>
-                <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
-                  Notes / Remarks <span style={{ color: '#DC2626' }}>*</span>
+                <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Call Notes / Parent Remarks <span style={{ color: '#DC2626' }}>*</span>
                 </label>
                 <textarea
-                  rows={2}
+                  rows={3}
+                  placeholder="e.g. Spoke with mother, wants Demo this Saturday 4 PM..."
                   value={updateNotes}
                   onChange={(e) => setUpdateNotes(e.target.value)}
-                  placeholder="e.g. Spoke to parent, requested weekend demo..."
                   className="form-control"
-                  style={{ fontSize: '0.82rem', padding: '0.42rem 0.7rem', borderRadius: '8px', border: '1px solid #CBD5E1', resize: 'vertical' }}
+                  style={{ borderRadius: '10px', fontSize: '0.85rem' }}
                   required
                 />
               </div>
 
-              {/* Next Follow-up Reminder with Quick Buttons below Date */}
-              {updateStatus === 'LOST' || updateStatus === 'TUITION_CONFIRMED' ? (
-                <div style={{ padding: '0.45rem 0.7rem', borderRadius: '8px', backgroundColor: '#F8FAFC', border: '1px dashed #CBD5E1', fontSize: '0.74rem', color: '#64748B' }}>
-                  ✓ No follow-up required for {updateStatus === 'LOST' ? 'Not Interested' : 'Converted'}
-                </div>
-              ) : (
-                <div>
-                  <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.25rem' }}>
-                    Next Follow-up Date <span style={{ color: '#DC2626' }}>*</span>
-                  </label>
-
-                  {/* Custom Date Selector */}
-                  <input
-                    type="date"
-                    value={updateNextFollowup ? updateNextFollowup.split('T')[0] : ''}
-                    onChange={(e) => setUpdateNextFollowup(e.target.value)}
-                    className="form-control"
-                    style={{ fontSize: '0.82rem', padding: '0.4rem 0.65rem', borderRadius: '8px', border: '1px solid #CBD5E1', width: '100%' }}
-                    required
-                  />
-
-                  {/* Quick 1-Tap Pickers directly below the input */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem', marginTop: '0.35rem' }}>
-                    {[
-                      { label: '⚡ Today', days: 0 },
-                      { label: '⚡ Tomorrow', days: 1 },
-                      { label: '⚡ In 3 Days', days: 3 },
-                    ].map((preset) => {
-                      const targetD = new Date(Date.now() + preset.days * 86400000).toISOString().split('T')[0];
-                      const isSelected = updateNextFollowup.startsWith(targetD);
-                      return (
-                        <button
-                          key={preset.label}
-                          type="button"
-                          onClick={() => setUpdateNextFollowup(targetD)}
-                          style={{
-                            padding: '0.28rem 0.35rem',
-                            borderRadius: '6px',
-                            border: `1px solid ${isSelected ? '#6366F1' : '#E2E8F0'}`,
-                            backgroundColor: isSelected ? '#EEF2FF' : '#F8FAFC',
-                            color: isSelected ? '#4F46E5' : '#475569',
-                            fontSize: '0.72rem',
-                            fontWeight: isSelected ? 800 : 600,
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
-                            textAlign: 'center',
-                          }}
-                        >
-                          {preset.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {noteError && (
-                <div style={{ padding: '0.42rem 0.7rem', borderRadius: '6px', backgroundColor: '#FEE2E2', color: '#DC2626', fontSize: '0.75rem', fontWeight: 700 }}>
-                  ⚠️ {noteError}
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem', paddingTop: '0.65rem', borderTop: '1px solid #F1F5F9' }}>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button
                   type="button"
                   onClick={() => setSelectedLeadForUpdate(null)}
                   style={{
-                    padding: '0.38rem 0.8rem',
-                    borderRadius: '8px',
+                    flex: 1,
+                    padding: '0.65rem',
+                    borderRadius: '10px',
                     border: '1px solid #CBD5E1',
                     backgroundColor: '#FFFFFF',
-                    color: '#475569',
-                    fontSize: '0.78rem',
+                    color: '#334155',
                     fontWeight: 700,
                     cursor: 'pointer',
                   }}
-                  disabled={noteSubmitting}
                 >
                   Cancel
                 </button>
@@ -1688,22 +1507,17 @@ export default function CounselorPortal() {
                   type="submit"
                   disabled={noteSubmitting}
                   style={{
-                    padding: '0.38rem 0.95rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    backgroundColor: '#6366F1',
+                    flex: 2,
+                    padding: '0.65rem',
+                    borderRadius: '10px',
+                    backgroundColor: '#0F172A',
                     color: '#FFFFFF',
-                    fontSize: '0.78rem',
+                    border: 'none',
                     fontWeight: 800,
                     cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    boxShadow: '0 2px 6px rgba(99, 102, 241, 0.3)',
                   }}
                 >
-                  <Send size={13} />
-                  <span>{noteSubmitting ? 'Saving...' : 'Save Update'}</span>
+                  {noteSubmitting ? 'Saving...' : '✓ Save Call Follow-up'}
                 </button>
               </div>
             </form>
@@ -1711,91 +1525,185 @@ export default function CounselorPortal() {
         </div>
       )}
 
-      {/* SMART PROXIMITY TUTOR MATCH MODAL */}
-      {selectedLeadForMatching && (
-        <TutorMatchModal
-          lead={selectedLeadForMatching}
-          currentOperator={currentOperator}
-          onClose={() => setSelectedLeadForMatching(null)}
-          onAssignTutor={(tutorName, tutorId, notes) => handleAssignProximityTutor(tutorName, tutorId, notes)}
-        />
-      )}
-
-      {/* CUSTOM CENTERED NOTIFICATION MODAL */}
-      {counselorToast && counselorToast.isOpen && (
+      {/* DIRECT ASSIGN CONFIRMATION MODAL */}
+      {directAssignModal.isOpen && directAssignModal.lead && directAssignModal.tutor && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.65)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 2000,
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(5px)',
+            zIndex: 1300,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             padding: '1rem',
           }}
+          onClick={() => setDirectAssignModal({ isOpen: false, lead: null, tutor: null })}
         >
           <div
+            className="apple-card"
+            onClick={(e) => e.stopPropagation()}
             style={{
               width: '100%',
-              maxWidth: '400px',
+              maxWidth: '460px',
               backgroundColor: '#FFFFFF',
               borderRadius: '20px',
               padding: '1.75rem',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
               textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.85rem',
             }}
           >
-            <div
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                backgroundColor: counselorToast.type === 'error' ? '#FEE2E2' : '#DCFCE7',
-                color: counselorToast.type === 'error' ? '#DC2626' : '#166534',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <div style={{ width: '54px', height: '54px', borderRadius: '50%', backgroundColor: '#E0F2FE', color: '#0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem auto' }}>
+              <UserCheck size={28} />
+            </div>
+
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem 0' }}>
+              Assign Educator to Student?
+            </h3>
+
+            <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.5, marginBottom: '1.25rem' }}>
+              Confirming assignment of <strong>{directAssignModal.tutor.name}</strong> ({directAssignModal.tutor.highestDegree}) for student <strong>{directAssignModal.lead.parentName}</strong> ({directAssignModal.lead.gradeClass}).
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.65rem' }}>
+              <button
+                type="button"
+                onClick={() => setDirectAssignModal({ isOpen: false, lead: null, tutor: null })}
+                style={{
+                  flex: 1,
+                  padding: '0.65rem',
+                  borderRadius: '10px',
+                  border: '1px solid #CBD5E1',
+                  backgroundColor: '#FFFFFF',
+                  color: '#334155',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                No, Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDirectAssignment}
+                style={{
+                  flex: 2,
+                  padding: '0.65rem',
+                  borderRadius: '10px',
+                  backgroundColor: '#0F172A',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                ✓ Yes, Confirm &amp; Assign
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PROXIMITY TUTOR MATCH MODAL */}
+      {selectedLeadForMatching && (
+        <TutorMatchModal
+          lead={{
+            id: selectedLeadForMatching.id,
+            parentName: selectedLeadForMatching.parentName,
+            parentPhone: selectedLeadForMatching.parentPhone,
+            locality: selectedLeadForMatching.locality,
+            gradeClass: selectedLeadForMatching.gradeClass,
+            subjectsNeeded: Array.isArray(selectedLeadForMatching.subjectsNeeded)
+              ? (selectedLeadForMatching.subjectsNeeded as string[]).join(', ')
+              : (selectedLeadForMatching.subjectsNeeded || '').replace(/[\[\]"]/g, ''),
+            budgetMonthly: selectedLeadForMatching.budgetMonthly,
+            preferredMode: selectedLeadForMatching.preferredMode,
+          }}
+          currentOperator={currentOperator}
+          onClose={() => setSelectedLeadForMatching(null)}
+          onAssignTutor={(tutorName: string, tutorId: string, matchNote: string) => {
+            setLeads((prev) =>
+              prev.map((l) =>
+                l.id === selectedLeadForMatching.id
+                  ? {
+                      ...l,
+                      assignedTutor: tutorName,
+                      status: 'DEMO_SCHEDULED',
+                      updatedAt: new Date().toISOString(),
+                    }
+                  : l
+              )
+            );
+            setSelectedLeadForMatching(null);
+            setCounselorToast({
+              isOpen: true,
+              title: 'Tutor Assigned',
+              message: `🎉 Matched ${tutorName} for ${selectedLeadForMatching.parentName}!`,
+              type: 'success',
+            });
+          }}
+        />
+      )}
+
+      {/* CENTERED TOAST NOTIFICATION */}
+      {counselorToast && counselorToast.isOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.4)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 1400,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+          onClick={() => setCounselorToast(null)}
+        >
+          <div
+            className="apple-card"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '420px',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '18px',
+              padding: '1.5rem',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: counselorToast.type === 'error' ? '#FEE2E2' : '#DCFCE7', color: counselorToast.type === 'error' ? '#DC2626' : '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem auto' }}>
               {counselorToast.type === 'error' ? <AlertCircle size={24} /> : <CheckCircle2 size={24} />}
             </div>
-
-            <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                {counselorToast.title}
-              </h3>
-              <p style={{ fontSize: '0.86rem', color: '#64748B', marginTop: '0.35rem', lineHeight: 1.45, margin: 0 }}>
-                {counselorToast.message}
-              </p>
-            </div>
-
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.4rem 0' }}>
+              {counselorToast.title}
+            </h3>
+            <p style={{ fontSize: '0.84rem', color: '#475569', lineHeight: 1.4, marginBottom: '1.25rem' }}>
+              {counselorToast.message}
+            </p>
             <button
               type="button"
               onClick={() => setCounselorToast(null)}
               style={{
                 width: '100%',
-                padding: '0.65rem 1rem',
+                padding: '0.6rem',
                 borderRadius: '10px',
-                border: 'none',
                 backgroundColor: '#0F172A',
                 color: '#FFFFFF',
-                fontSize: '0.86rem',
-                fontWeight: 700,
+                border: 'none',
+                fontWeight: 800,
                 cursor: 'pointer',
-                marginTop: '0.4rem',
               }}
             >
-              OK, Got It
+              Close
             </button>
           </div>
         </div>
       )}
+
+      <Footer />
     </div>
   );
 }
