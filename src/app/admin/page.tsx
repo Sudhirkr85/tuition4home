@@ -4121,28 +4121,106 @@ export default function SuperAdminPage() {
                                       </a>
 
                                       {/* Assign Button */}
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setSelectedLeadForMatching(lead);
-                                        }}
-                                        style={{
-                                          padding: '0.35rem 0.75rem',
-                                          borderRadius: '7px',
-                                          backgroundColor: '#0F172A',
-                                          color: '#FFFFFF',
-                                          border: 'none',
-                                          fontSize: '0.74rem',
-                                          fontWeight: 800,
-                                          cursor: 'pointer',
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          gap: '0.3rem',
-                                        }}
-                                      >
-                                        <CheckCircle2 size={13} />
-                                        <span>Assign Lead</span>
-                                      </button>
+                                      {lead.assignedTutor === activeTutor360.name ? (
+                                        <div
+                                          style={{
+                                            padding: '0.35rem 0.75rem',
+                                            borderRadius: '7px',
+                                            backgroundColor: '#DCFCE7',
+                                            color: '#15803D',
+                                            fontSize: '0.74rem',
+                                            fontWeight: 800,
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.3rem',
+                                          }}
+                                        >
+                                          <Check size={13} />
+                                          <span>Assigned</span>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setConfirmModal({
+                                              isOpen: true,
+                                              title: `Assign ${activeTutor360.name} to ${lead.parentName}?`,
+                                              message: `Confirm assigning verified tutor ${activeTutor360.name} (${activeTutor360.highestDegree}, ₹${activeTutor360.hourlyRateHome}/hr) to ${lead.parentName} for ${lead.gradeClass} (${lead.subjectsFormatted}) in ${lead.locality} (~${lead.estDist} km away).`,
+                                              confirmText: 'Yes, Assign Tutor',
+                                              cancelText: 'Cancel',
+                                              type: 'info',
+                                              onConfirm: async () => {
+                                                const matchNote = `Assigned tutor: ${activeTutor360.name} (${activeTutor360.highestDegree}, ~${lead.estDist} KM away). Rate: ₹${activeTutor360.hourlyRateHome}/hr. Assigned by Admin Desk.`;
+
+                                                try {
+                                                  await fetch('/api/counselor/leads/assign', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({
+                                                      leadId: lead.id,
+                                                      tutorName: activeTutor360.name,
+                                                      tutorId: activeTutor360.id,
+                                                      notes: matchNote,
+                                                      status: lead.status === 'TUITION_CONFIRMED' ? 'TUITION_CONFIRMED' : 'DEMO_SCHEDULED',
+                                                      assignedCounselor: adminUser?.name || 'Admin Desk',
+                                                    }),
+                                                  });
+                                                } catch (err) {
+                                                  console.error('Failed to assign tutor in database:', err);
+                                                }
+
+                                                const updatedActivities = [
+                                                  {
+                                                    id: `act-${Date.now()}`,
+                                                    leadId: lead.id,
+                                                    actionType: 'DEMO_FIXED',
+                                                    description: `[Status: DEMO_SCHEDULED] ${matchNote}`,
+                                                    performedBy: adminUser?.name || 'Admin (SSSAM Lead Desk)',
+                                                    createdAt: new Date().toISOString(),
+                                                  },
+                                                  ...(lead.activities || []),
+                                                ];
+
+                                                setLeads((prev) =>
+                                                  prev.map((l) =>
+                                                    l.id === lead.id
+                                                      ? {
+                                                          ...l,
+                                                          status: l.status === 'TUITION_CONFIRMED' ? 'TUITION_CONFIRMED' : 'DEMO_SCHEDULED',
+                                                          assignedTutor: activeTutor360.name,
+                                                          notes: matchNote,
+                                                          updatedAt: new Date().toISOString(),
+                                                          activities: updatedActivities,
+                                                        }
+                                                      : l
+                                                  )
+                                                );
+
+                                                setCounselorSuccessMsg(`🎉 Successfully assigned ${activeTutor360.name} to ${lead.parentName}!`);
+                                                setTimeout(() => setCounselorSuccessMsg(''), 4000);
+                                                setConfirmModal(null);
+                                              },
+                                            });
+                                          }}
+                                          style={{
+                                            padding: '0.35rem 0.75rem',
+                                            borderRadius: '7px',
+                                            backgroundColor: '#0F172A',
+                                            color: '#FFFFFF',
+                                            border: 'none',
+                                            fontSize: '0.74rem',
+                                            fontWeight: 800,
+                                            cursor: 'pointer',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.3rem',
+                                            boxShadow: '0 2px 6px rgba(15, 23, 42, 0.2)',
+                                          }}
+                                        >
+                                          <CheckCircle2 size={13} />
+                                          <span>Assign Lead</span>
+                                        </button>
+                                      )}
                                     </div>
                                   </div>
                                 ))
