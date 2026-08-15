@@ -104,8 +104,19 @@ export default function SuperAdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [adminUser, setAdminUser] = useState<any>(null);
 
-  const [activeAdminTab, setActiveAdminTab] = useState<'OVERVIEW' | 'COUNSELORS' | 'LEADS' | 'TUTOR_ALLOCATION' | 'PRICING_CAMPAIGNS' | 'CONVERTED'>('OVERVIEW');
+  const [activeAdminTab, setActiveAdminTab] = useState<'OVERVIEW' | 'COUNSELORS' | 'LEADS' | 'TUTOR_ALLOCATION' | 'COORDINATION' | 'PRICING_CAMPAIGNS' | 'CONVERTED'>('OVERVIEW');
   const [selectedTutorForLeads, setSelectedTutorForLeads] = useState<MockTutor>(VERIFIED_TUTORS[0]);
+
+  // Coordination Desk State (Tutor ⟷ Parent Communication Hub)
+  const [coordSearch, setCoordSearch] = useState('');
+  const [coordMilestoneFilter, setCoordMilestoneFilter] = useState<'ALL' | '1ST_SESSION_PENDING' | '1ST_SESSION_DONE' | 'FEE_PAID' | 'REPLACE_REQ'>('ALL');
+  const [coordCurrentPage, setCoordCurrentPage] = useState(1);
+  const [coordPerPage, setCoordPerPage] = useState(6);
+  const [leadCoordMilestones, setLeadCoordMilestones] = useState<{ [leadId: string]: string }>({
+    'LD-101': '1ST_SESSION_PENDING',
+    'LD-102': '1ST_SESSION_DONE',
+    'LD-104': 'FEE_PAID',
+  });
 
   // Pricing & campaign config state
   const [basePrice, setBasePrice] = useState(999);
@@ -813,7 +824,7 @@ export default function SuperAdminPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: isSidebarOpen ? '260px 1fr' : '1fr',
+              gridTemplateColumns: isSidebarOpen ? '270px 1fr' : '1fr',
               gap: '1.5rem',
               alignItems: 'flex-start',
               transition: 'grid-template-columns 0.25s ease',
@@ -1034,6 +1045,47 @@ export default function SuperAdminPage() {
                       {VERIFIED_TUTORS.length} Tutors
                     </span>
                   </button>
+                               {/* Nav 4.5: Tutor-Parent Coordination Desk */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveAdminTab('COORDINATION')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      outline: 'none',
+                      boxShadow: activeAdminTab === 'COORDINATION' ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
+                      backgroundColor: activeAdminTab === 'COORDINATION' ? '#6366F1' : 'transparent',
+                      color: activeAdminTab === 'COORDINATION' ? '#FFFFFF' : '#334155',
+                      fontWeight: 700,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <Users size={16} color={activeAdminTab === 'COORDINATION' ? '#FFFFFF' : '#0284C7'} />
+                      <span>Coordination</span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        padding: '1px 6px',
+                        borderRadius: '6px',
+                        backgroundColor: activeAdminTab === 'COORDINATION' ? 'rgba(255,255,255,0.25)' : '#E0F2FE',
+                        color: activeAdminTab === 'COORDINATION' ? '#FFFFFF' : '#0369A1',
+                      }}
+                    >
+                      {leads.filter(l => Boolean(l.assignedTutor) || l.status === 'DEMO_SCHEDULED' || l.status === 'TUITION_CONFIRMED').length}
+                    </span>
+                  </button>
 
                   {/* Nav 5: Converted Leads */}
                   <button
@@ -1132,16 +1184,18 @@ export default function SuperAdminPage() {
                         justifyContent: 'center',
                         fontWeight: 800,
                         fontSize: '0.9rem',
+                        boxShadow: 'var(--shadow-sm)',
+                        flexShrink: 0,
                       }}
                     >
-                      S
+                      {adminUser?.name ? adminUser.name[0].toUpperCase() : 'A'}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {adminUser?.name || 'Sudhir (Super Admin)'}
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {adminUser?.name || 'Administrator'}
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--brand-emerald)', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        sudhir@gmail.com
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        {adminUser?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin Operations'}
                       </div>
                     </div>
                   </div>
@@ -1153,9 +1207,8 @@ export default function SuperAdminPage() {
                     style={{
                       width: '100%',
                       justifyContent: 'center',
-                      color: '#DC2626',
-                      borderColor: '#FCA5A5',
-                      fontWeight: 700,
+                      color: 'var(--brand-crimson)',
+                      borderColor: 'var(--border-hairline)',
                       fontSize: '0.78rem',
                       backgroundColor: '#FEF2F2',
                     }}
@@ -1177,6 +1230,7 @@ export default function SuperAdminPage() {
                     {activeAdminTab === 'COUNSELORS' && 'Counselor Team & Sales Desks'}
                     {activeAdminTab === 'LEADS' && 'Shared Parent Inquiry Lead Hub'}
                     {activeAdminTab === 'TUTOR_ALLOCATION' && 'Proximity Student Lead Allocator by Tutor'}
+                    {activeAdminTab === 'COORDINATION' && 'Tutor-Parent Connect & Coordination Desk'}
                     {activeAdminTab === 'PRICING_CAMPAIGNS' && 'Tutor Verification Pricing & Campaigns'}
                     {activeAdminTab === 'CONVERTED' && 'Converted Leads'}
                   </h1>
@@ -1185,6 +1239,7 @@ export default function SuperAdminPage() {
                     {activeAdminTab === 'COUNSELORS' && 'Manage operational calling desks, sales performance, and staff credentials.'}
                     {activeAdminTab === 'LEADS' && 'Unified parent leads with 8 operational filters, mandatory notes, and history timeline.'}
                     {activeAdminTab === 'TUTOR_ALLOCATION' && 'Match and dispatch nearby student inquiries based on tutor travel radius.'}
+                    {activeAdminTab === 'COORDINATION' && 'Direct 2-way & 3-way communication between parents and assigned verified tutors.'}
                     {activeAdminTab === 'PRICING_CAMPAIGNS' && 'Configure base verification fees, 100% waiver drives, and season banner text.'}
                     {activeAdminTab === 'CONVERTED' && 'All successfully converted parent inquiries with full student details.'}
                   </p>
@@ -4376,6 +4431,590 @@ export default function SuperAdminPage() {
                     </div>
                   );
                 })()}
+              </div>
+            );
+          })()}
+
+          {/* TAB 4.5: TUTOR-PARENT CONNECT & COORDINATION DESK */}
+          {activeAdminTab === 'COORDINATION' && (() => {
+            // Filter all leads that have an assigned tutor or active placement
+            const allAssignedPairs = leads.filter(
+              (l) => Boolean(l.assignedTutor) || l.status === 'DEMO_SCHEDULED' || l.status === 'TUITION_CONFIRMED'
+            );
+
+            const filteredPairs = allAssignedPairs.filter((lead) => {
+              const currentMilestone = leadCoordMilestones[lead.id] || (lead.status === 'TUITION_CONFIRMED' ? '1ST_SESSION_DONE' : '1ST_SESSION_PENDING');
+
+              // Milestone Filter
+              if (coordMilestoneFilter !== 'ALL' && currentMilestone !== coordMilestoneFilter) {
+                return false;
+              }
+
+              // Search query filter
+              if (coordSearch.trim()) {
+                const q = coordSearch.toLowerCase();
+                const tutorName = (lead.assignedTutor || '').toLowerCase();
+                const parentName = (lead.parentName || '').toLowerCase();
+                const locality = (lead.locality || '').toLowerCase();
+                const grade = (lead.gradeClass || '').toLowerCase();
+                const phone = lead.parentPhone || '';
+
+                const matches =
+                  parentName.includes(q) ||
+                  tutorName.includes(q) ||
+                  locality.includes(q) ||
+                  grade.includes(q) ||
+                  phone.includes(q);
+
+                if (!matches) return false;
+              }
+
+              return true;
+            });
+
+            // Pagination
+            const totalCoordPages = Math.ceil(filteredPairs.length / coordPerPage) || 1;
+            const coordStartIndex = (coordCurrentPage - 1) * coordPerPage;
+            const coordEndIndex = Math.min(coordStartIndex + coordPerPage, filteredPairs.length);
+            const paginatedPairs = filteredPairs.slice(coordStartIndex, coordEndIndex);
+
+            return (
+              <div>
+                {/* Header Banner */}
+                <div className="apple-card" style={{ padding: '1.25rem 1.5rem', marginBottom: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '18px', border: '1px solid var(--border-hairline)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                      <div className="badge" style={{ marginBottom: '0.35rem', backgroundColor: '#E0F2FE', color: '#0369A1', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 800 }}>
+                        <Users size={13} />
+                        <span>ACTIVE TUITION COORDINATION DESK</span>
+                      </div>
+                      <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
+                        Tutor ⟷ Parent Communication &amp; Progress Hub
+                      </h2>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '3px', margin: 0 }}>
+                        Facilitate direct 2-way and 3-way calling, WhatsApp introductions, session tracking, and fee status.
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
+                      <div style={{ padding: '0.5rem 0.85rem', backgroundColor: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700 }}>ACTIVE PAIRS</div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A' }}>{allAssignedPairs.length}</div>
+                      </div>
+                      <div style={{ padding: '0.5rem 0.85rem', backgroundColor: '#FEF3C7', borderRadius: '10px', border: '1px solid #FDE68A', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.7rem', color: '#92400E', fontWeight: 700 }}>1ST CLASS DUE</div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#B45309' }}>
+                          {allAssignedPairs.filter((p) => (leadCoordMilestones[p.id] || p.status) === 'DEMO_SCHEDULED' || leadCoordMilestones[p.id] === '1ST_SESSION_PENDING').length}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter Toolbar */}
+                <div className="apple-card" style={{ padding: '1rem 1.25rem', marginBottom: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid var(--border-hairline)' }}>
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                    <div style={{ position: 'relative', flex: '1', minWidth: '260px' }}>
+                      <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                      <input
+                        type="text"
+                        placeholder="Search by parent name, phone, tutor name, or locality..."
+                        value={coordSearch}
+                        onChange={(e) => {
+                          setCoordSearch(e.target.value);
+                          setCoordCurrentPage(1);
+                        }}
+                        className="form-control"
+                        style={{ paddingLeft: '2.4rem', borderRadius: '10px', backgroundColor: '#F8FAFC', fontSize: '0.86rem', border: '1px solid var(--border-hairline)' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Milestone Filter Tabs */}
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {[
+                      { id: 'ALL', label: 'All Assigned Pairs', count: allAssignedPairs.length },
+                      { id: '1ST_SESSION_PENDING', label: '🟡 1st Class Pending', count: allAssignedPairs.filter((p) => (leadCoordMilestones[p.id] || (p.status === 'DEMO_SCHEDULED' ? '1ST_SESSION_PENDING' : '')) === '1ST_SESSION_PENDING').length },
+                      { id: '1ST_SESSION_DONE', label: '🟢 1st Class Done / Ongoing', count: allAssignedPairs.filter((p) => (leadCoordMilestones[p.id] || (p.status === 'TUITION_CONFIRMED' ? '1ST_SESSION_DONE' : '')) === '1ST_SESSION_DONE').length },
+                      { id: 'FEE_PAID', label: '💰 Fee Deposited', count: allAssignedPairs.filter((p) => leadCoordMilestones[p.id] === 'FEE_PAID').length },
+                      { id: 'REPLACE_REQ', label: '🔄 Replace Tutor Needed', count: allAssignedPairs.filter((p) => leadCoordMilestones[p.id] === 'REPLACE_REQ').length },
+                    ].map((pill) => {
+                      const isActive = coordMilestoneFilter === pill.id;
+                      return (
+                        <button
+                          key={pill.id}
+                          type="button"
+                          onClick={() => {
+                            setCoordMilestoneFilter(pill.id as any);
+                            setCoordCurrentPage(1);
+                          }}
+                          style={{
+                            padding: '0.35rem 0.75rem',
+                            borderRadius: '8px',
+                            border: `1.5px solid ${isActive ? '#0F172A' : '#E2E8F0'}`,
+                            backgroundColor: isActive ? '#0F172A' : '#FFFFFF',
+                            color: isActive ? '#FFFFFF' : '#334155',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <span>{pill.label}</span>
+                          <span
+                            style={{
+                              padding: '1px 6px',
+                              borderRadius: '10px',
+                              fontSize: '0.7rem',
+                              fontWeight: 800,
+                              backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : '#F1F5F9',
+                              color: isActive ? '#FFFFFF' : '#64748B',
+                            }}
+                          >
+                            {pill.count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* PAIR CARDS CONTAINER */}
+                {paginatedPairs.length === 0 ? (
+                  <div className="apple-card" style={{ padding: '3.5rem 1rem', textAlign: 'center', backgroundColor: '#FFFFFF', borderRadius: '18px', border: '1px solid var(--border-hairline)' }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🤝</div>
+                    <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0F172A' }}>No assigned pairs found</div>
+                    <p style={{ fontSize: '0.84rem', color: '#64748B', marginTop: '0.35rem', maxWidth: '420px', margin: '0.35rem auto 0' }}>
+                      Assign verified tutors to open student enquiries in the <strong>Shared Lead Desk</strong> or <strong>Tutor Allocator</strong> tab to start managing them here.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.25rem' }}>
+                    {paginatedPairs.map((lead) => {
+                      const subjects = Array.isArray(lead.subjectsNeeded)
+                        ? lead.subjectsNeeded.join(', ')
+                        : (lead.subjectsNeeded || '').replace(/[\[\]"]/g, '');
+
+                      // Find matching tutor object
+                      const assignedTutorObj = VERIFIED_TUTORS.find(
+                        (t) => t.name.toLowerCase() === (lead.assignedTutor || '').toLowerCase()
+                      ) || VERIFIED_TUTORS[0];
+
+                      const currentMilestone = leadCoordMilestones[lead.id] || (lead.status === 'TUITION_CONFIRMED' ? '1ST_SESSION_DONE' : '1ST_SESSION_PENDING');
+
+                      const milestoneConfig: { [k: string]: { label: string; bg: string; text: string; icon: string } } = {
+                        '1ST_SESSION_PENDING': { label: '🟡 1st Class Scheduled / Pending', bg: '#FEF3C7', text: '#92400E', icon: '🟡' },
+                        '1ST_SESSION_DONE': { label: '🟢 1st Class Done & Ongoing', bg: '#DCFCE7', text: '#166534', icon: '🟢' },
+                        'FEE_PAID': { label: '💰 Fee Deposited (Active)', bg: '#E0F2FE', text: '#0369A1', icon: '💰' },
+                        'REPLACE_REQ': { label: '🔄 Tutor Replacement Requested', bg: '#FEE2E2', text: '#991B1B', icon: '🔄' },
+                      };
+
+                      const currentBadge = milestoneConfig[currentMilestone] || milestoneConfig['1ST_SESSION_PENDING'];
+
+                      return (
+                        <div
+                          key={lead.id}
+                          className="apple-card"
+                          style={{
+                            padding: '1.25rem',
+                            backgroundColor: '#FFFFFF',
+                            borderRadius: '16px',
+                            border: '1.5px solid #E2E8F0',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1rem',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                          }}
+                        >
+                          {/* Pair Top Header */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid #F1F5F9' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.9rem' }}>
+                                Pair #{lead.id}
+                              </span>
+                              <span style={{ fontSize: '0.76rem', color: '#64748B' }}>
+                                • 📍 {lead.locality}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span
+                                style={{
+                                  fontSize: '0.74rem',
+                                  fontWeight: 800,
+                                  padding: '3px 9px',
+                                  borderRadius: '6px',
+                                  backgroundColor: currentBadge.bg,
+                                  color: currentBadge.text,
+                                }}
+                              >
+                                {currentBadge.label}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Split View: Parent Box ⟷ Tutor Box */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                            {/* 1. Parent & Student Card Box */}
+                            <div
+                              style={{
+                                padding: '1rem',
+                                borderRadius: '12px',
+                                backgroundColor: '#F8FAFC',
+                                border: '1px solid #E2E8F0',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.5rem',
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div>
+                                  <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase' }}>PARENT &amp; STUDENT</div>
+                                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', marginTop: '2px' }}>
+                                    {lead.parentName}
+                                  </div>
+                                </div>
+                                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0284C7' }}>
+                                  Budget: ₹{lead.budgetMonthly || 8000}/mo
+                                </span>
+                              </div>
+
+                              <div style={{ fontSize: '0.8rem', color: '#334155' }}>
+                                📚 <strong>{lead.gradeClass}</strong> ({subjects})
+                              </div>
+                              <div style={{ fontSize: '0.76rem', color: '#64748B' }}>
+                                📍 {lead.locality} • Mode: <strong>{lead.preferredMode === 'OFFLINE_HOME' ? 'Home Visit' : 'Online'}</strong>
+                              </div>
+
+                              {/* Parent Contact Buttons */}
+                              <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.35rem', paddingTop: '0.5rem', borderTop: '1px solid #E2E8F0' }}>
+                                <a
+                                  href={`tel:${lead.parentPhone}`}
+                                  style={{
+                                    flex: 1,
+                                    padding: '0.35rem 0.5rem',
+                                    borderRadius: '7px',
+                                    border: '1px solid #CBD5E1',
+                                    backgroundColor: '#FFFFFF',
+                                    color: '#0F172A',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 700,
+                                    textDecoration: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.3rem',
+                                  }}
+                                >
+                                  <Phone size={13} color="#0F766E" />
+                                  <span>Call Parent</span>
+                                </a>
+
+                                <a
+                                  href={`https://wa.me/?text=${encodeURIComponent(
+                                    `Hello ${lead.parentName},\n` +
+                                    `This is SSSAM Academy regarding your home tuition enquiry for ${lead.gradeClass} (${subjects}).\n` +
+                                    `Your assigned verified educator is *${lead.assignedTutor || assignedTutorObj.name}* (${assignedTutorObj.highestDegree}).\n\n` +
+                                    `Please let us know your preferred time for the trial class.`
+                                  )}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    flex: 1,
+                                    padding: '0.35rem 0.5rem',
+                                    borderRadius: '7px',
+                                    border: '1px solid #86EFAC',
+                                    backgroundColor: '#F0FDF4',
+                                    color: '#15803D',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 700,
+                                    textDecoration: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.3rem',
+                                  }}
+                                >
+                                  <MessageSquare size={13} color="#15803D" />
+                                  <span>WhatsApp Parent</span>
+                                </a>
+                              </div>
+                            </div>
+
+                            {/* 2. Assigned Educator Card Box */}
+                            <div
+                              style={{
+                                padding: '1rem',
+                                borderRadius: '12px',
+                                backgroundColor: '#F0FDF4',
+                                border: '1px solid #DCFCE7',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.5rem',
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={assignedTutorObj.avatarUrl}
+                                    alt={assignedTutorObj.name}
+                                    style={{ width: '38px', height: '38px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #86EFAC' }}
+                                  />
+                                  <div>
+                                    <div style={{ fontSize: '0.7rem', color: '#166534', fontWeight: 800, textTransform: 'uppercase' }}>ASSIGNED TUTOR</div>
+                                    <div style={{ fontSize: '0.96rem', fontWeight: 800, color: '#0F172A' }}>
+                                      {lead.assignedTutor || assignedTutorObj.name}
+                                    </div>
+                                  </div>
+                                </div>
+                                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0F766E' }}>
+                                  ₹{assignedTutorObj.hourlyRateHome}/hr
+                                </span>
+                              </div>
+
+                              <div style={{ fontSize: '0.78rem', color: '#334155' }}>
+                                🎓 {assignedTutorObj.highestDegree} • {assignedTutorObj.experienceYears}y exp
+                              </div>
+                              <div style={{ fontSize: '0.76rem', color: '#64748B' }}>
+                                📍 Base: {assignedTutorObj.serviceAreas[0]} (Radius: {assignedTutorObj.travelRadiusKm} KM)
+                              </div>
+
+                              {/* Tutor Contact Buttons */}
+                              <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.35rem', paddingTop: '0.5rem', borderTop: '1px solid #DCFCE7' }}>
+                                <a
+                                  href={`tel:${assignedTutorObj.phone}`}
+                                  style={{
+                                    flex: 1,
+                                    padding: '0.35rem 0.5rem',
+                                    borderRadius: '7px',
+                                    border: '1px solid #CBD5E1',
+                                    backgroundColor: '#FFFFFF',
+                                    color: '#0F172A',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 700,
+                                    textDecoration: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.3rem',
+                                  }}
+                                >
+                                  <Phone size={13} color="#0F766E" />
+                                  <span>Call Tutor</span>
+                                </a>
+
+                                <a
+                                  href={`https://wa.me/?text=${encodeURIComponent(
+                                    `Hello ${lead.assignedTutor || assignedTutorObj.name},\n` +
+                                    `This is SSSAM Academy coordinator regarding student lead in *${lead.locality}*:\n` +
+                                    `👤 *Parent:* ${lead.parentName} (${lead.parentPhone})\n` +
+                                    `📚 *Class:* ${lead.gradeClass} (${subjects})\n` +
+                                    `💰 *Monthly Budget:* ₹${lead.budgetMonthly || 8000}/month\n\n` +
+                                    `Please contact the parent and update us on your session timing.`
+                                  )}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    flex: 1,
+                                    padding: '0.35rem 0.5rem',
+                                    borderRadius: '7px',
+                                    border: '1px solid #86EFAC',
+                                    backgroundColor: '#FFFFFF',
+                                    color: '#15803D',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 700,
+                                    textDecoration: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.3rem',
+                                  }}
+                                >
+                                  <MessageSquare size={13} color="#15803D" />
+                                  <span>WhatsApp Tutor</span>
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Coordination Action Bar */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9' }}>
+                            {/* 3-Way WhatsApp Intro */}
+                            <a
+                              href={`https://wa.me/?text=${encodeURIComponent(
+                                `*SSSAM Academy (TuitionForHome) - Coordination Intro*\n\n` +
+                                `Hello ${lead.parentName} and ${lead.assignedTutor || assignedTutorObj.name} Sir,\n` +
+                                `Connecting you both for *${lead.gradeClass} (${subjects})* home tuition in *${lead.locality}*.\n\n` +
+                                `📍 *Session Location:* ${lead.locality}, Gurgaon\n` +
+                                `📚 *Subject:* ${subjects}\n` +
+                                `🎓 *Assigned Educator:* ${lead.assignedTutor || assignedTutorObj.name} (${assignedTutorObj.highestDegree})\n\n` +
+                                `Please coordinate your preferred timings for the trial session.`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                padding: '0.4rem 0.85rem',
+                                borderRadius: '8px',
+                                border: '1.5px solid #25D366',
+                                backgroundColor: '#F0FDF4',
+                                color: '#15803D',
+                                fontSize: '0.78rem',
+                                fontWeight: 800,
+                                textDecoration: 'none',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                              }}
+                            >
+                              <MessageSquare size={14} color="#25D366" />
+                              <span>🤝 Send 3-Way WhatsApp Intro</span>
+                            </a>
+
+                            {/* Milestone Updater & Replacement Controls */}
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 700 }}>Milestone:</span>
+                              <select
+                                value={currentMilestone}
+                                onChange={(e) => {
+                                  const newStatus = e.target.value;
+                                  setLeadCoordMilestones({
+                                    ...leadCoordMilestones,
+                                    [lead.id]: newStatus,
+                                  });
+                                  setCounselorSuccessMsg(`Updated Pair #${lead.id} milestone to "${milestoneConfig[newStatus]?.label || newStatus}"`);
+                                  setTimeout(() => setCounselorSuccessMsg(''), 3000);
+                                }}
+                                style={{
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '8px',
+                                  border: '1px solid #CBD5E1',
+                                  backgroundColor: '#F8FAFC',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  color: '#0F172A',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <option value="1ST_SESSION_PENDING">🟡 1st Class Scheduled</option>
+                                <option value="1ST_SESSION_DONE">🟢 1st Class Completed &amp; Ongoing</option>
+                                <option value="FEE_PAID">💰 Monthly Fee Deposited</option>
+                                <option value="REPLACE_REQ">🔄 Replacement Requested</option>
+                              </select>
+
+                              {/* Re-assign alternative tutor button */}
+                              <button
+                                type="button"
+                                onClick={() => setSelectedLeadForMatching(lead)}
+                                style={{
+                                  padding: '0.35rem 0.75rem',
+                                  borderRadius: '8px',
+                                  border: '1px solid #CBD5E1',
+                                  backgroundColor: '#FFFFFF',
+                                  color: '#334155',
+                                  fontSize: '0.76rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.3rem',
+                                }}
+                              >
+                                <RotateCcw size={12} />
+                                <span>Change Tutor</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {filteredPairs.length > 0 && (
+                  <div
+                    style={{
+                      padding: '0.75rem 1.25rem',
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: '14px',
+                      border: '1px solid var(--border-hairline)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '0.5rem',
+                      fontSize: '0.78rem',
+                      color: '#475569',
+                    }}
+                  >
+                    <div>
+                      Showing <strong>{coordStartIndex + 1}</strong> to <strong>{coordEndIndex}</strong> of <strong>{filteredPairs.length}</strong> active pairs
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <button
+                        type="button"
+                        disabled={coordCurrentPage === 1}
+                        onClick={() => setCoordCurrentPage((p) => Math.max(1, p - 1))}
+                        style={{
+                          padding: '0.25rem 0.55rem',
+                          borderRadius: '6px',
+                          border: '1px solid #CBD5E1',
+                          backgroundColor: coordCurrentPage === 1 ? '#F1F5F9' : '#FFFFFF',
+                          color: coordCurrentPage === 1 ? '#94A3B8' : '#334155',
+                          cursor: coordCurrentPage === 1 ? 'not-allowed' : 'pointer',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                        }}
+                      >
+                        ← Prev
+                      </button>
+
+                      {Array.from({ length: totalCoordPages }, (_, i) => i + 1).map((pageNum) => (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          onClick={() => setCoordCurrentPage(pageNum)}
+                          style={{
+                            minWidth: '26px',
+                            height: '26px',
+                            borderRadius: '6px',
+                            border: coordCurrentPage === pageNum ? 'none' : '1px solid #CBD5E1',
+                            backgroundColor: coordCurrentPage === pageNum ? '#0F172A' : '#FFFFFF',
+                            color: coordCurrentPage === pageNum ? '#FFFFFF' : '#334155',
+                            fontWeight: 800,
+                            fontSize: '0.76rem',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+
+                      <button
+                        type="button"
+                        disabled={coordCurrentPage >= totalCoordPages}
+                        onClick={() => setCoordCurrentPage((p) => Math.min(totalCoordPages, p + 1))}
+                        style={{
+                          padding: '0.25rem 0.55rem',
+                          borderRadius: '6px',
+                          border: '1px solid #CBD5E1',
+                          backgroundColor: coordCurrentPage >= totalCoordPages ? '#F1F5F9' : '#FFFFFF',
+                          color: coordCurrentPage >= totalCoordPages ? '#94A3B8' : '#334155',
+                          cursor: coordCurrentPage >= totalCoordPages ? 'not-allowed' : 'pointer',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                        }}
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })()}
