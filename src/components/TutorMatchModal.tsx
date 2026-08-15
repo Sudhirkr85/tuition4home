@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   VERIFIED_TUTORS,
   MockTutor,
@@ -95,6 +95,7 @@ export default function TutorMatchModal({
   onClose,
   onAssignTutor,
 }: TutorMatchModalProps) {
+  const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>(VERIFIED_TUTORS);
   const [searchQuery, setSearchQuery] = useState('');
   const [maxDistanceKm, setMaxDistanceKm] = useState<number>(10);
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>('ALL');
@@ -106,6 +107,18 @@ export default function TutorMatchModal({
   // Tutor Pagination State
   const [tutorCurrentPage, setTutorCurrentPage] = useState(1);
   const [tutorsPerPage, setTutorsPerPage] = useState(4);
+
+  // Fetch live verified tutors from database API
+  useEffect(() => {
+    fetch('/api/tutors/list')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.tutors && data.tutors.length > 0) {
+          setDynamicTutors(data.tutors);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch live tutors for matcher:', err));
+  }, []);
 
   const parsedSubjects = Array.isArray(lead.subjectsNeeded)
     ? lead.subjectsNeeded.join(', ')
@@ -120,7 +133,7 @@ export default function TutorMatchModal({
 
   // Calculate distance & subject match for all verified tutors
   const tutorListWithDistances = useMemo(() => {
-    return VERIFIED_TUTORS.map((tutor) => {
+    return dynamicTutors.map((tutor) => {
       const dist = getEstimatedDistance(lead.locality, tutor.serviceAreas);
       const isWithinTravelRadius = dist <= tutor.travelRadiusKm;
 
@@ -135,7 +148,7 @@ export default function TutorMatchModal({
         isSubjectMatch,
       };
     });
-  }, [lead.locality, requiredSubjectWords]);
+  }, [lead.locality, requiredSubjectWords, dynamicTutors]);
 
   // Filter & Sort tutors
   const filteredTutors = useMemo(() => {

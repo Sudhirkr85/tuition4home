@@ -100,6 +100,7 @@ export default function CounselorPortal() {
   const [noteError, setNoteError] = useState('');
 
   // 1,000+ Scalable Tutor Directory State
+  const [allTutors, setAllTutors] = useState<MockTutor[]>(VERIFIED_TUTORS);
   const [tutorSearch, setTutorSearch] = useState('');
   const [tutorSubjectFilter, setTutorSubjectFilter] = useState('ALL');
   const [tutorLocalityFilter, setTutorLocalityFilter] = useState('ALL');
@@ -169,8 +170,21 @@ export default function CounselorPortal() {
     }
   };
 
+  const fetchTutors = async () => {
+    try {
+      const res = await fetch('/api/tutors/list');
+      const data = await res.json();
+      if (data.success && data.tutors && data.tutors.length > 0) {
+        setAllTutors(data.tutors);
+      }
+    } catch (err) {
+      console.error('Failed to fetch dynamic tutors in counselor portal:', err);
+    }
+  };
+
   useEffect(() => {
     fetchLeads();
+    fetchTutors();
   }, []);
 
   const toggleTimeline = (leadId: string) => {
@@ -543,7 +557,7 @@ export default function CounselorPortal() {
                       color: activeTab === 'TUTOR_ALLOCATION' ? '#FFFFFF' : '#92400E',
                     }}
                   >
-                    {VERIFIED_TUTORS.length}
+                    {allTutors.length}
                   </span>
                 </button>
 
@@ -688,7 +702,7 @@ export default function CounselorPortal() {
 
                 <div className="apple-card" style={{ padding: '1rem 1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E0F2FE' }}>
                   <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0369A1', textTransform: 'uppercase' }}>VERIFIED EDUCATORS</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0284C7', marginTop: '2px' }}>{VERIFIED_TUTORS.length}</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0284C7', marginTop: '2px' }}>{allTutors.length}</div>
                   <div style={{ fontSize: '0.72rem', color: '#0369A1' }}>Ready for dispatch</div>
                 </div>
               </div>
@@ -914,7 +928,7 @@ export default function CounselorPortal() {
 
               {/* TAB 2: TUTOR ALLOCATION (1,000+ CAPACITY TABLE VIEW) */}
               {activeTab === 'TUTOR_ALLOCATION' && (() => {
-                const filteredTutors = VERIFIED_TUTORS.filter((tut) => {
+                const filteredTutors = allTutors.filter((tut) => {
                   if (tutorSubjectFilter !== 'ALL' && !tut.subjects.some((s) => s.toLowerCase().includes(tutorSubjectFilter.toLowerCase()))) return false;
                   if (tutorLocalityFilter !== 'ALL' && !tut.serviceAreas.some((a) => a.toLowerCase().includes(tutorLocalityFilter.toLowerCase()))) return false;
 

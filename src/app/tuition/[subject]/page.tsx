@@ -5,7 +5,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FeeEstimator from '@/components/FeeEstimator';
 import { SUBJECT_SEO_PAGES } from '@/lib/seo-data';
-import { GURGAON_LOCALITIES, SSSAM_OFFICE_DETAILS, VERIFIED_TUTORS } from '@/lib/data';
+import { GURGAON_LOCALITIES, SSSAM_OFFICE_DETAILS, VERIFIED_TUTORS, MockTutor } from '@/lib/data';
+import prisma from '@/lib/prisma';
 import {
   GraduationCap,
   ShieldCheck,
@@ -55,9 +56,65 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function SubjectPage({ params }: PageProps) {
+export default async function SubjectPage({ params }: PageProps) {
   const item = SUBJECT_SEO_PAGES.find((s) => s.slug === params.subject);
   if (!item) notFound();
+
+  // Fetch live verified tutors from Prisma MySQL
+  let dynamicTutors: MockTutor[] = VERIFIED_TUTORS;
+  try {
+    const dbTutors = await prisma.tutorProfile.findMany({
+      where: { status: 'ACTIVE_VERIFIED' },
+      include: { user: true },
+      take: 6,
+    });
+
+    if (dbTutors && dbTutors.length > 0) {
+      dynamicTutors = dbTutors.map((tp: any) => {
+        let subjects: string[] = [];
+        let serviceAreas: string[] = [];
+        try {
+          subjects = tp.subjects ? JSON.parse(tp.subjects) : [];
+        } catch {
+          subjects = tp.subjects ? tp.subjects.split(',').map((s: string) => s.trim()) : [];
+        }
+        try {
+          serviceAreas = tp.serviceAreas ? JSON.parse(tp.serviceAreas) : [];
+        } catch {
+          serviceAreas = tp.serviceAreas ? tp.serviceAreas.split(',').map((s: string) => s.trim()) : [];
+        }
+
+        return {
+          id: tp.id,
+          name: tp.user.name,
+          phone: tp.user.phone || '9811204921',
+          email: tp.user.email,
+          avatarUrl: tp.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+          introVideoUrl: tp.introVideoUrl || 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+          videoDuration: '1m 20s',
+          highestDegree: tp.highestDegree || 'M.Sc.',
+          experienceYears: tp.experienceYears,
+          teachingMode: tp.teachingMode,
+          subjects,
+          classes: [],
+          boards: [],
+          serviceAreas,
+          travelRadiusKm: tp.travelRadiusKm,
+          hourlyRateHome: tp.hourlyRateHome || 900,
+          hourlyRateOnline: tp.hourlyRateOnline || 600,
+          monthlyRateMin: tp.monthlyRateMin || 7500,
+          isVerified: tp.isVerified,
+          hasPoliceCheck: tp.hasPoliceCheck,
+          rating: tp.rating,
+          totalReviews: tp.totalReviews,
+          bio: tp.bio || '',
+          badge: tp.highestDegree ? `Specialist (${tp.highestDegree})` : 'Verified Tutor',
+        };
+      });
+    }
+  } catch (err) {
+    console.warn('DB query in subject page fallback to baseline:', err);
+  }
 
   // Schema.org Structured Data
   const jsonLd = {
@@ -188,7 +245,7 @@ export default function SubjectPage({ params }: PageProps) {
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: '1.5rem',
             }}>
-              {VERIFIED_TUTORS.slice(0, 3).map((tutor) => (
+              {dynamicTutors.slice(0, 3).map((tutor) => (
                 <div key={tutor.id} className="luxury-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>

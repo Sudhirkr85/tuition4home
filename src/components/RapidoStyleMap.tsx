@@ -19,10 +19,24 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectedAddress, setDetectedAddress] = useState('DLF Phase 5, Golf Course Road, Gurugram');
   const [isEditing, setIsEditing] = useState(false);
+  const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>(VERIFIED_TUTORS);
   const [selectedTutor, setSelectedTutor] = useState<MockTutor | null>(VERIFIED_TUTORS[0]);
   
   // Current coordinates (Center of Gurgaon, Haryana)
   const [currentCoords, setCurrentCoords] = useState({ lat: 28.4728, lng: 77.0345 });
+
+  // Fetch live verified tutors from database API
+  useEffect(() => {
+    fetch('/api/tutors/list')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.tutors && data.tutors.length > 0) {
+          setDynamicTutors(data.tutors);
+          setSelectedTutor(data.tutors[0]);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch live tutors for map:', err));
+  }, []);
 
   // Load Leaflet dynamically on the client
   useEffect(() => {
@@ -94,10 +108,13 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
       { id: 'tut-3', latOffset: -0.012, lngOffset: -0.008, distance: '3.4 km' },
     ];
 
-
-    VERIFIED_TUTORS.forEach((tutor) => {
-      const match = tutorCoordinates.find((tc) => tc.id === tutor.id);
-      if (!match) return;
+    dynamicTutors.forEach((tutor, idx) => {
+      const match = tutorCoordinates.find((tc) => tc.id === tutor.id) || {
+        id: tutor.id,
+        latOffset: (idx % 2 === 0 ? 1 : -1) * (0.004 * (idx + 1)),
+        lngOffset: (idx % 3 === 0 ? 1 : -1) * (0.005 * (idx + 1)),
+        distance: `${(1.2 + idx * 0.7).toFixed(1)} km`,
+      };
 
       const tLat = currentCoords.lat + match.latOffset;
       const tLng = currentCoords.lng + match.lngOffset;
@@ -125,7 +142,7 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
       });
     });
 
-  }, [L, map, currentCoords, selectedTutor]);
+  }, [L, map, currentCoords, selectedTutor, dynamicTutors]);
 
   // Handle GPS location auto-detect
   const handleAutoDetectGPS = () => {

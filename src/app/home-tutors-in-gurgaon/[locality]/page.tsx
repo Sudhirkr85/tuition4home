@@ -4,7 +4,8 @@ import { notFound } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FeeEstimator from '@/components/FeeEstimator';
-import { GURGAON_LOCALITIES, VERIFIED_TUTORS, SSSAM_OFFICE_DETAILS } from '@/lib/data';
+import { GURGAON_LOCALITIES, VERIFIED_TUTORS, SSSAM_OFFICE_DETAILS, MockTutor } from '@/lib/data';
+import prisma from '@/lib/prisma';
 import { MapPin, ShieldCheck, Star, Sparkles, CheckCircle, GraduationCap, Phone, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -44,9 +45,59 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function LocalityPage({ params }: PageProps) {
+export default async function LocalityPage({ params }: PageProps) {
   const loc = GURGAON_LOCALITIES.find((l) => l.slug === params.locality);
   if (!loc) notFound();
+
+  // Fetch live verified tutors from Prisma MySQL
+  let dynamicTutors: MockTutor[] = VERIFIED_TUTORS;
+  try {
+    const dbTutors = await prisma.tutorProfile.findMany({
+      where: { status: 'ACTIVE_VERIFIED' },
+      include: { user: true },
+      take: 6,
+    });
+
+    if (dbTutors && dbTutors.length > 0) {
+      dynamicTutors = dbTutors.map((tp: any) => {
+        let subjects: string[] = [];
+        try {
+          subjects = tp.subjects ? JSON.parse(tp.subjects) : [];
+        } catch {
+          subjects = tp.subjects ? tp.subjects.split(',').map((s: string) => s.trim()) : [];
+        }
+
+        return {
+          id: tp.id,
+          name: tp.user.name,
+          phone: tp.user.phone || '9811204921',
+          email: tp.user.email,
+          avatarUrl: tp.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+          introVideoUrl: tp.introVideoUrl || 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+          videoDuration: '1m 20s',
+          highestDegree: tp.highestDegree || 'M.Sc.',
+          experienceYears: tp.experienceYears,
+          teachingMode: tp.teachingMode,
+          subjects,
+          classes: [],
+          boards: [],
+          serviceAreas: [],
+          travelRadiusKm: tp.travelRadiusKm,
+          hourlyRateHome: tp.hourlyRateHome || 900,
+          hourlyRateOnline: tp.hourlyRateOnline || 600,
+          monthlyRateMin: tp.monthlyRateMin || 7500,
+          isVerified: tp.isVerified,
+          hasPoliceCheck: tp.hasPoliceCheck,
+          rating: tp.rating,
+          totalReviews: tp.totalReviews,
+          bio: tp.bio || '',
+          badge: tp.highestDegree ? `Specialist (${tp.highestDegree})` : 'Verified Tutor',
+        };
+      });
+    }
+  } catch (err) {
+    console.warn('DB query in locality page fallback to baseline:', err);
+  }
 
   // Schema.org Structured Data
   const schemaData = {
@@ -227,7 +278,7 @@ export default function LocalityPage({ params }: PageProps) {
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: '1.5rem',
             }}>
-              {VERIFIED_TUTORS.slice(0, 3).map((tutor) => (
+              {dynamicTutors.slice(0, 3).map((tutor) => (
                 <div key={tutor.id} className="luxury-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>

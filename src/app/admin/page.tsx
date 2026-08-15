@@ -313,6 +313,7 @@ export default function SuperAdminPage() {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   // Scalable Tutor Management & Lead Allocation Hub State
+  const [allTutors, setAllTutors] = useState<MockTutor[]>(VERIFIED_TUTORS);
   const [tutorSearchText, setTutorSearchText] = useState('');
   const [tutorKycFilter, setTutorKycFilter] = useState<'ALL' | 'VERIFIED' | 'PENDING' | 'HIDDEN'>('ALL');
   const [tutorSubjectFilter, setTutorSubjectFilter] = useState<string>('ALL');
@@ -434,9 +435,23 @@ export default function SuperAdminPage() {
     }
   };
 
+  const fetchTutors = async () => {
+    try {
+      const res = await fetch('/api/tutors/list');
+      const data = await res.json();
+      if (data.success && data.tutors && data.tutors.length > 0) {
+        setAllTutors(data.tutors);
+        setVerifiedTutorIds(data.tutors.filter((t: MockTutor) => t.isVerified).map((t: MockTutor) => t.id));
+      }
+    } catch (err) {
+      console.error('Failed to fetch dynamic tutors:', err);
+    }
+  };
+
   useEffect(() => {
     fetchCounselors();
     fetchLeads();
+    fetchTutors();
   }, []);
 
   const handleSaveConfig = (e: React.FormEvent) => {
@@ -4147,7 +4162,7 @@ export default function SuperAdminPage() {
           )}
           {activeAdminTab === 'TUTOR_ALLOCATION' && (() => {
             // Filter Tutors
-            const filteredTutorList = VERIFIED_TUTORS.filter((tut) => {
+            const filteredTutorList = allTutors.filter((tut) => {
               const isHidden = hiddenTutorIds.includes(tut.id);
               const isVerified = verifiedTutorIds.includes(tut.id);
 
@@ -4206,7 +4221,7 @@ export default function SuperAdminPage() {
                     <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                       <div style={{ padding: '0.5rem 0.85rem', backgroundColor: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
                         <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700 }}>TOTAL TUTORS</div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A' }}>{VERIFIED_TUTORS.length}</div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A' }}>{allTutors.length}</div>
                       </div>
                       <div style={{ padding: '0.5rem 0.85rem', backgroundColor: '#F0FDF4', borderRadius: '10px', border: '1px solid #DCFCE7', textAlign: 'center' }}>
                         <div style={{ fontSize: '0.7rem', color: '#166534', fontWeight: 700 }}>VERIFIED PRO</div>
@@ -4268,9 +4283,9 @@ export default function SuperAdminPage() {
                   {/* KYC & Visibility Status Filter Pills */}
                   <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
                     {[
-                      { id: 'ALL', label: 'All Tutors', count: VERIFIED_TUTORS.filter((t) => !hiddenTutorIds.includes(t.id)).length },
-                      { id: 'VERIFIED', label: '✓ Verified Pro', count: VERIFIED_TUTORS.filter((t) => verifiedTutorIds.includes(t.id) && !hiddenTutorIds.includes(t.id)).length },
-                      { id: 'PENDING', label: '⏳ Pending KYC', count: VERIFIED_TUTORS.filter((t) => !verifiedTutorIds.includes(t.id) && !hiddenTutorIds.includes(t.id)).length },
+                      { id: 'ALL', label: 'All Tutors', count: allTutors.filter((t) => !hiddenTutorIds.includes(t.id)).length },
+                      { id: 'VERIFIED', label: '✓ Verified Pro', count: allTutors.filter((t) => verifiedTutorIds.includes(t.id) && !hiddenTutorIds.includes(t.id)).length },
+                      { id: 'PENDING', label: '⏳ Pending KYC', count: allTutors.filter((t) => !verifiedTutorIds.includes(t.id) && !hiddenTutorIds.includes(t.id)).length },
                       { id: 'HIDDEN', label: '🙈 Hidden', count: hiddenTutorIds.length },
                     ].map((pill) => {
                       const isActive = tutorKycFilter === pill.id;

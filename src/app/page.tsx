@@ -49,6 +49,29 @@ export default function HomePage() {
   } | undefined>(undefined);
 
   const [activeVideoTutor, setActiveVideoTutor] = useState<MockTutor | null>(null);
+  const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>(VERIFIED_TUTORS);
+  const [platformConfig, setPlatformConfig] = useState<any>(null);
+
+  // Fetch live verified tutors & platform config from MySQL database
+  useEffect(() => {
+    fetch('/api/tutors/list')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.tutors && data.tutors.length > 0) {
+          setDynamicTutors(data.tutors);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch live tutors:', err));
+
+    fetch('/api/config/global')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.config) {
+          setPlatformConfig(data.config);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch platform config:', err));
+  }, []);
 
   // Search Mode State
   const [searchMode, setSearchMode] = useState<'OFFLINE_HOME' | 'ONLINE_LIVE'>('OFFLINE_HOME');
@@ -649,7 +672,7 @@ export default function HomePage() {
               gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
               gap: '1.75rem',
             }}>
-              {VERIFIED_TUTORS.map((tutor) => (
+              {dynamicTutors.map((tutor) => (
                 <div key={tutor.id} className="apple-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                   {/* Top Bar */}
                   <div style={{ padding: '1.25rem', paddingBottom: '0.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
