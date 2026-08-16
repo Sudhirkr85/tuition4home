@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { decrypt } from '@/lib/crypto';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     // Fetch all tutors, including user data and KYC documents
@@ -27,12 +29,16 @@ export async function GET() {
       let parsedClasses: string[] = [];
       let parsedBoards: string[] = [];
       let parsedServiceAreas: string[] = [];
+      let parsedQualifications: any[] = [];
+      let parsedExperiences: any[] = [];
       
       try {
         if (profile.subjects) parsedSubjects = JSON.parse(profile.subjects);
         if (profile.classes) parsedClasses = JSON.parse(profile.classes);
         if (profile.boards) parsedBoards = JSON.parse(profile.boards);
         if (profile.serviceAreas) parsedServiceAreas = JSON.parse(profile.serviceAreas);
+        if (profile.qualifications) parsedQualifications = JSON.parse(profile.qualifications);
+        if (profile.experiences) parsedExperiences = JSON.parse(profile.experiences);
       } catch (e) {
         console.error('Failed parsing tutor list fields', e);
       }
@@ -43,28 +49,43 @@ export async function GET() {
         name: profile.user.name,
         email: profile.user.email,
         phone: profile.user.phone || 'N/A',
-        avatarUrl: profile.avatarUrl || '/placeholder-avatar.jpg',
+        avatarUrl: profile.avatarUrl || '',
         introVideoUrl: profile.introVideoUrl || '',
-        highestDegree: profile.highestDegree || 'N/A',
-        experienceYears: profile.experienceYears,
-        teachingMode: profile.teachingMode,
+        highestDegree: profile.highestDegree || 'Bachelor Degree',
+        experienceYears: profile.experienceYears || 1,
+        teachingMode: profile.teachingMode || 'BOTH',
         subjects: parsedSubjects,
         classes: parsedClasses,
         boards: parsedBoards,
         serviceAreas: parsedServiceAreas,
-        travelRadiusKm: profile.travelRadiusKm,
-        hourlyRateHomeMin: profile.hourlyRateHomeMin || 0,
-        hourlyRateHomeMax: profile.hourlyRateHomeMax || 0,
-        hourlyRateOnlineMin: profile.hourlyRateOnlineMin || 0,
-        hourlyRateOnlineMax: profile.hourlyRateOnlineMax || 0,
+        travelRadiusKm: profile.travelRadiusKm || 5,
+        latitude: profile.latitude,
+        longitude: profile.longitude,
+        formattedAddress: profile.formattedAddress || '',
+        hourlyRateHome: profile.hourlyRateHomeMin || profile.hourlyRateHomeMax || 500,
+        hourlyRateHomeMin: profile.hourlyRateHomeMin || 500,
+        hourlyRateHomeMax: profile.hourlyRateHomeMax || 1000,
+        hourlyRateOnlineMin: profile.hourlyRateOnlineMin || 400,
+        hourlyRateOnlineMax: profile.hourlyRateOnlineMax || 800,
         status: profile.status,
         isVerified: profile.isVerified,
-        rating: profile.rating,
+        isAvailable: profile.isAvailable,
+        hasPoliceCheck: profile.hasPoliceCheck || false,
+        bio: profile.bio || '',
+        qualifications: parsedQualifications,
+        experiences: parsedExperiences,
+        rating: profile.rating || 5.0,
         kycDoc: profile.kycDoc ? {
+          id: profile.kycDoc.id,
           idType: profile.kycDoc.idType,
           idLast4: profile.kycDoc.idLast4,
           idNumberDecrypted,
-          idDocUrl: profile.kycDoc.idDocUrl
+          idDocUrl: profile.kycDoc.idDocUrl,
+          idStatus: profile.kycDoc.idStatus || 'NOT_SUBMITTED',
+          idRejectionNote: profile.kycDoc.idRejectionNote || '',
+          degreeDocUrl: profile.kycDoc.degreeDocUrl || '',
+          degreeStatus: profile.kycDoc.degreeStatus || 'NOT_SUBMITTED',
+          degreeRejectionNote: profile.kycDoc.degreeRejectionNote || ''
         } : null
       };
     });

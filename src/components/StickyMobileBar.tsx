@@ -42,7 +42,7 @@ export default function StickyMobileBar({ onOpenBooking }: StickyMobileBarProps)
         style={{ flex: 1.2, padding: '0.65rem 0.5rem', fontSize: '0.85rem', justifyContent: 'center' }}
       >
         <Sparkles size={15} />
-        <span>Book Demo</span>
+        <span>Request Tutor</span>
       </button>
     </div>
   );

@@ -64,6 +64,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'All fields are required.' }, { status: 400 });
     }
 
+    if (!reviewerId) {
+      return NextResponse.json({ success: false, error: 'Parent login required to post a verified review.' }, { status: 401 });
+    }
+
     let profileId = tutorId;
 
     if (!profileId && userId) {

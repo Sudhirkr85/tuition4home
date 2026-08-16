@@ -31,6 +31,8 @@ enum TutorStatus {
 
 enum LeadStatus {
   NEW_LEAD
+  CONTACTED
+  INTERESTED
   CALL_SCHEDULED
   TUTOR_MATCHED
   DEMO_SCHEDULED
@@ -47,7 +49,7 @@ model User {
   emailVerified DateTime?
   passwordHash  String?        // Bcrypt hash for password login
   phone         String?        @unique
-  image         String?
+  image         String?        @db.LongText
   role          Role           @default(PARENT)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -75,9 +77,9 @@ model TutorProfile {
   id                String       @id @default(uuid())
   userId            String       @unique
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  avatarUrl         String?      // Profile Photo (Cloudinary)
-  introVideoUrl     String?      // 60-90s Intro Video (Direct upload or YouTube/Vimeo embed)
-  videoThumbnailUrl String?
+  avatarUrl         String?      @db.LongText // Profile Photo (Cloudinary or Data URI)
+  introVideoUrl     String?      @db.LongText // 60-90s Intro Video (Direct upload or YouTube/Vimeo embed)
+  videoThumbnailUrl String?      @db.LongText
   bio               String?      @db.Text
   experienceYears   Int          @default(0)
   highestDegree     String?
@@ -102,6 +104,7 @@ model TutorProfile {
   monthlyRateMin    Int?
   status            TutorStatus  @default(PENDING_INTERVIEW)
   isVerified        Boolean      @default(false)
+  isAvailable       Boolean      @default(true) // Active / Inactive service availability toggle
   hasPoliceCheck    Boolean      @default(false) // Gold background check badge
   interviewScore    Int?         // 1 to 10
   interviewNotes    String?      @db.Text
@@ -124,10 +127,15 @@ model TutorKYC {
   id               String       @id @default(uuid())
   tutorId          String       @unique
   tutor            TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
-  idType           String       // "AADHAAR_MASKED" | "DRIVING_LICENSE" | "PAN" | "VOTER_ID"
+  idType           String       // "AADHAAR" | "PAN" | "AADHAAR_MASKED" | "DRIVING_LICENSE"
   idLast4          String       // Only store last 4 digits (e.g. "4589") - NEVER plain 12 digits
-  idNumberEncrypted String?      // Secure encrypted full government ID number
-  idDocUrl         String       // Secure private encrypted Cloudinary URL
+  idNumberEncrypted String?      // Secure AES-256 encrypted full government ID number
+  idDocUrl         String       @db.LongText // Secure Cloudinary URL or Data URI for Aadhaar/PAN image
+  idStatus         String       @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  idRejectionNote  String?      @db.Text
+  degreeDocUrl     String?      @db.LongText // Secure Cloudinary URL or Data URI for Highest Qualification Degree/Marksheet
+  degreeStatus     String       @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  degreeRejectionNote String?   @db.Text
   verificationDate DateTime?
   verifiedByAdmin  String?      // Admin/Caller User ID who verified
   createdAt        DateTime     @default(now())
@@ -227,5 +235,9 @@ model PlatformConfig {
   officeAddress        String   @default("M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001")
   helplinePhones       String   @default("+91 95174 47689, +91 92170 31899")
   supportEmail         String   @default("info@sssamacademy.com")
+  mapProvider          String   @default("GOOGLE_MAPS") // "GOOGLE_MAPS" | "OPENSTREETMAP"
+  googleMapsApiKey     String?  // Admin-configurable Google Maps API key
+  googleMapsUsageCount Int      @default(0)             // Monthly call counter
+  googleMapsLimit      Int      @default(25000)         // Safety monthly quota
   updatedAt            DateTime @updatedAt
 }

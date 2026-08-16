@@ -48,10 +48,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       `online ${item.subjectName.toLowerCase()} tutor india`,
       'SSSAM Academy',
     ],
+    alternates: {
+      canonical: `/tuition/${item.slug}`,
+    },
     openGraph: {
       title: item.metaTitle,
       description: item.metaDesc,
       url: `https://tuitionforhome.com/tuition/${item.slug}`,
+      siteName: 'TuitionForHome',
+      locale: 'en_IN',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: item.metaTitle,
+      description: item.metaDesc,
     },
   };
 }
@@ -61,7 +72,7 @@ export default async function SubjectPage({ params }: PageProps) {
   if (!item) notFound();
 
   // Fetch live verified tutors from Prisma MySQL
-  let dynamicTutors: MockTutor[] = VERIFIED_TUTORS;
+  let dynamicTutors: MockTutor[] = [];
   try {
     const dbTutors = await prisma.tutorProfile.findMany({
       where: { status: 'ACTIVE_VERIFIED' },
@@ -89,10 +100,10 @@ export default async function SubjectPage({ params }: PageProps) {
           name: tp.user.name,
           phone: tp.user.phone || '9811204921',
           email: tp.user.email,
-          avatarUrl: tp.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-          introVideoUrl: tp.introVideoUrl || 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-          videoDuration: '1m 20s',
-          highestDegree: tp.highestDegree || 'M.Sc.',
+          avatarUrl: tp.avatarUrl || '',
+          introVideoUrl: tp.introVideoUrl || '',
+          videoDuration: tp.introVideoUrl ? '1m 20s' : '',
+          highestDegree: tp.highestDegree || '',
           experienceYears: tp.experienceYears,
           teachingMode: tp.teachingMode,
           subjects,
@@ -116,8 +127,8 @@ export default async function SubjectPage({ params }: PageProps) {
     console.warn('DB query in subject page fallback to baseline:', err);
   }
 
-  // Schema.org Structured Data
-  const jsonLd = {
+  // Schema.org Structured Data (Course, FAQPage & BreadcrumbList)
+  const courseSchema = {
     '@context': 'https://schema.org',
     '@type': ['Course', 'EducationalOrganization'],
     name: item.h1,
@@ -130,11 +141,57 @@ export default async function SubjectPage({ params }: PageProps) {
     },
   };
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: item.faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://tuitionforhome.com',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Tuition Subjects',
+        item: 'https://tuitionforhome.com/#find-tutor',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: item.subjectName,
+        item: `https://tuitionforhome.com/tuition/${item.slug}`,
+      },
+    ],
+  };
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(courseSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
       <Navbar />
@@ -180,9 +237,9 @@ export default async function SubjectPage({ params }: PageProps) {
                 </div>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                  <Link href="/book-demo" className="btn btn-primary btn-lg">
+                  <Link href="/request-tutor" className="btn btn-primary btn-lg">
                     <Sparkles size={18} />
-                    <span>Book 1-on-1 Free {item.subjectName} Demo</span>
+                    <span>Request {item.subjectName} Tutor</span>
                   </Link>
                   <a href={`tel:${SSSAM_OFFICE_DETAILS.phones[0]}`} className="btn btn-secondary btn-lg">
                     <Phone size={18} />
@@ -221,8 +278,8 @@ export default async function SubjectPage({ params }: PageProps) {
                   </div>
                 </div>
 
-                <Link href="/book-demo" className="btn btn-emerald btn-lg" style={{ width: '100%', justifyContent: 'center' }}>
-                  <span>Schedule Free Demo Class</span>
+                <Link href="/request-tutor" className="btn btn-emerald btn-lg" style={{ width: '100%', justifyContent: 'center' }}>
+                  <span>Request Verified Tutor</span>
                   <ArrowRight size={18} />
                 </Link>
               </div>
@@ -270,8 +327,8 @@ export default async function SubjectPage({ params }: PageProps) {
                     </div>
                   </div>
 
-                  <Link href="/book-demo" className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center' }}>
-                    <span>Book Demo Class</span>
+                  <Link href="/" className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center' }}>
+                    <span>Request Classes</span>
                   </Link>
                 </div>
               ))}

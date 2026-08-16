@@ -1,30 +1,44 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
-    const rawDbLeads = await prisma.lead.findMany({
-      include: {
-        activities: {
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
-        assignedTutor: {
-          include: {
-            user: {
-              select: { name: true, phone: true },
+    let rawDbLeads: any[] = [];
+    try {
+      rawDbLeads = await prisma.lead.findMany({
+        include: {
+          activities: {
+            orderBy: {
+              createdAt: 'desc',
             },
           },
+          assignedTutor: {
+            include: {
+              user: {
+                select: { name: true, phone: true },
+              },
+            },
+          },
+          assignedCaller: {
+            select: { name: true, phone: true, email: true },
+          },
         },
-        assignedCaller: {
-          select: { name: true, phone: true, email: true },
+        orderBy: {
+          updatedAt: 'desc',
         },
-      },
-      orderBy: {
-        updatedAt: 'desc',
-      },
-    });
+      });
+    } catch (prismaErr) {
+      console.warn('Prisma findMany fallback to raw SQL:', prismaErr);
+      const rows: any[] = await prisma.$queryRawUnsafe('SELECT * FROM `Lead` ORDER BY updatedAt DESC');
+      const allActivities: any[] = await prisma.$queryRawUnsafe('SELECT * FROM `LeadActivity` ORDER BY createdAt DESC');
+      
+      rawDbLeads = rows.map((r) => ({
+        ...r,
+        activities: allActivities.filter((a) => a.leadId === r.id),
+      }));
+    }
 
     const leads = rawDbLeads.map((lead: any) => {
       let subjects = lead.subjectsNeeded;
@@ -42,16 +56,20 @@ export async function GET() {
         parentEmail: lead.parentEmail || '',
         preferredMode: lead.preferredMode,
         locality: lead.locality,
+        formattedAddress: lead.formattedAddress || lead.locality || '',
+        latitude: lead.latitude || null,
+        longitude: lead.longitude || null,
         gradeClass: lead.gradeClass,
         subjectsNeeded: subjects,
-        board: lead.board || 'CBSE',
-        budgetMonthly: lead.budgetMonthly || 8000,
+        board: lead.board || null,
+        budgetMonthly: lead.budgetMonthly || null,
         status: lead.status,
         notes: lead.notes || '',
         assignedTutor: lead.assignedTutor?.user?.name || null,
         assignedTutorId: lead.assignedTutorId || null,
         assignedCaller: lead.assignedCaller?.name || 'Unassigned',
         demoDate: lead.demoDate ? new Date(lead.demoDate).toISOString() : null,
+        nextFollowupDate: lead.demoDate ? new Date(lead.demoDate).toISOString() : null,
         commissionAmount: lead.commissionAmount || 0,
         createdAt: new Date(lead.createdAt).toISOString(),
         updatedAt: new Date(lead.updatedAt).toISOString(),

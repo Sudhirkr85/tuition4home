@@ -19,6 +19,10 @@ export async function GET() {
           officeAddress: 'M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001',
           helplinePhones: '+91 95174 47689, +91 92170 31899',
           supportEmail: 'info@sssamacademy.com',
+          mapProvider: 'GOOGLE_MAPS',
+          googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || null,
+          googleMapsUsageCount: 0,
+          googleMapsLimit: 25000,
         },
       });
     }
@@ -47,6 +51,10 @@ export async function POST(req: Request) {
         officeAddress: body.officeAddress || undefined,
         helplinePhones: body.helplinePhones || undefined,
         supportEmail: body.supportEmail || undefined,
+        mapProvider: body.mapProvider || undefined,
+        googleMapsApiKey: body.googleMapsApiKey !== undefined ? (body.googleMapsApiKey.trim() || null) : undefined,
+        googleMapsUsageCount: body.googleMapsUsageCount !== undefined ? Number(body.googleMapsUsageCount) : undefined,
+        googleMapsLimit: body.googleMapsLimit !== undefined ? Number(body.googleMapsLimit) : undefined,
       },
       create: {
         id: 'global_config',
@@ -58,6 +66,10 @@ export async function POST(req: Request) {
         officeAddress: body.officeAddress || 'M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001',
         helplinePhones: body.helplinePhones || '+91 95174 47689, +91 92170 31899',
         supportEmail: body.supportEmail || 'info@sssamacademy.com',
+        mapProvider: body.mapProvider || 'GOOGLE_MAPS',
+        googleMapsApiKey: body.googleMapsApiKey?.trim() || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || null,
+        googleMapsUsageCount: Number(body.googleMapsUsageCount || 0),
+        googleMapsLimit: Number(body.googleMapsLimit || 25000),
       },
     });
 

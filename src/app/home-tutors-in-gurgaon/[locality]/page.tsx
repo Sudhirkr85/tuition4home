@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `Best Home Tutors in ${loc.name}, Gurgaon (CBSE, ICSE, IB) | SSSAM Academy`,
-    description: `Find top-rated, background-verified home & online tutors in ${loc.name}, Gurgaon (${loc.landmark}). 1 Free Demo Class + 100% Replacement Guarantee. Verified by SSSAM Academy Sector 14 Gurugram.`,
+    description: `Find top-rated, background-verified home & online tutors in ${loc.name}, Gurgaon (${loc.landmark}). 100% Tutor Replacement Guarantee. Verified by SSSAM Academy Sector 14 Gurugram.`,
     keywords: [
       `home tutor in ${loc.name.toLowerCase()} gurgaon`,
       `home tuition ${loc.name.toLowerCase()} gurugram`,
@@ -38,9 +38,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       `physics tutor ${loc.name.toLowerCase()} gurgaon`,
       `private tuition teachers ${loc.name.toLowerCase()}`,
     ],
+    alternates: {
+      canonical: `/home-tutors-in-gurgaon/${loc.slug}`,
+    },
     openGraph: {
       title: `Home Tutors in ${loc.name}, Gurgaon | TuitionForHome`,
       description: `Hire verified home tutors in ${loc.name} (${loc.landmark}) for CBSE, ICSE, IB & Coding.`,
+      url: `https://tuitionforhome.com/home-tutors-in-gurgaon/${loc.slug}`,
+      siteName: 'TuitionForHome',
+      locale: 'en_IN',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `Best Home Tutors in ${loc.name}, Gurgaon`,
+      description: `Find verified home tutors in ${loc.name} (${loc.landmark}). Free Demo Class + 100% Replacement Guarantee.`,
     },
   };
 }
@@ -50,7 +62,7 @@ export default async function LocalityPage({ params }: PageProps) {
   if (!loc) notFound();
 
   // Fetch live verified tutors from Prisma MySQL
-  let dynamicTutors: MockTutor[] = VERIFIED_TUTORS;
+  let dynamicTutors: MockTutor[] = [];
   try {
     const dbTutors = await prisma.tutorProfile.findMany({
       where: { status: 'ACTIVE_VERIFIED' },
@@ -72,10 +84,10 @@ export default async function LocalityPage({ params }: PageProps) {
           name: tp.user.name,
           phone: tp.user.phone || '9811204921',
           email: tp.user.email,
-          avatarUrl: tp.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-          introVideoUrl: tp.introVideoUrl || 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-          videoDuration: '1m 20s',
-          highestDegree: tp.highestDegree || 'M.Sc.',
+          avatarUrl: tp.avatarUrl || '',
+          introVideoUrl: tp.introVideoUrl || '',
+          videoDuration: tp.introVideoUrl ? '1m 20s' : '',
+          highestDegree: tp.highestDegree || '',
           experienceYears: tp.experienceYears,
           teachingMode: tp.teachingMode,
           subjects,
@@ -99,7 +111,7 @@ export default async function LocalityPage({ params }: PageProps) {
     console.warn('DB query in locality page fallback to baseline:', err);
   }
 
-  // Schema.org Structured Data
+  // Schema.org Structured Data (LocalBusiness & BreadcrumbList)
   const schemaData = {
     '@context': 'https://schema.org',
     '@type': ['LocalBusiness', 'EducationalOrganization'],
@@ -109,10 +121,10 @@ export default async function LocalityPage({ params }: PageProps) {
     telephone: SSSAM_OFFICE_DETAILS.phones[0],
     address: {
       '@type': 'PostalAddress',
-      streetAddress: loc.landmark,
+      streetAddress: SSSAM_OFFICE_DETAILS.address,
       addressLocality: 'Gurugram',
       addressRegion: 'Haryana',
-      postalCode: loc.pincode,
+      postalCode: '122001',
       addressCountry: 'IN',
     },
     geo: {
@@ -120,8 +132,36 @@ export default async function LocalityPage({ params }: PageProps) {
       latitude: SSSAM_OFFICE_DETAILS.geo.lat,
       longitude: SSSAM_OFFICE_DETAILS.geo.lng,
     },
-    areaServed: loc.name,
+    areaServed: {
+      '@type': 'Place',
+      name: `${loc.name}, Gurugram`,
+    },
     priceRange: '₹₹',
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://tuitionforhome.com',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Gurgaon Localities',
+        item: 'https://tuitionforhome.com/#localities',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: `Home Tutors in ${loc.name}`,
+        item: `https://tuitionforhome.com/home-tutors-in-gurgaon/${loc.slug}`,
+      },
+    ],
   };
 
   const faqSchema = {
@@ -133,7 +173,7 @@ export default async function LocalityPage({ params }: PageProps) {
         name: `How do I book a home tutor in ${loc.name}, Gurgaon?`,
         acceptedAnswer: {
           '@type': 'Answer',
-          text: `You can book a verified home tutor in ${loc.name} by requesting a 1-on-1 free demo class on TuitionForHome. Our academic counselors from SSSAM Academy will match the top tutor near ${loc.landmark} within 2 hours.`,
+          text: `You can book a verified home tutor in ${loc.name} by submitting a tutor inquiry on TuitionForHome. Our academic counselors from SSSAM Academy will match the top tutor near ${loc.landmark} within 2 hours.`,
         },
       },
       {
@@ -156,6 +196,10 @@ export default async function LocalityPage({ params }: PageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
       <Navbar />
@@ -186,7 +230,7 @@ export default async function LocalityPage({ params }: PageProps) {
                   Best Home Tutors in <span className="text-gradient">{loc.name}, Gurgaon</span>
                 </h1>
                 <p style={{ fontSize: '1.05rem', color: 'var(--color-slate-600)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-                  Serving residential communities around <strong>{loc.landmark}</strong>. Connect with {loc.activeTutorsCount}+ verified tutors for CBSE, ICSE, IB, and Cambridge boards with a <strong>1 Free Demo Class</strong>.
+                  Serving residential communities around <strong>{loc.landmark}</strong>. Connect with {loc.activeTutorsCount}+ verified tutors for CBSE, ICSE, IB, and Cambridge boards with <strong>100% Replacement Guarantee</strong>.
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '2rem', fontSize: '0.9rem', color: 'var(--color-slate-700)' }}>
@@ -196,17 +240,17 @@ export default async function LocalityPage({ params }: PageProps) {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <CheckCircle size={16} color="var(--color-emerald-600)" />
-                    <span>Academic & police-checked background verified by SSSAM Academy</span>
+                    <span>Academic degrees &amp; identity verified in-person by SSSAM Academy</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <CheckCircle size={16} color="var(--color-emerald-600)" />
-                    <span>Free tutor replacement guarantee if you are not 100% satisfied</span>
+                    <span>100% Replacement guarantee if you need a different teacher</span>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
                   <Link href="/" className="btn btn-primary btn-lg">
-                    <span>Book Free Demo in {loc.name}</span>
+                    <span>Request Home Tutor in {loc.name}</span>
                     <ArrowRight size={18} />
                   </Link>
                   <a href={`tel:${SSSAM_OFFICE_DETAILS.phones[0]}`} className="btn btn-secondary btn-lg">
@@ -231,7 +275,7 @@ export default async function LocalityPage({ params }: PageProps) {
                   Get matched with top tutors near {loc.landmark} in under 2 hours.
                 </p>
 
-                <form action="/book-demo" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <form action="/request-tutor" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div>
                     <label className="form-label">Grade / Board</label>
                     <select className="form-control">
@@ -255,7 +299,7 @@ export default async function LocalityPage({ params }: PageProps) {
 
                   <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
                     <Sparkles size={16} />
-                    <span>Schedule Demo in {loc.name}</span>
+                    <span>Find Tutor in {loc.name}</span>
                   </button>
                 </form>
               </div>
@@ -308,7 +352,7 @@ export default async function LocalityPage({ params }: PageProps) {
                   </div>
 
                   <Link href="/" className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center' }}>
-                    <span>Book Demo Class</span>
+                    <span>Request Classes</span>
                   </Link>
                 </div>
               ))}
@@ -329,16 +373,16 @@ export default async function LocalityPage({ params }: PageProps) {
                   How soon can a tutor start in {loc.name}?
                 </h4>
                 <p style={{ fontSize: '0.88rem', color: 'var(--color-slate-600)', lineHeight: 1.5 }}>
-                  Once you request a demo, our academic counselor connects you with the shortlisted tutor in {loc.name} within 2 hours. Your 1st free demo class can be scheduled for the very next day.
+                  Once you submit your inquiry, our academic counselor connects you with the shortlisted tutor in {loc.name} within 2 hours. Classes can start as early as the next day.
                 </p>
               </div>
 
               <div style={{ backgroundColor: '#FFFFFF', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
                 <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--color-slate-900)' }}>
-                  What happens if my child is not satisfied with the demo?
+                  What happens if we need a tutor replacement?
                 </h4>
                 <p style={{ fontSize: '0.88rem', color: 'var(--color-slate-600)', lineHeight: 1.5 }}>
-                  Under our 100% Satisfaction Guarantee, you pay nothing for an unsatisfied demo, and we will arrange a demo with a new top-tier tutor from SSSAM Academy at no extra charge.
+                  Under our 100% Satisfaction Guarantee, if you ever feel the educator is not the right fit, SSSAM Academy will provide an immediate replacement educator at zero extra charge.
                 </p>
               </div>
             </div>

@@ -26,68 +26,12 @@ export async function GET() {
         },
       });
     } catch (dbErr) {
-      console.warn('Database not reached or table empty, returning mock counselors:', dbErr);
-    }
-
-    // Default baseline professional counselors
-    const defaultDesks = [
-      {
-        id: 'csl-1',
-        name: 'Pooja Sharma (Lead Desk 1)',
-        email: 'pooja.counselor@sssamacademy.com',
-        phone: '9517447689',
-        role: 'TELECALLER',
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: 'csl-2',
-        name: 'Karan Mehra (Lead Desk 2)',
-        email: 'karan.telecaller@sssamacademy.com',
-        phone: '9217031899',
-        role: 'TELECALLER',
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: 'csl-3',
-        name: 'Priya Sharma (Lead Desk 3)',
-        email: 'priya.sharma@sssamacademy.com',
-        phone: '9811998877',
-        role: 'TELECALLER',
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: 'csl-4',
-        name: 'Anita Verma (Lead Desk 4)',
-        email: 'anita.verma@sssamacademy.com',
-        phone: '9811122233',
-        role: 'TELECALLER',
-        createdAt: new Date().toISOString(),
-      },
-    ];
-
-    // Combine DB counselors with default baseline desks if not already present
-    // Also clean up any mock timestamp emails
-    const sanitizedDbCounselors = counselors.map((c) => {
-      if (/\.\d{8,}@/.test(c.email)) {
-        const cleanName = c.name.toLowerCase().replace(/[^a-z]/g, '');
-        return {
-          ...c,
-          email: `${cleanName || 'counselor'}@sssamacademy.com`,
-        };
-      }
-      return c;
-    });
-
-    const combined = [...sanitizedDbCounselors];
-    for (const desk of defaultDesks) {
-      if (!combined.some((c) => c.email.toLowerCase() === desk.email.toLowerCase() || c.id === desk.id)) {
-        combined.push(desk);
-      }
+      console.warn('Database query error fetching counselors:', dbErr);
     }
 
     return NextResponse.json({
       success: true,
-      counselors: combined,
+      counselors,
     });
   } catch (error: any) {
     console.error('[ADMIN_GET_COUNSELORS_ERROR]:', error);
@@ -102,10 +46,12 @@ export async function POST(req: Request) {
     const { name, email, phone, password } = body;
 
     if (!name || !email || !password) {
-      return NextResponse.json(
-        { success: false, error: 'Name, email and password are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'Name, email and password are required' }, { status: 400 });
+    }
+
+    const cleanPhone = phone ? phone.replace(/\D/g, '').slice(0, 10) : null;
+    if (cleanPhone && cleanPhone.length > 0 && cleanPhone.length !== 10) {
+      return NextResponse.json({ success: false, error: 'Mobile phone number must be exactly 10 digits.' }, { status: 400 });
     }
 
     // Hash password

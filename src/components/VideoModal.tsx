@@ -1,77 +1,145 @@
 'use client';
 
 import React from 'react';
-import { X, ShieldCheck, GraduationCap } from 'lucide-react';
+import { X, ShieldCheck, Play } from 'lucide-react';
 import { MockTutor } from '@/lib/data';
 
 interface VideoModalProps {
   tutor: MockTutor | null;
   onClose: () => void;
-  onBookDemo: (tutor: MockTutor) => void;
+  onSelectTutor: (tutor: MockTutor) => void;
 }
 
-export default function VideoModal({ tutor, onClose, onBookDemo }: VideoModalProps) {
+export default function VideoModal({ tutor, onClose, onSelectTutor }: VideoModalProps) {
   if (!tutor) return null;
 
+  // Check if introVideoUrl is a valid video link (youtube, vimeo, mp4, etc.)
+  const rawVideoUrl = tutor.introVideoUrl || '';
+  const isValidVideoUrl = Boolean(
+    rawVideoUrl &&
+    (rawVideoUrl.includes('youtube.com') ||
+     rawVideoUrl.includes('youtu.be') ||
+     rawVideoUrl.includes('vimeo.com') ||
+     rawVideoUrl.includes('cloudinary.com') ||
+     rawVideoUrl.endsWith('.mp4'))
+  );
+
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 2100,
-      backgroundColor: 'rgba(11, 19, 43, 0.85)',
-      backdropFilter: 'blur(12px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1rem',
-    }}>
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: '24px',
-        maxWidth: '680px',
-        width: '100%',
-        overflow: 'hidden',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
-        position: 'relative',
-      }}>
-        {/* Close Button */}
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        backgroundColor: 'rgba(15, 23, 42, 0.75)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1.25rem',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: '24px',
+          maxWidth: '680px',
+          width: '100%',
+          overflow: 'hidden',
+          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.4)',
+          position: 'relative',
+          border: '1px solid #E2E8F0',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Prominent Floating Close (X) Button */}
         <button
+          type="button"
           onClick={onClose}
+          aria-label="Close Modal"
           style={{
             position: 'absolute',
             top: '1rem',
             right: '1rem',
-            width: '36px',
-            height: '36px',
+            width: '40px',
+            height: '40px',
             borderRadius: '50%',
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            border: 'none',
+            backgroundColor: '#0F172A',
+            color: '#FFFFFF',
+            border: '2px solid #FFFFFF',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            zIndex: 10,
+            zIndex: 99999,
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+            transition: 'transform 0.15s ease',
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
         >
-          <X size={18} color="var(--color-slate-900)" />
+          <X size={20} color="#FFFFFF" strokeWidth={3} />
         </button>
 
-        {/* Video Player Area */}
-        <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, backgroundColor: '#000000' }}>
-          <iframe
-            src={`${tutor.introVideoUrl}?autoplay=1&rel=0`}
-            title={`Video Intro: ${tutor.name}`}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              border: 'none',
-            }}
-          />
+        {/* Video Player or Placeholder Area */}
+        <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', backgroundColor: '#0F172A' }}>
+          {isValidVideoUrl ? (
+            <iframe
+              src={`${rawVideoUrl}${rawVideoUrl.includes('?') ? '&' : '?'}autoplay=1&rel=0`}
+              title={`Video Intro: ${tutor.name}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                border: 'none',
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#FFFFFF',
+                padding: '2rem',
+                textAlign: 'center',
+                backgroundColor: 'radial-gradient(circle at 50% 50%, #1E293B 0%, #0F172A 100%)',
+              }}
+            >
+              <div
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(13, 148, 136, 0.2)',
+                  color: 'var(--brand-teal, #0D9488)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '1rem',
+                  border: '1px solid rgba(13, 148, 136, 0.4)',
+                }}
+              >
+                <Play size={28} />
+              </div>
+              <h4 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 0.4rem 0', color: '#FFFFFF' }}>
+                60s Video Intro &amp; Demo Session
+              </h4>
+              <p style={{ fontSize: '0.85rem', color: '#94A3B8', maxWidth: '440px', margin: 0, lineHeight: 1.5 }}>
+                {tutor.name}&apos;s live video intro is presented during official student demo matching. Click below to request a 1-on-1 trial class.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Tutor Details & Booking Action */}
@@ -79,33 +147,37 @@ export default function VideoModal({ tutor, onClose, onBookDemo }: VideoModalPro
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-slate-900)' }}>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
                   {tutor.name}
                 </h3>
-                <span className="badge badge-verified">
-                  <ShieldCheck size={13} />
+                <span style={{ fontSize: '0.7rem', fontWeight: 800, backgroundColor: '#DCFCE7', color: '#15803D', padding: '0.15rem 0.55rem', borderRadius: '999px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                  <ShieldCheck size={12} />
                   <span>VERIFIED TUTOR</span>
                 </span>
               </div>
-              <div style={{ fontSize: '0.88rem', color: 'var(--color-slate-600)', fontWeight: 500 }}>
-                {tutor.highestDegree} • {tutor.experienceYears}+ Years Teaching Experience
+              <div style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600 }}>
+                {tutor.highestDegree || 'Bachelor Degree'} {tutor.experienceYears ? `• ${tutor.experienceYears}+ Years Teaching Experience` : ''}
               </div>
             </div>
 
             <button
+              type="button"
               onClick={() => {
                 onClose();
-                onBookDemo(tutor);
+                onSelectTutor(tutor);
               }}
               className="btn btn-primary"
+              style={{ backgroundColor: '#0D9488', padding: '0.65rem 1.35rem', fontWeight: 800, fontSize: '0.88rem' }}
             >
-              <span>Book Demo with {tutor.name.split(' ')[0]}</span>
+              <span>Select {tutor.name.split(' ')[0]}</span>
             </button>
           </div>
 
-          <p style={{ fontSize: '0.88rem', color: 'var(--color-slate-600)', lineHeight: 1.5, borderTop: '1px solid var(--border-subtle)', paddingTop: '0.85rem' }}>
-            {tutor.bio}
-          </p>
+          {tutor.bio && (
+            <p style={{ fontSize: '0.86rem', color: '#334155', lineHeight: 1.6, borderTop: '1px solid #F1F5F9', paddingTop: '0.85rem', margin: 0 }}>
+              {tutor.bio}
+            </p>
+          )}
         </div>
       </div>
     </div>

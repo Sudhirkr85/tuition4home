@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -11,6 +13,7 @@ export async function GET(req: Request) {
     const tutorProfiles = await prisma.tutorProfile.findMany({
       where: {
         status: 'ACTIVE_VERIFIED',
+        isAvailable: true,
       },
       include: {
         user: {
@@ -21,9 +24,13 @@ export async function GET(req: Request) {
           },
         },
         kycDoc: true,
+        reviews: {
+          where: { isApproved: true },
+          select: { rating: true }
+        }
       },
       orderBy: {
-        rating: 'desc',
+        createdAt: 'desc',
       },
     });
 
@@ -58,15 +65,21 @@ export async function GET(req: Request) {
         serviceAreas = tp.serviceAreas ? tp.serviceAreas.split(',').map((s: string) => s.trim()) : [];
       }
 
+      const approvedRev = tp.reviews || [];
+      const reviewCount = approvedRev.length;
+      const calculatedRating = reviewCount > 0
+        ? Math.round((approvedRev.reduce((acc: number, r: any) => acc + r.rating, 0) / reviewCount) * 10) / 10
+        : (tp.rating || 5.0);
+
       return {
         id: tp.id,
         name: tp.user.name,
         phone: tp.user.phone || '9811204921',
         email: tp.user.email,
-        avatarUrl: tp.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-        introVideoUrl: tp.introVideoUrl || 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-        videoDuration: '1m 20s',
-        highestDegree: tp.highestDegree || 'M.Sc.',
+        avatarUrl: tp.avatarUrl || '',
+        introVideoUrl: tp.introVideoUrl || '',
+        videoDuration: tp.introVideoUrl ? '1m 20s' : '',
+        highestDegree: tp.highestDegree || '',
         experienceYears: tp.experienceYears,
         teachingMode: tp.teachingMode,
         subjects,
@@ -74,13 +87,15 @@ export async function GET(req: Request) {
         boards,
         serviceAreas,
         travelRadiusKm: tp.travelRadiusKm,
+        latitude: tp.latitude || null,
+        longitude: tp.longitude || null,
         hourlyRateHome: tp.hourlyRateHome || 900,
         hourlyRateOnline: tp.hourlyRateOnline || 600,
         monthlyRateMin: tp.monthlyRateMin || 7500,
         isVerified: tp.isVerified,
         hasPoliceCheck: tp.hasPoliceCheck,
-        rating: tp.rating,
-        totalReviews: tp.totalReviews,
+        rating: calculatedRating,
+        totalReviews: reviewCount,
         bio: tp.bio || '',
         badge: tp.highestDegree ? `Specialist (${tp.highestDegree})` : 'Verified Tutor',
       };

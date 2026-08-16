@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Navigation, Edit2, CheckCircle2, ShieldCheck, MapPin } from 'lucide-react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { Navigation, X, CheckCircle2, ShieldCheck, MapPin, ArrowUpRight, Crosshair, Search } from 'lucide-react';
 import { VERIFIED_TUTORS, MockTutor } from '@/lib/data';
 import 'leaflet/dist/leaflet.css';
 
@@ -10,298 +11,740 @@ interface RapidoStyleMapProps {
   isCompact?: boolean;
 }
 
+const POPULAR_GURGAON_SECTORS = [
+  { name: 'DLF Phase 5', landmark: 'The Aralias, Magnolias, Horizon Centre', lat: 28.4552, lng: 77.0945 },
+  { name: 'Golf Course Road', landmark: 'Sector 42, One Horizon, Mega Mall', lat: 28.4595, lng: 77.0988 },
+  { name: 'DLF Phase 1', landmark: 'Silver Oaks, Qutab Plaza', lat: 28.4795, lng: 77.1025 },
+  { name: 'DLF Phase 2', landmark: 'Cyber City, Jacaranda Marg', lat: 28.4895, lng: 77.0895 },
+  { name: 'DLF Phase 4', landmark: 'Galleria Market, Supermart 1 & 2', lat: 28.4685, lng: 77.0855 },
+  { name: 'Sector 14 & Old DLF', landmark: 'SSSAM Academy Center, Sector 14 Market', lat: 28.4728, lng: 77.0345 },
+  { name: 'Sector 56', landmark: 'HUDA Market, Rapid Metro, Kendriya Vihar', lat: 28.4315, lng: 77.1035 },
+  { name: 'Sector 57', landmark: 'Hong Kong Bazaar, Sushant Lok 3', lat: 28.4255, lng: 77.0885 },
+  { name: 'Sector 50 / Nirvana Country', landmark: 'Unitech Fresco, South City 2', lat: 28.4185, lng: 77.0655 },
+  { name: 'Sector 48 / Sohna Road', landmark: 'Vipul Greens, Central Park 2, JMD Megapolis', lat: 28.4205, lng: 77.0395 },
+  { name: 'Sushant Lok 1', landmark: 'Gold Souk, Vyapar Kendra, Fortis Hospital', lat: 28.4615, lng: 77.0785 },
+  { name: 'Palam Vihar', landmark: 'Ansal Plaza, Chiranjiv Bharati School', lat: 28.5095, lng: 77.0425 },
+  { name: 'New Gurgaon (Sector 82-84)', landmark: 'Vatika India Next, Mapsko Mount Ville', lat: 28.3895, lng: 76.9655 },
+  { name: 'Sector 49', landmark: 'South City 2, Orchid Petals, Vatika City', lat: 28.4125, lng: 77.0515 },
+  { name: 'Sector 31', landmark: 'HUDA Market, Sector 31 Gurgaon', lat: 28.4555, lng: 77.0505 },
+  { name: 'Sector 45', landmark: 'Greenwoods City, DPS Gurgaon', lat: 28.4485, lng: 77.0715 },
+  { name: 'Sector 46', landmark: 'Amity International School, Sector 46', lat: 28.4415, lng: 77.0625 },
+];
+
 export default function RapidoStyleMap({ onLocationSelected, isCompact = false }: RapidoStyleMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const popupMapRef = useRef<HTMLDivElement>(null);
+
+  // Leaflet references
   const [L, setL] = useState<any>(null);
-  const [map, setMap] = useState<any>(null);
-  
+  const leafletMapInstanceRef = useRef<any>(null);
+  const leafletPopupMapInstanceRef = useRef<any>(null);
+  const leafletPopupMarkerRef = useRef<any>(null);
+
   // State values
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectedAddress, setDetectedAddress] = useState('DLF Phase 5, Golf Course Road, Gurugram');
-  const [isEditing, setIsEditing] = useState(false);
-  const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>(VERIFIED_TUTORS);
-  const [selectedTutor, setSelectedTutor] = useState<MockTutor | null>(VERIFIED_TUTORS[0]);
-  
+  const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>([]);
+  const [selectedTutor, setSelectedTutor] = useState<MockTutor | null>(null);
+
+  // Location popup state
+  const [showLocationPopup, setShowLocationPopup] = useState(false);
+  const [popupAddress, setPopupAddress] = useState('');
+  const [popupCoords, setPopupCoords] = useState({ lat: 28.4728, lng: 77.0345 });
+  const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Array<{ name: string; landmark?: string; lat: number; lng: number }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   // Current coordinates (Center of Gurgaon, Haryana)
   const [currentCoords, setCurrentCoords] = useState({ lat: 28.4728, lng: 77.0345 });
 
-  // Fetch live verified tutors from database API
+  // 1. Fetch live verified tutors
   useEffect(() => {
     fetch('/api/tutors/list')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.tutors && data.tutors.length > 0) {
+        if (data.success && Array.isArray(data.tutors) && data.tutors.length > 0) {
           setDynamicTutors(data.tutors);
           setSelectedTutor(data.tutors[0]);
+        } else {
+          setDynamicTutors([]);
+          setSelectedTutor(null);
         }
       })
-      .catch((err) => console.error('Failed to fetch live tutors for map:', err));
+      .catch((err) => {
+        console.error('Failed to fetch live tutors for map:', err);
+        setDynamicTutors([]);
+        setSelectedTutor(null);
+      });
   }, []);
 
-  // Load Leaflet dynamically on the client
+  // 2. Preload Leaflet on client
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      import('leaflet').then((leaflet) => {
-        setL(leaflet.default);
+      import('leaflet').then((mod) => {
+        setL(mod.default);
       });
     }
   }, []);
 
-  // Initialize Map
-  useEffect(() => {
-    if (!L || !mapContainerRef.current || map) return;
+  // Reverse Geocoding with OSM Nominatim
+  const handleReverseGeocode = useCallback(async (lat: number, lng: number): Promise<string> => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`,
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const data = await res.json();
+      if (data?.address) {
+        const a = data.address;
+        const parts: string[] = [];
+        if (a.neighbourhood) parts.push(a.neighbourhood);
+        else if (a.suburb) parts.push(a.suburb);
+        if (a.road) parts.push(a.road);
+        if (a.city || a.town || a.village) parts.push(a.city || a.town || a.village);
+        if (a.state_district) parts.push(a.state_district);
+        return parts.length > 0 ? parts.join(', ') : (data.display_name || 'Gurugram, Haryana');
+      }
+      return data.display_name || 'Gurugram, Haryana';
+    } catch {
+      return 'Gurugram, Haryana';
+    }
+  }, []);
 
-    // Create Leaflet Map instance
-    const leafletMap = L.map(mapContainerRef.current, {
+  // Search handler for Gurgaon sectors & landmarks
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    if (!query || query.trim().length === 0) {
+      setSearchResults([]);
+      return;
+    }
+
+    const q = query.toLowerCase().trim();
+    const localMatches = POPULAR_GURGAON_SECTORS.filter(
+      (s) => s.name.toLowerCase().includes(q) || s.landmark.toLowerCase().includes(q)
+    );
+
+    setSearchResults(localMatches);
+
+    // If query has 3+ chars, also query Nominatim for additional specific landmarks
+    if (q.length >= 3) {
+      setIsSearching(true);
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Gurgaon')}&countrycodes=in&limit=4`, {
+        headers: { 'Accept-Language': 'en' }
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data) && data.length > 0) {
+            const osmResults = data.map((item) => ({
+              name: item.display_name.split(',')[0],
+              landmark: item.display_name.split(',').slice(1, 3).join(',').trim(),
+              lat: parseFloat(item.lat),
+              lng: parseFloat(item.lon),
+            }));
+
+            // Merge local matches and OSM matches without duplicate names
+            const existingNames = new Set(localMatches.map((m) => m.name.toLowerCase()));
+            const uniqueOsm = osmResults.filter((o) => !existingNames.has(o.name.toLowerCase()));
+            setSearchResults([...localMatches, ...uniqueOsm]);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setIsSearching(false));
+    }
+  };
+
+  // Select search result
+  const handleSelectSearchResult = (result: { name: string; landmark?: string; lat: number; lng: number }) => {
+    setPopupCoords({ lat: result.lat, lng: result.lng });
+    setPopupAddress(result.name + (result.landmark ? ` (${result.landmark})` : '') + ', Gurugram');
+    setSearchQuery('');
+    setSearchResults([]);
+
+    if (leafletPopupMapInstanceRef.current && leafletPopupMarkerRef.current) {
+      leafletPopupMapInstanceRef.current.setView([result.lat, result.lng], 16);
+      leafletPopupMarkerRef.current.setLatLng([result.lat, result.lng]);
+    }
+  };
+
+  // =========================================================================
+  // MAIN MAP INITIALIZATION (100% PURE OPENSTREETMAP LEAFLET)
+  // =========================================================================
+  useEffect(() => {
+    if (!L || !mapContainerRef.current) return;
+
+    if (leafletMapInstanceRef.current) {
+      leafletMapInstanceRef.current.remove();
+      leafletMapInstanceRef.current = null;
+    }
+    if ((mapContainerRef.current as any)._leaflet_id) {
+      delete (mapContainerRef.current as any)._leaflet_id;
+    }
+
+    const map = L.map(mapContainerRef.current, {
       center: [currentCoords.lat, currentCoords.lng],
       zoom: 14,
       zoomControl: !isCompact,
       attributionControl: false,
     });
 
-    // Add OpenStreetMap light styled tiles (jawg or osm standard)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
-    }).addTo(leafletMap);
+      subdomains: 'abcd',
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+    }).addTo(map);
 
-    setMap(leafletMap);
+    leafletMapInstanceRef.current = map;
 
-    return () => {
-      leafletMap.remove();
-    };
-  }, [L]);
+    // Trigger invalidateSize to ensure tiles render immediately
+    map.invalidateSize();
+    setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+    setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+    setTimeout(() => { if (map) map.invalidateSize(); }, 800);
 
-  // Handle markers placement on map load/coordinate updates
-  useEffect(() => {
-    if (!L || !map) return;
+    // Parent pin
+    try {
+      const parentIcon = L.divIcon({
+        className: 'custom-parent-pin',
+        html: `
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: #2563EB; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(37,99,235,0.45);">
+              <div style="width: 8px; height: 8px; border-radius: 50%; background: #FFFFFF;"></div>
+            </div>
+          </div>
+        `,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+      });
 
-    // Clear existing markers/layers (except tile layer)
-    map.eachLayer((layer: any) => {
-      if (layer instanceof L.Marker) {
-        map.removeLayer(layer);
+      L.marker([currentCoords.lat, currentCoords.lng], { icon: parentIcon }).addTo(map);
+    } catch (e) {
+      console.warn('Parent marker error:', e);
+    }
+
+    // Tutor pins
+    const nearbyTutorsList = Array.isArray(dynamicTutors) ? dynamicTutors.slice(0, 12) : [];
+    nearbyTutorsList.forEach((tutor, idx) => {
+      try {
+        let tLat = tutor.latitude;
+        let tLng = tutor.longitude;
+
+        if (!tLat || !tLng) {
+          const angle = idx * 2.399963;
+          const distanceKm = 0.8 + idx * 0.32;
+          tLat = currentCoords.lat + (distanceKm / 110.85) * Math.sin(angle);
+          tLng = currentCoords.lng + (distanceKm / 97.8) * Math.cos(angle);
+        }
+
+        const tutorName = tutor?.name || 'Verified Tutor';
+        const tutorAvatar = tutor?.avatarUrl || '';
+        const initial = tutorName.charAt(0).toUpperCase() || 'T';
+
+        const tutorIcon = L.divIcon({
+          className: 'custom-tutor-pin',
+          html: `
+            <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+              <div style="position: relative; padding: 2px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.18);">
+                ${tutorAvatar 
+                  ? `<img src="${tutorAvatar}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; display: block;" />`
+                  : `<div style="width: 28px; height: 28px; border-radius: 50%; background: #0F766E; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;">${initial}</div>`}
+              </div>
+              <span style="font-size: 0.65rem; font-weight: 800; background: #FFF; color: #0F172A; padding: 0.1rem 0.35rem; border-radius: 4px; border: 1px solid #CBD5E1; margin-top: 1px;">
+                ${tutorName.split(' ')[0]}
+              </span>
+            </div>
+          `,
+          iconSize: [60, 50],
+          iconAnchor: [30, 15],
+        });
+
+        const tMarker = L.marker([tLat, tLng], { icon: tutorIcon }).addTo(map);
+        tMarker.on('click', () => setSelectedTutor(tutor));
+      } catch (err) {
+        console.warn('Tutor marker error:', err);
       }
     });
 
-    // 1. YOUR LOCATION marker
-    const parentIcon = L.divIcon({
-      className: 'custom-parent-pin',
-      html: `
-        <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-          <div style="width: 32px; height: 32px; border-radius: 50%; background: #2563EB; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(37,99,235,0.45);">
-            <div style="width: 10px; height: 10px; border-radius: 50%; background: #FFFFFF;"></div>
-          </div>
-          <span style="margin-top: 3px; font-size: 0.65rem; font-weight: 800; background: #0F172A; color: #FFFFFF; padding: 0.15rem 0.45rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); white-space: nowrap;">
-            YOUR LOCATION
-          </span>
-        </div>
-      `,
-      iconSize: [80, 50],
-      iconAnchor: [40, 16],
-    });
+    return () => {
+      if (map) {
+        map.remove();
+        leafletMapInstanceRef.current = null;
+      }
+    };
+  }, [L, currentCoords, dynamicTutors, isCompact]);
 
-    L.marker([currentCoords.lat, currentCoords.lng], { icon: parentIcon }).addTo(map);
+  // =========================================================================
+  // POPUP MAP INITIALIZATION (100% PURE LEAFLET)
+  // =========================================================================
+  useEffect(() => {
+    if (!showLocationPopup || !popupMapRef.current || !L) return;
 
-    // 2. TUTOR pins mapped around center coordinates
-    const tutorCoordinates = [
-      { id: 'tut-1', latOffset: 0.007, lngOffset: 0.005, distance: '1.2 km' },
-      { id: 'tut-2', latOffset: -0.004, lngOffset: 0.012, distance: '2.1 km' },
-      { id: 'tut-3', latOffset: -0.012, lngOffset: -0.008, distance: '3.4 km' },
-    ];
+    const timer = setTimeout(() => {
+      if (!popupMapRef.current) return;
 
-    dynamicTutors.forEach((tutor, idx) => {
-      const match = tutorCoordinates.find((tc) => tc.id === tutor.id) || {
-        id: tutor.id,
-        latOffset: (idx % 2 === 0 ? 1 : -1) * (0.004 * (idx + 1)),
-        lngOffset: (idx % 3 === 0 ? 1 : -1) * (0.005 * (idx + 1)),
-        distance: `${(1.2 + idx * 0.7).toFixed(1)} km`,
-      };
+      if (leafletPopupMapInstanceRef.current) {
+        leafletPopupMapInstanceRef.current.remove();
+        leafletPopupMapInstanceRef.current = null;
+      }
+      if ((popupMapRef.current as any)._leaflet_id) {
+        delete (popupMapRef.current as any)._leaflet_id;
+      }
 
-      const tLat = currentCoords.lat + match.latOffset;
-      const tLng = currentCoords.lng + match.lngOffset;
+      const pMap = L.map(popupMapRef.current, {
+        center: [popupCoords.lat, popupCoords.lng],
+        zoom: 16,
+        zoomControl: true,
+        attributionControl: false,
+      });
 
-      const tutorIcon = L.divIcon({
-        className: 'custom-tutor-pin',
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        subdomains: 'abcd',
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+      }).addTo(pMap);
+
+      const markerIcon = L.divIcon({
+        className: 'popup-location-pin',
         html: `
-          <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-            <div style="position: relative; padding: 2px; border-radius: 50%; background: ${selectedTutor?.id === tutor.id ? '#0F6E56' : '#FFFFFF'}; box-shadow: 0 4px 12px rgba(0,0,0,0.18);">
-              <img src="${tutor.avatarUrl}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; display: block;" />
-              <div style="position: absolute; bottom: -2px; right: -2px; background: #047857; color: #FFFFFF; border-radius: 50%; width: 12px; height: 12px; display: flex; align-items: center; justify-content: center; font-size: 7px;">✓</div>
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: #2563EB; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(37,99,235,0.5); cursor: grab;">
+              <div style="width: 12px; height: 12px; border-radius: 50%; background: #FFFFFF;"></div>
             </div>
-            <span style="margin-top: 2px; font-size: 0.62rem; font-weight: 700; background: #FFFFFF; color: #1D1D1F; padding: 0.1rem 0.35rem; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); border: 1px solid #E8E8ED; white-space: nowrap;">
-              ${tutor.name.split(' ')[0]} (${match.distance})
-            </span>
+            <div style="width: 3px; height: 12px; background: #2563EB; margin-top: -2px;"></div>
           </div>
         `,
-        iconSize: [60, 50],
-        iconAnchor: [30, 16],
+        iconSize: [36, 50],
+        iconAnchor: [18, 50],
       });
 
-      const tMarker = L.marker([tLat, tLng], { icon: tutorIcon }).addTo(map);
-      tMarker.on('click', () => {
-        setSelectedTutor(tutor);
+      const marker = L.marker([popupCoords.lat, popupCoords.lng], {
+        icon: markerIcon,
+        draggable: true,
+      }).addTo(pMap);
+
+      leafletPopupMarkerRef.current = marker;
+
+      marker.on('dragend', async () => {
+        const pos = marker.getLatLng();
+        setPopupCoords({ lat: pos.lat, lng: pos.lng });
+        setIsReverseGeocoding(true);
+        const addr = await handleReverseGeocode(pos.lat, pos.lng);
+        setPopupAddress(addr);
+        setIsReverseGeocoding(false);
       });
-    });
 
-  }, [L, map, currentCoords, selectedTutor, dynamicTutors]);
+      pMap.on('click', async (e: any) => {
+        marker.setLatLng(e.latlng);
+        setPopupCoords({ lat: e.latlng.lat, lng: e.latlng.lng });
+        setIsReverseGeocoding(true);
+        const addr = await handleReverseGeocode(e.latlng.lat, e.latlng.lng);
+        setPopupAddress(addr);
+        setIsReverseGeocoding(false);
+      });
 
-  // Handle GPS location auto-detect
+      leafletPopupMapInstanceRef.current = pMap;
+
+      setTimeout(() => {
+        if (pMap) pMap.invalidateSize();
+      }, 150);
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [showLocationPopup, L]);
+
+  // Cleanup popup map
+  useEffect(() => {
+    if (!showLocationPopup) {
+      if (leafletPopupMapInstanceRef.current) {
+        leafletPopupMapInstanceRef.current.remove();
+        leafletPopupMapInstanceRef.current = null;
+      }
+    }
+  }, [showLocationPopup]);
+
+  // GPS Auto-detection handler
   const handleAutoDetectGPS = () => {
     setIsDetecting(true);
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setIsDetecting(false);
+        async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-          
-          // Center map to new coordinates
-          setCurrentCoords({ lat, lng });
-          if (map) {
-            map.setView([lat, lng], 14);
-          }
-
-          // Mock Gurgaon address mapping near coordinates
-          const mockSectors = ['Sector 49', 'Sector 47', 'DLF Phase 5', 'Golf Course Road', 'Sector 14'];
-          const randomSector = mockSectors[Math.floor(Math.random() * mockSectors.length)];
-          const newAddress = `${randomSector}, Gurugram (Auto-Detected GPS)`;
-          
-          setDetectedAddress(newAddress);
-          onLocationSelected({
-            address: newAddress,
-            lat,
-            lng,
-            nearestTutorsCount: 12,
-          });
-        },
-        (error) => {
+          setPopupCoords({ lat, lng });
+          setShowLocationPopup(true);
           setIsDetecting(false);
-          console.warn('GPS location unavailable, defaulting to Gurgaon Sector 14:', error);
-          setDetectedAddress('Sector 14, Old DLF Colony, Gurugram');
+          setIsReverseGeocoding(true);
+          const addr = await handleReverseGeocode(lat, lng);
+          setPopupAddress(addr);
+          setIsReverseGeocoding(false);
+        },
+        () => {
+          setIsDetecting(false);
+          setPopupCoords({ lat: 28.4728, lng: 77.0345 });
+          setPopupAddress('Sector 14, Gurugram, Haryana');
+          setShowLocationPopup(true);
         },
         { enableHighAccuracy: true, timeout: 8000 }
       );
     } else {
       setIsDetecting(false);
-      console.warn('Geolocation not supported by browser.');
-      setDetectedAddress('Sector 14, Old DLF Colony, Gurugram');
+      setShowLocationPopup(true);
     }
   };
 
+  const handleConfirmLocation = () => {
+    setCurrentCoords(popupCoords);
+    setDetectedAddress(popupAddress);
+    setShowLocationPopup(false);
+
+    if (leafletMapInstanceRef.current) {
+      leafletMapInstanceRef.current.setView([popupCoords.lat, popupCoords.lng], 14);
+    }
+
+    onLocationSelected({
+      address: popupAddress,
+      lat: popupCoords.lat,
+      lng: popupCoords.lng,
+      nearestTutorsCount: 12,
+    });
+  };
+
   return (
-    <div style={{
-      padding: isCompact ? '0.5rem' : '1.5rem',
-      backgroundColor: '#FFFFFF',
-      overflow: 'hidden',
-      borderRadius: isCompact ? '0px' : '24px',
-    }}>
-      {/* Map Header */}
-      {!isCompact && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <div>
-            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--brand-emerald)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span className="pulse-emerald" />
-              <span>LIVE TUTOR PROXIMITY MAP (REAL-TIME OPENSTREETMAP)</span>
-            </div>
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '2px' }}>
-              Nearby Verified Tutors in Your Sector
-            </h4>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleAutoDetectGPS}
-            disabled={isDetecting}
-            className="btn btn-primary btn-sm"
-          >
-            <span>{isDetecting ? 'Detecting GPS...' : '📍 Auto-Detect My Location'}</span>
-          </button>
-        </div>
-      )}
-
-      {/* Map container */}
-      <div 
-        ref={mapContainerRef}
-        style={{
-          position: 'relative',
-          height: isCompact ? '180px' : '280px',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          border: '1px solid var(--border-hairline)',
-          marginBottom: isCompact ? '0.5rem' : '1.25rem',
-          zIndex: 2,
-          touchAction: 'pan-y',
-        }}
-      />
-
-      {/* Selected Tutor Preview Card */}
-      {selectedTutor && (
-        <div style={{
-          backgroundColor: 'var(--brand-blue-light)',
-          border: '1px solid rgba(0, 102, 204, 0.18)',
-          borderRadius: '12px',
-          padding: '0.65rem 0.85rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: isCompact ? '0.5rem' : '1rem',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-            <img src={selectedTutor.avatarUrl} alt={selectedTutor.name} style={{ width: '34px', height: '34px', borderRadius: '8px', objectFit: 'cover' }} />
-            <div>
-              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                {selectedTutor.name} <span style={{ fontSize: '0.7rem', color: 'var(--brand-emerald)', fontWeight: 700 }}>({selectedTutor.id === 'tut-1' ? '1.2' : selectedTutor.id === 'tut-2' ? '2.1' : '3.4'} km away)</span>
-              </div>
-
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                {selectedTutor.highestDegree} • ₹{selectedTutor.hourlyRateHome}/hr
-              </div>
-            </div>
-          </div>
-
-          <span className="badge badge-emerald" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>
-            <span>MATCHED</span>
-          </span>
-        </div>
-      )}
-
-      {/* Auto-Fetched Address Confirmation */}
+    <>
       <div style={{
-        backgroundColor: 'var(--bg-card-subtle)',
-        border: '1px solid var(--border-hairline)',
-        borderRadius: '10px',
-        padding: '0.65rem 0.85rem',
+        padding: isCompact ? '0.5rem' : '1.5rem',
+        backgroundColor: '#FFFFFF',
+        overflow: 'hidden',
+        borderRadius: isCompact ? '0px' : '24px',
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
-          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-            CONFIRM NEAREST SECTOR
-          </span>
-          <button
-            type="button"
-            onClick={() => setIsEditing(!isEditing)}
-            style={{ fontSize: '0.72rem', color: 'var(--brand-blue)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
-          >
-            <span>{isEditing ? 'Save' : 'Edit'}</span>
-          </button>
-        </div>
+        {!isCompact && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div>
+              <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--brand-emerald)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span className="pulse-emerald" />
+                <span>📍 LIVE LOCATION PROXIMITY ENGINE</span>
+              </div>
+              <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '2px' }}>
+                Nearby Verified Tutors in Your Sector
+              </h4>
+            </div>
 
-        {isEditing ? (
-          <input
-            type="text"
-            value={detectedAddress}
-            onChange={(e) => {
-              setDetectedAddress(e.target.value);
-              onLocationSelected({ address: e.target.value, lat: currentCoords.lat, lng: currentCoords.lng, nearestTutorsCount: 3 });
+            <button
+              type="button"
+              onClick={handleAutoDetectGPS}
+              disabled={isDetecting}
+              className="btn btn-primary btn-sm"
+            >
+              <span>{isDetecting ? 'Detecting...' : '📍 Use Current Location'}</span>
+            </button>
+          </div>
+        )}
+
+        {/* Map Container */}
+        <div
+          ref={mapContainerRef}
+          style={{
+            position: 'relative',
+            height: isCompact ? '180px' : '280px',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            border: '1px solid var(--border-hairline)',
+            marginBottom: isCompact ? '0.5rem' : '1.25rem',
+            zIndex: 1,
+            backgroundColor: '#E2E8F0',
+          }}
+        />
+
+        {/* Selected Tutor Clickable Card */}
+        {selectedTutor && (
+          <Link
+            href={`/tutors/${selectedTutor.id}`}
+            style={{
+              backgroundColor: '#F0FDF4',
+              border: '1.5px solid #BBF7D0',
+              borderRadius: '14px',
+              padding: '0.75rem 1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: isCompact ? '0.5rem' : '1rem',
+              textDecoration: 'none',
+              color: 'inherit',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.08)',
             }}
-            className="form-control"
-            style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem', height: '32px' }}
-          />
-        ) : (
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+              <img src={selectedTutor.avatarUrl} alt={selectedTutor.name} style={{ width: '42px', height: '42px', borderRadius: '10px', objectFit: 'cover', border: '1.5px solid #059669', flexShrink: 0 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <span>{selectedTutor.name}</span>
+                  <span style={{ fontSize: '0.68rem', color: '#047857', fontWeight: 700, backgroundColor: '#DCFCE7', padding: '0.1rem 0.4rem', borderRadius: '6px' }}>✓ SSSAM Verified</span>
+                </div>
+                <div style={{ fontSize: '0.76rem', color: '#475569', marginTop: '2px' }}>
+                  {selectedTutor.highestDegree} • ₹{selectedTutor.hourlyRateHome}/hr
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', backgroundColor: '#0F172A', color: '#FFFFFF', padding: '0.4rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 800, flexShrink: 0 }}>
+              <span>View Profile</span>
+              <ArrowUpRight size={13} />
+            </div>
+          </Link>
+        )}
+
+        {/* Current Address display & Edit button */}
+        <div style={{
+          backgroundColor: 'var(--bg-card-subtle)',
+          border: '1px solid var(--border-hairline)',
+          borderRadius: '10px',
+          padding: '0.65rem 0.85rem',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+              CONFIRM NEAREST SECTOR
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowLocationPopup(true)}
+              style={{ fontSize: '0.72rem', color: 'var(--brand-blue)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+            >
+              <MapPin size={12} />
+              <span>Change Location</span>
+            </button>
+          </div>
+
           <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
             <CheckCircle2 size={14} color="var(--brand-emerald)" />
             <span>{detectedAddress}</span>
           </div>
-        )}
+        </div>
       </div>
-    </div>
+
+      {/* POPUP MODAL */}
+      {showLocationPopup && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '1rem', backdropFilter: 'blur(4px)',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowLocationPopup(false); }}
+        >
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '20px',
+            width: '100%',
+            maxWidth: '520px',
+            maxHeight: '92vh',
+            overflow: 'hidden',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.25)',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '1.25rem 1.5rem 1rem',
+              borderBottom: '1px solid #E2E8F0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.75rem',
+            }}>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
+                  📍 Set Your Location
+                </h3>
+                <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '2px 0 0 0' }}>
+                  Search sector, drag pin, or tap on map
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if ('geolocation' in navigator) {
+                      setIsReverseGeocoding(true);
+                      navigator.geolocation.getCurrentPosition(
+                        async (pos) => {
+                          const lat = pos.coords.latitude;
+                          const lng = pos.coords.longitude;
+                          setPopupCoords({ lat, lng });
+                          if (leafletPopupMapInstanceRef.current && leafletPopupMarkerRef.current) {
+                            leafletPopupMapInstanceRef.current.setView([lat, lng], 16);
+                            leafletPopupMarkerRef.current.setLatLng([lat, lng]);
+                          }
+                          const addr = await handleReverseGeocode(lat, lng);
+                          setPopupAddress(addr);
+                          setIsReverseGeocoding(false);
+                        },
+                        () => setIsReverseGeocoding(false),
+                        { enableHighAccuracy: true, timeout: 8000 }
+                      );
+                    }
+                  }}
+                  disabled={isReverseGeocoding}
+                  style={{
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '999px',
+                    border: '1.5px solid #059669',
+                    backgroundColor: '#ECFDF5',
+                    color: '#047857',
+                    fontWeight: 800,
+                    fontSize: '0.76rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    boxShadow: '0 2px 8px rgba(5,150,105,0.12)',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <Crosshair size={13} />
+                  <span>{isReverseGeocoding ? 'Detecting...' : 'Get Current Location'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowLocationPopup(false)}
+                  style={{ background: '#F1F5F9', border: 'none', borderRadius: '10px', padding: '0.4rem', cursor: 'pointer', display: 'flex' }}
+                >
+                  <X size={18} color="#64748B" />
+                </button>
+              </div>
+            </div>
+
+            {/* Sector / Landmark Search Box */}
+            <div style={{ padding: '0.75rem 1.25rem 0.5rem', backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', position: 'relative' }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                <input
+                  type="text"
+                  placeholder="Search Gurgaon sector, colony, or landmark (e.g. Sector 56, DLF Phase 5)..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="form-control"
+                  style={{
+                    paddingLeft: '2.4rem',
+                    paddingRight: searchQuery ? '2rem' : '0.75rem',
+                    borderRadius: '10px',
+                    fontSize: '0.84rem',
+                    backgroundColor: '#FFFFFF',
+                  }}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => { setSearchQuery(''); setSearchResults([]); }}
+                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Live Search Autocomplete Dropdown */}
+              {searchResults.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '1.25rem',
+                  right: '1.25rem',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '12px',
+                  boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
+                  border: '1.5px solid #E2E8F0',
+                  zIndex: 100,
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  marginTop: '4px',
+                }}>
+                  {searchResults.map((res, i) => (
+                    <div
+                      key={i}
+                      onClick={() => handleSelectSearchResult(res)}
+                      style={{
+                        padding: '0.65rem 1rem',
+                        borderBottom: i < searchResults.length - 1 ? '1px solid #F1F5F9' : 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        transition: 'background 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F0FDF4')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
+                    >
+                      <MapPin size={14} color="#059669" style={{ flexShrink: 0 }} />
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0F172A' }}>
+                          {res.name}
+                        </div>
+                        {res.landmark && (
+                          <div style={{ fontSize: '0.72rem', color: '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {res.landmark}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Popup Map */}
+            <div
+              ref={popupMapRef}
+              style={{ height: '240px', width: '100%', position: 'relative', zIndex: 10, backgroundColor: '#E2E8F0' }}
+            />
+
+            {/* Address Details & Confirm */}
+            <div style={{ padding: '1.25rem 1.5rem' }}>
+              <div style={{
+                backgroundColor: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: '12px',
+                padding: '0.85rem 1rem',
+                marginBottom: '1rem',
+              }}>
+                <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.3rem' }}>
+                  DETECTED ADDRESS
+                </div>
+                <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  {isReverseGeocoding ? (
+                    <span style={{ color: '#94A3B8', fontWeight: 600 }}>Detecting address...</span>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={15} color="#059669" />
+                      <span>{popupAddress || 'Tap on map or drag pin'}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleConfirmLocation}
+                disabled={isReverseGeocoding || !popupAddress}
+                style={{
+                  width: '100%', padding: '0.85rem', borderRadius: '12px', border: 'none',
+                  background: popupAddress ? '#0F6E56' : '#CBD5E1', color: '#FFFFFF',
+                  fontWeight: 800, fontSize: '0.92rem', cursor: popupAddress ? 'pointer' : 'not-allowed',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem',
+                  boxShadow: popupAddress ? '0 4px 14px rgba(15,110,86,0.3)' : 'none',
+                }}
+              >
+                <CheckCircle2 size={16} />
+                <span>Confirm Location</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

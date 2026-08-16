@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { MapPin, Phone, Mail, ShieldCheck, GraduationCap, Clock, CheckCircle } from 'lucide-react';
+import { MapPin, Phone, Mail, ShieldCheck, GraduationCap, Clock, CheckCircle, Instagram, Facebook, Youtube } from 'lucide-react';
 import { GURGAON_LOCALITIES, SSSAM_OFFICE_DETAILS } from '@/lib/data';
 
 export default function Footer() {
@@ -42,9 +42,82 @@ export default function Footer() {
               />
             </div>
 
-            <p style={{ color: '#94A3B8', fontSize: '0.92rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+            <p style={{ color: '#94A3B8', fontSize: '0.92rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
               Gurgaon&apos;s premier managed home & online tuition mediation network. Connecting parents with verified, background-checked Indian educators with a 100% satisfaction guarantee.
             </p>
+
+            {/* Social Media Links */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <a
+                href="https://www.instagram.com/tuition4home"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Tuition4Home Instagram"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#F472B6',
+                  border: '1px solid rgba(244, 114, 182, 0.3)',
+                  transition: 'all 0.2s ease',
+                }}
+                className="social-btn"
+              >
+                <Instagram size={19} />
+              </a>
+
+              <a
+                href="https://www.facebook.com/tuition4home"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Tuition4Home Facebook"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#60A5FA',
+                  border: '1px solid rgba(96, 165, 250, 0.3)',
+                  transition: 'all 0.2s ease',
+                }}
+                className="social-btn"
+              >
+                <Facebook size={19} />
+              </a>
+
+              <a
+                href="https://www.youtube.com/@codingwithsudhir"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="CodingWithSudhir YouTube"
+                style={{
+                  height: '38px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  padding: '0 0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  color: '#F87171',
+                  border: '1px solid rgba(248, 113, 113, 0.3)',
+                  textDecoration: 'none',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  transition: 'all 0.2s ease',
+                }}
+                className="social-btn"
+              >
+                <Youtube size={19} />
+                <span>CodingWithSudhir</span>
+              </a>
+            </div>
 
             {/* SSSAM Academy Accreditation Box */}
             <div style={{

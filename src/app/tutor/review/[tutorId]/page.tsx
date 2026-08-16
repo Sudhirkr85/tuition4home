@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -38,10 +38,9 @@ interface ReviewItem {
 export default function TutorPublicReviewPage({
   params
 }: {
-  params: Promise<{ tutorId: string }>;
+  params: { tutorId: string };
 }) {
-  const resolvedParams = use(params);
-  const tutorId = resolvedParams.tutorId;
+  const tutorId = params.tutorId;
 
   const [tutor, setTutor] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -103,6 +102,12 @@ export default function TutorPublicReviewPage({
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!parentSession) {
+      setSubmitError('Parent login required to post a verified review. Please log in first.');
+      return;
+    }
+
     if (!parentName.trim() || !comment.trim()) {
       setSubmitError('Please fill in your name and review comment.');
       return;
@@ -117,7 +122,7 @@ export default function TutorPublicReviewPage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: tutorId,
-          reviewerId: parentSession?.userId || null,
+          reviewerId: parentSession.userId,
           parentName: parentName.trim(),
           rating,
           comment: comment.trim()
@@ -439,7 +444,7 @@ export default function TutorPublicReviewPage({
                   </strong>
                 </div>
 
-                {parentSession ? (
+                {parentSession && (
                   <span style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -455,103 +460,142 @@ export default function TutorPublicReviewPage({
                     <ShieldCheck size={12} />
                     <span>Verified Parent Active</span>
                   </span>
-                ) : (
-                  <Link
-                    href="/parent/login"
-                    style={{ fontSize: '0.74rem', color: '#2563EB', fontWeight: 700, textDecoration: 'none' }}
-                  >
-                    Parent Login →
-                  </Link>
                 )}
               </div>
 
-              {parentSession && (
-                <div style={{ padding: '0.65rem 0.85rem', backgroundColor: '#F0FDFA', border: '1px solid #99F6E4', borderRadius: '10px', fontSize: '0.78rem', color: '#0F766E', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                  <ShieldCheck size={15} />
-                  <span>Posting as verified parent <strong>{parentSession.name}</strong> ({parentSession.email})</span>
-                </div>
-              )}
-
-              {submitSuccess && (
-                <div style={{ padding: '0.85rem', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '12px', color: '#065F46', fontSize: '0.82rem', marginBottom: '1rem' }}>
-                  🎉 Thank you! Your verified parent review has been submitted.
-                </div>
-              )}
-
-              {submitError && (
-                <div style={{ padding: '0.85rem', backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '12px', color: '#991B1B', fontSize: '0.82rem', marginBottom: '1rem' }}>
-                  {submitError}
-                </div>
-              )}
-
-              <form onSubmit={handleSubmitReview} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                <div>
-                  <label className="form-label" style={{ fontSize: '0.78rem' }}>Your Name (Parent / Guardian) *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Mrs. Sharma (Sector 56)"
-                    className="form-control"
-                    value={parentName}
-                    onChange={e => setParentName(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <label className="form-label" style={{ fontSize: '0.78rem' }}>Star Rating *</label>
-                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.2rem' }}>
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setRating(star)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          padding: '0.2rem',
-                          color: star <= rating ? '#F59E0B' : '#CBD5E1',
-                          transition: 'transform 0.15s'
-                        }}
-                      >
-                        <Star size={24} fill={star <= rating ? '#F59E0B' : 'none'} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="form-label" style={{ fontSize: '0.78rem' }}>Written Review / Feedback *</label>
-                  <textarea
-                    rows={3}
-                    required
-                    placeholder="Describe how the educator helped your child in understanding concepts, homework, or exam scores..."
-                    className="form-control"
-                    style={{ height: 'auto', resize: 'vertical' }}
-                    value={comment}
-                    onChange={e => setComment(e.target.value)}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="btn btn-primary"
-                  style={{
+              {!parentSession ? (
+                <div style={{
+                  padding: '1.5rem',
+                  backgroundColor: '#F8FAFC',
+                  borderRadius: '16px',
+                  border: '1.5px solid #CBD5E1',
+                  textAlign: 'center',
+                  marginTop: '0.5rem',
+                }}>
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '50%',
+                    backgroundColor: '#EFF6FF',
+                    color: '#2563EB',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '0.4rem',
-                    fontSize: '0.85rem',
-                    backgroundColor: 'var(--brand-teal)',
-                    padding: '0.75rem 1.25rem',
-                    marginTop: '0.25rem'
-                  }}
-                >
-                  <Send size={14} />
-                  <span>{submitting ? 'Submitting Review...' : 'Submit Parent Review'}</span>
-                </button>
-              </form>
+                    margin: '0 auto 0.75rem auto',
+                    border: '1px solid #BFDBFE',
+                  }}>
+                    <ShieldCheck size={24} />
+                  </div>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem 0' }}>
+                    Parent Account Required to Post Review
+                  </h4>
+                  <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: '0 0 1.25rem 0' }}>
+                    To maintain 100% verified feedback and prevent unverified ratings, reviews can only be posted by logged-in parents.
+                  </p>
+                  <Link
+                    href={`/parent/login?redirectTo=${encodeURIComponent(`/tutor/review/${tutorId}`)}`}
+                    className="btn btn-primary"
+                    style={{
+                      backgroundColor: '#0F6E56',
+                      width: '100%',
+                      justifyContent: 'center',
+                      padding: '0.75rem',
+                      fontSize: '0.88rem',
+                      fontWeight: 800,
+                    }}
+                  >
+                    <span>🔑 Login as Parent / Get OTP</span>
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  <div style={{ padding: '0.65rem 0.85rem', backgroundColor: '#F0FDFA', border: '1px solid #99F6E4', borderRadius: '10px', fontSize: '0.78rem', color: '#0F766E', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <ShieldCheck size={15} />
+                    <span>Posting as verified parent <strong>{parentSession.name}</strong> ({parentSession.email})</span>
+                  </div>
+
+                  {submitSuccess && (
+                    <div style={{ padding: '0.85rem', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '12px', color: '#065F46', fontSize: '0.82rem', marginBottom: '1rem' }}>
+                      🎉 Thank you! Your verified parent review has been submitted.
+                    </div>
+                  )}
+
+                  {submitError && (
+                    <div style={{ padding: '0.85rem', backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '12px', color: '#991B1B', fontSize: '0.82rem', marginBottom: '1rem' }}>
+                      {submitError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSubmitReview} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.78rem' }}>Your Name (Parent / Guardian) *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Mrs. Sharma (Sector 56)"
+                        className="form-control"
+                        value={parentName}
+                        onChange={e => setParentName(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.78rem' }}>Star Rating *</label>
+                      <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.2rem' }}>
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRating(star)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '0.2rem',
+                              color: star <= rating ? '#F59E0B' : '#CBD5E1',
+                              transition: 'transform 0.15s'
+                            }}
+                          >
+                            <Star size={24} fill={star <= rating ? '#F59E0B' : 'none'} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.78rem' }}>Written Review / Feedback *</label>
+                      <textarea
+                        rows={3}
+                        required
+                        placeholder="Describe how the educator helped your child in understanding concepts, homework, or exam scores..."
+                        className="form-control"
+                        style={{ height: 'auto', resize: 'vertical' }}
+                        value={comment}
+                        onChange={e => setComment(e.target.value)}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="btn btn-primary"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.4rem',
+                        fontSize: '0.85rem',
+                        backgroundColor: 'var(--brand-teal)',
+                        padding: '0.75rem 1.25rem',
+                        marginTop: '0.25rem'
+                      }}
+                    >
+                      <Send size={14} />
+                      <span>{submitting ? 'Submitting Review...' : 'Submit Parent Review'}</span>
+                    </button>
+                  </form>
+                </>
+              )}
             </div>
 
             {/* Approved Past Parent Reviews List */}

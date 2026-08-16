@@ -1,5 +1,11 @@
 # 🎓 TuitionForHome — Hybrid Home & Online Tuition Platform (Gurgaon, Delhi NCR & Pan-India)
 
+> [!IMPORTANT]
+> ### 🛑 STRICT CORE ARCHITECTURE PRINCIPLE: ZERO "BOOK DEMO" POLICY
+> **TuitionForHome strictly DOES NOT feature or promote "Book Demo" / "Free Demo" anywhere across the website, parent application flows, or marketing copy.**
+> - **Primary Parent CTAs:** `Request Home Tutor`, `Find & Match Tutor`, `Request Classes`, and `100% Replacement Guarantee`.
+> - **Operational Logic:** Inquiries go directly to verified educator matching and 1st academic session placement through the Counselor desk, eliminating demo bottlenecks.
+
 > **High-Converting, SEO-Dominant Home & Online Tuition Mediation Platform with In-House Telecalling CRM, Rapido-Style Tutor Radar Matchmaking, Tutor KYC & Video Verification, and Automated Lead Distribution.**  
 > **Operated & Verified by SSSAM Academy (M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001).**
 
@@ -325,6 +331,17 @@ erDiagram
 
 * **`POST /api/auth/parent`**
   - **Description:** Passwordless / OTP authentication for parent dashboard access.
+
+### 10.4 Media, Video & KYC Upload Endpoints
+* **`POST /api/upload`**
+  - **Description:** Multi-part file uploader for profile photos (max 5MB), KYC proofs (max 10MB), and 60s intro videos (max 60MB) directly to Cloudinary CDN.
+  - **Payload:** `multipart/form-data` with `file`, `folder`, `type` (`image` | `video` | `raw`).
+  - **Response:** `{ success: true, url, publicId, format, bytes }`
+
+* **`POST /api/upload/delete`**
+  - **Description:** Admin-only endpoint to permanently purge assets from Cloudinary when an educator or document is deleted.
+  - **Payload:** `{ publicId, resourceType, adminSecret }`
+  - **Response:** `{ success: true, result: "ok" }`
 
 ---
 

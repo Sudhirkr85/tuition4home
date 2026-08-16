@@ -25,29 +25,56 @@ export async function POST(
       );
     }
 
-    const activityDescription = `${status ? `[Status: ${status}] ` : ''}${notes.trim()}${
-      nextFollowupDate ? ` (Next Follow-up set: ${new Date(nextFollowupDate).toLocaleString('en-IN')})` : ''
-    }`;
+    // Store clean note text in description
+    const cleanNoteText = notes.trim();
 
     try {
       // 1. Create LeadActivity record
-      const activity = await prisma.leadActivity.create({
-        data: {
+      let activityId = `act-${Date.now()}`;
+      try {
+        const activity = await prisma.leadActivity.create({
+          data: {
+            leadId,
+            actionType: status || actionType || 'NOTE_ADDED',
+            description: cleanNoteText,
+            performedBy,
+          },
+        });
+        activityId = activity.id;
+      } catch (actErr) {
+        console.warn('LeadActivity insert via prisma fallback:', actErr);
+        await prisma.$executeRawUnsafe(
+          'INSERT INTO `LeadActivity` (id, leadId, actionType, description, performedBy, createdAt) VALUES (?, ?, ?, ?, ?, NOW())',
+          activityId,
           leadId,
-          actionType: actionType || 'STATUS_CHANGE',
-          description: activityDescription,
-          performedBy,
-        },
-      });
+          status || actionType || 'NOTE_ADDED',
+          cleanNoteText,
+          performedBy
+        );
+      }
 
-      // 2. Update Lead status and notes
-      const updatedLead = await prisma.lead.update({
+      // 2. Direct MySQL Update on Lead to guarantee instant status & notes update
+      const formattedDemoDate = nextFollowupDate ? new Date(nextFollowupDate) : null;
+      if (status) {
+        await prisma.$executeRawUnsafe(
+          'UPDATE `Lead` SET status = ?, notes = ?, demoDate = ?, updatedAt = NOW() WHERE id = ?',
+          status,
+          cleanNoteText,
+          formattedDemoDate,
+          leadId
+        );
+      } else {
+        await prisma.$executeRawUnsafe(
+          'UPDATE `Lead` SET notes = ?, demoDate = ?, updatedAt = NOW() WHERE id = ?',
+          cleanNoteText,
+          formattedDemoDate,
+          leadId
+        );
+      }
+
+      // 3. Fetch updated lead
+      const updatedLead = await prisma.lead.findUnique({
         where: { id: leadId },
-        data: {
-          ...(status ? { status } : {}),
-          notes: notes.trim(),
-          ...(nextFollowupDate ? { demoDate: new Date(nextFollowupDate) } : {}),
-        },
         include: {
           activities: {
             orderBy: { createdAt: 'desc' },
@@ -59,15 +86,14 @@ export async function POST(
         success: true,
         message: 'Follow-up logged and timeline updated successfully.',
         lead: updatedLead,
-        activity,
       });
     } catch (dbErr) {
       console.warn('Prisma DB update fallback in mock mode:', dbErr);
       const mockActivity = {
         id: `act-${Date.now()}`,
         leadId,
-        actionType: actionType || 'STATUS_CHANGE',
-        description: activityDescription,
+        actionType: status || actionType || 'NOTE_ADDED',
+        description: cleanNoteText,
         performedBy,
         createdAt: new Date().toISOString(),
       };

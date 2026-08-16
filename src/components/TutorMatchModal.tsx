@@ -95,7 +95,7 @@ export default function TutorMatchModal({
   onClose,
   onAssignTutor,
 }: TutorMatchModalProps) {
-  const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>(VERIFIED_TUTORS);
+  const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [maxDistanceKm, setMaxDistanceKm] = useState<number>(10);
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>('ALL');
@@ -113,11 +113,16 @@ export default function TutorMatchModal({
     fetch('/api/tutors/list')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.tutors && data.tutors.length > 0) {
+        if (data.success && Array.isArray(data.tutors)) {
           setDynamicTutors(data.tutors);
+        } else {
+          setDynamicTutors([]);
         }
       })
-      .catch((err) => console.error('Failed to fetch live tutors for matcher:', err));
+      .catch((err) => {
+        console.error('Failed to fetch live tutors for matcher:', err);
+        setDynamicTutors([]);
+      });
   }, []);
 
   const parsedSubjects = Array.isArray(lead.subjectsNeeded)
@@ -216,7 +221,7 @@ export default function TutorMatchModal({
       `⭐ *Rating:* ${tutor.rating}/5.0 (${tutor.totalReviews} verified reviews)\n` +
       `⏳ *Experience:* ${tutor.experienceYears}+ Years\n` +
       `💰 *Fee:* ₹${tutor.hourlyRateHome}/hour\n` +
-      `🛡️ *Verification:* 100% Background & Police Verified\n\n` +
+      `🛡️ *Verification:* 100% Academic & KYC Verified by SSSAM\n\n` +
       `Shall we confirm ${tutor.name} for your home tuition sessions?`
     );
   };

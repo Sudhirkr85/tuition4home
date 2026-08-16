@@ -20,266 +20,243 @@ const GURGAON_LOCALITIES = [
   { slug: 'sushant-lok-1', name: 'Sushant Lok 1', pincode: '122009', landmark: 'Gold Souk, Vyapar Kendra, Fortis' },
 ];
 
-const TUTORS_DATA = [
-  {
-    id: 'tut-1',
-    name: 'Rohit Sharma',
-    phone: '9811204921',
-    email: 'rohit.sharma@tuitionforhome.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-    introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    highestDegree: 'M.Sc. Mathematics (Delhi University)',
-    experienceYears: 7,
-    teachingMode: 'BOTH',
-    subjects: JSON.stringify(['Mathematics', 'Physics']),
-    classes: JSON.stringify(['Class 9 & 10 (CBSE / ICSE Board)', 'Class 11 & 12 (Board & JEE/NEET)']),
-    boards: JSON.stringify(['CBSE', 'ICSE', 'IB (International Baccalaureate)']),
-    serviceAreas: JSON.stringify(['DLF Phase 5', 'Golf Course Road', 'Sector 56', 'Sushant Lok 1']),
-    travelRadiusKm: 6,
-    hourlyRateHome: 900,
-    hourlyRateOnline: 600,
-    monthlyRateMin: 7500,
-    isVerified: true,
-    hasPoliceCheck: true,
-    rating: 4.95,
-    totalReviews: 38,
-    bio: 'Former coaching faculty specializing in conceptual Maths and Board exam 95+ score strategy. 100% personalized pacing for each child.',
-    kycLast4: '4589',
-  },
-  {
-    id: 'tut-2',
-    name: 'Dr. Ananya Sengupta',
-    phone: '9873194021',
-    email: 'ananya.sengupta@tuitionforhome.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
-    introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    highestDegree: 'Ph.D. Organic Chemistry (IIT Delhi Alum)',
-    experienceYears: 9,
-    teachingMode: 'BOTH',
-    subjects: JSON.stringify(['Chemistry', 'Biology']),
-    classes: JSON.stringify(['Class 11 & 12 (Board & JEE/NEET)', 'IIT-JEE / NEET Special Mentorship', 'IB / IGCSE / Cambridge Elite']),
-    boards: JSON.stringify(['CBSE', 'IB (International Baccalaureate)', 'IGCSE / Cambridge']),
-    serviceAreas: JSON.stringify(['DLF Phase 1', 'DLF Phase 4', 'Nirvana Country', 'Sohna Road']),
-    travelRadiusKm: 8,
-    hourlyRateHome: 1200,
-    hourlyRateOnline: 800,
-    monthlyRateMin: 9500,
-    isVerified: true,
-    hasPoliceCheck: true,
-    rating: 5.0,
-    totalReviews: 52,
-    bio: 'Specialist in organic mechanisms & NEET numericals. Taught 120+ top rankers in Gurgaon over 9 years.',
-    kycLast4: '7821',
-  },
-  {
-    id: 'tut-3',
-    name: 'Priyanka Verma',
-    phone: '9517447689',
-    email: 'priyanka.verma@tuitionforhome.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop&q=80',
-    introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    highestDegree: 'B.Tech CS (NSUT) & SSSAM Coding Mentor',
-    experienceYears: 5,
-    teachingMode: 'BOTH',
-    subjects: JSON.stringify(['Computer Science & Python', 'Web Development & Coding (SSSAM)', 'Mathematics']),
-    classes: JSON.stringify(['Class 9 & 10 (CBSE / ICSE Board)', 'Class 11 & 12 (Board & JEE/NEET)', 'Coding & AI for Kids']),
-    boards: JSON.stringify(['CBSE', 'ICSE', 'IGCSE / Cambridge']),
-    serviceAreas: JSON.stringify(['Sector 14 & Old DLF', 'Sector 48', 'Palam Vihar', 'DLF Phase 2']),
-    travelRadiusKm: 7,
-    hourlyRateHome: 1000,
-    hourlyRateOnline: 700,
-    monthlyRateMin: 8000,
-    isVerified: true,
-    hasPoliceCheck: false,
-    rating: 4.92,
-    totalReviews: 29,
-    bio: 'Lead Python instructor at SSSAM Academy Sector 14. Mentoring school students in CBSE Python, algorithmic thinking, and building live web projects.',
-    kycLast4: '3312',
-  },
-  {
-    id: 'tut-4',
-    name: 'Priyanka Aggarwal',
-    phone: '9810482019',
-    email: 'priyanka.aggarwal@tuitionforhome.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&auto=format&fit=crop&q=80',
-    introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    highestDegree: 'M.Com, Chartered Accountant (Inter)',
-    experienceYears: 6,
-    teachingMode: 'OFFLINE_HOME',
-    subjects: JSON.stringify(['Accountancy & Commerce', 'Economics']),
-    classes: JSON.stringify(['Class 11 & 12 (Board & JEE/NEET)', 'Class 9 & 10 (CBSE / ICSE Board)']),
-    boards: JSON.stringify(['CBSE', 'ISC / ICSE']),
-    serviceAreas: JSON.stringify(['Sector 56', 'Sector 57', 'Golf Course Road', 'DLF Phase 5']),
-    travelRadiusKm: 5,
-    hourlyRateHome: 850,
-    hourlyRateOnline: 600,
-    monthlyRateMin: 7000,
-    isVerified: true,
-    hasPoliceCheck: true,
-    rating: 4.90,
-    totalReviews: 24,
-    bio: 'Specialist in Class 11-12 CBSE Accounts & Economics. Simplifies balance sheets and cash flow statements with practical company examples.',
-    kycLast4: '9901',
-  },
-  {
-    id: 'tut-5',
-    name: 'Vikram Malhotra',
-    phone: '9899124012',
-    email: 'vikram.malhotra@tuitionforhome.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
-    introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    highestDegree: 'B.Tech Mechanical (IIT Roorkee)',
-    experienceYears: 8,
-    teachingMode: 'BOTH',
-    subjects: JSON.stringify(['Physics', 'Mathematics']),
-    classes: JSON.stringify(['Class 11 & 12 (Board & JEE/NEET)', 'Class 9 & 10 (CBSE / ICSE Board)']),
-    boards: JSON.stringify(['CBSE', 'ICSE', 'IB (International Baccalaureate)']),
-    serviceAreas: JSON.stringify(['Nirvana Country (Sector 50)', 'Sohna Road', 'Sector 48', 'Sector 57']),
-    travelRadiusKm: 8,
-    hourlyRateHome: 1100,
-    hourlyRateOnline: 750,
-    monthlyRateMin: 9000,
-    isVerified: true,
-    hasPoliceCheck: true,
-    rating: 4.98,
-    totalReviews: 44,
-    bio: 'IITian Physics specialist with 8 years of coaching experience in Gurgaon. Master in rotational dynamics, electromagnetism, and board numericals.',
-    kycLast4: '6654',
-  },
-  {
-    id: 'tut-6',
-    name: 'Meenakshi Sundaram',
-    phone: '9811263012',
-    email: 'meenakshi.s@tuitionforhome.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=80',
-    introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    highestDegree: 'M.A. English Literature (Lady Shri Ram College, DU)',
-    experienceYears: 6,
-    teachingMode: 'BOTH',
-    subjects: JSON.stringify(['English Language & Literature', 'Social Science (History, Geo, Civics, Eco)']),
-    classes: JSON.stringify(['Class 9 & 10 (CBSE / ICSE Board)', 'Class 11 & 12 (Board & JEE/NEET)', 'Class 6 - 8 (Middle School)']),
-    boards: JSON.stringify(['CBSE', 'ICSE', 'IB (International Baccalaureate)', 'IGCSE / Cambridge']),
-    serviceAreas: JSON.stringify(['DLF Phase 5', 'DLF Phase 4', 'Golf Course Road', 'Sector 56']),
-    travelRadiusKm: 6,
-    hourlyRateHome: 800,
-    hourlyRateOnline: 550,
-    monthlyRateMin: 6500,
-    isVerified: true,
-    hasPoliceCheck: true,
-    rating: 4.96,
-    totalReviews: 32,
-    bio: 'Specialist in English writing skills, CBSE board literature answers, and critical reading. Proven 95+ score track record.',
-    kycLast4: '1123',
-  },
-  {
-    id: 'tut-7',
-    name: 'Rajesh Kumar Gupta',
-    phone: '9818833912',
-    email: 'rajesh.gupta@tuitionforhome.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
-    introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    highestDegree: 'M.Sc. Mathematics & Statistics (IIT Kanpur)',
-    experienceYears: 10,
-    teachingMode: 'BOTH',
-    subjects: JSON.stringify(['Mathematics', 'JEE Main & Advanced Maths', 'IB Diploma Math (AA / AI HL & SL)']),
-    classes: JSON.stringify(['Class 9 & 10 (CBSE / ICSE Board)', 'Class 11 & 12 (Board & JEE/NEET)', 'IB / IGCSE / Cambridge Elite']),
-    boards: JSON.stringify(['CBSE', 'IB (International Baccalaureate)', 'IGCSE / Cambridge']),
-    serviceAreas: JSON.stringify(['DLF Phase 1', 'DLF Phase 2', 'Sector 14 & Old DLF', 'Palam Vihar']),
-    travelRadiusKm: 8,
-    hourlyRateHome: 1250,
-    hourlyRateOnline: 850,
-    monthlyRateMin: 10000,
-    isVerified: true,
-    hasPoliceCheck: true,
-    rating: 5.0,
-    totalReviews: 61,
-    bio: 'Ex-Bansal faculty with 10+ years mentoring IIT-JEE aspirants and IB Diploma students in advanced Calculus and Algebra.',
-    kycLast4: '8872',
-  },
-  {
-    id: 'tut-8',
-    name: 'Dr. Shalini Kapoor',
-    phone: '9810992314',
-    email: 'shalini.kapoor@tuitionforhome.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1573496799652-408c2ac9fe98?w=400&auto=format&fit=crop&q=80',
-    introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    highestDegree: 'M.Sc. & Ph.D. Zoology (AIIMS / DU)',
-    experienceYears: 8,
-    teachingMode: 'BOTH',
-    subjects: JSON.stringify(['Biology', 'NEET Biology Prep', 'IB Biology & Environmental Science']),
-    classes: JSON.stringify(['Class 11 & 12 (Board & JEE/NEET)', 'Class 9 & 10 (CBSE / ICSE Board)']),
-    boards: JSON.stringify(['CBSE', 'ICSE', 'IB (International Baccalaureate)']),
-    serviceAreas: JSON.stringify(['Sohna Road', 'Nirvana Country (Sector 50)', 'Sector 48', 'Sector 57']),
-    travelRadiusKm: 7,
-    hourlyRateHome: 1150,
-    hourlyRateOnline: 800,
-    monthlyRateMin: 9200,
-    isVerified: true,
-    hasPoliceCheck: true,
-    rating: 4.97,
-    totalReviews: 47,
-    bio: 'NEET Botany & Zoology specialist. 360/360 biology strategy builder with comprehensive NCERT diagram breakdown.',
-    kycLast4: '5543',
-  },
-  {
-    id: 'tut-9',
-    name: 'Amanpreet Singh',
-    phone: '9811002233',
-    email: 'amanpreet.singh@tuitionforhome.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80',
-    introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    highestDegree: 'B.Ed & M.Sc. Physics (Punjab University)',
-    experienceYears: 6,
-    teachingMode: 'OFFLINE_HOME',
-    subjects: JSON.stringify(['Physics', 'Science (Class 1 - 10 Combined)']),
-    classes: JSON.stringify(['Class 9 & 10 (CBSE / ICSE Board)', 'Class 6 - 8 (Middle School)']),
-    boards: JSON.stringify(['CBSE', 'ICSE']),
-    serviceAreas: JSON.stringify(['Sector 14 & Old DLF', 'Sector 48', 'Palam Vihar', 'DLF Phase 1']),
-    travelRadiusKm: 6,
-    hourlyRateHome: 850,
-    hourlyRateOnline: 600,
-    monthlyRateMin: 7000,
-    isVerified: true,
-    hasPoliceCheck: true,
-    rating: 4.88,
-    totalReviews: 21,
-    bio: 'Hands-on practical physics teacher. Uses live everyday experiment demonstrations to build deep intuition for Newton laws and Optics.',
-    kycLast4: '2290',
-  },
-  {
-    id: 'tut-10',
-    name: 'Neha Chawla',
-    phone: '9811445566',
-    email: 'neha.chawla@tuitionforhome.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-    introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    highestDegree: 'B.El.Ed (DU) & Montessori Certified',
-    experienceYears: 5,
-    teachingMode: 'OFFLINE_HOME',
-    subjects: JSON.stringify(['All Primary Subjects (Class 1 - 5)', 'Abacus & Vedic Mathematics', 'English Language & Literature']),
-    classes: JSON.stringify(['Class 1 - 5 (Primary Foundation)', 'Class 6 - 8 (Middle School)']),
-    boards: JSON.stringify(['CBSE', 'ICSE', 'IB (International Baccalaureate)']),
-    serviceAreas: JSON.stringify(['DLF Phase 5', 'Golf Course Road', 'Sushant Lok 1', 'Sector 56']),
-    travelRadiusKm: 5,
-    hourlyRateHome: 750,
-    hourlyRateOnline: 500,
-    monthlyRateMin: 6000,
-    isVerified: true,
-    hasPoliceCheck: true,
-    rating: 4.94,
-    totalReviews: 35,
-    bio: 'Gentle, patient primary home tutor specializing in reading phonics, handwriting improvement, and foundational mental math.',
-    kycLast4: '4410',
-  },
+// Generator pools for 100 realistic tutors
+const FIRST_NAMES = [
+  'Rohit', 'Ananya', 'Vikram', 'Pooja', 'Amit', 'Neha', 'Suresh', 'Kavita', 'Rajat', 'Priyanka',
+  'Deepak', 'Meenakshi', 'Arjun', 'Sneha', 'Manish', 'Ritika', 'Harish', 'Divya', 'Naveen', 'Simran',
+  'Siddharth', 'Bhavna', 'Gaurav', 'Tanvi', 'Karan', 'Aakanksha', 'Rahul', 'Sunita', 'Vikas', 'Swati',
+  'Prateek', 'Shreya', 'Ashish', 'Komal', 'Abhishek', 'Pallavi', 'Tarun', 'Anushka', 'Sachin', 'Preeti',
+  'Yash', 'Rashi', 'Varun', 'Isha', 'Alok', 'Mahima', 'Kunal', 'Jyoti', 'Hemant', 'Sonam'
 ];
 
-async function main() {
-  console.log('🚀 Initializing & Seeding Complete Database...');
+const LAST_NAMES = [
+  'Sharma', 'Sengupta', 'Choudhary', 'Malhotra', 'Bhatia', 'Aggarwal', 'Verma', 'Mathur', 'Mittal', 'Gupta',
+  'Saxena', 'Mehta', 'Kapoor', 'Rao', 'Bansal', 'Jain', 'Singhania', 'Narang', 'Arora', 'Dubey',
+  'Tiwari', 'Pandey', 'Mishra', 'Chauhan', 'Rawat', 'Reddy', 'Menon', 'Nair', 'Mukherjee', 'Dutta'
+];
 
-  // 1. Seed Global Platform Config
+const DEGREES = [
+  'M.Sc. Mathematics (Delhi University)',
+  'Ph.D. Organic Chemistry (IIT Delhi Alum)',
+  'B.Tech Mechanical (IIT Roorkee)',
+  'M.Sc. Physics (Hansraj College, DU)',
+  'B.Com (Hons), CA Inter (SRCC)',
+  'M.A. English Literature (JNU New Delhi)',
+  'B.Tech Computer Science (DTU / DCE)',
+  'M.Sc. Zoology & NEET Specialist (AIIMS Alum)',
+  'M.A. Economics (Delhi School of Economics)',
+  'B.El.Ed & Child Psychology Certified (DU)',
+  'M.Sc. Biotechnology (Panjab University)',
+  'B.Tech Electrical Engineering (NIT Kurukshetra)'
+];
+
+const SUBJECT_COMBOS = [
+  ['Mathematics', 'Physics'],
+  ['Chemistry', 'Biology'],
+  ['Physics', 'Chemistry', 'Mathematics'],
+  ['Mathematics'],
+  ['Physics'],
+  ['Chemistry'],
+  ['Biology', 'Zoology'],
+  ['Accounts', 'Economics', 'Business Studies'],
+  ['Economics', 'Mathematics'],
+  ['English Literature', 'Grammar'],
+  ['Computer Science', 'Python', 'AI'],
+  ['Science', 'Mathematics (Class 6-10)'],
+  ['Primary All Subjects', 'Phonics (Class 1-5)'],
+  ['French Language', 'English']
+];
+
+const LOCALITY_NAMES = [
+  'DLF Phase 5', 'Golf Course Road', 'Sector 56', 'Sushant Lok 1',
+  'DLF Phase 1', 'DLF Phase 2', 'DLF Phase 4', 'Cyber City',
+  'Sohna Road', 'Nirvana Country', 'Sector 50', 'Sector 48',
+  'Sector 14 & Old DLF', 'Palam Vihar', 'Sector 57', 'New Gurgaon (Sector 82-84)'
+];
+
+const AVATAR_URLS = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&auto=format&fit=crop&q=80'
+];
+
+const GURGAON_COORDINATES = {
+  'DLF Phase 5': { lat: 28.4552, lng: 77.0983 },
+  'Golf Course Road': { lat: 28.4485, lng: 77.1050 },
+  'Sector 56': { lat: 28.4285, lng: 77.1054 },
+  'Sushant Lok 1': { lat: 28.4645, lng: 77.0780 },
+  'DLF Phase 1': { lat: 28.4754, lng: 77.1023 },
+  'DLF Phase 2': { lat: 28.4905, lng: 77.0898 },
+  'DLF Phase 4': { lat: 28.4682, lng: 77.0872 },
+  'Cyber City': { lat: 28.4950, lng: 77.0880 },
+  'Sohna Road': { lat: 28.4198, lng: 77.0425 },
+  'Nirvana Country': { lat: 28.4180, lng: 77.0650 },
+  'Sector 50': { lat: 28.4175, lng: 77.0620 },
+  'Sector 48': { lat: 28.4110, lng: 77.0380 },
+  'Sector 14 & Old DLF': { lat: 28.4728, lng: 77.0345 },
+  'Palam Vihar': { lat: 28.5080, lng: 77.0310 },
+  'Sector 57': { lat: 28.4230, lng: 77.0870 },
+  'New Gurgaon (Sector 82-84)': { lat: 28.3890, lng: 76.9680 }
+};
+
+// Generate 100 Verified Tutors Data
+const GENERATED_TUTORS = [];
+for (let i = 1; i <= 100; i++) {
+  const fName = FIRST_NAMES[(i - 1) % FIRST_NAMES.length];
+  const lName = LAST_NAMES[Math.floor((i * 7) % LAST_NAMES.length)];
+  const name = `${fName} ${lName}`;
+  const id = `tut-${i}`;
+  const phone = `98${String(11000000 + i * 8371).slice(0, 8)}`;
+  const email = `${fName.toLowerCase()}.${lName.toLowerCase()}${i}@tuitionforhome.com`;
+  const degree = DEGREES[i % DEGREES.length];
+  const exp = 3 + (i % 12);
+  const subjects = SUBJECT_COMBOS[i % SUBJECT_COMBOS.length];
+  const avatarUrl = AVATAR_URLS[i % AVATAR_URLS.length];
+  
+  // Pick 3-4 service areas
+  const startLoc = i % LOCALITY_NAMES.length;
+  const primaryLoc = LOCALITY_NAMES[startLoc];
+  const serviceAreas = [
+    primaryLoc,
+    LOCALITY_NAMES[(startLoc + 1) % LOCALITY_NAMES.length],
+    LOCALITY_NAMES[(startLoc + 2) % LOCALITY_NAMES.length],
+    LOCALITY_NAMES[(startLoc + 3) % LOCALITY_NAMES.length]
+  ];
+
+  const baseCoords = GURGAON_COORDINATES[primaryLoc] || { lat: 28.4552, lng: 77.0983 };
+  // Organic jitter around the primary sector within ~300-500 meters
+  const angle = (i * 137.5) * (Math.PI / 180);
+  const jitterDist = 0.002 + ((i % 5) * 0.001);
+  const latitude = Number((baseCoords.lat + Math.sin(angle) * jitterDist).toFixed(6));
+  const longitude = Number((baseCoords.lng + Math.cos(angle) * jitterDist).toFixed(6));
+
+  const rating = Number((4.75 + ((i * 3) % 25) * 0.01).toFixed(2));
+  const totalReviews = 12 + ((i * 11) % 65);
+  const hourlyRateHome = 700 + ((i % 8) * 100);
+  const hourlyRateOnline = hourlyRateHome - 300;
+  const monthlyRateMin = hourlyRateHome * 8;
+
+  GENERATED_TUTORS.push({
+    id,
+    name,
+    phone,
+    email,
+    avatarUrl,
+    introVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    highestDegree: degree,
+    experienceYears: exp,
+    teachingMode: i % 3 === 0 ? 'OFFLINE_HOME' : i % 3 === 1 ? 'ONLINE_LIVE' : 'BOTH',
+    subjects: JSON.stringify(subjects),
+    classes: JSON.stringify(['Class 9 & 10 (CBSE / ICSE)', 'Class 11 & 12 (Board & Entrance)', 'Middle School (Class 6-8)']),
+    boards: JSON.stringify(['CBSE', 'ICSE', 'IB', 'Cambridge IGCSE']),
+    serviceAreas: JSON.stringify(serviceAreas),
+    travelRadiusKm: 5 + (i % 4),
+    latitude,
+    longitude,
+    hourlyRateHome,
+    hourlyRateOnline,
+    monthlyRateMin,
+    isVerified: true,
+    hasPoliceCheck: true,
+    rating,
+    totalReviews,
+    bio: `Passionate educator with ${exp}+ years experience specializing in ${subjects.join(', ')}. Strong track record of improving student grades and building conceptual clarity for board and competitive exams.`,
+    kycLast4: String(1000 + ((i * 37) % 9000))
+  });
+}
+
+// Generate 50 Realistic Leads / Parents Data
+const PARENT_NAMES = [
+  'Mrs. Ritu Verma', 'Dr. Alok Nath Mehra', 'Col. Rajiv Mathur', 'Mrs. Sunita Bansal', 'Dr. Vivek Malhotra',
+  'Mr. Sandeep Kapoor', 'Mrs. Shalini Gupta', 'Mr. Amitav Roy', 'Mrs. Preeti Choudhary', 'Dr. Harsh Vardhan',
+  'Mrs. Meenakshi Sundaram', 'Mr. Rajesh Khurana', 'Mrs. Deepika Sethi', 'Mr. Anupam Mittal', 'Mrs. Radhika Singhal',
+  'Mr. Vikramaditya Rao', 'Mrs. Kavita Sachdeva', 'Mr. Puneet Oberoi', 'Mrs. Neerja Aggarwal', 'Dr. Rohit Batra',
+  'Mrs. Sangeeta Ahuja', 'Mr. Manish Khandelwal', 'Mrs. Vandana Nambiar', 'Mr. Tarun Grover', 'Mrs. Archana Joshi',
+  'Mr. Gaurav Chawla', 'Mrs. Anjali Talwar', 'Mr. Sudhir Srivastava', 'Mrs. Parul Goel', 'Mr. Hemant Somani',
+  'Mrs. Smriti Kashyap', 'Mr. Nikhil Dhawan', 'Mrs. Bhavna Juneja', 'Mr. Ritesh Deshmukh', 'Mrs. Swati Mahajan',
+  'Mr. Ashutosh Bhardwaj', 'Mrs. Tanya Arora', 'Mr. Kunal Rawat', 'Mrs. Monica Chhabra', 'Mr. Sanjay Bajaj',
+  'Mrs. Rekha Tripathi', 'Mr. Deepanshu Sood', 'Mrs. Payal Vashisht', 'Mr. Mohit Singla', 'Mrs. Garima Chopra',
+  'Mr. Vishal Taneja', 'Mrs. Nupur Kaushik', 'Mr. Devendra Sahni', 'Mrs. Rashmi Saxena', 'Mr. Akhil Duggal'
+];
+
+const LEAD_STATUSES = [
+  'NEW_LEAD', 'CALL_SCHEDULED', 'TUTOR_MATCHED',
+  'DEMO_SCHEDULED', 'DEMO_COMPLETED', 'TUITION_CONFIRMED', 'COMMISSION_RECEIVED'
+];
+
+const GRADES = [
+  'Class 10 CBSE Board', 'Class 12 CBSE Physics & Maths', 'Class 9 ICSE Science',
+  'Class 11 NEET Biology', 'Class 8 CBSE All Subjects', 'Class 12 Commerce & Accounts',
+  'Class 7 Cambridge Checkpoint', 'Class 11 JEE Advanced Maths', 'Class 5 Primary Phonics & Maths',
+  'Class 10 ICSE Computer Applications'
+];
+
+const GENERATED_LEADS = [];
+for (let i = 1; i <= 50; i++) {
+  const pName = PARENT_NAMES[i - 1];
+  const pPhone = `98${String(12000000 + i * 9431).slice(0, 8)}`;
+  const pEmail = `${pName.toLowerCase().replace(/[^a-z]/g, '')}${i}@gmail.com`;
+  const loc = LOCALITY_NAMES[i % LOCALITY_NAMES.length];
+  const grade = GRADES[i % GRADES.length];
+  const subjects = SUBJECT_COMBOS[i % SUBJECT_COMBOS.length];
+  const status = LEAD_STATUSES[i % LEAD_STATUSES.length];
+  const budget = 7000 + ((i % 10) * 1000);
+  
+  // Assign a tutor if status is TUTOR_MATCHED, DEMO_SCHEDULED, DEMO_COMPLETED, or TUITION_CONFIRMED
+  let assignedTutorId = null;
+  if (['TUTOR_MATCHED', 'DEMO_SCHEDULED', 'DEMO_COMPLETED', 'TUITION_CONFIRMED', 'COMMISSION_RECEIVED'].includes(status)) {
+    assignedTutorId = `tut-${((i * 3) % 100) + 1}`;
+  }
+
+  const daysAgo = (i % 15);
+  const createdAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+  const updatedAt = new Date(Date.now() - Math.max(0, daysAgo - 1) * 24 * 60 * 60 * 1000);
+
+  GENERATED_LEADS.push({
+    id: `LD-${100 + i}`,
+    parentName: pName,
+    parentPhone: pPhone,
+    parentEmail: pEmail,
+    preferredMode: i % 4 === 0 ? 'ONLINE_LIVE' : 'OFFLINE_HOME',
+    locality: loc,
+    gradeClass: grade,
+    subjectsNeeded: JSON.stringify(subjects),
+    board: grade.includes('ICSE') ? 'ICSE' : grade.includes('Cambridge') ? 'Cambridge' : 'CBSE',
+    budgetMonthly: budget,
+    status,
+    notes: `Parent inquiry for ${grade} in ${loc}. Looking for an experienced educator with focus on fundamentals and regular tests.`,
+    assignedTutorId,
+    commissionAmount: status === 'TUITION_CONFIRMED' || status === 'COMMISSION_RECEIVED' ? Math.round(budget * 0.5) : 0,
+    createdAt,
+    updatedAt
+  });
+}
+
+async function main() {
+  console.log('🚀 Starting Complete High-Capacity Database Seeding (100 Tutors + 50 Leads)...');
+
+  // 1. Platform Global Config
   await prisma.platformConfig.upsert({
     where: { id: 'global_config' },
-    update: {},
+    update: {
+      baseVerificationFee: 999,
+      isOfferActive: true,
+      offerDiscountPercent: 100,
+      offerTitle: 'Academic Session 2026-27 Special Drive',
+      offerSubtext: '100% Verification Fee Waiver for Gurgaon & NCR Educators',
+      officeAddress: 'M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001',
+      helplinePhones: '+91 95174 47689, +91 92170 31899',
+      supportEmail: 'info@sssamacademy.com',
+    },
     create: {
       id: 'global_config',
       baseVerificationFee: 999,
@@ -292,84 +269,87 @@ async function main() {
       supportEmail: 'info@sssamacademy.com',
     },
   });
+  console.log('✅ Global Platform Config upserted');
 
-  // 2. Seed Locality SEO Pages
+  // 2. Gurgaon Locality SEO
   for (const loc of GURGAON_LOCALITIES) {
     await prisma.localitySEO.upsert({
       where: { slug: loc.slug },
-      update: {},
+      update: {
+        name: loc.name,
+        pincode: loc.pincode,
+        metaTitle: `Best Home Tutors in ${loc.name}, Gurgaon | SSSAM Academy`,
+        metaDesc: `Find top-rated, background-verified home & online tutors in ${loc.name}, Gurgaon (${loc.landmark}). 1 Free Demo Class.`,
+        h1Heading: `Best Home Tutors in ${loc.name}, Gurgaon`,
+        city: 'Gurgaon',
+      },
       create: {
         slug: loc.slug,
         name: loc.name,
-        city: 'Gurgaon',
         pincode: loc.pincode,
         metaTitle: `Best Home Tutors in ${loc.name}, Gurgaon | SSSAM Academy`,
-        metaDesc: `Find verified home and online tutors in ${loc.name}, Gurgaon (${loc.landmark}). 1 Free Demo Class + 100% Replacement Guarantee.`,
+        metaDesc: `Find top-rated, background-verified home & online tutors in ${loc.name}, Gurgaon (${loc.landmark}). 1 Free Demo Class.`,
         h1Heading: `Best Home Tutors in ${loc.name}, Gurgaon`,
-        contentBody: `Connect with verified educators serving residential communities in and around ${loc.landmark}.`,
-        isActive: true,
+        city: 'Gurgaon',
       },
     });
   }
+  console.log(`✅ ${GURGAON_LOCALITIES.length} Locality SEO records upserted`);
 
-  // 3. Seed Default Admin User
-  const defaultPasswordHash = await bcrypt.hash('admin123', 10);
-  const adminUser = await prisma.user.upsert({
+  // 3. Super Admin & Counselor Users
+  const passwordHash = await bcrypt.hash('admin123', 10);
+  await prisma.user.upsert({
     where: { email: 'admin@sssamacademy.com' },
-    update: {},
+    update: { role: 'SUPER_ADMIN', name: 'SSSAM Super Admin' },
     create: {
-      name: 'Super Admin',
       email: 'admin@sssamacademy.com',
-      passwordHash: defaultPasswordHash,
-      phone: '+91 95174 47689',
+      name: 'SSSAM Super Admin',
+      phone: '9517447689',
       role: 'SUPER_ADMIN',
+      passwordHash,
     },
   });
 
-  // 4. Seed Counselor Accounts
   const counselors = [
-    { name: 'Pooja Sharma', email: 'pooja.sharma@sssamacademy.com', phone: '+91 98112 34567', role: 'TELECALLER' },
-    { name: 'Amit Kumar', email: 'amit.kumar@sssamacademy.com', phone: '+91 98765 43210', role: 'TELECALLER' },
-    { name: 'Sneha Verma', email: 'sneha.verma@sssamacademy.com', phone: '+91 99887 76655', role: 'TELECALLER' },
-    { name: 'Rahul Dev', email: 'rahul.dev@sssamacademy.com', phone: '+91 97110 09988', role: 'TELECALLER' },
+    { name: 'Counselor Pooja', email: 'pooja.counselor@sssamacademy.com', phone: '9811234101' },
+    { name: 'Counselor Rajesh', email: 'rajesh.counselor@sssamacademy.com', phone: '9811234102' },
+    { name: 'Counselor Ankit', email: 'ankit.counselor@sssamacademy.com', phone: '9811234103' },
+    { name: 'Counselor Neha', email: 'neha.counselor@sssamacademy.com', phone: '9811234104' },
   ];
 
-  let firstCounselorId = adminUser.id;
   for (const c of counselors) {
-    const user = await prisma.user.upsert({
+    await prisma.user.upsert({
       where: { email: c.email },
-      update: {},
+      update: { name: c.name, role: 'TELECALLER', phone: c.phone },
       create: {
-        name: c.name,
         email: c.email,
-        passwordHash: defaultPasswordHash,
+        name: c.name,
         phone: c.phone,
         role: 'TELECALLER',
+        passwordHash,
       },
     });
-    if (c.name === 'Pooja Sharma') firstCounselorId = user.id;
   }
+  console.log('✅ Super Admin and 4 Counselor accounts upserted');
 
-  // 5. Seed Verified Tutors & Tutor Profiles
-  for (const tut of TUTORS_DATA) {
-    const tutorUser = await prisma.user.upsert({
+  // 4. 100 Verified Tutors + KYC records
+  for (const tut of GENERATED_TUTORS) {
+    const user = await prisma.user.upsert({
       where: { email: tut.email },
-      update: {},
+      update: { name: tut.name, phone: tut.phone, role: 'TUTOR' },
       create: {
-        name: tut.name,
         email: tut.email,
+        name: tut.name,
         phone: tut.phone,
-        passwordHash: defaultPasswordHash,
         role: 'TUTOR',
+        passwordHash,
       },
     });
 
     const tutorProfile = await prisma.tutorProfile.upsert({
-      where: { userId: tutorUser.id },
-      update: {},
-      create: {
-        id: tut.id,
-        userId: tutorUser.id,
+      where: { id: tut.id },
+      update: {
+        userId: user.id,
         avatarUrl: tut.avatarUrl,
         introVideoUrl: tut.introVideoUrl,
         highestDegree: tut.highestDegree,
@@ -380,6 +360,33 @@ async function main() {
         boards: tut.boards,
         serviceAreas: tut.serviceAreas,
         travelRadiusKm: tut.travelRadiusKm,
+        latitude: tut.latitude,
+        longitude: tut.longitude,
+        hourlyRateHome: tut.hourlyRateHome,
+        hourlyRateOnline: tut.hourlyRateOnline,
+        monthlyRateMin: tut.monthlyRateMin,
+        isVerified: tut.isVerified,
+        hasPoliceCheck: tut.hasPoliceCheck,
+        rating: tut.rating,
+        totalReviews: tut.totalReviews,
+        bio: tut.bio,
+        status: 'ACTIVE_VERIFIED',
+      },
+      create: {
+        id: tut.id,
+        userId: user.id,
+        avatarUrl: tut.avatarUrl,
+        introVideoUrl: tut.introVideoUrl,
+        highestDegree: tut.highestDegree,
+        experienceYears: tut.experienceYears,
+        teachingMode: tut.teachingMode,
+        subjects: tut.subjects,
+        classes: tut.classes,
+        boards: tut.boards,
+        serviceAreas: tut.serviceAreas,
+        travelRadiusKm: tut.travelRadiusKm,
+        latitude: tut.latitude,
+        longitude: tut.longitude,
         hourlyRateHome: tut.hourlyRateHome,
         hourlyRateOnline: tut.hourlyRateOnline,
         monthlyRateMin: tut.monthlyRateMin,
@@ -392,141 +399,93 @@ async function main() {
       },
     });
 
-    // KYC record
     await prisma.tutorKYC.upsert({
       where: { tutorId: tutorProfile.id },
-      update: {},
+      update: {
+        idType: 'AADHAAR_MASKED',
+        idLast4: tut.kycLast4,
+        idDocUrl: 'https://res.cloudinary.com/demo/image/upload/sample_aadhaar.jpg',
+        verificationDate: new Date(),
+        verifiedByAdmin: 'SSSAM Super Admin',
+      },
       create: {
         tutorId: tutorProfile.id,
         idType: 'AADHAAR_MASKED',
         idLast4: tut.kycLast4,
-        idDocUrl: 'https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?w=600&auto=format&fit=crop&q=80',
+        idDocUrl: 'https://res.cloudinary.com/demo/image/upload/sample_aadhaar.jpg',
         verificationDate: new Date(),
-        verifiedByAdmin: adminUser.id,
+        verifiedByAdmin: 'SSSAM Super Admin',
       },
     });
   }
+  console.log(`✅ ${GENERATED_TUTORS.length} Verified Tutors & KYC records upserted`);
 
-  // 6. Seed Sample Leads with Dynamic Parent Inquiries
-  const sampleLeads = [
-    {
-      id: 'LD-101',
-      parentName: 'Sunita Rao',
-      parentPhone: '9811200111',
-      parentEmail: 'sunita.rao@gmail.com',
-      gradeClass: 'Class 10',
-      subjectsNeeded: JSON.stringify(['Mathematics', 'Physics']),
-      board: 'CBSE',
-      locality: 'DLF Phase 5, Gurgaon',
-      preferredMode: 'OFFLINE_HOME',
-      budgetMonthly: 8000,
-      status: 'DEMO_SCHEDULED',
-      assignedCallerId: firstCounselorId,
-      assignedTutorId: 'tut-1',
-      notes: 'Parent requested demo class on Saturday at 5 PM. Rohit Sharma assigned.',
-    },
-    {
-      id: 'LD-102',
-      parentName: 'Vikram Ahuja',
-      parentPhone: '9873100222',
-      parentEmail: 'vikram.ahuja@outlook.com',
-      gradeClass: 'Class 12',
-      subjectsNeeded: JSON.stringify(['Chemistry', 'Biology / NEET']),
-      board: 'CBSE',
-      locality: 'Nirvana Country (Sector 50)',
-      preferredMode: 'OFFLINE_HOME',
-      budgetMonthly: 10000,
-      status: 'TUITION_CONFIRMED',
-      assignedCallerId: firstCounselorId,
-      assignedTutorId: 'tut-2',
-      notes: 'Tuition confirmed. Advance fee ₹10,000 received. Ongoing classes MWF 6 PM.',
-    },
-    {
-      id: 'LD-103',
-      parentName: 'Deepak Malhotra',
-      parentPhone: '9899100333',
-      parentEmail: 'deepak.m@gmail.com',
-      gradeClass: 'Class 8',
-      subjectsNeeded: JSON.stringify(['Mathematics', 'Science']),
-      board: 'ICSE',
-      locality: 'Sector 56, Gurgaon',
-      preferredMode: 'OFFLINE_HOME',
-      budgetMonthly: 7000,
-      status: 'NEW_LEAD',
-      assignedCallerId: firstCounselorId,
-      notes: 'Fresh inquiry from website. Seeking experienced teacher for ICSE Class 8.',
-    },
-    {
-      id: 'LD-104',
-      parentName: 'Megha Singhal',
-      parentPhone: '9810500444',
-      parentEmail: 'megha.singhal@yahoo.com',
-      gradeClass: 'Class 11',
-      subjectsNeeded: JSON.stringify(['Accountancy', 'Economics']),
-      board: 'CBSE',
-      locality: 'Golf Course Road, Gurgaon',
-      preferredMode: 'OFFLINE_HOME',
-      budgetMonthly: 9000,
-      status: 'TUITION_CONFIRMED',
-      assignedCallerId: firstCounselorId,
-      assignedTutorId: 'tut-4',
-      notes: 'Classes running smoothly with Priyanka Aggarwal since last month.',
-    },
-    {
-      id: 'LD-105',
-      parentName: 'Rajesh Nair',
-      parentPhone: '9818800555',
-      parentEmail: 'rajesh.nair@corp.in',
-      gradeClass: 'Class 4',
-      subjectsNeeded: JSON.stringify(['All Primary Subjects', 'Abacus']),
-      board: 'IB (International Baccalaureate)',
-      locality: 'DLF Phase 4, Gurgaon',
-      preferredMode: 'OFFLINE_HOME',
-      budgetMonthly: 7500,
-      status: 'CALL_SCHEDULED',
-      assignedCallerId: firstCounselorId,
-      notes: 'Call scheduled today at 4:30 PM to discuss IB primary syllabus requirements.',
-    },
-  ];
-
-  for (const l of sampleLeads) {
-    await prisma.lead.upsert({
-      where: { id: l.id },
-      update: {},
+  // 5. 50 Realistic Leads & Parent Records
+  for (const lead of GENERATED_LEADS) {
+    const createdLead = await prisma.lead.upsert({
+      where: { id: lead.id },
+      update: {
+        parentName: lead.parentName,
+        parentPhone: lead.parentPhone,
+        parentEmail: lead.parentEmail,
+        preferredMode: lead.preferredMode,
+        locality: lead.locality,
+        gradeClass: lead.gradeClass,
+        subjectsNeeded: lead.subjectsNeeded,
+        board: lead.board,
+        budgetMonthly: lead.budgetMonthly,
+        status: lead.status,
+        notes: lead.notes,
+        assignedTutorId: lead.assignedTutorId,
+        commissionAmount: lead.commissionAmount,
+        createdAt: lead.createdAt,
+        updatedAt: lead.updatedAt,
+      },
       create: {
-        id: l.id,
-        parentName: l.parentName,
-        parentPhone: l.parentPhone,
-        parentEmail: l.parentEmail,
-        gradeClass: l.gradeClass,
-        subjectsNeeded: l.subjectsNeeded,
-        board: l.board,
-        locality: l.locality,
-        preferredMode: l.preferredMode,
-        budgetMonthly: l.budgetMonthly,
-        status: l.status,
-        assignedCallerId: l.assignedCallerId,
-        assignedTutorId: l.assignedTutorId,
-        notes: l.notes,
-        activities: {
-          create: [
-            {
-              actionType: 'STATUS_CHANGE',
-              description: `Lead created with initial status: ${l.status}. Remark: ${l.notes}`,
-              performedBy: 'System Seeder',
-            },
-          ],
-        },
+        id: lead.id,
+        parentName: lead.parentName,
+        parentPhone: lead.parentPhone,
+        parentEmail: lead.parentEmail,
+        preferredMode: lead.preferredMode,
+        locality: lead.locality,
+        gradeClass: lead.gradeClass,
+        subjectsNeeded: lead.subjectsNeeded,
+        board: lead.board,
+        budgetMonthly: lead.budgetMonthly,
+        status: lead.status,
+        notes: lead.notes,
+        assignedTutorId: lead.assignedTutorId,
+        commissionAmount: lead.commissionAmount,
+        createdAt: lead.createdAt,
+        updatedAt: lead.updatedAt,
       },
     });
-  }
 
-  console.log('✅ Database completely initialized and seeded with all tables and records!');
+    // Add activity log
+    const existingAct = await prisma.leadActivity.findFirst({
+      where: { leadId: createdLead.id },
+    });
+
+    if (!existingAct) {
+      await prisma.leadActivity.create({
+        data: {
+          leadId: createdLead.id,
+          actionType: lead.status === 'NEW_LEAD' ? 'NEW_LEAD' : 'NOTE_ADDED',
+          description: `Lead status is ${lead.status}. Requirement: ${lead.gradeClass} in ${lead.locality}.`,
+          performedBy: 'Counselor Desk (SSSAM System)',
+          createdAt: lead.createdAt,
+        },
+      });
+    }
+  }
+  console.log(`✅ ${GENERATED_LEADS.length} Leads & Parent inquiries upserted with Activity history`);
+
+  console.log('🎉 Complete Database successfully initialized with 100 Tutors and 50 Parent Leads!');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('❌ Error during seed:', e);
     process.exit(1);
   })
   .finally(async () => {

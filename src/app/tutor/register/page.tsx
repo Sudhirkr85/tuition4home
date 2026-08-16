@@ -34,6 +34,7 @@ import {
   Phone,
   User,
   ExternalLink,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function TutorRegisterLoginPage() {
@@ -52,25 +53,28 @@ export default function TutorRegisterLoginPage() {
   const [userEmail, setUserEmail] = useState('');
   
   // Auth Form State (Register)
-  const [regName, setRegName] = useState('Amit Kumar');
-  const [regEmail, setRegEmail] = useState('tutor2@tuitionforhome.com');
-  const [regPhone, setRegPhone] = useState('9876543211');
-  const [regPassword, setRegPassword] = useState('tutor123');
-  const [regConfirmPassword, setRegConfirmPassword] = useState('tutor123');
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
   
   // Auth Form State (Login - Password)
-  const [loginContact, setLoginContact] = useState('tutor@tuitionforhome.com');
-  const [loginPassword, setLoginPassword] = useState('tutor123');
+  const [loginContact, setLoginContact] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   
   // Auth Form State (Login - OTP)
-  const [otpContact, setOtpContact] = useState('tutor@tuitionforhome.com');
-  const [otpCode, setOtpCode] = useState('123456');
+  const [otpContact, setOtpContact] = useState('');
+  const [otpCode, setOtpCode] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
 
   // Show/Hide Password & Shake Animation States
   const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [shakeForm, setShakeForm] = useState(false);
+  const [loginErrorField, setLoginErrorField] = useState<'password' | 'contact' | 'both' | null>(null);
+  const [regErrorField, setRegErrorField] = useState<'password' | 'confirm' | null>(null);
 
   // Dynamic rotation for Gurgaon leads
   const [activeLeadIndex, setActiveLeadIndex] = useState(0);
@@ -95,13 +99,13 @@ export default function TutorRegisterLoginPage() {
   // Profile Wizard Form State
   const [teachingMode, setTeachingMode] = useState<'BOTH' | 'OFFLINE_HOME' | 'ONLINE_LIVE'>('BOTH');
   const [degree, setDegree] = useState('');
-  const [experienceYears, setExperienceYears] = useState(3);
+  const [experienceYears, setExperienceYears] = useState(2);
   
   // Selectable lists (stored as arrays)
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([SUBJECT_OPTIONS[0]]);
-  const [selectedClasses, setSelectedClasses] = useState<string[]>([CLASS_OPTIONS[2]]);
-  const [selectedBoards, setSelectedBoards] = useState<string[]>([BOARD_OPTIONS[0]]);
-  const [serviceAreas, setServiceAreas] = useState<string[]>([GURGAON_LOCALITIES[0].name]);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
+  const [selectedBoards, setSelectedBoards] = useState<string[]>([]);
+  const [serviceAreas, setServiceAreas] = useState<string[]>([]);
   
   // Custom "Other" write-in states for searchable multiselects
   const [customSubject, setCustomSubject] = useState('');
@@ -115,6 +119,71 @@ export default function TutorRegisterLoginPage() {
   
   // Step 3: Locations & Travel
   const [travelRadius, setTravelRadius] = useState(5);
+  const [tutorLatitude, setTutorLatitude] = useState<number | null>(null);
+  const [tutorLongitude, setTutorLongitude] = useState<number | null>(null);
+  const [tutorFormattedAddress, setTutorFormattedAddress] = useState('');
+  const [showTutorLocationPicker, setShowTutorLocationPicker] = useState(false);
+  const [isDetectingTutorGPS, setIsDetectingTutorGPS] = useState(false);
+  const [isTutorReverseGeocoding, setIsTutorReverseGeocoding] = useState(false);
+  const tutorPickerMapRef = React.useRef<HTMLDivElement>(null);
+  const [tutorPickerMap, setTutorPickerMap] = useState<any>(null);
+  const tutorPickerMarkerRef = React.useRef<any>(null);
+  const [leafletLib, setLeafletLib] = useState<any>(null);
+
+  // Load Leaflet dynamically
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('leaflet').then((mod) => setLeafletLib(mod.default));
+    }
+  }, []);
+
+  // Reverse geocode using unified maps utility (Google Maps Geocoder -> OSM Nominatim)
+  const tutorReverseGeocode = async (lat: number, lng: number): Promise<string> => {
+    const { reverseGeocodeUnified } = await import('@/lib/maps');
+    return await reverseGeocodeUnified(lat, lng);
+  };
+
+  // Init tutor location picker map
+  useEffect(() => {
+    if (!leafletLib || !showTutorLocationPicker || !tutorPickerMapRef.current || tutorPickerMap) return;
+    const timer = setTimeout(() => {
+      if (!tutorPickerMapRef.current) return;
+      const center = tutorLatitude && tutorLongitude ? [tutorLatitude, tutorLongitude] : [28.4728, 77.0345];
+      const pMap = leafletLib.map(tutorPickerMapRef.current, { center, zoom: 15, zoomControl: true, attributionControl: false });
+      leafletLib.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(pMap);
+      const markerIcon = leafletLib.divIcon({
+        className: 'tutor-loc-pin',
+        html: '<div style="display:flex;flex-direction:column;align-items:center;"><div style="width:36px;height:36px;border-radius:50%;background:#0F6E56;border:3px solid #FFF;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(15,110,86,0.5);cursor:grab;"><div style="width:12px;height:12px;border-radius:50%;background:#FFF;"></div></div><div style="width:3px;height:12px;background:#0F6E56;margin-top:-2px;"></div></div>',
+        iconSize: [36, 50], iconAnchor: [18, 50],
+      });
+      const marker = leafletLib.marker(center, { icon: markerIcon, draggable: true }).addTo(pMap);
+      tutorPickerMarkerRef.current = marker;
+      marker.on('dragend', async () => {
+        const pos = marker.getLatLng();
+        setTutorLatitude(pos.lat); setTutorLongitude(pos.lng);
+        setIsTutorReverseGeocoding(true);
+        const addr = await tutorReverseGeocode(pos.lat, pos.lng);
+        setTutorFormattedAddress(addr);
+        setIsTutorReverseGeocoding(false);
+      });
+      pMap.on('click', async (e: any) => {
+        marker.setLatLng([e.latlng.lat, e.latlng.lng]);
+        setTutorLatitude(e.latlng.lat); setTutorLongitude(e.latlng.lng);
+        setIsTutorReverseGeocoding(true);
+        const addr = await tutorReverseGeocode(e.latlng.lat, e.latlng.lng);
+        setTutorFormattedAddress(addr);
+        setIsTutorReverseGeocoding(false);
+      });
+      setTutorPickerMap(pMap);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [leafletLib, showTutorLocationPicker]);
+
+  useEffect(() => {
+    if (!showTutorLocationPicker && tutorPickerMap) {
+      tutorPickerMap.remove(); setTutorPickerMap(null); tutorPickerMarkerRef.current = null;
+    }
+  }, [showTutorLocationPicker]);
   
   // Step 4: Pricing Rates (Ranges)
   const [hourlyRateHomeMin, setHourlyRateHomeMin] = useState(600);
@@ -228,13 +297,116 @@ export default function TutorRegisterLoginPage() {
     hourlyRateOnlineMax, profilePhotoUrl, introVideoUrl, idType
   ]);
 
-  // Auth Operations
-  const handleRegister = async (e: React.FormEvent) => {
+  // Registration Email OTP Verification States
+  const [regStep, setRegStep] = useState<'DETAILS' | 'OTP' | 'PASSWORD'>('DETAILS');
+  const [regOtpCode, setRegOtpCode] = useState('');
+  const [regEmailVerified, setRegEmailVerified] = useState(false);
+  const [sendingRegOtp, setSendingRegOtp] = useState(false);
+  const [verifyingRegOtp, setVerifyingRegOtp] = useState(false);
+
+  // Step 1: Send Email OTP for Registration
+  const handleSendRegOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
     
+    if (!regName.trim()) {
+      setErrorMessage('Please enter your full name.');
+      triggerShake();
+      return;
+    }
+    if (!regPhone || regPhone.length < 10) {
+      setErrorMessage('Please enter a valid 10-digit mobile number.');
+      triggerShake();
+      return;
+    }
+    if (!regEmail || !regEmail.includes('@')) {
+      setErrorMessage('Please enter a valid email address.');
+      triggerShake();
+      return;
+    }
+
+    setSendingRegOtp(true);
+    try {
+      const res = await fetch('/api/tutors/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact: regEmail.toLowerCase().trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRegStep('OTP');
+      } else {
+        setErrorMessage(data.error || 'Failed to send verification code.');
+        triggerShake();
+      }
+    } catch {
+      setErrorMessage('Failed to connect to the server.');
+    } finally {
+      setSendingRegOtp(false);
+    }
+  };
+
+  // Step 2: Verify Email OTP for Registration
+  const handleVerifyRegOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+
+    if (!regOtpCode || regOtpCode.trim().length !== 6) {
+      setErrorMessage('Please enter the 6-digit verification code.');
+      triggerShake();
+      return;
+    }
+
+    setVerifyingRegOtp(true);
+    try {
+      const res = await fetch('/api/tutors/auth/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contact: regEmail.toLowerCase().trim(),
+          otpCode: regOtpCode.trim(),
+          mode: 'REGISTRATION',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRegEmailVerified(true);
+        setRegStep('PASSWORD');
+      } else {
+        setErrorMessage(data.error || 'Invalid or expired verification code.');
+        triggerShake();
+      }
+    } catch {
+      setErrorMessage('Failed to verify code.');
+    } finally {
+      setVerifyingRegOtp(false);
+    }
+  };
+
+  // Step 3: Finalize Account Creation after Email Verification
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setRegErrorField(null);
+
+    if (!regEmailVerified) {
+      setErrorMessage('Please verify your email address first before setting a password.');
+      setRegStep('DETAILS');
+      triggerShake();
+      return;
+    }
+    
+    if (regPassword.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
+      setRegErrorField('password');
+      triggerShake();
+      return;
+    }
+
     if (regPassword !== regConfirmPassword) {
-      setErrorMessage('Passwords do not match.');
+      setErrorMessage('Passwords do not match. Please re-enter correctly.');
+      setRegErrorField('confirm');
+      triggerShake();
       return;
     }
 
@@ -254,9 +426,10 @@ export default function TutorRegisterLoginPage() {
       
       if (!data.success) {
         setErrorMessage(data.error || 'Registration failed.');
+        setRegErrorField('password');
         triggerShake();
       } else {
-        const session = { userId: data.userId, name: data.name, email: data.email };
+        const session = { userId: data.userId, name: data.name, email: data.email, loginAt: Date.now(), expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000 };
         localStorage.setItem('tutor_session', JSON.stringify(session));
         setUserId(data.userId);
         setUserName(data.name);
@@ -274,6 +447,7 @@ export default function TutorRegisterLoginPage() {
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+    setLoginErrorField(null);
     setLoading(true);
 
     try {
@@ -288,10 +462,11 @@ export default function TutorRegisterLoginPage() {
       const data = await res.json();
       
       if (!data.success) {
-        setErrorMessage(data.error || 'Login failed.');
+        setErrorMessage(data.error || 'Invalid email/mobile or password.');
+        setLoginErrorField('password');
         triggerShake();
       } else {
-        const session = { userId: data.userId, name: data.name, email: data.email };
+        const session = { userId: data.userId, name: data.name, email: data.email, loginAt: Date.now(), expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000 };
         localStorage.setItem('tutor_session', JSON.stringify(session));
         setUserId(data.userId);
         setUserName(data.name);
@@ -358,7 +533,7 @@ export default function TutorRegisterLoginPage() {
         setErrorMessage(data.error || 'OTP verification failed.');
         triggerShake();
       } else {
-        const session = { userId: data.userId, name: data.name, email: data.email };
+        const session = { userId: data.userId, name: data.name, email: data.email, loginAt: Date.now(), expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000 };
         localStorage.setItem('tutor_session', JSON.stringify(session));
         setUserId(data.userId);
         setUserName(data.name);
@@ -385,7 +560,9 @@ export default function TutorRegisterLoginPage() {
       const session = { 
         userId: `GGL-${Math.floor(10000 + Math.random() * 90000)}`, 
         name: 'Google Educator Alum', 
-        email: 'google.educator@example.com' 
+        email: 'google.educator@example.com',
+        loginAt: Date.now(),
+        expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000,
       };
       localStorage.setItem('tutor_session', JSON.stringify(session));
       setUserId(session.userId);
@@ -450,6 +627,9 @@ export default function TutorRegisterLoginPage() {
           boards: selectedBoards,
           serviceAreas: serviceAreas,
           travelRadiusKm: travelRadius,
+          latitude: tutorLatitude,
+          longitude: tutorLongitude,
+          formattedAddress: tutorFormattedAddress || null,
           hourlyRateHomeMin,
           hourlyRateHomeMax,
           hourlyRateOnlineMin,
@@ -503,22 +683,91 @@ export default function TutorRegisterLoginPage() {
 
       <main style={{ flex: 1, padding: isLoggedIn ? '3.5rem 0 5rem 0' : 0 }}>
         
+        {/* =========================================================================
+            CENTERED ERROR NOTIFICATION POPUP MODAL
+            ========================================================================= */}
         {errorMessage && (
-          <div className="container" style={{ maxWidth: '780px', marginTop: '1.5rem' }}>
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: '1rem',
+          }}>
             <div style={{
-              backgroundColor: '#FEF2F2',
-              border: '1.5px solid #FCA5A5',
-              color: '#B91C1C',
-              padding: '1rem',
-              borderRadius: '12px',
-              fontSize: '0.88rem',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '24px',
+              padding: '2.25rem 2rem',
+              maxWidth: '440px',
+              width: '100%',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              textAlign: 'center',
+              border: '1px solid #E2E8F0',
             }}>
-              <span>⚠️ {errorMessage}</span>
-              <button type="button" onClick={() => setErrorMessage('')} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontWeight: 800 }}>X</button>
+              <div style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                backgroundColor: '#FEF2F2',
+                color: '#DC2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.25rem auto',
+                border: '1px solid #FECACA',
+              }}>
+                <AlertCircle size={26} />
+              </div>
+
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.5rem' }}>
+                Registration Notice
+              </h3>
+
+              <p style={{ fontSize: '0.92rem', color: '#64748B', lineHeight: 1.55, marginBottom: '1.75rem' }}>
+                {errorMessage}
+              </p>
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                {errorMessage.toLowerCase().includes('already registered') ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setErrorMessage('');
+                        setAuthTab('login');
+                      }}
+                      className="btn btn-primary"
+                      style={{ flex: 1, padding: '0.75rem 1rem', fontWeight: 800, backgroundColor: '#0F6E56' }}
+                    >
+                      <span>Switch to Login</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setErrorMessage('')}
+                      className="btn btn-secondary"
+                      style={{ flex: 1, padding: '0.75rem 1rem', fontWeight: 700 }}
+                    >
+                      Dismiss
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setErrorMessage('')}
+                    className="btn btn-primary"
+                    style={{ width: '100%', padding: '0.75rem 1.5rem', fontWeight: 800, backgroundColor: '#0F6E56' }}
+                  >
+                    <span>Understood</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -712,11 +961,11 @@ export default function TutorRegisterLoginPage() {
                       <strong style={{ display: 'block', fontSize: '0.82rem', color: 'var(--brand-teal)', marginBottom: '0.35rem' }}>
                         🤝 SSSAM Tutor Promise
                       </strong>
-                      <span style={{ fontSize: '0.75rem', color: '#E2E8F0', fontWeight: 700, display: 'block', marginBottom: '0.25rem' }}>
-                        "फीस और बातचीत की कोई टेंशन नहीं, ज़िम्मेदारी हमारी है!"
+                      <span style={{ fontSize: '0.78rem', color: '#E2E8F0', fontWeight: 700, display: 'block', marginBottom: '0.25rem' }}>
+                        &ldquo;Guaranteed On-Time Payments &amp; Zero Fee Hassle&rdquo;
                       </span>
                       <span style={{ fontSize: '0.7rem', color: '#94A3B8', lineHeight: 1.45, display: 'block' }}>
-                        SSSAM Academy handles parent negotiations and collects advanced fees, guaranteeing your payouts on-time. You focus purely on delivering quality teaching!
+                        SSSAM Academy handles parent negotiations and manages advance fee collection, guaranteeing your payouts on-time. You focus purely on delivering excellence in teaching!
                       </span>
                     </div>
 
@@ -800,118 +1049,294 @@ export default function TutorRegisterLoginPage() {
                   </button>
                 </div>
 
-                {/* 1. APPLY AS TUTOR (REGISTER) FORM */}
+                {/* 1. APPLY AS TUTOR (REGISTER) FORM WITH MANDATORY EMAIL OTP VERIFICATION FIRST */}
                 {authTab === 'register' && (
-                  <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    <div style={{ marginBottom: '0.5rem' }}>
-                      <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)' }}>Create Account</h2>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Onboarding takes less than 5 minutes</p>
-                    </div>
+                  <div>
+                    {/* STEP 1: Details & Request Email Verification OTP */}
+                    {regStep === 'DETAILS' && (
+                      <form onSubmit={handleSendRegOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ backgroundColor: '#ECFDF5', color: '#0F6E56', padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800 }}>STEP 1 OF 3</span>
+                            <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>EMAIL VERIFICATION</span>
+                          </div>
+                          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.25rem' }}>Create Account</h2>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Verify your email first, then set your account password.</p>
+                        </div>
 
-                    <div className="form-group">
-                      <label className="form-label">Full Name</label>
-                      <div style={{ position: 'relative' }}>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. Amit Kumar"
-                          value={regName}
-                          onChange={(e) => setRegName(e.target.value)}
-                          className="form-control"
-                          style={{ paddingLeft: '2.5rem' }}
-                        />
-                        <User size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
-                      </div>
-                    </div>
+                        <div className="form-group">
+                          <label className="form-label">Full Name</label>
+                          <div style={{ position: 'relative' }}>
+                            <input
+                              type="text"
+                              required
+                              placeholder="e.g. Amit Kumar"
+                              value={regName}
+                              onChange={(e) => setRegName(e.target.value)}
+                              className="form-control"
+                              style={{ paddingLeft: '2.5rem' }}
+                            />
+                            <User size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                          </div>
+                        </div>
 
-                    <div className="form-group">
-                      <label className="form-label">Mobile Number</label>
-                      <div style={{ position: 'relative' }}>
-                        <input
-                          type="tel"
-                          required
-                          placeholder="10-digit mobile number"
-                          value={regPhone}
-                          onChange={(e) => setRegPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                          className="form-control"
-                          style={{ paddingLeft: '2.5rem' }}
-                        />
-                        <Phone size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
-                      </div>
-                    </div>
+                        <div className="form-group">
+                          <label className="form-label">Mobile Number</label>
+                          <div style={{ position: 'relative' }}>
+                            <input
+                              type="tel"
+                              required
+                              placeholder="10-digit mobile number"
+                              value={regPhone}
+                              onChange={(e) => setRegPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                              className="form-control"
+                              style={{ paddingLeft: '2.5rem' }}
+                            />
+                            <Phone size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                          </div>
+                        </div>
 
-                    <div className="form-group">
-                      <label className="form-label">Email Address</label>
-                      <div style={{ position: 'relative' }}>
-                        <input
-                          type="email"
-                          required
-                          placeholder="amit@example.com"
-                          value={regEmail}
-                          onChange={(e) => setRegEmail(e.target.value)}
-                          className="form-control"
-                          style={{ paddingLeft: '2.5rem' }}
-                        />
-                        <Mail size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
-                      </div>
-                    </div>
+                        <div className="form-group">
+                          <label className="form-label">Email Address (OTP Sent Here)</label>
+                          <div style={{ position: 'relative' }}>
+                            <input
+                              type="email"
+                              required
+                              placeholder="amit@example.com"
+                              value={regEmail}
+                              onChange={(e) => setRegEmail(e.target.value)}
+                              className="form-control"
+                              style={{ paddingLeft: '2.5rem' }}
+                            />
+                            <Mail size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                          </div>
+                        </div>
 
-                    <div className="form-group">
-                      <label className="form-label">Create Password</label>
-                      <div style={{ position: 'relative' }}>
-                        <input
-                          type={showRegPassword ? 'text' : 'password'}
-                          required
-                          placeholder="Minimum 6 characters"
-                          value={regPassword}
-                          onChange={(e) => setRegPassword(e.target.value)}
-                          className="form-control"
-                          style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
-                        />
-                        <Lock size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
                         <button
-                          type="button"
-                          onClick={() => setShowRegPassword(!showRegPassword)}
-                          style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-light)', padding: 0 }}
+                          type="submit"
+                          disabled={sendingRegOtp}
+                          className="btn btn-primary"
+                          style={{ padding: '0.9rem', fontSize: '0.95rem', marginTop: '0.5rem', width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-teal)' }}
                         >
-                          {showRegPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          {sendingRegOtp ? 'Sending Email Verification Code...' : 'Send Verification Code to Email'}
+                          <ArrowRight size={18} />
                         </button>
-                      </div>
-                    </div>
+                      </form>
+                    )}
 
-                    <div className="form-group">
-                      <label className="form-label">Confirm Password</label>
-                      <div style={{ position: 'relative' }}>
-                        <input
-                          type={showRegPassword ? 'text' : 'password'}
-                          required
-                          placeholder="Re-enter password"
-                          value={regConfirmPassword}
-                          onChange={(e) => setRegConfirmPassword(e.target.value)}
-                          className="form-control"
-                          style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
-                        />
-                        <Lock size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                    {/* STEP 2: Enter Email OTP Code */}
+                    {regStep === 'OTP' && (
+                      <form onSubmit={handleVerifyRegOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ backgroundColor: '#ECFDF5', color: '#0F6E56', padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800 }}>STEP 2 OF 3</span>
+                            <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>ENTER CODE</span>
+                          </div>
+                          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.25rem' }}>Verify Email OTP</h2>
+                          <p style={{ fontSize: '0.85rem', color: '#0F6E56', marginTop: '0.2rem', fontWeight: 700 }}>
+                            We sent a 6-digit verification code to <u>{regEmail}</u>
+                          </p>
+                        </div>
+
+                        <div className="form-group">
+                          <label className="form-label">6-Digit Verification Code</label>
+                          <input
+                            type="text"
+                            required
+                            maxLength={6}
+                            placeholder="e.g. 123456"
+                            value={regOtpCode}
+                            onChange={(e) => setRegOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            className="form-control"
+                            style={{
+                              fontSize: '1.4rem',
+                              letterSpacing: '0.4rem',
+                              textAlign: 'center',
+                              fontWeight: 800,
+                              borderRadius: '12px',
+                              padding: '0.75rem',
+                            }}
+                          />
+                        </div>
+
                         <button
-                          type="button"
-                          onClick={() => setShowRegPassword(!showRegPassword)}
-                          style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-light)', padding: 0 }}
+                          type="submit"
+                          disabled={verifyingRegOtp || regOtpCode.length !== 6}
+                          className="btn btn-primary"
+                          style={{ padding: '0.9rem', fontSize: '0.95rem', width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-teal)' }}
                         >
-                          {showRegPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          {verifyingRegOtp ? 'Verifying Code...' : 'Verify Email & Proceed to Password'}
+                          <CheckCircle2 size={18} />
                         </button>
-                      </div>
-                    </div>
 
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="btn btn-primary"
-                      style={{ padding: '0.9rem', fontSize: '1rem', marginTop: '0.5rem', width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-teal)' }}
-                    >
-                      {loading ? 'Processing Registry...' : 'Register & Start Profile'}
-                      <ArrowRight size={18} />
-                    </button>
-                  </form>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', marginTop: '0.25rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => setRegStep('DETAILS')}
+                            style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', textDecoration: 'underline' }}
+                          >
+                            ← Change Details
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={handleSendRegOtp}
+                            disabled={sendingRegOtp}
+                            style={{ background: 'none', border: 'none', color: '#2563EB', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            {sendingRegOtp ? 'Resending...' : 'Resend Code'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {/* STEP 3: Set Password & Finalize Account */}
+                    {regStep === 'PASSWORD' && (
+                      <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ backgroundColor: '#ECFDF5', color: '#0F6E56', padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800 }}>STEP 3 OF 3</span>
+                            <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 800 }}>✓ EMAIL VERIFIED</span>
+                          </div>
+                          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.25rem' }}>Set Password</h2>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Create a secure password for your educator portal account.</p>
+                        </div>
+
+                        {/* Verified Email Summary Badge */}
+                        <div style={{
+                          backgroundColor: '#ECFDF5',
+                          border: '1.5px solid #A7F3D0',
+                          borderRadius: '12px',
+                          padding: '0.75rem 1rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.6rem',
+                          fontSize: '0.85rem',
+                          color: '#065F46',
+                          fontWeight: 700,
+                        }}>
+                          <CheckCircle2 size={18} color="#059669" />
+                          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            Verified Email: <span>{regEmail}</span>
+                          </div>
+                        </div>
+
+                        <div className="form-group">
+                          <label className="form-label">Create Password</label>
+                          <div style={{ position: 'relative' }}>
+                            <input
+                              type={showRegPassword ? 'text' : 'password'}
+                              required
+                              placeholder="Minimum 6 characters"
+                              value={regPassword}
+                              onChange={(e) => {
+                                setRegPassword(e.target.value);
+                                if (regErrorField === 'password') setRegErrorField(null);
+                              }}
+                              className="form-control"
+                              style={{
+                                paddingLeft: '2.5rem',
+                                paddingRight: '2.5rem',
+                                borderColor: (regConfirmPassword.length > 0 && regPassword !== regConfirmPassword) || regErrorField === 'password'
+                                  ? '#EF4444'
+                                  : (regConfirmPassword.length > 0 && regPassword === regConfirmPassword && regPassword.length >= 6)
+                                  ? '#10B981'
+                                  : undefined,
+                                boxShadow: (regConfirmPassword.length > 0 && regPassword !== regConfirmPassword) || regErrorField === 'password'
+                                  ? '0 0 0 3px rgba(239, 68, 68, 0.18)'
+                                  : (regConfirmPassword.length > 0 && regPassword === regConfirmPassword && regPassword.length >= 6)
+                                  ? '0 0 0 3px rgba(16, 185, 129, 0.18)'
+                                  : undefined,
+                              }}
+                            />
+                            <Lock
+                              size={16}
+                              color={
+                                (regConfirmPassword.length > 0 && regPassword !== regConfirmPassword) || regErrorField === 'password'
+                                  ? '#EF4444'
+                                  : (regConfirmPassword.length > 0 && regPassword === regConfirmPassword && regPassword.length >= 6)
+                                  ? '#10B981'
+                                  : "var(--text-light)"
+                              }
+                              style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowRegPassword(!showRegPassword)}
+                              style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-light)', padding: 0 }}
+                            >
+                              {showRegPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </div>
+                          {regPassword.length > 0 && regPassword.length < 6 && (
+                            <div style={{ fontSize: '0.74rem', color: '#EAB308', fontWeight: 600, marginTop: '0.3rem' }}>
+                              ⚠️ Password must be at least 6 characters
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="form-group">
+                          <label className="form-label">Confirm Password</label>
+                          <div style={{ position: 'relative' }}>
+                            <input
+                              type={showRegConfirmPassword ? 'text' : 'password'}
+                              required
+                              placeholder="Re-enter password"
+                              value={regConfirmPassword}
+                              onChange={(e) => {
+                                setRegConfirmPassword(e.target.value);
+                                if (regErrorField === 'confirm') setRegErrorField(null);
+                              }}
+                              className="form-control"
+                              style={{
+                                paddingLeft: '2.5rem',
+                                paddingRight: '2.5rem',
+                                borderColor: (regConfirmPassword.length > 0 && regPassword !== regConfirmPassword) || regErrorField === 'confirm'
+                                  ? '#EF4444'
+                                  : (regConfirmPassword.length > 0 && regPassword === regConfirmPassword)
+                                  ? '#10B981'
+                                  : undefined,
+                                boxShadow: (regConfirmPassword.length > 0 && regPassword !== regConfirmPassword) || regErrorField === 'confirm'
+                                  ? '0 0 0 3px rgba(239, 68, 68, 0.18)'
+                                  : (regConfirmPassword.length > 0 && regPassword === regConfirmPassword)
+                                  ? '0 0 0 3px rgba(16, 185, 129, 0.18)'
+                                  : undefined,
+                              }}
+                            />
+                            <Lock size={16} color={regConfirmPassword.length > 0 && regPassword !== regConfirmPassword ? '#EF4444' : "var(--text-light)"} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                            <button
+                              type="button"
+                              onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
+                              style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-light)', padding: 0 }}
+                            >
+                              {showRegConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </div>
+                          {/* Live Matching Message */}
+                          {regConfirmPassword.length > 0 && regPassword !== regConfirmPassword && (
+                            <div style={{ fontSize: '0.76rem', color: '#EF4444', fontWeight: 700, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span>✕ Passwords do not match</span>
+                            </div>
+                          )}
+                          {regConfirmPassword.length > 0 && regPassword === regConfirmPassword && (
+                            <div style={{ fontSize: '0.76rem', color: '#059669', fontWeight: 700, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span>✓ Passwords match</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="btn btn-primary"
+                          style={{ padding: '0.9rem', fontSize: '1rem', marginTop: '0.5rem', width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-teal)' }}
+                        >
+                          {loading ? 'Finalizing Account...' : 'Complete Registration & Proceed'}
+                          <ArrowRight size={18} />
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 )}
 
                 {/* 2. LOGIN FORM */}
@@ -926,7 +1351,7 @@ export default function TutorRegisterLoginPage() {
                     <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
                       <button
                         type="button"
-                        onClick={() => { setLoginMethod('password'); setErrorMessage(''); }}
+                        onClick={() => { setLoginMethod('password'); setErrorMessage(''); setLoginErrorField(null); }}
                         className="btn btn-sm"
                         style={{
                           flex: 1,
@@ -939,7 +1364,7 @@ export default function TutorRegisterLoginPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setLoginMethod('otp'); setErrorMessage(''); }}
+                        onClick={() => { setLoginMethod('otp'); setErrorMessage(''); setLoginErrorField(null); }}
                         className="btn btn-sm"
                         style={{
                           flex: 1,
@@ -962,11 +1387,18 @@ export default function TutorRegisterLoginPage() {
                               required
                               placeholder="amit@example.com or mobile"
                               value={loginContact}
-                              onChange={(e) => setLoginContact(e.target.value)}
+                              onChange={(e) => {
+                                setLoginContact(e.target.value);
+                                if (loginErrorField) setLoginErrorField(null);
+                              }}
                               className="form-control"
-                              style={{ paddingLeft: '2.5rem' }}
+                              style={{
+                                paddingLeft: '2.5rem',
+                                borderColor: loginErrorField ? '#EF4444' : undefined,
+                                boxShadow: loginErrorField ? '0 0 0 3px rgba(239, 68, 68, 0.18)' : undefined,
+                              }}
                             />
-                            <User size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                            <User size={16} color={loginErrorField ? '#EF4444' : "var(--text-light)"} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
                           </div>
                         </div>
 
@@ -978,11 +1410,19 @@ export default function TutorRegisterLoginPage() {
                               required
                               placeholder="Enter your account password"
                               value={loginPassword}
-                              onChange={(e) => setLoginPassword(e.target.value)}
+                              onChange={(e) => {
+                                setLoginPassword(e.target.value);
+                                if (loginErrorField) setLoginErrorField(null);
+                              }}
                               className="form-control"
-                              style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
+                              style={{
+                                paddingLeft: '2.5rem',
+                                paddingRight: '2.5rem',
+                                borderColor: loginErrorField ? '#EF4444' : undefined,
+                                boxShadow: loginErrorField ? '0 0 0 3px rgba(239, 68, 68, 0.2)' : undefined,
+                              }}
                             />
-                            <Lock size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                            <Lock size={16} color={loginErrorField ? '#EF4444' : "var(--text-light)"} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
                             <button
                               type="button"
                               onClick={() => setShowLoginPassword(!showLoginPassword)}
@@ -991,6 +1431,11 @@ export default function TutorRegisterLoginPage() {
                               {showLoginPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                           </div>
+                          {loginErrorField && (
+                            <div style={{ fontSize: '0.76rem', color: '#EF4444', fontWeight: 700, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span>⚠️ Incorrect email/mobile or password. Please verify.</span>
+                            </div>
+                          )}
                         </div>
 
                         <button
@@ -1602,6 +2047,52 @@ export default function TutorRegisterLoginPage() {
                         </div>
                       </div>
 
+                      {/* GPS Home Location Picker */}
+                      {(teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') && (
+                        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                          <label className="form-label">📍 Your Home / Base Location (for proximity matching)</label>
+                          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                            Set your current location so we can match you with nearby parents. This helps counselors assign students closest to you.
+                          </p>
+
+                          <div
+                            onClick={() => setShowTutorLocationPicker(true)}
+                            style={{
+                              border: tutorLatitude ? '2px solid #0F6E56' : '2px dashed #CBD5E1',
+                              borderRadius: '14px',
+                              padding: '0.85rem 1rem',
+                              cursor: 'pointer',
+                              backgroundColor: tutorLatitude ? '#F0FDF4' : '#F8FAFC',
+                              display: 'flex', alignItems: 'center', gap: '0.75rem',
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: tutorLatitude ? '#DCFCE7' : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <MapPin size={18} color={tutorLatitude ? '#059669' : '#94A3B8'} />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              {tutorLatitude ? (
+                                <>
+                                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                    <CheckCircle2 size={14} color="#059669" />
+                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tutorFormattedAddress || 'Location Set'}</span>
+                                  </div>
+                                  <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>Tap to change</div>
+                                </>
+                              ) : (
+                                <>
+                                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#64748B' }}>📍 Tap to set your home location</div>
+                                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '2px' }}>Helps match nearest students to you</div>
+                                </>
+                              )}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0F6E56', backgroundColor: '#ECFDF5', padding: '0.3rem 0.6rem', borderRadius: '8px', flexShrink: 0 }}>
+                              {tutorLatitude ? 'Change' : 'Set'}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                     </div>
                   )}
 
@@ -1894,17 +2385,20 @@ export default function TutorRegisterLoginPage() {
                         <input
                           type="text"
                           required
-                          placeholder={idType === 'AADHAAR_MASKED' ? '0000 0000 0000' : 'ABCDE1234F'}
+                          placeholder={idType === 'AADHAAR_MASKED' ? '5234 2389 4823' : 'ABCDE1234F'}
                           value={idNumber}
                           onChange={(e) => {
                             const val = e.target.value;
                             if (idType === 'AADHAAR_MASKED') {
-                              setIdNumber(val.replace(/\D/g, '').slice(0, 12));
+                              const rawDigits = val.replace(/\D/g, '').slice(0, 12);
+                              const formatted = rawDigits.replace(/(\d{4})(?=\d)/g, '$1 ');
+                              setIdNumber(formatted);
                             } else {
                               setIdNumber(val.toUpperCase().slice(0, 15));
                             }
                           }}
                           className="form-control"
+                          style={{ letterSpacing: idType === 'AADHAAR_MASKED' ? '0.12rem' : undefined, fontWeight: 700 }}
                         />
                       </div>
 
@@ -1977,7 +2471,7 @@ export default function TutorRegisterLoginPage() {
                         marginBottom: '1.5rem',
                       }}>
                         <p style={{ marginBottom: '0.75rem' }}>
-                          By checking the agreement box below, you signify that you have read, understood, and agreed to the service protocols, payment commissions, screening interviews, and data safety terms of <strong>TuitionForHome (Operated by SSSAM Academy Trust)</strong>.
+                          By checking the agreement box below, you signify that you have read, understood, and agreed to the service protocols, payment commissions, screening interviews, and data safety terms of <strong>TuitionForHome (Operated by SSSAM Academy)</strong>.
                         </p>
                         
                         <button 
@@ -2223,7 +2717,7 @@ export default function TutorRegisterLoginPage() {
             }}>
               <h4 style={{ fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.5rem', color: '#0F172A' }}>SECTION 1: IDENTITY DATA PRIVACY & ENCRYPTION PROTOCOLS</h4>
               <p style={{ marginBottom: '1rem' }}>
-                TuitionForHome (the "Bureau"), operated and supervised by SSSAM Academy Trust, sector 14 Gurgaon, adheres to the Digital Personal Data Protection (DPDP) Act of India. Tutors uploading credentials and identification documents (including Aadhaar Card, PAN Card, and Driving License) hereby consent that all such government ID records will be stored in an encrypted format. Standard cryptographic hashing and AES-256 block-cipher structures are applied to prevent unauthorized data exposure. The complete documentation remains confidential and is restricted to the internal administrative audit desk. Masked visual tags containing only the last four digits of the verified document shall be accessible to the tutor profile settings.
+                TuitionForHome (the "Bureau"), operated and supervised by SSSAM Academy, sector 14 Gurgaon, adheres to the Digital Personal Data Protection (DPDP) Act of India. Tutors uploading credentials and identification documents (including Aadhaar Card, PAN Card, and Driving License) hereby consent that all such government ID records will be stored in an encrypted format. Standard cryptographic hashing and AES-256 block-cipher structures are applied to prevent unauthorized data exposure. The complete documentation remains confidential and is restricted to the internal administrative audit desk. Masked visual tags containing only the last four digits of the verified document shall be accessible to the tutor profile settings.
               </p>
 
               <h4 style={{ fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.5rem', color: '#0F172A' }}>SECTION 2: PROHIBITION OF DIRECT OR COLLUSIVE DEALS</h4>
@@ -2273,6 +2767,88 @@ export default function TutorRegisterLoginPage() {
       )}
 
       {isLoggedIn && <Footer />}
+
+      {/* TUTOR LOCATION PICKER POPUP */}
+      {showTutorLocationPicker && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 2500, backgroundColor: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(4px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowTutorLocationPicker(false); }}
+        >
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', width: '100%', maxWidth: '500px', maxHeight: '85vh', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '1.1rem 1.25rem', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>📍 Set Your Home Location</h3>
+                <p style={{ fontSize: '0.75rem', color: '#64748B', margin: '2px 0 0 0' }}>Drag pin or tap on the map</p>
+              </div>
+              <button type="button" onClick={() => setShowTutorLocationPicker(false)} style={{ background: '#F1F5F9', border: 'none', borderRadius: '10px', padding: '0.4rem', cursor: 'pointer', display: 'flex' }}>
+                <X size={18} color="#64748B" />
+              </button>
+            </div>
+
+            <div ref={tutorPickerMapRef} style={{ height: '250px', width: '100%', position: 'relative', zIndex: 10 }} />
+
+            <div style={{ padding: '1rem 1.25rem' }}>
+              <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '0.75rem 0.9rem', marginBottom: '0.85rem' }}>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.25rem' }}>YOUR ADDRESS</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  {isTutorReverseGeocoding ? (
+                    <span style={{ color: '#94A3B8', fontWeight: 600 }}>Detecting address...</span>
+                  ) : (
+                    <>
+                      {tutorFormattedAddress && <CheckCircle2 size={14} color="#059669" />}
+                      <span>{tutorFormattedAddress || 'Tap on the map to select'}</span>
+                    </>
+                  )}
+                </div>
+                {tutorLatitude && tutorLongitude && (
+                  <div style={{ fontSize: '0.68rem', color: '#94A3B8', marginTop: '0.2rem' }}>{tutorLatitude.toFixed(5)}, {tutorLongitude.toFixed(5)}</div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.65rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!('geolocation' in navigator)) return;
+                    setIsDetectingTutorGPS(true);
+                    navigator.geolocation.getCurrentPosition(
+                      async (pos) => {
+                        const lat = pos.coords.latitude; const lng = pos.coords.longitude;
+                        setTutorLatitude(lat); setTutorLongitude(lng);
+                        if (tutorPickerMap && tutorPickerMarkerRef.current) {
+                          tutorPickerMap.setView([lat, lng], 16);
+                          tutorPickerMarkerRef.current.setLatLng([lat, lng]);
+                        }
+                        setIsTutorReverseGeocoding(true);
+                        const addr = await tutorReverseGeocode(lat, lng);
+                        setTutorFormattedAddress(addr);
+                        setIsTutorReverseGeocoding(false); setIsDetectingTutorGPS(false);
+                      },
+                      () => { setIsDetectingTutorGPS(false); },
+                      { enableHighAccuracy: true, timeout: 8000 }
+                    );
+                  }}
+                  disabled={isDetectingTutorGPS}
+                  style={{ flex: 1, padding: '0.65rem', borderRadius: '12px', border: '1px solid #E2E8F0', background: '#FFFFFF', color: '#334155', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}
+                >
+                  <MapPin size={14} />
+                  {isDetectingTutorGPS ? 'Detecting...' : 'Use Current Location'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowTutorLocationPicker(false)}
+                  disabled={!tutorLatitude || isTutorReverseGeocoding}
+                  style={{ flex: 1.5, padding: '0.65rem', borderRadius: '12px', border: 'none', background: tutorLatitude ? '#0F6E56' : '#CBD5E1', color: '#FFFFFF', fontWeight: 800, fontSize: '0.82rem', cursor: tutorLatitude ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', boxShadow: tutorLatitude ? '0 4px 14px rgba(15,110,86,0.3)' : 'none' }}
+                >
+                  <CheckCircle2 size={14} />
+                  Confirm Location
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

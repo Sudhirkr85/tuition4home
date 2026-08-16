@@ -23,9 +23,10 @@ export async function POST(req: Request) {
       hourlyRateOnlineMax,
       avatarUrl,
       introVideoUrl,
-      idType,       // for KYC
+      idType,       // for KYC: 'AADHAAR' | 'PAN'
       idNumber,     // for KYC
-      idDocUrl,     // for KYC
+      idDocUrl,     // for KYC (Aadhaar or PAN image URL)
+      degreeDocUrl, // for Highest Qualification Degree/Marksheet image URL
       status        // final state e.g., 'PENDING_INTERVIEW'
     } = body;
 
@@ -35,11 +36,34 @@ export async function POST(req: Request) {
 
     // Verify user exists and has a profile
     const profile = await prisma.tutorProfile.findUnique({
-      where: { userId }
+      where: { userId },
+      include: { kycDoc: true }
     });
 
     if (!profile) {
       return NextResponse.json({ success: false, error: 'Tutor profile not found.' }, { status: 404 });
+    }
+
+    // Security Rule: If tutor has been DEACTIVATED/SUSPENDED by Admin, prevent tutor from self-activating
+    if (((profile.status as string) === 'SUSPENDED' || (profile.status as string) === 'DEACTIVATED' || (profile.status as string) === 'REJECTED') && body.isAvailable === true) {
+      return NextResponse.json({
+        success: false,
+        error: 'Your account has been deactivated by SSSAM Academy Admin. Please contact Admin (support@tuitionforhome.com) for profile reactivation.'
+      }, { status: 403 });
+    }
+
+    // Security Rule: If tutor is already VERIFIED, prevent replacing KYC identity documents
+    if (profile.isVerified && (idNumber || idDocUrl || degreeDocUrl)) {
+      // Check if tutor is attempting to change verified documents
+      if (
+        (idDocUrl && profile.kycDoc && profile.kycDoc.idDocUrl !== idDocUrl) ||
+        (degreeDocUrl && (profile.kycDoc as any)?.degreeDocUrl && (profile.kycDoc as any)?.degreeDocUrl !== degreeDocUrl)
+      ) {
+        return NextResponse.json({
+          success: false,
+          error: 'Your profile has already been verified by SSSAM Academy. Verified KYC and qualification documents are locked and cannot be replaced. Contact admin to request changes.'
+        }, { status: 403 });
+      }
     }
 
     // Build the update payload
@@ -58,20 +82,26 @@ export async function POST(req: Request) {
     
     if (travelRadiusKm !== undefined) profileUpdateData.travelRadiusKm = Number(travelRadiusKm);
     
+    // Save GPS location for proximity matching
+    if (body.latitude !== undefined && body.latitude !== null && !isNaN(Number(body.latitude))) profileUpdateData.latitude = parseFloat(body.latitude);
+    if (body.longitude !== undefined && body.longitude !== null && !isNaN(Number(body.longitude))) profileUpdateData.longitude = parseFloat(body.longitude);
+    if (body.formattedAddress !== undefined) profileUpdateData.formattedAddress = body.formattedAddress;
+
     // Store price ranges
-    if (hourlyRateHomeMin !== undefined) profileUpdateData.hourlyRateHomeMin = Number(hourlyRateHomeMin);
-    if (hourlyRateHomeMax !== undefined) profileUpdateData.hourlyRateHomeMax = Number(hourlyRateHomeMax);
-    if (hourlyRateOnlineMin !== undefined) profileUpdateData.hourlyRateOnlineMin = Number(hourlyRateOnlineMin);
-    if (hourlyRateOnlineMax !== undefined) profileUpdateData.hourlyRateOnlineMax = Number(hourlyRateOnlineMax);
+    if (hourlyRateHomeMin !== undefined && !isNaN(Number(hourlyRateHomeMin))) profileUpdateData.hourlyRateHomeMin = Number(hourlyRateHomeMin);
+    if (hourlyRateHomeMax !== undefined && !isNaN(Number(hourlyRateHomeMax))) profileUpdateData.hourlyRateHomeMax = Number(hourlyRateHomeMax);
+    if (hourlyRateOnlineMin !== undefined && !isNaN(Number(hourlyRateOnlineMin))) profileUpdateData.hourlyRateOnlineMin = Number(hourlyRateOnlineMin);
+    if (hourlyRateOnlineMax !== undefined && !isNaN(Number(hourlyRateOnlineMax))) profileUpdateData.hourlyRateOnlineMax = Number(hourlyRateOnlineMax);
     
     // Set fallback single rates (middle of range or min) for backwards compatibility
-    if (hourlyRateHomeMin !== undefined) profileUpdateData.hourlyRateHome = Number(hourlyRateHomeMin);
-    if (hourlyRateOnlineMin !== undefined) profileUpdateData.hourlyRateOnline = Number(hourlyRateOnlineMin);
+    if (hourlyRateHomeMin !== undefined && !isNaN(Number(hourlyRateHomeMin))) profileUpdateData.hourlyRateHome = Number(hourlyRateHomeMin);
+    if (hourlyRateOnlineMin !== undefined && !isNaN(Number(hourlyRateOnlineMin))) profileUpdateData.hourlyRateOnline = Number(hourlyRateOnlineMin);
 
     if (avatarUrl !== undefined) profileUpdateData.avatarUrl = avatarUrl;
     if (introVideoUrl !== undefined) profileUpdateData.introVideoUrl = introVideoUrl;
+    if (body.isAvailable !== undefined) profileUpdateData.isAvailable = Boolean(body.isAvailable);
     
-    if (status !== undefined) profileUpdateData.status = status;
+    if (status !== undefined && !profile.isVerified) profileUpdateData.status = status;
 
     // Update profile within a database transaction
     await prisma.$transaction(async (tx) => {
@@ -81,13 +111,31 @@ export async function POST(req: Request) {
         data: profileUpdateData
       });
 
-      // Handle KYC creation/update if KYC fields are sent
-      if (idType && idNumber) {
-        // Enforce secure encryption
+      // Handle KYC creation/update if not verified or updating before verification
+      if (idType && idNumber && !profile.isVerified) {
+        // Enforce secure AES-256 encryption
         const idNumberEncrypted = encrypt(idNumber);
-        const idLast4 = idNumber.slice(-4); // mask everything except last 4 digits
+        const idLast4 = idNumber.replace(/\D/g, '').slice(-4) || idNumber.slice(-4);
         
-        await tx.tutorKYC.upsert({
+        const kycUpdateData: any = {
+          idType,
+          idLast4,
+          idNumberEncrypted,
+        };
+
+        if (idDocUrl) {
+          kycUpdateData.idDocUrl = idDocUrl;
+          kycUpdateData.idStatus = 'PENDING';
+          kycUpdateData.idRejectionNote = null;
+        }
+
+        if (degreeDocUrl !== undefined) {
+          kycUpdateData.degreeDocUrl = degreeDocUrl;
+          kycUpdateData.degreeStatus = 'PENDING';
+          kycUpdateData.degreeRejectionNote = null;
+        }
+
+        await (tx.tutorKYC as any).upsert({
           where: { tutorId: profile.id },
           create: {
             tutorId: profile.id,
@@ -95,13 +143,11 @@ export async function POST(req: Request) {
             idLast4,
             idNumberEncrypted,
             idDocUrl: idDocUrl || '/placeholder-doc.png',
+            idStatus: 'PENDING',
+            degreeDocUrl: degreeDocUrl || null,
+            degreeStatus: degreeDocUrl ? 'PENDING' : 'PENDING',
           },
-          update: {
-            idType,
-            idLast4,
-            idNumberEncrypted,
-            idDocUrl: idDocUrl || undefined
-          }
+          update: kycUpdateData
         });
       }
     });
@@ -129,13 +175,23 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: 'User ID is required.' }, { status: 400 });
     }
 
-    const profile = await prisma.tutorProfile.findUnique({
+    let profile = await prisma.tutorProfile.findUnique({
       where: { userId },
       include: {
         kycDoc: true,
         user: true,
       }
     });
+
+    if (!profile) {
+      profile = await prisma.tutorProfile.findUnique({
+        where: { id: userId },
+        include: {
+          kycDoc: true,
+          user: true,
+        }
+      });
+    }
 
     if (!profile) {
       return NextResponse.json({ success: false, error: 'Tutor profile not found.' }, { status: 404 });

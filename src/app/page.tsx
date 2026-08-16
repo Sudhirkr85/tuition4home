@@ -18,6 +18,7 @@ import {
   VERIFIED_TUTORS,
   SSSAM_OFFICE_DETAILS,
   MockTutor,
+  LocalityInfo,
 } from '@/lib/data';
 import {
   Sparkles,
@@ -35,6 +36,7 @@ import {
   Users,
   Award,
   BookOpen,
+  Briefcase,
   MessageSquare,
   Smartphone,
   Globe,
@@ -44,24 +46,51 @@ export default function HomePage() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedTutorForBooking, setSelectedTutorForBooking] = useState<{
     tutorName?: string;
+    tutorAvatar?: string;
+    tutorDegree?: string;
+    tutorRate?: number;
+    tutorId?: string;
     grade?: string;
     mode?: string;
+    subject?: string;
   } | undefined>(undefined);
 
   const [activeVideoTutor, setActiveVideoTutor] = useState<MockTutor | null>(null);
-  const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>(VERIFIED_TUTORS);
+  const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>([]);
+  const [dynamicLocalities, setDynamicLocalities] = useState<LocalityInfo[]>(GURGAON_LOCALITIES);
+  const [totalVerifiedTutors, setTotalVerifiedTutors] = useState<string>('');
+  const [selectedShowcaseSector, setSelectedShowcaseSector] = useState<string>('All Sectors');
   const [platformConfig, setPlatformConfig] = useState<any>(null);
 
-  // Fetch live verified tutors & platform config from MySQL database
+  // Fetch live verified tutors, dynamic sectors & platform config from MySQL database
   useEffect(() => {
     fetch('/api/tutors/list')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.tutors && data.tutors.length > 0) {
+        if (data.success && Array.isArray(data.tutors)) {
           setDynamicTutors(data.tutors);
+        } else {
+          setDynamicTutors([]);
         }
       })
-      .catch((err) => console.error('Failed to fetch live tutors:', err));
+      .catch((err) => {
+        console.error('Failed to fetch live tutors:', err);
+        setDynamicTutors([]);
+      });
+
+    fetch('/api/localities')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.localities)) {
+          setDynamicLocalities(data.localities);
+          if (data.totalTutorsCount && data.totalTutorsCount > 0) {
+            setTotalVerifiedTutors(`${data.totalTutorsCount}+`);
+          } else {
+            setTotalVerifiedTutors('');
+          }
+        }
+      })
+      .catch((err) => console.error('Failed to fetch dynamic localities:', err));
 
     fetch('/api/config/global')
       .then((res) => res.json())
@@ -98,7 +127,15 @@ export default function HomePage() {
 
   const handleOpenBooking = (tutor?: MockTutor) => {
     if (tutor) {
-      setSelectedTutorForBooking({ tutorName: tutor.name });
+      setSelectedTutorForBooking({
+        tutorName: tutor.name,
+        tutorAvatar: tutor.avatarUrl,
+        tutorDegree: tutor.highestDegree,
+        tutorRate: tutor.hourlyRateHome,
+        tutorId: tutor.id,
+        grade: tutor.classes?.[0],
+        subject: tutor.subjects?.[0],
+      });
     } else {
       setSelectedTutorForBooking(undefined);
     }
@@ -543,8 +580,13 @@ export default function HomePage() {
           <section style={{ padding: '3.5rem 0 1rem 0' }}>
             <div className="container">
               <RapidoStyleMap
-                onLocationSelected={() => {
-                  handleOpenBooking();
+                onLocationSelected={(data) => {
+                  if (data.address) {
+                    const sectorPart = data.address.split(',')[0].replace('(Auto-Detected GPS)', '').trim();
+                    if (sectorPart) {
+                      setSelectedShowcaseSector(sectorPart);
+                    }
+                  }
                 }}
               />
             </div>
@@ -561,26 +603,26 @@ export default function HomePage() {
         {/* =========================================================================
             4. FIGMA SCREENSHOT 3 STYLE: MOBILE EXPERIENCE CARD
             ========================================================================= */}
-        <section style={{ padding: '5rem 0', backgroundColor: '#FFFFFF' }}>
+        <section style={{ padding: '2.5rem 0 3.75rem 0', backgroundColor: '#FFFFFF' }}>
           <div className="container">
-            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-              <div className="badge badge-blue" style={{ marginBottom: '0.5rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '2.25rem' }}>
+              <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
                 <span>PARENT EXPERIENCE</span>
               </div>
               <h2 style={{ fontSize: '2.25rem', fontWeight: 800 }}>
                 The Simplest Tuition Experience. Ever.
               </h2>
               <p style={{ color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-                No account required for parents. Receive your trial details directly via WhatsApp or Phone.
+                No account required for parents. Receive your verified tutor match details directly via WhatsApp or Phone.
               </p>
             </div>
 
             <div className="apple-card" style={{
               backgroundColor: 'var(--bg-app)',
-              padding: 'clamp(2rem, 4vw, 3rem)',
+              padding: 'clamp(1.75rem, 3.5vw, 2.75rem)',
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '3rem',
+              gap: '2.5rem',
               alignItems: 'center',
             }}>
               {/* Left Column: Phone Mockup Image (Screenshot 3 Style) */}
@@ -588,7 +630,7 @@ export default function HomePage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/mobile_whatsapp_mockup.jpg"
-                  alt="Mobile Trial Class Confirmation Mockup"
+                  alt="Mobile Class Confirmation Mockup"
                   style={{ width: '100%', maxWidth: '380px', borderRadius: '20px', boxShadow: 'var(--shadow-hover)' }}
                 />
               </div>
@@ -601,10 +643,10 @@ export default function HomePage() {
                   </div>
                   <div>
                     <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.25rem' }}>
-                      Receive Trial Slip via WhatsApp
+                      Receive Class Slip via WhatsApp
                     </h3>
                     <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                      Parent gets tutor qualifications and schedule link directly on WhatsApp — zero app download needed.
+                      Parent gets tutor qualifications, verified credentials, and schedule link directly on WhatsApp — zero app download needed.
                     </p>
                   </div>
                 </div>
@@ -624,7 +666,7 @@ export default function HomePage() {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: '#D1FAE5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '#D1FAE5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, backgroundColor: '#D1FAE5' }}>
                     <ShieldCheck size={20} />
                   </div>
                   <div>
@@ -632,7 +674,7 @@ export default function HomePage() {
                       100% Free Replacement Guarantee
                     </h3>
                     <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                      If student is unsatisfied after trial, counselor assigns a new top-tier tutor at zero additional fee.
+                      If student or parent is unsatisfied at any point, counselor assigns a new top-tier tutor at zero additional fee.
                     </p>
                   </div>
                 </div>
@@ -642,41 +684,130 @@ export default function HomePage() {
         </section>
 
         {/* =========================================================================
-            5. VERIFIED TUTORS SHOWCASE (FIGMA SOFT CARDS)
+            5. VERIFIED TUTORS SHOWCASE (FIGMA SOFT CARDS - DYNAMIC BY SECTOR)
             ========================================================================= */}
         <section id="find-tutor" style={{ padding: '5rem 0', backgroundColor: 'var(--bg-app)' }}>
           <div className="container">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '3rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.75rem' }}>
               <div>
                 <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
                   <Award size={14} />
                   <span>REVIEW-VERIFIED EDUCATORS</span>
                 </div>
                 <h2 style={{ fontSize: 'clamp(1.75rem, 3vw, 2.35rem)', fontWeight: 800 }}>
-                  Top Verified Tutors Near Your Sector
+                  Top Verified Tutors {selectedShowcaseSector === 'All Sectors' ? 'Near Your Sector' : `in ${selectedShowcaseSector}`}
                 </h2>
                 <p style={{ color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-                  Watch 60-second intro videos and read verified parent reviews before requesting a trial class.
+                  Watch 60-second intro videos and connect with verified educators ready to teach in {selectedShowcaseSector === 'All Sectors' ? 'your Gurgaon sector' : selectedShowcaseSector}.
                 </p>
               </div>
 
-              <button onClick={() => handleOpenBooking()} className="btn btn-secondary">
-                <span>View All 500+ Tutors</span>
+              <Link href="/tutors" className="btn btn-secondary">
+                <span>Browse All 1,000+ Verified Tutors</span>
                 <ChevronRight size={16} color="#0F6E56" />
-              </button>
+              </Link>
             </div>
 
-            {/* Tutors Grid */}
+            {/* Interactive Sector Selector Filter Pills */}
+            <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.65rem', marginBottom: '2rem', scrollbarWidth: 'none' }}>
+              {['All Sectors', 'DLF Phase 5', 'Golf Course Road', 'Sector 14 & Old DLF', 'Sohna Road', 'Sector 56', 'Nirvana Country', 'Sushant Lok 1', 'DLF Phase 1', 'Cyber City', 'Sector 57', 'Sector 48'].map((sec) => {
+                const isSel = selectedShowcaseSector === sec;
+                return (
+                  <button
+                    key={sec}
+                    type="button"
+                    onClick={() => setSelectedShowcaseSector(sec)}
+                    style={{
+                      padding: '0.45rem 0.95rem',
+                      borderRadius: '999px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      border: isSel ? '1.5px solid #0F6E56' : '1px solid #E2E8F0',
+                      backgroundColor: isSel ? '#0F6E56' : '#FFFFFF',
+                      color: isSel ? '#FFFFFF' : '#334155',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.2s ease',
+                      boxShadow: isSel ? '0 4px 12px rgba(15,110,86,0.2)' : '0 1px 3px rgba(0,0,0,0.03)',
+                    }}
+                  >
+                    {sec === 'All Sectors' ? '🌐 All Sectors' : `📍 ${sec}`}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Tutors Grid (Filtered Dynamically by Selected Sector) */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
               gap: '1.75rem',
             }}>
-              {dynamicTutors.map((tutor) => (
+              {(() => {
+                const filtered = selectedShowcaseSector === 'All Sectors'
+                  ? dynamicTutors.slice(0, 6)
+                  : (() => {
+                      const matched = dynamicTutors.filter(t => 
+                        t.serviceAreas.some(area => area.toLowerCase().includes(selectedShowcaseSector.toLowerCase()))
+                      );
+                      if (matched.length >= 6) return matched.slice(0, 6);
+                      const remaining = dynamicTutors.filter(t => !matched.some(m => m.id === t.id));
+                      return [...matched, ...remaining].slice(0, 6);
+                    })();
+
+                if (filtered.length === 0) {
+                  return (
+                    <div style={{
+                      gridColumn: '1 / -1',
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: '24px',
+                      padding: '3.5rem 2rem',
+                      textAlign: 'center',
+                      border: '1.5px dashed #CBD5E1',
+                      boxShadow: 'var(--shadow-subtle)',
+                    }}>
+                      <div style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--brand-teal-light)',
+                        color: '#0F6E56',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 1.25rem auto',
+                      }}>
+                        <Sparkles size={28} />
+                      </div>
+                      <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+                        Educator Verification & Matching Active
+                      </h3>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.94rem', maxWidth: '540px', margin: '0 auto 1.75rem auto', lineHeight: 1.6 }}>
+                        SSSAM Academy academic counselors are actively matching verified educators across all Gurgaon sectors. Submit your requirement to get matched directly within 2 hours!
+                      </p>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenBooking()}
+                          className="btn btn-primary"
+                          style={{ padding: '0.75rem 1.75rem', backgroundColor: 'var(--brand-teal)' }}
+                        >
+                          <span>Request a Home Tutor</span>
+                          <ChevronRight size={16} />
+                        </button>
+                        <Link href="/tutor/register" className="btn btn-secondary" style={{ padding: '0.75rem 1.75rem' }}>
+                          <span>Apply as Educator</span>
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return filtered.map((tutor) => (
                 <div key={tutor.id} className="apple-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                   {/* Top Bar */}
                   <div style={{ padding: '1.25rem', paddingBottom: '0.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <div style={{ position: 'relative' }}>
+                    <Link href={`/tutors/${tutor.id}`} style={{ position: 'relative', display: 'block' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={tutor.avatarUrl}
@@ -699,69 +830,124 @@ export default function HomePage() {
                       }}>
                         <ShieldCheck size={11} />
                       </span>
-                    </div>
+                    </Link>
 
                     <div style={{ flex: 1 }}>
-                      <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                        {tutor.name}
-                      </h4>
+                      <Link href={`/tutors/${tutor.id}`} style={{ textDecoration: 'none' }}>
+                        <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                          {tutor.name}
+                        </h4>
+                      </Link>
                       <div style={{ fontSize: '0.78rem', color: '#0F6E56', fontWeight: 700, margin: '2px 0' }}>
                         {tutor.badge}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                         <Star size={13} color="var(--brand-amber)" fill="var(--brand-amber)" />
                         <strong>{tutor.rating}</strong>
-                        <span>({tutor.totalReviews} parent reviews)</span>
+                        <span>({tutor.totalReviews} reviews)</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Body Line-wise Points */}
-                  <div style={{ padding: '1.25rem', paddingTop: '0.5rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <GraduationCap size={15} color="#0F6E56" style={{ flexShrink: 0 }} />
-                      <span style={{ fontWeight: 600 }}>{tutor.highestDegree} • {tutor.experienceYears}+ Yrs Exp</span>
+                  {/* Prominent Education & Experience Stat Box */}
+                  <div style={{ padding: '1.25rem', paddingTop: '0.4rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                      gap: '0.5rem',
+                      padding: '0.65rem 0.75rem',
+                      backgroundColor: '#F8FAFC',
+                      borderRadius: '12px',
+                      border: '1px solid #E2E8F0',
+                      alignItems: 'center',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', flexShrink: 0 }}>
+                          <GraduationCap size={15} />
+                        </div>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Degree</div>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tutor.highestDegree}>
+                            {tutor.highestDegree}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, borderLeft: '1px solid #E2E8F0', paddingLeft: '0.5rem' }}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', flexShrink: 0 }}>
+                          <Briefcase size={15} />
+                        </div>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Experience</div>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {tutor.experienceYears}+ Years
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                    <div style={{ fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'flex-start', gap: '0.45rem', marginTop: '0.1rem' }}>
                       <MapPin size={15} color="#047857" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span>{tutor.serviceAreas.join(' • ')}</span>
+                      <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>
+                        {tutor.serviceAreas.join(' • ')}
+                      </span>
                     </div>
 
                     {/* Subjects Badges */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.25rem' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.2rem' }}>
                       {tutor.subjects.map((s) => (
-                        <span key={s} style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', backgroundColor: 'var(--brand-teal-light)', color: '#0F6E56', borderRadius: '6px', fontWeight: 600 }}>
+                        <span key={s} style={{ fontSize: '0.74rem', padding: '0.2rem 0.55rem', backgroundColor: '#F0FDF4', color: '#166534', border: '1px solid #DCFCE7', borderRadius: '6px', fontWeight: 600 }}>
                           {s}
                         </span>
                       ))}
                     </div>
 
-                    {/* 60s Video Intro Pill */}
-                    <button
-                      type="button"
-                      onClick={() => setActiveVideoTutor(tutor)}
-                      style={{
-                        marginTop: '0.5rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '10px',
-                        backgroundColor: 'var(--brand-teal-light)',
-                        border: '1px solid var(--border-teal)',
-                        color: '#0F6E56',
-                        fontSize: '0.82rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Play size={14} fill="#0F6E56" />
-                        <span>Watch 60s Video Intro</span>
-                      </span>
-                      <span style={{ fontSize: '0.72rem', color: '#0F6E56' }}>{tutor.videoDuration}</span>
-                    </button>
+                    {/* 60s Video Intro Pill (Optional) */}
+                    {tutor.introVideoUrl && tutor.introVideoUrl.trim() !== '' ? (
+                      <button
+                        type="button"
+                        onClick={() => setActiveVideoTutor(tutor)}
+                        style={{
+                          marginTop: '0.5rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.6rem 0.85rem',
+                          borderRadius: '10px',
+                          backgroundColor: '#F0FDF4',
+                          border: '1px solid #BBF7D0',
+                          color: '#0F6E56',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <Play size={14} fill="#0F6E56" />
+                          <span>Watch 60s Intro Video</span>
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: '#0F6E56' }}>{tutor.videoDuration || 'Preview'}</span>
+                      </button>
+                    ) : (
+                      <div
+                        style={{
+                          marginTop: '0.5rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                          padding: '0.55rem 0.85rem',
+                          borderRadius: '10px',
+                          backgroundColor: '#F8FAFC',
+                          border: '1px solid #E2E8F0',
+                          color: '#0F6E56',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                        }}
+                      >
+                        <ShieldCheck size={14} color="#059669" />
+                        <span>Interview Verified • SSSAM Sector 14</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Card Footer Price & Action */}
@@ -772,28 +958,47 @@ export default function HomePage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    gap: '0.5rem',
                   }}>
                     <div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>STARTING FROM</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                        ₹{tutor.hourlyRateHome}<span style={{ fontSize: '0.75rem', fontWeight: 500 }}>/hr</span>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>ESTIMATED FEE RANGE</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                        ₹{tutor.hourlyRateHome} – ₹{Math.round((tutor.hourlyRateHome * 1.4) / 50) * 50}<span style={{ fontSize: '0.74rem', fontWeight: 500, color: 'var(--text-muted)' }}>/hr</span>
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleOpenBooking(tutor)}
-                      className="btn btn-primary btn-sm"
-                      style={{ backgroundColor: '#0F6E56' }}
-                    >
-                      <span>Request Trial</span>
-                      <div className="btn-arrow">
-                        <ChevronRight size={13} />
-                      </div>
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <Link
+                        href={`/tutors/${tutor.id}`}
+                        className="btn btn-secondary btn-sm"
+                        style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }}
+                      >
+                        Profile
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenBooking(tutor)}
+                        className="btn btn-primary btn-sm"
+                        style={{ backgroundColor: '#0F6E56' }}
+                      >
+                        <span>Request</span>
+                        <div className="btn-arrow">
+                          <ChevronRight size={14} />
+                        </div>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              ))}
+              ));
+            })()}
+            </div>
+
+            {/* Bottom Explore Button */}
+            <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+              <Link href="/tutors" className="btn btn-primary btn-lg" style={{ padding: '0.9rem 2.25rem' }}>
+                <span>Explore All 1,000+ Verified Tutors in Gurgaon</span>
+                <ChevronRight size={18} />
+              </Link>
             </div>
           </div>
         </section>
@@ -894,12 +1099,12 @@ export default function HomePage() {
         </section>
 
         {/* =========================================================================
-            8. GURGAON LOCALITIES SEO DIRECTORY GRID
+            8. GURGAON LOCALITIES SEO DIRECTORY GRID (100% Dynamic from DB)
             ========================================================================= */}
         <section style={{ padding: '4.5rem 0', backgroundColor: 'var(--bg-app)' }}>
           <div className="container">
             <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 2.5rem auto' }}>
-              <div className="badge badge-blue" style={{ marginBottom: '0.5rem' }}>
+              <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
                 <MapPin size={14} />
                 <span>HYPER-LOCAL COVERAGE</span>
               </div>
@@ -907,7 +1112,9 @@ export default function HomePage() {
                 Home Tutors Available in Your Gurgaon Sector
               </h2>
               <p style={{ color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-                Over 500+ verified teachers ready to travel across all residential sectors of Gurgaon.
+                {totalVerifiedTutors
+                  ? `Over ${totalVerifiedTutors} verified teachers ready to travel across all residential sectors of Gurgaon.`
+                  : 'Verified 1-on-1 home and online educators available across all residential sectors of Gurgaon.'}
               </p>
             </div>
 
@@ -916,7 +1123,7 @@ export default function HomePage() {
               gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
               gap: '1rem',
             }}>
-              {GURGAON_LOCALITIES.map((loc) => (
+              {dynamicLocalities.map((loc) => (
                 <Link
                   key={loc.slug}
                   href={`/home-tutors-in-gurgaon/${loc.slug}`}
@@ -926,6 +1133,8 @@ export default function HomePage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    textDecoration: 'none',
+                    color: 'inherit',
                   }}
                 >
                   <div>
@@ -936,9 +1145,15 @@ export default function HomePage() {
                       {loc.landmark}
                     </div>
                   </div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0F6E56', backgroundColor: 'var(--brand-teal-light)', padding: '0.25rem 0.6rem', borderRadius: '999px' }}>
-                    {loc.activeTutorsCount}+ Tutors
-                  </span>
+                  {loc.activeTutorsCount > 0 ? (
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0F6E56', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.25rem 0.65rem', borderRadius: '999px', whiteSpace: 'nowrap' }}>
+                      {loc.activeTutorsCount} {loc.activeTutorsCount === 1 ? 'Tutor' : 'Tutors'}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#0284C7', backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD', padding: '0.25rem 0.65rem', borderRadius: '999px', whiteSpace: 'nowrap' }}>
+                      Explore Sector →
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>
@@ -958,7 +1173,7 @@ export default function HomePage() {
       <VideoModal
         tutor={activeVideoTutor}
         onClose={() => setActiveVideoTutor(null)}
-        onBookDemo={(tutor) => handleOpenBooking(tutor)}
+        onSelectTutor={(tutor) => handleOpenBooking(tutor)}
       />
 
       <StickyMobileBar onOpenBooking={() => handleOpenBooking()} />

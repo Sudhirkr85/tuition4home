@@ -33,6 +33,15 @@ export async function POST(req: Request) {
       where: { id: otpRecord.id }
     });
 
+    // If mode is REGISTRATION, just confirm email verification without requiring existing user
+    if (body.mode === 'REGISTRATION') {
+      return NextResponse.json({
+        success: true,
+        message: 'Email address verified successfully!',
+        verifiedEmail: contact,
+      });
+    }
+
     // Check if the user exists with this email or phone
     const user = await prisma.user.findFirst({
       where: {

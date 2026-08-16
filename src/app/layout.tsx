@@ -1,8 +1,20 @@
 import type { Metadata } from 'next';
+import { Outfit } from 'next/font/google';
 import './globals.css';
 
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
-  title: 'TuitionForHome — #1 Verified Home & Online Tutors in Gurgaon | SSSAM Academy',
+  metadataBase: new URL('https://tuitionforhome.com'),
+  title: {
+    default: 'TuitionForHome — #1 Verified Home & Online Tutors in Gurgaon | SSSAM Academy',
+    template: '%s | TuitionForHome Gurgaon',
+  },
   description:
     'Find top-rated, background-checked CBSE, ICSE, IB & Coding home tutors in Gurgaon (DLF Phase 1-5, Golf Course Rd, Sohna Rd, Sector 56). Verified by SSSAM Academy Sector 14 Gurugram. 1 Free Demo Class + 100% Replacement Guarantee.',
   keywords: [
@@ -17,7 +29,18 @@ export const metadata: Metadata = {
     'tuition bureau sector 14 gurgaon',
     'SSSAM Academy',
   ],
-  authors: [{ name: 'SSSAM Academy' }],
+  authors: [{ name: 'SSSAM Academy', url: 'https://sssamacademy.com' }],
+  icons: {
+    icon: [
+      { url: '/logo.png', sizes: 'any' },
+      { url: '/logo.png', type: 'image/png', sizes: '192x192' },
+    ],
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: 'TuitionForHome — Verified Home & Online Tutors in Gurgaon',
     description:
@@ -29,11 +52,29 @@ export const metadata: Metadata = {
         url: 'https://sssamacademy.com/assets/home_page.webp',
         width: 1200,
         height: 630,
-        alt: 'TuitionForHome Gurugram',
+        alt: 'TuitionForHome Gurugram — Verified Home & Online Tutors',
       },
     ],
     locale: 'en_IN',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TuitionForHome — #1 Verified Home & Online Tutors in Gurgaon',
+    description:
+      'Book background-checked CBSE, ICSE & IB home tutors in Gurgaon within 3.5 km. 1 Free Demo Class + 100% Replacement Guarantee.',
+    images: ['https://sssamacademy.com/assets/home_page.webp'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   other: {
     'geo.region': 'IN-HR',
@@ -51,7 +92,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/logo.png" type="image/png" />
         {/* Schema.org LocalBusiness & EducationalOrganization */}
         <script
           type="application/ld+json"
@@ -59,11 +100,12 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': ['LocalBusiness', 'EducationalOrganization'],
-              name: 'TuitionForHome',
+              name: 'TuitionForHome — SSSAM Academy',
               url: 'https://tuitionforhome.com',
               logo: 'https://sssamacademy.com/assets/logo.webp',
+              image: 'https://sssamacademy.com/assets/home_page.webp',
               description:
-                'Premier home and online tuition bureau in Gurgaon connecting parents with verified educators. Powered by SSSAM Academy.',
+                'Premier home and online tuition bureau in Gurgaon connecting parents with background-verified educators for CBSE, ICSE, IB & Cambridge curricula.',
               telephone: ['+919517447689', '+919217031899'],
               email: 'info@sssamacademy.com',
               address: {
@@ -79,6 +121,14 @@ export default function RootLayout({
                 latitude: 28.4703,
                 longitude: 77.0418,
               },
+              openingHoursSpecification: [
+                {
+                  '@type': 'OpeningHoursSpecification',
+                  dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+                  opens: '08:00',
+                  closes: '20:00',
+                },
+              ],
               areaServed: [
                 'Gurugram',
                 'DLF Phase 1',
@@ -86,16 +136,30 @@ export default function RootLayout({
                 'DLF Phase 4',
                 'DLF Phase 5',
                 'Golf Course Road',
+                'Golf Course Extension',
                 'Sohna Road',
+                'Sector 14 Gurgaon',
                 'Sector 56 Gurgaon',
+                'Sector 57 Gurgaon',
+                'Nirvana Country',
+                'South City 1',
+                'South City 2',
+                'Palam Vihar',
                 'Delhi NCR',
               ],
-              priceRange: '₹₹',
+              priceRange: '₹₹ - ₹₹₹',
+              currenciesAccepted: 'INR',
+              paymentAccepted: 'Cash, UPI, Net Banking, Credit Card',
+              sameAs: [
+                'https://www.instagram.com/tuition4home',
+                'https://www.facebook.com/tuition4home',
+                'https://www.youtube.com/@codingwithsudhir',
+              ],
             }),
           }}
         />
       </head>
-      <body>{children}</body>
+      <body className={outfit.className}>{children}</body>
     </html>
   );
 }

@@ -2,8 +2,6 @@
    TUITIONFORHOME — FIGMA SOFT MINT & DEEP TEAL DESIGN SYSTEM
    ========================================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
-
 :root {
   /* Figma Soft Mint & Deep Teal Palette */
   --bg-app: #EDFBF7;           /* Soft Light Mint Background (Screenshot 1-4) */
@@ -83,26 +81,42 @@ body {
 }
 
 /* =========================================================================
-   NAVBAR RESPONSIVE — Desktop nav hidden on mobile, visible on 900px+
+   NAVBAR RESPONSIVE — Desktop nav hidden on mobile, visible on 1024px+
    ========================================================================= */
 .desktop-nav {
-  display: none;
+  display: none !important;
 }
 .mobile-toggle {
-  display: flex;
+  display: flex !important;
 }
 .mobile-only-flex {
-  display: flex;
+  display: flex !important;
 }
-@media (min-width: 900px) {
+@media (min-width: 1024px) {
   .desktop-nav {
     display: flex !important;
+    align-items: center;
   }
   .mobile-toggle {
     display: none !important;
   }
   .mobile-only-flex {
     display: none !important;
+  }
+}
+
+/* =========================================================================
+   BOOKING MODAL RESPONSIVE GRID — 1-col on mobile, spacious 2-col on desktop
+   ========================================================================= */
+.booking-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+}
+@media (min-width: 600px) {
+  .booking-form-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
   }
 }
 
@@ -649,6 +663,12 @@ h3 {
 
 .slide-over-drawer {
   animation: slideInRight 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (max-width: 900px) {
+  .tutor-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 
