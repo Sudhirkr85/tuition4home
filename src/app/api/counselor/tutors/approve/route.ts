@@ -91,8 +91,6 @@ export async function POST(req: Request) {
       });
     }
 
-    console.log(`[TUTOR APPROVED]: Profile ${tutorId} status updated to ACTIVE_VERIFIED and all documents marked APPROVED.`);
-
     return NextResponse.json({
       success: true,
       message: 'Tutor profile approved and activated successfully.'

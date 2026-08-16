@@ -123,8 +123,8 @@ export default async function SubjectPage({ params }: PageProps) {
         };
       });
     }
-  } catch (err) {
-    console.warn('DB query in subject page fallback to baseline:', err);
+  } catch {
+    // DB query fallback to baseline
   }
 
   // Schema.org Structured Data (Course, FAQPage & BreadcrumbList)

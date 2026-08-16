@@ -107,8 +107,8 @@ export default async function LocalityPage({ params }: PageProps) {
         };
       });
     }
-  } catch (err) {
-    console.warn('DB query in locality page fallback to baseline:', err);
+  } catch {
+    // DB query fallback to baseline
   }
 
   // Schema.org Structured Data (LocalBusiness & BreadcrumbList)

@@ -32,8 +32,8 @@ export async function getMapConfig(): Promise<MapConfig> {
         };
         return cachedConfig;
       }
-    } catch (e) {
-      console.warn('Failed to fetch map configuration, falling back to OSM:', e);
+    } catch {
+      // Map config fetch fallback
     }
     cachedConfig = {
       provider: 'OPENSTREETMAP',
@@ -111,8 +111,8 @@ export async function reverseGeocodeUnified(lat: number, lng: number): Promise<s
         });
       });
       if (response) return response;
-    } catch (err) {
-      console.warn('Google reverse geocode fallback to OSM:', err);
+    } catch {
+      // Google reverse geocode fallback to OSM
     }
   }
 

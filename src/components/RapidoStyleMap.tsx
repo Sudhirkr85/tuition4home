@@ -220,8 +220,8 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
       });
 
       L.marker([currentCoords.lat, currentCoords.lng], { icon: parentIcon }).addTo(map);
-    } catch (e) {
-      console.warn('Parent marker error:', e);
+    } catch {
+      // Parent marker fallback
     }
 
     // Tutor pins
@@ -307,8 +307,8 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
           setSelectedTutor(tutor);
           tMarker.openPopup();
         });
-      } catch (err) {
-        console.warn('Tutor marker error:', err);
+      } catch {
+        // Tutor marker fallback
       }
     });
 

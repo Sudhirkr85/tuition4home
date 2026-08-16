@@ -23,8 +23,7 @@ export async function GET() {
         },
         orderBy: { createdAt: 'desc' },
       });
-    } catch (err) {
-      console.warn('Prisma findMany for parents fallback to raw SQL:', err);
+    } catch {
       rawParents = await prisma.$queryRawUnsafe("SELECT id, name, email, phone, createdAt, updatedAt, role FROM `User` WHERE role = 'PARENT' ORDER BY createdAt DESC");
     }
 

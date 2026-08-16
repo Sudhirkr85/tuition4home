@@ -50,8 +50,6 @@ export async function POST(req: Request) {
       },
     });
 
-    console.log(`[LEAD SAVED TO DB]: ${lead.id} from ${parentName} (${parentPhone}) in ${locality} | Specific Tutor: ${specificTutor || 'None'}`);
-
     // If Telegram Bot credentials exist, fire instant notification to staff group
     const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
     const telegramChatId = process.env.TELEGRAM_CHAT_ID;

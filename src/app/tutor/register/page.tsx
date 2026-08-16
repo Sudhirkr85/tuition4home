@@ -294,7 +294,6 @@ export default function TutorRegisterLoginPage() {
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [consentMarketing, setConsentMarketing] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [legalModalTab, setLegalModalTab] = useState<'agreement' | 'commission' | 'verification' | 'privacy' | 'waiver' | 'grievance'>('agreement');
   
   // Submission Lifecycle
   const [loading, setLoading] = useState(false);
@@ -3300,7 +3299,7 @@ export default function TutorRegisterLoginPage() {
 
                   {/* STEP 7: Privacy & Service Agreement */}
                   {currentStep === 7 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                       <div>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', color: '#0F6E56', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.25rem 0.65rem', borderRadius: '999px', marginBottom: '0.5rem' }}>
                           <span>STEP 7 OF 7</span>
@@ -3313,82 +3312,40 @@ export default function TutorRegisterLoginPage() {
                         </p>
                       </div>
 
-                      {/* Main Agreement Overview Card */}
+                      {/* Clean Terms Card with View Details button */}
                       <div style={{
-                        backgroundColor: '#FFFFFF',
+                        backgroundColor: '#F8FAFC',
                         border: '1.5px solid #E2E8F0',
                         borderRadius: '16px',
-                        padding: '1.35rem',
-                        boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+                        padding: '1.25rem',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '1rem',
+                        gap: '0.75rem',
                       }}>
-                        <p style={{ fontSize: '0.88rem', color: '#334155', lineHeight: 1.6, margin: 0 }}>
-                          By checking the agreement box below, you signify that you have read, understood, and agreed to the service protocols, payment commissions, screening interviews, and data safety terms of <strong>TuitionForHome (Operated by SSSAM Academy)</strong>.
+                        <p style={{ fontSize: '0.86rem', color: '#334155', lineHeight: 1.6, margin: 0 }}>
+                          By completing registration, you confirm your acceptance of the <strong>TuitionForHome (SSSAM Academy)</strong> service guidelines, 1st-month matching commission, interview verification, and document data protection policies.
                         </p>
-
-                        {/* View Details / Read Legal Policy Button */}
-                        <div style={{ textAlign: 'center', margin: '0.25rem 0' }}>
+                        <div>
                           <button
                             type="button"
                             onClick={() => setShowTermsModal(true)}
-                            className="btn btn-secondary"
                             style={{
-                              borderColor: '#0F6E56',
+                              background: 'none',
+                              border: 'none',
                               color: '#0F6E56',
-                              backgroundColor: '#F0FDF4',
+                              fontSize: '0.84rem',
                               fontWeight: 700,
-                              fontSize: '0.85rem',
-                              padding: '0.6rem 1.25rem',
-                              borderRadius: '10px',
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                              padding: 0,
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '0.5rem',
+                              gap: '0.35rem',
                             }}
                           >
-                            <FileText size={16} />
-                            <span>Read Full Wording &amp; Legal Policy (View Details)</span>
+                            <FileText size={15} />
+                            <span>Read Full Terms &amp; Policies (View Details)</span>
                           </button>
-                        </div>
-
-                        {/* Summary Feature Bullets */}
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                          gap: '0.65rem',
-                          backgroundColor: '#F8FAFC',
-                          padding: '1rem',
-                          borderRadius: '12px',
-                          border: '1px solid #E2E8F0',
-                          fontSize: '0.8rem',
-                          color: '#475569',
-                          lineHeight: 1.5,
-                        }}>
-                          <div>
-                            <strong style={{ color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '2px' }}>
-                              <span>💰 1st-Month Commission</span>
-                            </strong>
-                            100% first month bureau matching fee; regular scheduled payouts from Month 2 onwards.
-                          </div>
-                          <div>
-                            <strong style={{ color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '2px' }}>
-                              <span>🛡️ Mandatory Interview</span>
-                            </strong>
-                            Telephonic screening followed by a brief video call or Sector 14 center walk-in.
-                          </div>
-                          <div>
-                            <strong style={{ color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '2px' }}>
-                              <span>🔒 Document Safety</span>
-                            </strong>
-                            Encrypted internal audit review only; IDs are never shown publicly or shared with parents.
-                          </div>
-                          <div>
-                            <strong style={{ color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '2px' }}>
-                              <span>🏷️ Verification Fee Waiver</span>
-                            </strong>
-                            Standard ₹999 registration fee is 100% waived under our current promotional drive (₹0).
-                          </div>
                         </div>
                       </div>
 
@@ -3397,75 +3354,32 @@ export default function TutorRegisterLoginPage() {
                         display: 'flex',
                         alignItems: 'flex-start',
                         gap: '0.85rem',
-                        padding: '1rem 1.15rem',
-                        borderRadius: '12px',
-                        backgroundColor: agreeTerms ? '#F0FDF4' : '#F8FAFC',
+                        padding: '1.1rem 1.25rem',
+                        borderRadius: '14px',
+                        backgroundColor: agreeTerms ? '#F0FDF4' : '#FFFFFF',
                         border: agreeTerms ? '1.5px solid #86EFAC' : '1.5px solid #CBD5E1',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
                       }}>
                         <input
                           type="checkbox"
                           id="agree-terms-main-check"
                           checked={agreeTerms}
-                          onChange={(e) => setAgreeTerms(e.target.checked)}
+                          onChange={(e) => {
+                            const val = e.target.checked;
+                            setAgreeTerms(val);
+                            setAgreeCommission(val);
+                            setAgreeVerification(val);
+                            setAgreePrivacy(val);
+                            setConsentMarketing(val);
+                          }}
                           style={{ marginTop: '3px', width: '20px', height: '20px', accentColor: '#0F6E56', cursor: 'pointer', flexShrink: 0 }}
                         />
                         <div style={{ fontSize: '0.88rem', color: '#1E293B', fontWeight: 600, lineHeight: 1.5 }}>
-                          I agree to SSSAM Academy &amp; TuitionForHome&apos;s terms of service, full 1st-month commission allocation, mandatory interview verification, and encrypted document safety regulations.
+                          I agree to TuitionForHome &amp; SSSAM Academy&apos;s terms of service, full 1st-month commission allocation, mandatory interview verification, and encrypted document safety regulations.
                         </div>
                       </label>
-
-                      {/* Optional Marketing Consent Checkbox */}
-                      <label style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '0.85rem',
-                        padding: '0.85rem 1.15rem',
-                        borderRadius: '12px',
-                        backgroundColor: '#FFFFFF',
-                        border: '1px solid #E2E8F0',
-                        cursor: 'pointer',
-                      }}>
-                        <input
-                          type="checkbox"
-                          id="consent-marketing-check"
-                          checked={consentMarketing}
-                          onChange={(e) => setConsentMarketing(e.target.checked)}
-                          style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#0F6E56', cursor: 'pointer', flexShrink: 0 }}
-                        />
-                        <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.45 }}>
-                          <strong style={{ color: '#0F172A' }}>(Optional)</strong> I consent to TuitionForHome showcasing my verified tutor profile, intro video, and teaching credentials on social media to generate student inquiries.
-                        </div>
-                      </label>
-
-                      {/* Quick Policy Links Bar */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '1.25rem',
-                        flexWrap: 'wrap',
-                        fontSize: '0.76rem',
-                        color: '#64748B',
-                      }}>
-                        <button type="button" onClick={() => { setLegalModalTab('agreement'); setShowTermsModal(true); }} style={{ background: 'none', border: 'none', color: '#0F6E56', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
-                          Tutor Agreement
-                        </button>
-                        <span>•</span>
-                        <button type="button" onClick={() => { setLegalModalTab('commission'); setShowTermsModal(true); }} style={{ background: 'none', border: 'none', color: '#0F6E56', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
-                          Payment &amp; Commission
-                        </button>
-                        <span>•</span>
-                        <button type="button" onClick={() => { setLegalModalTab('privacy'); setShowTermsModal(true); }} style={{ background: 'none', border: 'none', color: '#0F6E56', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
-                          Privacy Policy
-                        </button>
-                        <span>•</span>
-                        <button type="button" onClick={() => { setLegalModalTab('grievance'); setShowTermsModal(true); }} style={{ background: 'none', border: 'none', color: '#0F6E56', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
-                          Support &amp; Grievance
-                        </button>
-                      </div>
-
                     </div>
                   )}
 
@@ -3779,7 +3693,7 @@ export default function TutorRegisterLoginPage() {
           }}>
             {/* Modal Header */}
             <div style={{
-              padding: '1.2rem 1.5rem',
+              padding: '1.25rem 1.75rem',
               borderBottom: '1px solid #E2E8F0',
               display: 'flex',
               justifyContent: 'space-between',
@@ -3791,7 +3705,7 @@ export default function TutorRegisterLoginPage() {
                   TuitionForHome • Operated by SSSAM Academy
                 </div>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: '2px 0 0 0' }}>
-                  Terms, Privacy &amp; Platform Policies
+                  Tutor Service Agreement &amp; Policies
                 </h3>
               </div>
               <button 
@@ -3806,181 +3720,83 @@ export default function TutorRegisterLoginPage() {
               </button>
             </div>
 
-            {/* Modal Tabs Bar */}
-            <div style={{
-              display: 'flex',
-              overflowX: 'auto',
-              borderBottom: '1px solid #E2E8F0',
-              backgroundColor: '#FFFFFF',
-              padding: '0 1rem',
-              gap: '0.25rem',
-            }}>
-              {[
-                { key: 'agreement', label: 'Tutor Agreement' },
-                { key: 'commission', label: 'Payment & Commission' },
-                { key: 'verification', label: 'Verification Process' },
-                { key: 'privacy', label: 'Privacy Policy' },
-                { key: 'waiver', label: 'Fee & Waiver' },
-                { key: 'grievance', label: 'Support & Grievance' },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setLegalModalTab(tab.key as any)}
-                  style={{
-                    padding: '0.75rem 0.9rem',
-                    fontSize: '0.8rem',
-                    fontWeight: legalModalTab === tab.key ? 800 : 600,
-                    color: legalModalTab === tab.key ? '#0F6E56' : '#64748B',
-                    border: 'none',
-                    background: 'none',
-                    borderBottom: legalModalTab === tab.key ? '2.5px solid #0F6E56' : '2.5px solid transparent',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Modal Body */}
+            {/* Modal Body (Single Clean Scrollable Document) */}
             <div style={{
               padding: '1.75rem',
               overflowY: 'auto',
-              fontSize: '0.85rem',
+              fontSize: '0.84rem',
               color: '#334155',
               lineHeight: '1.65',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.35rem',
             }}>
-              
-              {/* TAB 1: Tutor Service Agreement */}
-              {legalModalTab === 'agreement' && (
-                <div>
-                  <h4 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.65rem', color: '#0F172A' }}>
-                    1. Tutor Service Agreement &amp; Platform Guidelines
-                  </h4>
-                  <p style={{ marginBottom: '0.85rem' }}>
-                    TuitionForHome provides student-matching, scheduling coordination, and administrative mediation for qualified educators in Gurugram, operating under the institutional supervision of SSSAM Academy (Sector 14, Gurugram).
-                  </p>
-                  <div style={{ backgroundColor: '#F8FAFC', padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0', marginBottom: '1rem' }}>
-                    <strong style={{ color: '#0F172A', display: 'block', marginBottom: '0.35rem' }}>• Platform Integrity &amp; Lead Management:</strong>
-                    To protect tutors, students, and parents, assignments introduced through TuitionForHome should remain within the platform&apos;s documented communication and payment process. Documented sessions ensure transparent dispute resolution, verified review tracking, and prompt teacher disbursements. Serious or repeated violations of platform integrity may result in suspension or review of the tutor account in accordance with platform policies.
-                  </div>
-                  <p style={{ marginBottom: '0.5rem' }}>
-                    <strong>• Educator Code of Conduct:</strong> Tutors agree to maintain high professional standards, regular punctuality, student safety precautions during home visits, and adherence to the academic curriculum prescribed by the student&apos;s board (CBSE, ICSE, IB, IGCSE, State Board).
-                  </p>
-                </div>
-              )}
+              {/* SECTION 1 */}
+              <div>
+                <h4 style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: '0.45rem', color: '#0F172A' }}>
+                  1. Identity Data Privacy &amp; Encryption Protocols
+                </h4>
+                <p style={{ margin: 0 }}>
+                  TuitionForHome (the &quot;Bureau&quot;), operated and supervised by SSSAM Academy, Sector 14 Gurugram, adheres to the Digital Personal Data Protection (DPDP) Act of India. Tutors uploading credentials and identification documents (including Aadhaar Card, PAN Card, and Driving License) hereby consent that all such government ID records will be stored in an encrypted format. The documentation remains confidential and is restricted to the internal administrative audit desk. Unmasked document files are never shared with parents or displayed publicly.
+                </p>
+              </div>
 
-              {/* TAB 2: Payment & Commission Policy */}
-              {legalModalTab === 'commission' && (
-                <div>
-                  <h4 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.65rem', color: '#0F172A' }}>
-                    2. Payment &amp; Commission Structure (Important Information)
-                  </h4>
-                  <p style={{ marginBottom: '0.85rem' }}>
-                    Our commercial matching model is designed to provide tutors with sustained, long-term student engagements while keeping platform management transparent:
-                  </p>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
-                    <div style={{ backgroundColor: '#F0FDF4', padding: '0.9rem 1rem', borderRadius: '12px', border: '1px solid #BBF7D0' }}>
-                      <strong style={{ color: '#166534', display: 'block', marginBottom: '2px' }}>💰 First-Month Bureau Commission:</strong>
-                      For every finalized student assignment, a platform management commission equivalent to 100% of the first calendar month&apos;s tuition fee (or first 30 days of active tuition) is retained by TuitionForHome for marketing acquisition, parent counseling, background safety checks, and continuous coordination.
-                    </div>
-                    <div style={{ backgroundColor: '#F8FAFC', padding: '0.9rem 1rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                      <strong style={{ color: '#0F172A', display: 'block', marginBottom: '2px' }}>🗓️ Regular Payouts from Month 2 Onwards:</strong>
-                      The client (parent/student) is instructed to deposit the first month&apos;s fees directly with the platform. Starting from Month 2 and all subsequent months, tutors receive their full scheduled tuition payments directly or via the platform per the agreed hourly/monthly rates.
-                    </div>
-                    <div style={{ backgroundColor: '#F8FAFC', padding: '0.9rem 1rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                      <strong style={{ color: '#0F172A', display: 'block', marginBottom: '2px' }}>🛡️ Student Discontinuation &amp; Pro-Rata Protection:</strong>
-                      If an assigned student stops or cancels tuition before completing 30 days due to scheduling mismatch or unforeseen circumstances, the tutor is protected through pro-rata settlement or prompt priority reassignment to an equivalent student lead without additional matching deductions.
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* SECTION 2 */}
+              <div>
+                <h4 style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: '0.45rem', color: '#0F172A' }}>
+                  2. Platform Service Standards &amp; Booking Integrity
+                </h4>
+                <p style={{ margin: 0 }}>
+                  TuitionForHome provides matched student opportunities, scheduling coordination, and administrative mediation for qualified educators in Gurugram. All introduced sessions, scheduling confirmations, and billing must be logged through the official platform channels to guarantee documented dispute resolution, verified rating accreditation, and transparent parent management. Tutors agree to maintain high professional standards, regular punctuality, student safety precautions during home visits, and adherence to the student&apos;s curriculum (CBSE, ICSE, IB, IGCSE, State Board).
+                </p>
+              </div>
 
-              {/* TAB 3: Verification & Activation */}
-              {legalModalTab === 'verification' && (
-                <div>
-                  <h4 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.65rem', color: '#0F172A' }}>
-                    3. Profile Verification &amp; Interview Screening
-                  </h4>
-                  <p style={{ marginBottom: '0.85rem' }}>
-                    To uphold educational trust for Gurgaon parents, tutor profile activation requires three simple verification steps:
-                  </p>
-                  <ol style={{ paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-                    <li><strong>Telephonic Screening:</strong> A brief discussion regarding your academic specialization, teaching philosophy, and preferred localities.</li>
-                    <li><strong>Online Video Call or Center Walk-In:</strong> A 10-minute interaction with our counselor team (or in person at SSSAM Academy, Sector 14 Gurugram) to verify communication fluency and subject proficiency.</li>
-                    <li><strong>Document Audit:</strong> Secure authentication of academic degrees and government identification proof.</li>
-                  </ol>
-                  <p style={{ margin: 0 }}>
-                    Once verified, profile badges (Verified Tutor, Star Mentor) and direct student inquiry notifications will be activated on your account.
-                  </p>
+              {/* SECTION 3 */}
+              <div>
+                <h4 style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: '0.45rem', color: '#0F172A' }}>
+                  3. Commission Fee Retention Structure (100% First Month Fee)
+                </h4>
+                <p style={{ marginBottom: '0.65rem' }}>
+                  For every finalized student assignment, TuitionForHome charges a matching and counseling management commission equivalent to <strong>100% of the tuition fees generated during the first calendar month</strong> (or first 30 days of active tuition).
+                </p>
+                <div style={{ backgroundColor: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.8rem', color: '#475569', lineHeight: 1.55 }}>
+                  <strong style={{ color: '#0F172A', display: 'block', marginBottom: '2px' }}>• Regular Disbursements from Month 2:</strong>
+                  The client (parent/student) is instructed to deposit the first month&apos;s fees directly with TuitionForHome. Starting from Month 2 and all subsequent months, tutors receive their full scheduled tuition payments directly or via the platform per the agreed rates. If a student discontinues before 30 days, pro-rata protection or priority lead reassignment is promptly provided.
                 </div>
-              )}
+              </div>
 
-              {/* TAB 4: Privacy Policy */}
-              {legalModalTab === 'privacy' && (
-                <div>
-                  <h4 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.65rem', color: '#0F172A' }}>
-                    4. Privacy Policy &amp; Document Protection
-                  </h4>
-                  <p style={{ marginBottom: '0.85rem' }}>
-                    We treat your personal data and identification documents with the highest degree of confidentiality:
-                  </p>
-                  <ul style={{ paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-                    <li><strong>Collected Data:</strong> Contact details, educational credentials, and government ID (Aadhaar / PAN / Driving License).</li>
-                    <li><strong>Purpose of Collection:</strong> Strictly used for verifying identity, conducting tutor safety audits, and validating qualifications.</li>
-                    <li><strong>Access Control:</strong> Document proofs are restricted solely to authorized internal administrative auditors at SSSAM Academy. Unmasked ID documents are NEVER displayed publicly or shared with parents/students.</li>
-                    <li><strong>Data Rights &amp; Deletion:</strong> Tutors retain the right to update, correct, or request the deletion of their personal records at any time by contacting our support desk at <code>support@tuitionforhome.com</code>.</li>
-                  </ul>
+              {/* SECTION 4 */}
+              <div>
+                <h4 style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: '0.45rem', color: '#0F172A' }}>
+                  4. Mandatory Interview Screening &amp; Profile Activation
+                </h4>
+                <p style={{ margin: 0 }}>
+                  Initial online registration does not constitute instant profile activation. Tutors must successfully pass a telephonic screening followed by a brief 10-minute online video call interview or physical walk-in evaluation at SSSAM Academy (Sector 14, Gurugram). Profile badges (Verified Tutor, Star Mentor) and priority lead alerts activate immediately after verification.
+                </p>
+              </div>
+
+              {/* SECTION 5 */}
+              <div>
+                <h4 style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: '0.45rem', color: '#0F172A' }}>
+                  5. Registration Fee &amp; Promotional Waiver Policy
+                </h4>
+                <p style={{ margin: 0 }}>
+                  The standard tutor onboarding and verification fee of ₹999 is currently <strong>100% waived under our promotional drive (₹0)</strong>. Any applicable fee in the future will be clearly disclosed before payment is requested.
+                </p>
+              </div>
+
+              {/* SECTION 6 */}
+              <div>
+                <h4 style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: '0.45rem', color: '#0F172A' }}>
+                  6. Grievance Redressal, Center Walk-In &amp; Support
+                </h4>
+                <div style={{ backgroundColor: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.8rem', color: '#475569', lineHeight: 1.55, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <div><strong>🏢 Physical Center:</strong> SSSAM Academy, M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001 (Near HUDA Market).</div>
+                  <div><strong>📞 Helpline / WhatsApp:</strong> +91 92170 31899 / +91 95174 47689</div>
+                  <div><strong>✉️ Support Email:</strong> support@tuitionforhome.com / info@tuitionforhome.com</div>
+                  <div><strong>⏰ Office Timings:</strong> Monday to Sunday, 9:00 AM – 9:00 PM</div>
                 </div>
-              )}
-
-              {/* TAB 5: Registration Fee & Promotional Waiver */}
-              {legalModalTab === 'waiver' && (
-                <div>
-                  <h4 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.65rem', color: '#0F172A' }}>
-                    5. Verification Fee &amp; Promotional Waiver Policy
-                  </h4>
-                  <p style={{ marginBottom: '0.85rem' }}>
-                    TuitionForHome operates seasonal promotional drives to encourage top educators in Gurgaon to join our network:
-                  </p>
-                  <div style={{ backgroundColor: '#F8FAFC', padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0', marginBottom: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', fontWeight: 700 }}>
-                      <span>Standard Tutor Onboarding Fee:</span>
-                      <span style={{ textDecoration: 'line-through', color: '#64748B' }}>₹999</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontWeight: 800, color: '#0F6E56' }}>
-                      <span>Current Promotional Onboarding Fee:</span>
-                      <span>₹0 (100% Free Drive)</span>
-                    </div>
-                    <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0, lineHeight: 1.5 }}>
-                      Any applicable fee will be clearly disclosed before payment is requested. TuitionForHome will not treat an undisclosed fee as payable.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 6: Support & Grievance Desk */}
-              {legalModalTab === 'grievance' && (
-                <div>
-                  <h4 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.65rem', color: '#0F172A' }}>
-                    6. Grievance Redressal, Support &amp; Contact
-                  </h4>
-                  <p style={{ marginBottom: '0.85rem' }}>
-                    For questions regarding your application, verification schedule, fee disbursements, or document updates:
-                  </p>
-                  <div style={{ backgroundColor: '#F8FAFC', padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem' }}>
-                    <div><strong>🏢 Physical Center:</strong> SSSAM Academy, M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001 (Near HUDA Market).</div>
-                    <div><strong>📞 Phone / WhatsApp Helpline:</strong> +91 92170 31899 / +91 95174 47689</div>
-                    <div><strong>✉️ Support Email:</strong> support@tuitionforhome.com / info@tuitionforhome.com</div>
-                    <div><strong>⏰ Office Hours:</strong> Monday to Sunday, 9:00 AM – 9:00 PM</div>
-                  </div>
-                </div>
-              )}
-
+              </div>
             </div>
 
             {/* Modal Footer */}
@@ -4009,10 +3825,11 @@ export default function TutorRegisterLoginPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (legalModalTab === 'agreement') setAgreeTerms(true);
-                    if (legalModalTab === 'commission') setAgreeCommission(true);
-                    if (legalModalTab === 'verification') setAgreeVerification(true);
-                    if (legalModalTab === 'privacy') setAgreePrivacy(true);
+                    setAgreeTerms(true);
+                    setAgreeCommission(true);
+                    setAgreeVerification(true);
+                    setAgreePrivacy(true);
+                    setConsentMarketing(true);
                     setShowTermsModal(false);
                   }}
                   className="btn btn-primary btn-sm"

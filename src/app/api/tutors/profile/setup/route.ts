@@ -237,8 +237,8 @@ export async function GET(req: Request) {
           rawQual = rawRows[0].qualifications;
           rawExp = rawRows[0].experiences;
         }
-      } catch (e) {
-        console.warn('Fallback query error:', e);
+      } catch {
+        // Fallback query
       }
     }
 

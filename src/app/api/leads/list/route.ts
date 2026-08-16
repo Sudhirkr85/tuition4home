@@ -29,8 +29,7 @@ export async function GET() {
           updatedAt: 'desc',
         },
       });
-    } catch (prismaErr) {
-      console.warn('Prisma findMany fallback to raw SQL:', prismaErr);
+    } catch {
       const rows: any[] = await prisma.$queryRawUnsafe('SELECT * FROM `Lead` ORDER BY updatedAt DESC');
       const allActivities: any[] = await prisma.$queryRawUnsafe('SELECT * FROM `LeadActivity` ORDER BY createdAt DESC');
       

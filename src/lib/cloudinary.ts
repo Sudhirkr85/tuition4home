@@ -31,7 +31,6 @@ export async function uploadToCloudinary(
   const isMock = !process.env.CLOUDINARY_API_KEY || process.env.CLOUDINARY_API_KEY.includes('mock');
 
   if (isMock) {
-    console.log(`[CLOUDINARY MOCK UPLOAD] Resource: ${resourceType} to folder: ${folder}`);
     const mockId = `mock_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     return {
       url: `https://res.cloudinary.com/demo/image/upload/${mockId}.jpg`,
@@ -85,7 +84,6 @@ export async function deleteFromCloudinary(
   const isMock = !process.env.CLOUDINARY_API_KEY || process.env.CLOUDINARY_API_KEY.includes('mock');
 
   if (isMock) {
-    console.log(`[CLOUDINARY MOCK DELETE] Deleted publicId: ${publicId} (${resourceType})`);
     return { success: true, result: 'ok' };
   }
 
@@ -95,7 +93,6 @@ export async function deleteFromCloudinary(
       invalidate: true,
     });
 
-    console.log(`[CLOUDINARY ASSET DELETED] ${publicId}:`, res);
     return {
       success: res.result === 'ok',
       result: res.result,

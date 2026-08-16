@@ -25,8 +25,8 @@ export async function GET() {
           createdAt: 'desc',
         },
       });
-    } catch (dbErr) {
-      console.warn('Database query error fetching counselors:', dbErr);
+    } catch {
+      // Database query fallback
     }
 
     return NextResponse.json({
@@ -94,9 +94,8 @@ export async function POST(req: Request) {
         counselor: newCounselor,
         message: 'Counselor account created successfully!',
       });
-    } catch (dbErr) {
+    } catch {
       // Fallback response for mock/offline environment
-      console.warn('Prisma create fallback in mock mode:', dbErr);
       const mockNewCounselor = {
         id: `csl-${Date.now()}`,
         name,
@@ -156,8 +155,7 @@ export async function PUT(req: Request) {
         counselor: updated,
         message: password ? 'Counselor details & Password updated successfully!' : 'Counselor details updated successfully!',
       });
-    } catch (dbErr) {
-      console.warn('Prisma update fallback in mock mode:', dbErr);
+    } catch {
       return NextResponse.json({
         success: true,
         counselor: { id, name, email, phone, role: 'TELECALLER', updatedAt: new Date().toISOString() },
@@ -185,8 +183,7 @@ export async function DELETE(req: Request) {
         where: { id },
       });
       return NextResponse.json({ success: true, message: 'Counselor deleted successfully' });
-    } catch (dbErr) {
-      console.warn('Prisma delete fallback in mock mode:', dbErr);
+    } catch {
       return NextResponse.json({ success: true, message: 'Counselor removed from active list' });
     }
   } catch (error: any) {

@@ -41,8 +41,7 @@ export async function POST(
           },
         });
         activityId = activity.id;
-      } catch (actErr) {
-        console.warn('LeadActivity insert via prisma fallback:', actErr);
+      } catch {
         await prisma.$executeRawUnsafe(
           'INSERT INTO `LeadActivity` (id, leadId, actionType, description, performedBy, createdAt) VALUES (?, ?, ?, ?, ?, NOW())',
           activityId,
@@ -87,8 +86,7 @@ export async function POST(
         message: 'Follow-up logged and timeline updated successfully.',
         lead: updatedLead,
       });
-    } catch (dbErr) {
-      console.warn('Prisma DB update fallback in mock mode:', dbErr);
+    } catch {
       const mockActivity = {
         id: `act-${Date.now()}`,
         leadId,

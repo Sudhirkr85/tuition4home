@@ -128,8 +128,8 @@ export default async function TutorProfilePage({ params }: PageProps) {
         badge: dbProfile.highestDegree ? `Specialist (${dbProfile.highestDegree})` : 'Verified Educator',
       };
     }
-  } catch (err) {
-    console.warn('DB query error on tutor profile, using baseline:', err);
+  } catch {
+    // DB query fallback
   }
 
   // Fallback to static mock if not in DB

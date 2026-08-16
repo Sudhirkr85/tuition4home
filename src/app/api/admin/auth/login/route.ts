@@ -29,8 +29,8 @@ export async function POST(req: Request) {
           email: cleanEmail,
         },
       });
-    } catch (dbErr) {
-      console.warn('DB lookup error in admin login:', dbErr);
+    } catch {
+      // DB lookup fallback
     }
 
     // Master Admin fallback check
@@ -51,8 +51,8 @@ export async function POST(req: Request) {
             role: 'SUPER_ADMIN',
           },
         });
-      } catch (createErr) {
-        console.warn('Fallback admin creation in DB:', createErr);
+      } catch {
+        // Fallback admin creation
       }
 
       return NextResponse.json({

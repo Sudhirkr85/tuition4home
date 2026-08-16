@@ -21,7 +21,6 @@ export async function sendTransactionalEmail({
   const apiKey = process.env.BREVO_API_KEY;
 
   if (!apiKey || apiKey.includes('mock')) {
-    console.log(`[BREVO MOCK EMAIL] To: ${to.map(t => t.email).join(', ')} | Subject: "${subject}"`);
     return { success: true, messageId: `mock_brevo_${Date.now()}` };
   }
 
@@ -48,7 +47,6 @@ export async function sendTransactionalEmail({
       return { success: false, error: data.message || 'Failed to send email via Brevo' };
     }
 
-    console.log(`[BREVO EMAIL SENT] MessageId: ${data.messageId} to ${to.map(t => t.email).join(', ')}`);
     return { success: true, messageId: data.messageId };
   } catch (err: any) {
     console.error('Brevo Email dispatch failed:', err);

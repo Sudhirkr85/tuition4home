@@ -7,8 +7,6 @@ export async function POST(req: Request) {
 
     const tutorId = `TUT-${Math.floor(10000 + Math.random() * 90000)}`;
 
-    console.log(`[TUTOR REGISTERED]: ${tutorId} - ${name} (${email}, ${phone}) for ${subjects?.join(', ')} in ${serviceAreas?.join(', ')}`);
-
     return NextResponse.json({
       success: true,
       tutorId,
