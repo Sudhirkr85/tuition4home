@@ -248,6 +248,16 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
     onConfirm: () => void;
   } | null>(null);
 
+  // Coordination Milestone Confirmation Modal
+  const [milestoneModal, setMilestoneModal] = useState<{
+    lead: any;
+    currentMilestone: string;
+    targetMilestone: string;
+    tutorName: string;
+    parentName: string;
+    note: string;
+  } | null>(null);
+
   // Sidebar Collapse & Mobile Drawer State
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -482,12 +492,53 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
     }
   };
 
+  const refreshAllData = async () => {
+    try {
+      await Promise.allSettled([
+        fetchLeads(),
+        fetchTutors(),
+        fetchParents(),
+        fetchCounselors(),
+        fetchPlatformConfig(),
+      ]);
+    } catch (err) {
+      console.error('Failed to refresh data:', err);
+    }
+  };
+
+  // Initial load, window focus sync & auto 20s background polling
   useEffect(() => {
-    fetchCounselors();
-    fetchLeads();
-    fetchTutors();
-    fetchPlatformConfig();
+    refreshAllData();
+
+    const handleFocus = () => {
+      refreshAllData();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    const interval = setInterval(() => {
+      fetchLeads();
+      fetchTutors();
+    }, 20000);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(interval);
+    };
   }, []);
+
+  // Auto-refresh fresh data whenever tab is switched
+  useEffect(() => {
+    if (activeAdminTab === 'LEADS' || activeAdminTab === 'COORDINATION' || activeAdminTab === 'FEES_PAYOUTS') {
+      fetchLeads();
+    } else if (activeAdminTab === 'TUTOR_ALLOCATION') {
+      fetchTutors();
+      fetchLeads();
+    } else if (activeAdminTab === 'PARENTS') {
+      fetchParents();
+    } else if (activeAdminTab === 'COUNSELORS') {
+      fetchCounselors();
+    }
+  }, [activeAdminTab]);
 
   const handleSaveConfig = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -504,6 +555,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
         }),
       });
       setSavedSuccess(true);
+      fetchPlatformConfig();
       setTimeout(() => setSavedSuccess(false), 3000);
     } catch (err) {
       console.error('Failed to save config:', err);
@@ -4269,7 +4321,14 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.45rem', borderTop: '1px solid #F1F5F9' }}>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F766E' }}>₹{tut.hourlyRateHome}/hr</span>
+                          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0F766E', backgroundColor: '#DCFCE7', padding: '1px 5px', borderRadius: '4px' }}>
+                              🏠 ₹{tut.hourlyRateHomeMin || tut.hourlyRateHome || 600}–₹{tut.hourlyRateHomeMax && tut.hourlyRateHomeMax !== tut.hourlyRateHomeMin ? tut.hourlyRateHomeMax : Math.round(((tut.hourlyRateHomeMin || tut.hourlyRateHome || 600) * 1.4) / 50) * 50}
+                            </span>
+                            <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0284C7', backgroundColor: '#E0F2FE', padding: '1px 5px', borderRadius: '4px' }}>
+                              💻 ₹{tut.hourlyRateOnlineMin || tut.hourlyRateOnline || 500}–₹{tut.hourlyRateOnlineMax && tut.hourlyRateOnlineMax !== tut.hourlyRateOnlineMin ? tut.hourlyRateOnlineMax : Math.round(((tut.hourlyRateOnlineMin || tut.hourlyRateOnline || 500) * 1.4) / 50) * 50}
+                            </span>
+                          </div>
                           <span style={{ fontSize: '0.72rem', padding: '2px 7px', borderRadius: '4px', backgroundColor: '#DCFCE7', color: '#166534', fontWeight: 800 }}>
                             {matchingLeads.length} Matching Leads
                           </span>
@@ -4629,7 +4688,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div>
                                   <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase' }}>PARENT &amp; STUDENT</div>
-                                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', marginTop: '2px' }}>
+                                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', marginTop: '2px', textTransform: 'capitalize' }}>
                                     {lead.parentName}
                                   </div>
                                 </div>
@@ -4667,11 +4726,12 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                                 </a>
 
                                 <a
-                                  href={`https://wa.me/?text=${encodeURIComponent(
-                                    `Hello ${lead.parentName},\n` +
-                                    `This is SSSAM Academy regarding your home tuition enquiry for ${lead.gradeClass} (${subjects}).\n` +
-                                    `Your assigned verified educator is *${lead.assignedTutor || assignedTutorObj.name}* (${assignedTutorObj.highestDegree}).\n\n` +
-                                    `Please let us know your preferred time for the trial class.`
+                                  href={`https://wa.me/${lead.parentPhone ? '91' + lead.parentPhone.replace(/\D/g, '') : ''}?text=${encodeURIComponent(
+                                    `Hello *${lead.parentName ? lead.parentName.trim().charAt(0).toUpperCase() + lead.parentName.trim().slice(1) : 'Parent'}*,\n` +
+                                    `Greetings from *TuitionForHome*.\n\n` +
+                                    `Regarding your tuition enquiry for *${lead.gradeClass.replace(/\s*\([^)]+\)/g, '')} (${subjects.replace(/\s*\(Class\s*[^)]+\)/gi, '').replace(/\s*\([^)]+\)/g, '').trim()})*:\n` +
+                                    `Your assigned verified educator is *${(lead.assignedTutor || assignedTutorObj.name || '').trim().charAt(0).toUpperCase() + (lead.assignedTutor || assignedTutorObj.name || '').trim().slice(1)}* (${assignedTutorObj.highestDegree?.toUpperCase() || 'Verified Educator'}).\n\n` +
+                                    `Please let us know your preferred date & time for the 1st session.`
                                   )}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
@@ -4719,18 +4779,23 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                                   />
                                   <div>
                                     <div style={{ fontSize: '0.7rem', color: '#166534', fontWeight: 800, textTransform: 'uppercase' }}>ASSIGNED TUTOR</div>
-                                    <div style={{ fontSize: '0.96rem', fontWeight: 800, color: '#0F172A' }}>
+                                    <div style={{ fontSize: '0.96rem', fontWeight: 800, color: '#0F172A', textTransform: 'capitalize' }}>
                                       {lead.assignedTutor || assignedTutorObj.name}
                                     </div>
                                   </div>
                                 </div>
-                                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0F766E' }}>
-                                  ₹{assignedTutorObj.hourlyRateHome}/hr
-                                </span>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px', flexShrink: 0 }}>
+                                  <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0F766E', backgroundColor: '#DCFCE7', padding: '2px 6px', borderRadius: '4px' }}>
+                                    🏠 Home: ₹{assignedTutorObj.hourlyRateHomeMin || assignedTutorObj.hourlyRateHome || 600}–₹{assignedTutorObj.hourlyRateHomeMax && assignedTutorObj.hourlyRateHomeMax !== assignedTutorObj.hourlyRateHomeMin ? assignedTutorObj.hourlyRateHomeMax : Math.round(((assignedTutorObj.hourlyRateHomeMin || assignedTutorObj.hourlyRateHome || 600) * 1.4) / 50) * 50}/hr
+                                  </span>
+                                  <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0284C7', backgroundColor: '#E0F2FE', padding: '2px 6px', borderRadius: '4px' }}>
+                                    💻 Online: ₹{assignedTutorObj.hourlyRateOnlineMin || assignedTutorObj.hourlyRateOnline || 500}–₹{assignedTutorObj.hourlyRateOnlineMax && assignedTutorObj.hourlyRateOnlineMax !== assignedTutorObj.hourlyRateOnlineMin ? assignedTutorObj.hourlyRateOnlineMax : Math.round(((assignedTutorObj.hourlyRateOnlineMin || assignedTutorObj.hourlyRateOnline || 500) * 1.4) / 50) * 50}/hr
+                                  </span>
+                                </div>
                               </div>
 
                               <div style={{ fontSize: '0.78rem', color: '#334155' }}>
-                                🎓 {assignedTutorObj.highestDegree} • {assignedTutorObj.experienceYears}y exp
+                                🎓 {assignedTutorObj.highestDegree?.toUpperCase()} • {assignedTutorObj.experienceYears}y exp
                               </div>
                               <div style={{ fontSize: '0.76rem', color: '#64748B' }}>
                                 📍 Base: {assignedTutorObj.serviceAreas[0]} (Radius: {assignedTutorObj.travelRadiusKm} KM)
@@ -4746,7 +4811,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                                     borderRadius: '7px',
                                     border: '1px solid #CBD5E1',
                                     backgroundColor: '#FFFFFF',
-                                    color: '#0F172A',
+                                    color: '#0F766E',
                                     fontSize: '0.76rem',
                                     fontWeight: 700,
                                     textDecoration: 'none',
@@ -4762,11 +4827,13 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
 
                                 <a
                                   href={`https://wa.me/?text=${encodeURIComponent(
-                                    `Hello ${lead.assignedTutor || assignedTutorObj.name},\n` +
-                                    `This is SSSAM Academy coordinator regarding student lead in *${lead.locality}*:\n` +
-                                    `👤 *Parent:* ${lead.parentName} (${lead.parentPhone})\n` +
-                                    `📚 *Class:* ${lead.gradeClass} (${subjects})\n\n` +
-                                    `Please contact the parent and update us on your session timing.`
+                                    `Hello *${(lead.assignedTutor || assignedTutorObj.name || '').trim().charAt(0).toUpperCase() + (lead.assignedTutor || assignedTutorObj.name || '').trim().slice(1)}*,\n` +
+                                    `Tuition assignment from *TuitionForHome*:\n\n` +
+                                    `👤 *Parent:* ${lead.parentName ? lead.parentName.trim().charAt(0).toUpperCase() + lead.parentName.trim().slice(1) : ''} (${lead.parentPhone})\n` +
+                                    `📚 *Class:* ${lead.gradeClass.replace(/\s*\([^)]+\)/g, '')} (${subjects.replace(/\s*\(Class\s*[^)]+\)/gi, '').replace(/\s*\([^)]+\)/g, '').trim()})\n` +
+                                    `📍 *Locality:* ${lead.locality}, Gurgaon\n` +
+                                    `💻 *Mode:* ${lead.preferredMode === 'ONLINE_LIVE' || lead.preferredMode === 'Online' ? 'Online' : 'Home Visit'}\n\n` +
+                                    `Please contact the parent to confirm your session timing.`
                                   )}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
@@ -4798,13 +4865,14 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                             {/* 3-Way WhatsApp Intro */}
                             <a
                               href={`https://wa.me/?text=${encodeURIComponent(
-                                `*SSSAM Academy (TuitionForHome) - Coordination Intro*\n\n` +
-                                `Hello ${lead.parentName} and ${lead.assignedTutor || assignedTutorObj.name} Sir,\n` +
-                                `Connecting you both for *${lead.gradeClass} (${subjects})* home tuition in *${lead.locality}*.\n\n` +
-                                `📍 *Session Location:* ${lead.locality}, Gurgaon\n` +
-                                `📚 *Subject:* ${subjects}\n` +
-                                `🎓 *Assigned Educator:* ${lead.assignedTutor || assignedTutorObj.name} (${assignedTutorObj.highestDegree})\n\n` +
-                                `Please coordinate your preferred timings for the trial session.`
+                                `*TuitionForHome — Class Coordination*\n\n` +
+                                `Hello *${lead.parentName ? lead.parentName.trim().charAt(0).toUpperCase() + lead.parentName.trim().slice(1) : 'Parent'}* & *${(lead.assignedTutor || assignedTutorObj.name || '').trim().charAt(0).toUpperCase() + (lead.assignedTutor || assignedTutorObj.name || '').trim().slice(1)}*,\n\n` +
+                                `Connecting you both for *${lead.gradeClass.replace(/\s*\([^)]+\)/g, '')} (${subjects.replace(/\s*\(Class\s*[^)]+\)/gi, '').replace(/\s*\([^)]+\)/g, '').trim()})* tuition.\n\n` +
+                                `📍 *Location:* ${lead.locality}, Gurgaon\n` +
+                                `📚 *Subject:* ${subjects.replace(/\s*\(Class\s*[^)]+\)/gi, '').replace(/\s*\([^)]+\)/g, '').trim()}\n` +
+                                `🎓 *Assigned Educator:* ${(lead.assignedTutor || assignedTutorObj.name || '').trim().charAt(0).toUpperCase() + (lead.assignedTutor || assignedTutorObj.name || '').trim().slice(1)} (${assignedTutorObj.highestDegree?.toUpperCase() || 'Verified Educator'})\n` +
+                                `💻 *Mode:* ${lead.preferredMode === 'ONLINE_LIVE' || lead.preferredMode === 'Online' ? 'Online (Live 1-on-1)' : 'Home Visit'}\n\n` +
+                                `Please coordinate mutually convenient timings for the 1st session.`
                               )}`}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -4829,33 +4897,45 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                             {/* Milestone Updater & Replacement Controls */}
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                               <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 700 }}>Milestone:</span>
-                              <select
-                                value={currentMilestone}
-                                onChange={(e) => {
-                                  const newStatus = e.target.value;
-                                  setLeadCoordMilestones({
-                                    ...leadCoordMilestones,
-                                    [lead.id]: newStatus,
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMilestoneModal({
+                                    lead,
+                                    currentMilestone,
+                                    targetMilestone: currentMilestone,
+                                    tutorName: lead.assignedTutor || assignedTutorObj.name,
+                                    parentName: lead.parentName,
+                                    note: '',
                                   });
-                                  setCounselorSuccessMsg(`Updated Pair #${lead.id} milestone to "${milestoneConfig[newStatus]?.label || newStatus}"`);
-                                  setTimeout(() => setCounselorSuccessMsg(''), 3000);
                                 }}
                                 style={{
-                                  padding: '0.35rem 0.65rem',
+                                  padding: '0.35rem 0.75rem',
                                   borderRadius: '8px',
-                                  border: '1px solid #CBD5E1',
-                                  backgroundColor: '#F8FAFC',
+                                  border: '1.5px solid #CBD5E1',
+                                  backgroundColor: '#FFFFFF',
                                   fontSize: '0.78rem',
-                                  fontWeight: 700,
+                                  fontWeight: 800,
                                   color: '#0F172A',
                                   cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem',
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                                  transition: 'all 0.15s ease',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.borderColor = '#0F6E56';
+                                  e.currentTarget.style.backgroundColor = '#F0FDF4';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.borderColor = '#CBD5E1';
+                                  e.currentTarget.style.backgroundColor = '#FFFFFF';
                                 }}
                               >
-                                <option value="1ST_SESSION_PENDING">🟡 1st Class Scheduled</option>
-                                <option value="1ST_SESSION_DONE">🟢 1st Class Completed &amp; Ongoing</option>
-                                <option value="FEE_PAID">💰 Monthly Fee Deposited</option>
-                                <option value="REPLACE_REQ">🔄 Replacement Requested</option>
-                              </select>
+                                <span>{milestoneConfig[currentMilestone]?.label || currentMilestone}</span>
+                                <Edit size={12} color="#0F6E56" />
+                              </button>
 
                               {/* Re-assign alternative tutor button */}
                               <button
@@ -6804,6 +6884,205 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                 }}
               >
                 {confirmModal.confirmText || 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Coordination Milestone Confirmation Modal */}
+      {milestoneModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setMilestoneModal(null);
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '20px',
+              width: '100%',
+              maxWidth: '520px',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 24px 80px rgba(0, 0, 0, 0.35)',
+              overflow: 'hidden',
+              animation: 'modalSlideIn 0.2s ease-out',
+            }}
+          >
+            {/* Modal Header (Fixed) */}
+            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                  🔄 Update Coordination Milestone
+                </h3>
+                <p style={{ fontSize: '0.76rem', color: '#64748B', margin: '2px 0 0 0' }}>
+                  Select current tuition progress milestone with confirmation
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMilestoneModal(null)}
+                aria-label="Close milestone modal"
+                style={{ background: '#F1F5F9', border: 'none', borderRadius: '8px', padding: '0.4rem', cursor: 'pointer', display: 'flex' }}
+              >
+                <X size={16} color="#64748B" />
+              </button>
+            </div>
+
+            {/* Modal Body (Scrollable) */}
+            <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', overflowY: 'auto', flex: 1 }}>
+              {/* Pair Snapshot */}
+              <div style={{ padding: '0.65rem 0.85rem', backgroundColor: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.8rem', color: '#334155' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                  <span>👤 Parent: <strong style={{ textTransform: 'capitalize' }}>{milestoneModal.parentName}</strong></span>
+                  <span>🎓 Tutor: <strong style={{ textTransform: 'capitalize' }}>{milestoneModal.tutorName}</strong></span>
+                </div>
+                <div>
+                  📚 Class: <strong>{milestoneModal.lead.gradeClass}</strong> • 📍 Locality: <strong>{milestoneModal.lead.locality}</strong>
+                </div>
+              </div>
+
+              {/* Select Milestone Option Cards */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Select New Milestone Status:
+                </div>
+
+                {[
+                  { key: '1ST_SESSION_PENDING', icon: '🟡', title: '1st Class Scheduled', desc: 'Demo session is scheduled; awaiting completion.' },
+                  { key: '1ST_SESSION_DONE', icon: '🟢', title: '1st Class Completed & Ongoing', desc: 'Student attended 1st class; tuition ongoing smoothly.' },
+                  { key: 'FEE_PAID', icon: '💰', title: 'Monthly Fee Deposited', desc: 'Parent paid tuition fee; marks lead active & settled.' },
+                  { key: 'REPLACE_REQ', icon: '🔄', title: 'Replacement Requested', desc: 'Parent requested tutor change; unlocks re-allocation.' },
+                ].map((opt) => {
+                  const isSelected = milestoneModal.targetMilestone === opt.key;
+                  return (
+                    <div
+                      key={opt.key}
+                      onClick={() => setMilestoneModal({ ...milestoneModal, targetMilestone: opt.key })}
+                      style={{
+                        padding: '0.6rem 0.85rem',
+                        borderRadius: '10px',
+                        border: isSelected ? '2px solid #0F6E56' : '1.5px solid #E2E8F0',
+                        backgroundColor: isSelected ? '#F0FDF4' : '#FFFFFF',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.65rem',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <span style={{ fontSize: '1.15rem' }}>{opt.icon}</span>
+                        <div>
+                          <div style={{ fontSize: '0.84rem', fontWeight: 800, color: isSelected ? '#065F46' : '#0F172A' }}>
+                            {opt.title}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                            {opt.desc}
+                          </div>
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', flexShrink: 0 }}>
+                          <Check size={11} strokeWidth={3} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Modal Footer Actions (Fixed at bottom) */}
+            <div style={{ padding: '0.85rem 1.25rem', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', backgroundColor: '#F8FAFC', flexShrink: 0 }}>
+              <button
+                type="button"
+                onClick={() => setMilestoneModal(null)}
+                style={{
+                  padding: '0.55rem 0.95rem',
+                  borderRadius: '10px',
+                  border: '1.5px solid #CBD5E1',
+                  backgroundColor: '#FFFFFF',
+                  color: '#475569',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  const targetKey = milestoneModal.targetMilestone;
+                  setLeadCoordMilestones((prev) => ({
+                    ...prev,
+                    [milestoneModal.lead.id]: targetKey,
+                  }));
+
+                  const actorName = adminUser?.name
+                    ? `${adminUser.name} (${portalMode === 'counselor' ? 'Counselor' : 'Admin'})`
+                    : (portalMode === 'counselor' ? 'Counselor Desk' : 'Admin Desk');
+
+                  const statusMap: Record<string, string> = {
+                    '1ST_SESSION_PENDING': 'DEMO_SCHEDULED',
+                    '1ST_SESSION_DONE': 'DEMO_COMPLETED',
+                    'FEE_PAID': 'TUITION_CONFIRMED',
+                    'REPLACE_REQ': 'REPLACEMENT_REQUESTED',
+                  };
+
+                  try {
+                    await fetch(`/api/leads/${milestoneModal.lead.id}/followup`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        status: statusMap[targetKey] || targetKey,
+                        notes: `Milestone updated to: ${milestoneConfig[targetKey]?.label || targetKey}`,
+                        performedBy: actorName,
+                        actionType: 'STATUS_CHANGE',
+                      }),
+                    });
+                  } catch (err) {
+                    console.error('Failed to sync milestone followup:', err);
+                  }
+
+                  setCounselorSuccessMsg(`Successfully updated milestone to "${milestoneConfig[targetKey]?.label || targetKey}" for ${milestoneModal.parentName}`);
+                  setTimeout(() => setCounselorSuccessMsg(''), 3500);
+                  setMilestoneModal(null);
+                  refreshAllData();
+                }}
+                style={{
+                  padding: '0.55rem 1.15rem',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)',
+                  color: '#FFFFFF',
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  boxShadow: '0 4px 14px rgba(15,110,86,0.3)',
+                }}
+              >
+                <Check size={14} />
+                <span>Confirm &amp; Update Status</span>
               </button>
             </div>
           </div>

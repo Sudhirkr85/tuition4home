@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { X, CheckCircle2, ShieldCheck, Phone, Home, Video, Building2, User, ChevronRight, MapPin, Crosshair, Search } from 'lucide-react';
+import { X, CheckCircle2, ShieldCheck, Phone, Home, Video, Building2, User, ChevronRight, MapPin, Crosshair, Search, Globe } from 'lucide-react';
 import SearchableSelect from '@/components/SearchableSelect';
 import { GURGAON_LOCALITIES, SUBJECT_OPTIONS, CLASS_OPTIONS, SSSAM_OFFICE_DETAILS, getSubjectsForClass } from '@/lib/data';
 import 'leaflet/dist/leaflet.css';
@@ -39,12 +39,22 @@ const POPULAR_GURGAON_SECTORS = [
   { name: 'New Gurgaon (Sector 82-84)', landmark: 'Vatika India Next, Mapsko Mount Ville', lat: 28.3895, lng: 76.9655 },
 ];
 
+function formatNameCase(name?: string): string {
+  if (!name) return '';
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ''))
+    .join(' ');
+}
+
 export default function BookingModal({
   isOpen = true,
   onClose,
   isInline = false,
   initialData,
 }: BookingModalProps) {
+  const tutorDisplayName = formatNameCase(initialData?.tutorName);
   const [mode, setMode] = useState<'HOME' | 'ONLINE' | 'CENTER'>(
     initialData?.mode === 'ONLINE' ? 'ONLINE' : initialData?.mode === 'CENTER' ? 'CENTER' : 'HOME'
   );
@@ -318,8 +328,8 @@ export default function BookingModal({
           parentName: parentName || 'Parent (Gurgaon)',
           parentPhone: phone,
           preferredMode: mode === 'HOME' ? 'OFFLINE_HOME' : mode === 'ONLINE' ? 'ONLINE_LIVE' : 'BOTH',
-          locality: mode === 'CENTER' ? 'SSSAM Academy Sector 14 Center' : locality || 'Gurgaon',
-          formattedAddress: formattedAddress || locality || 'Gurgaon',
+          locality: mode === 'CENTER' ? 'SSSAM Academy Sector 14 Center' : mode === 'ONLINE' ? 'Online (Remote / Pan-India)' : locality || 'Gurgaon',
+          formattedAddress: mode === 'ONLINE' ? 'Online Live 1-on-1 Session' : formattedAddress || locality || 'Gurgaon',
           latitude: locationCoords?.lat || null,
           longitude: locationCoords?.lng || null,
           gradeClass: grade,
@@ -386,49 +396,66 @@ export default function BookingModal({
       )}
 
       {!submitted ? (
-        <div style={{ padding: isInline ? '1.85rem 2rem' : '1.65rem 2rem' }}>
+        <div style={{ padding: isInline ? '2rem 2.25rem' : '1.75rem 2.25rem' }}>
           {/* Header */}
-          <div style={{ marginBottom: '1rem', paddingRight: '2.5rem' }}>
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0F172A', margin: 0, lineHeight: 1.25 }}>
-              {initialData?.tutorName ? `Book ${initialData.tutorName}` : 'Request a Home Tutor'}
+          <div style={{ marginBottom: '1.25rem', paddingRight: onClose && !isInline ? '2.5rem' : '0' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.72rem', fontWeight: 800, color: '#0F6E56', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+              <ShieldCheck size={14} color="#0F6E56" />
+              <span>SSSAM ACADEMY OFFICIAL MATCHING</span>
+            </div>
+            <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: 0, lineHeight: 1.25 }}>
+              {tutorDisplayName ? `Book Trial Class with ${tutorDisplayName}` : 'Request a Verified Home & Online Tutor'}
             </h3>
-            <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '4px 0 0 0' }}>
-              Academic counselor calls within <strong>30 minutes</strong> for personalized matching
+            <p style={{ fontSize: '0.86rem', color: '#64748B', margin: '4px 0 0 0' }}>
+              Academic counselor calls within <strong>30 minutes</strong> for personalized teacher alignment.
             </p>
           </div>
 
-          {/* Selected Tutor Mini Strip */}
-          {initialData?.tutorName && (
+          {/* Selected Tutor Premium Card */}
+          {tutorDisplayName && (
             <div style={{
               backgroundColor: '#F0FDF4',
               border: '1.5px solid #BBF7D0',
-              borderRadius: '12px',
-              padding: '0.55rem 0.95rem',
+              borderRadius: '14px',
+              padding: '0.75rem 1rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: '0.5rem',
-              marginBottom: '1rem',
+              gap: '0.75rem',
+              marginBottom: '1.25rem',
+              boxShadow: '0 2px 8px rgba(5,150,105,0.06)',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
-                {initialData.tutorAvatar ? (
-                  <img src={initialData.tutorAvatar} alt={initialData.tutorName} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #059669', flexShrink: 0 }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                {initialData?.tutorAvatar ? (
+                  <img src={initialData.tutorAvatar} alt={tutorDisplayName} style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #059669', flexShrink: 0 }} />
                 ) : (
-                  <User size={18} color="#059669" />
+                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#0F6E56', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1rem', flexShrink: 0 }}>
+                    {tutorDisplayName.charAt(0).toUpperCase()}
+                  </div>
                 )}
-                <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#065F46', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  🎯 Selected: <strong>{initialData.tutorName}</strong> {initialData.tutorRate ? `(₹${initialData.tutorRate}/hr)` : ''}
-                </span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#065F46', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {tutorDisplayName}
+                    </span>
+                    <span style={{ fontSize: '0.68rem', color: '#047857', fontWeight: 700, backgroundColor: '#DCFCE7', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                      ✓ Verified
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.76rem', color: '#047857' }}>
+                    {initialData?.tutorDegree ? `${initialData.tutorDegree} • ` : ''}Target Tutor Request
+                  </div>
+                </div>
               </div>
-              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#047857', backgroundColor: '#DCFCE7', padding: '0.2rem 0.55rem', borderRadius: '6px', flexShrink: 0 }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#047857', backgroundColor: '#DCFCE7', padding: '0.25rem 0.65rem', borderRadius: '6px', flexShrink: 0 }}>
                 Priority Match
               </span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Preferred Mode (Segmented Tabs) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.4rem', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.4rem', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
               {modeOptions.map(({ key, icon, label }) => {
                 const isSelected = mode === key;
                 return (
@@ -437,20 +464,20 @@ export default function BookingModal({
                     type="button"
                     onClick={() => setMode(key)}
                     style={{
-                      padding: '0.6rem 0.4rem',
-                      borderRadius: '9px',
+                      padding: '0.65rem 0.4rem',
+                      borderRadius: '10px',
                       border: 'none',
                       backgroundColor: isSelected ? '#0F6E56' : 'transparent',
                       color: isSelected ? '#FFFFFF' : '#475569',
-                      fontWeight: 700,
-                      fontSize: '0.84rem',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '0.4rem',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
-                      boxShadow: isSelected ? '0 2px 8px rgba(15,110,86,0.25)' : 'none',
+                      boxShadow: isSelected ? '0 4px 12px rgba(15,110,86,0.3)' : 'none',
                     }}
                   >
                     {icon}
@@ -460,14 +487,14 @@ export default function BookingModal({
               })}
             </div>
 
-            {/* Location Row */}
+            {/* Mode-Specific Location / Sector View */}
             {mode === 'HOME' ? (
               <div
                 onClick={() => setShowLocationPicker(true)}
                 style={{
                   border: (locationCoords || formattedAddress || locality) ? '1.5px solid #059669' : '1.5px dashed #CBD5E1',
                   borderRadius: '12px',
-                  padding: '0.65rem 1rem',
+                  padding: '0.75rem 1rem',
                   cursor: 'pointer',
                   backgroundColor: (locationCoords || formattedAddress || locality) ? '#F0FDF4' : '#F8FAFC',
                   display: 'flex',
@@ -482,7 +509,7 @@ export default function BookingModal({
                   <MapPin size={18} color={(locationCoords || formattedAddress || locality) ? '#059669' : '#94A3B8'} style={{ flexShrink: 0 }} />
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: '0.88rem', fontWeight: (locationCoords || formattedAddress || locality) ? 800 : 500, color: (locationCoords || formattedAddress || locality) ? '#0F172A' : '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {formattedAddress || locality || 'Tap to select location on map'}
+                      {formattedAddress || locality || 'Tap to select home sector on map'}
                     </div>
                   </div>
                 </div>
@@ -490,24 +517,48 @@ export default function BookingModal({
                   {(locationCoords || formattedAddress || locality) ? 'Change' : 'Set Location'}
                 </span>
               </div>
+            ) : mode === 'ONLINE' ? (
+              <div
+                style={{
+                  borderRadius: '12px',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: '#F0F9FF',
+                  border: '1.5px solid #BAE6FD',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  fontSize: '0.84rem',
+                  color: '#0369A1',
+                  fontWeight: 700,
+                  minHeight: '48px',
+                }}
+              >
+                <Globe size={18} color="#0284C7" style={{ flexShrink: 0 }} />
+                <span>🌐 Online Live 1-on-1 Class (Connect from anywhere on Zoom/Google Meet)</span>
+              </div>
             ) : (
-              mode !== 'CENTER' && (
-                <select
-                  value={locality}
-                  onChange={(e) => setLocality(e.target.value)}
-                  className="form-control"
-                  style={{ fontSize: '0.9rem', padding: '0.7rem 0.95rem', borderRadius: '12px', minHeight: '48px' }}
-                >
-                  <option value="">Select your sector...</option>
-                  {GURGAON_LOCALITIES.map((l) => (
-                    <option key={l.name} value={l.name}>{l.name}</option>
-                  ))}
-                </select>
-              )
+              <div
+                style={{
+                  borderRadius: '12px',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: '#FEF3C7',
+                  border: '1.5px solid #FDE68A',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  fontSize: '0.84rem',
+                  color: '#92400E',
+                  fontWeight: 700,
+                  minHeight: '48px',
+                }}
+              >
+                <Building2 size={18} color="#D97706" style={{ flexShrink: 0 }} />
+                <span>🏢 SSSAM Center: M24 Ground Floor, Sector 14, Gurugram</span>
+              </div>
             )}
 
-            {/* Class & Subject (2 Columns on Desktop, 1 Column on Mobile) */}
-            <div className="booking-form-grid">
+            {/* Class Selection (Full Width so full text is visible) */}
+            <div>
               <SearchableSelect
                 placeholder="Select Class / Grade..."
                 options={CLASS_OPTIONS}
@@ -521,9 +572,12 @@ export default function BookingModal({
                 }}
                 required
               />
+            </div>
 
+            {/* Subject Selection (Full Width so full text is visible) */}
+            <div>
               <SearchableSelect
-                placeholder={grade ? "Select Subject..." : "Select Class first..."}
+                placeholder={grade ? "Select Subject..." : "Select Class first to view subjects..."}
                 options={grade ? getSubjectsForClass(grade) : SUBJECT_OPTIONS}
                 value={subject}
                 onChange={setSubject}
@@ -537,11 +591,16 @@ export default function BookingModal({
                 <User size={16} style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
                 <input
                   type="text"
-                  placeholder="Your Name *"
+                  placeholder="Your Full Name *"
                   value={parentName}
-                  onChange={(e) => setParentName(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const capitalized = val.replace(/(^|\s)\S/g, (l) => l.toUpperCase());
+                    setParentName(capitalized);
+                  }}
+                  autoCapitalize="words"
                   className="form-control"
-                  style={{ paddingLeft: '2.4rem', fontSize: '0.92rem', paddingBlock: '0.7rem', borderRadius: '12px', minHeight: '48px', width: '100%' }}
+                  style={{ paddingLeft: '2.4rem', fontSize: '0.92rem', paddingBlock: '0.75rem', borderRadius: '12px', minHeight: '48px', width: '100%', border: '1.5px solid #CBD5E1', textTransform: 'capitalize' }}
                   required
                 />
               </div>
@@ -554,15 +613,16 @@ export default function BookingModal({
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   className="form-control"
-                  style={{ paddingLeft: '2.4rem', fontSize: '0.92rem', paddingBlock: '0.7rem', borderRadius: '12px', minHeight: '48px', width: '100%' }}
+                  style={{ paddingLeft: '2.4rem', fontSize: '0.92rem', paddingBlock: '0.75rem', borderRadius: '12px', minHeight: '48px', width: '100%', border: '1.5px solid #CBD5E1' }}
                   required
                 />
               </div>
             </div>
 
             {phoneError && (
-              <div style={{ padding: '0.55rem 0.85rem', borderRadius: '10px', backgroundColor: '#FEE2E2', color: '#DC2626', fontSize: '0.82rem', fontWeight: 700 }}>
-                ⚠️ {phoneError}
+              <div style={{ padding: '0.65rem 0.95rem', borderRadius: '10px', backgroundColor: '#FEE2E2', color: '#DC2626', fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span>⚠️</span>
+                <span>{phoneError}</span>
               </div>
             )}
 
@@ -572,22 +632,38 @@ export default function BookingModal({
               disabled={loading}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                padding: '0.85rem 1.5rem',
+                padding: '0.95rem 1.5rem',
                 borderRadius: '12px',
                 border: 'none',
-                background: loading ? '#94A3B8' : '#0F6E56',
+                background: loading ? '#94A3B8' : 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)',
                 color: '#FFFFFF',
-                fontWeight: 800, fontSize: '0.96rem',
+                fontWeight: 800, fontSize: '1rem',
                 cursor: loading ? 'not-allowed' : 'pointer',
-                boxShadow: loading ? 'none' : '0 4px 16px rgba(15,110,86,0.3)',
+                boxShadow: loading ? 'none' : '0 6px 20px rgba(15,110,86,0.35)',
                 transition: 'all 0.15s ease',
-                marginTop: '0.2rem',
-                minHeight: '48px',
+                marginTop: '0.25rem',
+                minHeight: '50px',
               }}
             >
               <span>{loading ? 'Submitting...' : 'Submit Request — Get Callback'}</span>
-              {!loading && <ChevronRight size={17} />}
+              {!loading && <ChevronRight size={18} />}
             </button>
+
+            {/* Micro-Trust Badges */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.4rem', fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <CheckCircle2 size={13} color="#059669" />
+                <span>Verified Tutors</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <CheckCircle2 size={13} color="#059669" />
+                <span>30-Min Fast Response</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <CheckCircle2 size={13} color="#059669" />
+                <span>100% Parent Privacy</span>
+              </div>
+            </div>
           </form>
         </div>
       ) : (
@@ -682,34 +758,14 @@ export default function BookingModal({
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-            <button
-              type="button"
-              onClick={handleDetectGPS}
-              disabled={isDetectingGPS || isReverseGeocoding}
-              style={{
-                padding: '0.4rem 0.75rem',
-                borderRadius: '999px',
-                border: '1.5px solid #059669',
-                backgroundColor: '#ECFDF5',
-                color: '#047857',
-                fontWeight: 800,
-                fontSize: '0.74rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                boxShadow: '0 2px 6px rgba(5,150,105,0.12)',
-              }}
-            >
-              <Crosshair size={12} />
-              <span>{isDetectingGPS || isReverseGeocoding ? 'Detecting...' : 'Get Current Location'}</span>
-            </button>
-
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <button
               type="button"
               onClick={() => setShowLocationPicker(false)}
-              style={{ background: '#F1F5F9', border: 'none', borderRadius: '10px', padding: '0.4rem', cursor: 'pointer', display: 'flex' }}
+              aria-label="Close location picker"
+              style={{ background: '#F1F5F9', border: 'none', borderRadius: '10px', padding: '0.45rem', cursor: 'pointer', display: 'flex', transition: 'background 0.15s ease' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#E2E8F0'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F1F5F9'; }}
             >
               <X size={18} color="#64748B" />
             </button>
@@ -794,14 +850,76 @@ export default function BookingModal({
           )}
         </div>
 
-        {/* Map */}
-        <div
-          ref={pickerMapRef}
-          style={{ height: '240px', width: '100%', position: 'relative', zIndex: 10, backgroundColor: '#E2E8F0' }}
-        />
+        {/* Map Container with Floating GPS Target Button */}
+        <div style={{ position: 'relative', width: '100%', height: '240px' }}>
+          <div
+            ref={pickerMapRef}
+            style={{ height: '100%', width: '100%', zIndex: 10, backgroundColor: '#E2E8F0' }}
+          />
+
+          <style>{`
+            @keyframes gpsFloatingPulse {
+              0% {
+                box-shadow: 0 0 0 0 rgba(15, 110, 86, 0.65), 0 4px 14px rgba(15, 110, 86, 0.35);
+                transform: scale(1);
+              }
+              50% {
+                box-shadow: 0 0 0 8px rgba(15, 110, 86, 0), 0 6px 20px rgba(15, 110, 86, 0.45);
+                transform: scale(1.05);
+              }
+              100% {
+                box-shadow: 0 0 0 0 rgba(15, 110, 86, 0), 0 4px 14px rgba(15, 110, 86, 0.35);
+                transform: scale(1);
+              }
+            }
+            @keyframes gpsIconSpin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+
+          {/* Sleek Floating Animated GPS Button right on map */}
+          <button
+            type="button"
+            onClick={handleDetectGPS}
+            disabled={isDetectingGPS || isReverseGeocoding}
+            title="Auto-detect current GPS location"
+            style={{
+              position: 'absolute',
+              bottom: '12px',
+              right: '12px',
+              zIndex: 1000,
+              padding: '0.45rem 0.9rem',
+              borderRadius: '999px',
+              border: 'none',
+              background: isDetectingGPS || isReverseGeocoding 
+                ? '#94A3B8' 
+                : 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)',
+              color: '#FFFFFF',
+              fontWeight: 800,
+              fontSize: '0.8rem',
+              cursor: isDetectingGPS || isReverseGeocoding ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              animation: isDetectingGPS || isReverseGeocoding ? 'none' : 'gpsFloatingPulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1)',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <Crosshair
+              size={14}
+              color="#FFFFFF"
+              style={{
+                animation: (isDetectingGPS || isReverseGeocoding) ? 'gpsIconSpin 1s linear infinite' : 'none',
+                flexShrink: 0,
+              }}
+            />
+            <span>{isDetectingGPS || isReverseGeocoding ? 'Locating...' : '📍 My Location'}</span>
+          </button>
+        </div>
 
         {/* Address + Actions */}
-        <div style={{ padding: '1.1rem 1.25rem' }}>
+        <div style={{ padding: '1rem 1.25rem' }}>
           <div style={{
             backgroundColor: '#F8FAFC',
             border: '1px solid #E2E8F0',

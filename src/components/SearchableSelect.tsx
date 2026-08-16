@@ -123,32 +123,87 @@ export default function SearchableSelect({
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
           {value && (
             <button
               type="button"
+              title="Clear selection"
+              aria-label="Clear selection"
               onClick={(e) => {
                 e.stopPropagation();
                 onChange('');
                 setIsOpen(true);
                 inputRef.current?.focus();
               }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: '2px', display: 'flex', alignItems: 'center' }}
+              style={{
+                width: '22px',
+                height: '22px',
+                borderRadius: '50%',
+                backgroundColor: '#FEE2E2',
+                border: '1px solid #FECACA',
+                cursor: 'pointer',
+                color: '#EF4444',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                transform: 'scale(1) rotate(0deg)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#EF4444';
+                e.currentTarget.style.color = '#FFFFFF';
+                e.currentTarget.style.borderColor = '#DC2626';
+                e.currentTarget.style.transform = 'scale(1.15) rotate(90deg)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(239, 68, 68, 0.35)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#FEE2E2';
+                e.currentTarget.style.color = '#EF4444';
+                e.currentTarget.style.borderColor = '#FECACA';
+                e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
-              <X size={14} />
+              <X size={12} strokeWidth={2.8} />
             </button>
           )}
+
+          {value && <div style={{ width: '1px', height: '16px', backgroundColor: '#E2E8F0' }} />}
+
           <button
             type="button"
+            title="Toggle options"
+            aria-label="Toggle options"
             onClick={(e) => {
               e.stopPropagation();
               setIsOpen((prev) => !prev);
             }}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: '2px', display: 'flex', alignItems: 'center' }}
+            style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '6px',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: isOpen ? '#0F6E56' : '#64748B',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#F1F5F9';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
             <ChevronDown
               size={16}
-              color={isOpen ? '#0F6E56' : '#94A3B8'}
+              color={isOpen ? '#0F6E56' : '#64748B'}
+              strokeWidth={2.2}
               style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
             />
           </button>
