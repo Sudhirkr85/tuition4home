@@ -2809,7 +2809,7 @@ export default function TutorProfileDashboard() {
                       <div style={{ fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: 'var(--text-muted)' }}>Document Type:</span>
-                          <strong>{idType === 'AADHAAR' ? 'Aadhaar Card' : idType === 'PAN' ? 'PAN Card' : idType}</strong>
+                          <strong>{idType === 'AADHAAR_MASKED' || idType === 'AADHAAR' ? 'Aadhaar Card (UIDAI)' : idType === 'PAN' ? 'PAN Card' : idType === 'DRIVING_LICENSE' ? 'Driving License (RTO)' : idType}</strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: 'var(--text-muted)' }}>Masked ID Number:</span>
@@ -2849,10 +2849,11 @@ export default function TutorProfileDashboard() {
                               value={idType}
                               onChange={(e) => setIdType(e.target.value)}
                               className="form-control form-control-sm"
-                              style={{ width: '140px', fontSize: '0.78rem' }}
+                              style={{ width: '160px', fontSize: '0.78rem', fontWeight: 600 }}
                             >
-                              <option value="AADHAAR">Aadhaar Card</option>
+                              <option value="AADHAAR_MASKED">Aadhaar Card</option>
                               <option value="PAN">PAN Card</option>
+                              <option value="DRIVING_LICENSE">Driving License</option>
                             </select>
 
                             <label style={{

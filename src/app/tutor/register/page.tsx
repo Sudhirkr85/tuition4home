@@ -110,6 +110,8 @@ export default function TutorRegisterLoginPage() {
   const [college, setCollege] = useState('');
   const [passingYear, setPassingYear] = useState('');
   const [experienceYears, setExperienceYears] = useState(2);
+  const [degreeDocUrl, setDegreeDocUrl] = useState('');
+  const [degreeDocFileName, setDegreeDocFileName] = useState('');
   
   // Selectable lists (stored as arrays)
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
@@ -378,12 +380,18 @@ export default function TutorRegisterLoginPage() {
           if (p.currentStep) setCurrentStep(p.currentStep);
           if (p.teachingMode) setTeachingMode(p.teachingMode);
           if (p.degree) setDegree(p.degree);
-          if (p.experienceYears) setExperienceYears(p.experienceYears);
+          if (p.college) setCollege(p.college);
+          if (p.passingYear) setPassingYear(p.passingYear);
+          if (p.experienceYears !== undefined) setExperienceYears(p.experienceYears);
           if (p.selectedSubjects) setSelectedSubjects(p.selectedSubjects);
           if (p.selectedClasses) setSelectedClasses(p.selectedClasses);
           if (p.selectedBoards) setSelectedBoards(p.selectedBoards);
+          if (p.locationPrefType) setLocationPrefType(p.locationPrefType);
           if (p.serviceAreas) setServiceAreas(p.serviceAreas);
           if (p.travelRadius) setTravelRadius(p.travelRadius);
+          if (p.tutorLatitude) setTutorLatitude(p.tutorLatitude);
+          if (p.tutorLongitude) setTutorLongitude(p.tutorLongitude);
+          if (p.tutorFormattedAddress) setTutorFormattedAddress(p.tutorFormattedAddress);
           if (p.hourlyRateHomeMin) setHourlyRateHomeMin(p.hourlyRateHomeMin);
           if (p.hourlyRateHomeMax) setHourlyRateHomeMax(p.hourlyRateHomeMax);
           if (p.hourlyRateOnlineMin) setHourlyRateOnlineMin(p.hourlyRateOnlineMin);
@@ -391,6 +399,10 @@ export default function TutorRegisterLoginPage() {
           if (p.profilePhotoUrl) setProfilePhotoUrl(p.profilePhotoUrl);
           if (p.introVideoUrl) setIntroVideoUrl(p.introVideoUrl);
           if (p.idType) setIdType(p.idType);
+          if (p.idNumber) setIdNumber(p.idNumber);
+          if (p.idDocUrl) setIdDocUrl(p.idDocUrl);
+          if (p.degreeDocUrl) setDegreeDocUrl(p.degreeDocUrl);
+          if (p.degreeDocFileName) setDegreeDocFileName(p.degreeDocFileName);
         } catch (e) {
           console.error('Failed to parse draft details', e);
         }
@@ -405,12 +417,18 @@ export default function TutorRegisterLoginPage() {
         currentStep,
         teachingMode,
         degree,
+        college,
+        passingYear,
         experienceYears,
         selectedSubjects,
         selectedClasses,
         selectedBoards,
+        locationPrefType,
         serviceAreas,
         travelRadius,
+        tutorLatitude,
+        tutorLongitude,
+        tutorFormattedAddress,
         hourlyRateHomeMin,
         hourlyRateHomeMax,
         hourlyRateOnlineMin,
@@ -418,14 +436,20 @@ export default function TutorRegisterLoginPage() {
         profilePhotoUrl,
         introVideoUrl,
         idType,
+        idNumber,
+        idDocUrl,
+        degreeDocUrl,
+        degreeDocFileName,
       };
       localStorage.setItem(`tutor_draft_${userId}`, JSON.stringify(draftData));
     }
   }, [
-    isLoggedIn, userId, currentStep, teachingMode, degree, experienceYears,
-    selectedSubjects, selectedClasses, selectedBoards, serviceAreas,
-    travelRadius, hourlyRateHomeMin, hourlyRateHomeMax, hourlyRateOnlineMin,
-    hourlyRateOnlineMax, profilePhotoUrl, introVideoUrl, idType
+    isLoggedIn, userId, currentStep, teachingMode, degree, college, passingYear,
+    experienceYears, selectedSubjects, selectedClasses, selectedBoards,
+    locationPrefType, serviceAreas, travelRadius, tutorLatitude, tutorLongitude,
+    tutorFormattedAddress, hourlyRateHomeMin, hourlyRateHomeMax,
+    hourlyRateOnlineMin, hourlyRateOnlineMax, profilePhotoUrl, introVideoUrl,
+    idType, idNumber, idDocUrl, degreeDocUrl, degreeDocFileName
   ]);
 
   // Registration Email OTP Verification States
@@ -707,7 +731,7 @@ export default function TutorRegisterLoginPage() {
   };
 
   // Profile Upload Helpers (reads file as base64 string mock upload)
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'video' | 'kyc') => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'video' | 'kyc' | 'degree') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -723,6 +747,9 @@ export default function TutorRegisterLoginPage() {
       } else if (type === 'kyc') {
         setIdDocUrl(base64String);
         setIdDocFileName(file.name);
+      } else if (type === 'degree') {
+        setDegreeDocUrl(base64String);
+        setDegreeDocFileName(file.name);
       }
     };
     reader.readAsDataURL(file);
@@ -774,6 +801,7 @@ export default function TutorRegisterLoginPage() {
           idType,
           idNumber,
           idDocUrl: idDocUrl || '',
+          degreeDocUrl: degreeDocUrl || '',
           consentMarketing,
           status: 'PENDING_INTERVIEW',
         }),
@@ -1204,6 +1232,46 @@ export default function TutorRegisterLoginPage() {
                           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Verify your email first, then set your account password.</p>
                         </div>
 
+                        {/* Google Quick Registration at the Top */}
+                        <button
+                          type="button"
+                          onClick={handleGoogleLogin}
+                          disabled={loading}
+                          className="btn btn-secondary"
+                          style={{
+                            width: '100%',
+                            padding: '0.85rem 1rem',
+                            borderRadius: '12px',
+                            border: '1.5px solid #CBD5E1',
+                            backgroundColor: '#FFFFFF',
+                            color: '#0F172A',
+                            fontWeight: 700,
+                            fontSize: '0.92rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.6rem',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                          }}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                          </svg>
+                          <span>Register with Google (Instant 1-Click)</span>
+                        </button>
+
+                        {/* Divider */}
+                        <div style={{ position: 'relative', textAlign: 'center', margin: '0.25rem 0' }}>
+                          <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', backgroundColor: 'var(--border-hairline)', zIndex: 0 }} />
+                          <span style={{ position: 'relative', backgroundColor: '#FFFFFF', padding: '0 0.85rem', color: 'var(--text-light)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.04em' }}>
+                            OR REGISTER MANUALLY
+                          </span>
+                        </div>
+
                         <div className="form-group">
                           <label className="form-label">Full Name</label>
                           <div style={{ position: 'relative' }}>
@@ -1261,46 +1329,6 @@ export default function TutorRegisterLoginPage() {
                           {sendingRegOtp ? 'Sending Email Verification Code...' : 'Send Verification Code to Email'}
                           <ArrowRight size={18} />
                         </button>
-
-                        {/* Google Quick Registration / 1-Click Verification */}
-                        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #E2E8F0', textAlign: 'center' }}>
-                          <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
-                            <span style={{ backgroundColor: '#FFFFFF', padding: '0 0.5rem', fontSize: '0.74rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>
-                              OR 1-CLICK VERIFY
-                            </span>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={handleGoogleLogin}
-                            disabled={loading}
-                            className="btn"
-                            style={{
-                              width: '100%',
-                              padding: '0.75rem',
-                              borderRadius: '12px',
-                              border: '1.5px solid #CBD5E1',
-                              backgroundColor: '#FFFFFF',
-                              color: '#0F172A',
-                              fontWeight: 700,
-                              fontSize: '0.88rem',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '0.6rem',
-                              cursor: 'pointer',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-                            }}
-                          >
-                            <svg width="18" height="18" viewBox="0 0 24 24">
-                              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-                              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
-                              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-                              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                            </svg>
-                            <span>Register with Google (Skip Email OTP)</span>
-                          </button>
-                        </div>
                       </form>
                     )}
 
@@ -1581,8 +1609,48 @@ export default function TutorRegisterLoginPage() {
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Access your educator dashboard settings</p>
                     </div>
 
+                    {/* Google Login at the Top */}
+                    <button
+                      type="button"
+                      onClick={handleGoogleLogin}
+                      disabled={loading}
+                      className="btn btn-secondary"
+                      style={{
+                        width: '100%',
+                        justifyContent: 'center',
+                        fontWeight: 700,
+                        padding: '0.85rem 1rem',
+                        fontSize: '0.92rem',
+                        backgroundColor: '#FFFFFF',
+                        border: '1.5px solid #CBD5E1',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                        marginBottom: '1.25rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                      }}
+                    >
+                      {/* Google G logo SVG */}
+                      <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.77c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                      </svg>
+                      <span>Continue with Google</span>
+                    </button>
+
+                    {/* Divider */}
+                    <div style={{ position: 'relative', textAlign: 'center', margin: '1.25rem 0 1.25rem 0' }}>
+                      <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', backgroundColor: 'var(--border-hairline)', zIndex: 0 }} />
+                      <span style={{ position: 'relative', backgroundColor: '#FFFFFF', padding: '0 0.85rem', color: 'var(--text-light)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.04em' }}>
+                        OR SIGN IN WITH EMAIL
+                      </span>
+                    </div>
+
                     {/* Login method selectors */}
-                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
                       <button
                         type="button"
                         onClick={() => { setLoginMethod('password'); setErrorMessage(''); setLoginErrorField(null); }}
@@ -1667,7 +1735,7 @@ export default function TutorRegisterLoginPage() {
                           </div>
                           {loginErrorField && (
                             <div style={{ fontSize: '0.76rem', color: '#EF4444', fontWeight: 700, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span>⚠️ Incorrect email/mobile or password. Please verify.</span>
+                              <span>⚠️ Incorrect email or password. Please verify.</span>
                             </div>
                           )}
                         </div>
@@ -1731,28 +1799,6 @@ export default function TutorRegisterLoginPage() {
                         </button>
                       </form>
                     )}
-
-                    <div style={{ position: 'relative', textAlign: 'center', margin: '2rem 0 1.5rem 0' }}>
-                      <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', backgroundColor: 'var(--border-hairline)', zIndex: 0 }} />
-                      <span style={{ position: 'relative', backgroundColor: '#FFFFFF', padding: '0 1rem', color: 'var(--text-light)', fontSize: '0.8rem', fontWeight: 600 }}>OR SOCIAL ACCESS</span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleGoogleLogin}
-                      disabled={loading}
-                      className="btn btn-secondary"
-                      style={{ width: '100%', justifyContent: 'center', fontWeight: 700 }}
-                    >
-                      {/* Google G logo SVG */}
-                      <svg width="18" height="18" viewBox="0 0 24 24" style={{ marginRight: '6px' }}>
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.77c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
-                      </svg>
-                      <span>Continue with Google</span>
-                    </button>
                   </div>
                 )}
 
@@ -1962,6 +2008,60 @@ export default function TutorRegisterLoginPage() {
                           required
                         />
                       </div>
+
+                      {/* Mandatory Highest Qualification Degree / Marksheet Document Upload */}
+                      <div
+                        id="field-degreeDoc"
+                        className="form-group"
+                        style={{
+                          backgroundColor: wizardErrorField === 'field-degreeDoc' ? '#FEF2F2' : '#F8FAFC',
+                          border: wizardErrorField === 'field-degreeDoc' ? '2px solid #EF4444' : '1.5px dashed #CBD5E1',
+                          borderRadius: '12px',
+                          padding: '1rem',
+                          marginTop: '0.25rem',
+                          boxShadow: wizardErrorField === 'field-degreeDoc' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                          <label className="form-label" style={{ margin: 0, fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <FileText size={16} color="var(--brand-teal)" />
+                            Highest Qualification Degree / Marksheet Proof <span style={{ color: '#DC2626' }}>*</span>
+                          </label>
+                          {degreeDocFileName && (
+                            <span style={{ fontSize: '0.74rem', color: '#0F6E56', fontWeight: 800 }}>
+                              ✓ Attached
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
+                          Upload Degree, Marksheet, or Certificate (PNG, JPG, or PDF). Required for tutor profile verification.
+                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            id="degreeDocUpload"
+                            onChange={(e) => {
+                              handleFileChange(e, 'degree');
+                              if (wizardErrorField === 'field-degreeDoc') setWizardErrorField(null);
+                            }}
+                            style={{ display: 'none' }}
+                          />
+                          <label
+                            htmlFor="degreeDocUpload"
+                            className="btn btn-secondary"
+                            style={{ padding: '0.5rem 1rem', fontSize: '0.84rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                          >
+                            <Upload size={15} />
+                            {degreeDocFileName ? 'Change Degree Document' : 'Upload Degree / Marksheet Proof'}
+                          </label>
+                          {degreeDocFileName && (
+                            <span style={{ fontSize: '0.82rem', color: '#0F172A', fontWeight: 600 }}>
+                              📄 {degreeDocFileName}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -2001,13 +2101,66 @@ export default function TutorRegisterLoginPage() {
                       <div className="form-group">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                           <label className="form-label" style={{ margin: 0 }}>
-                            Subjects Taught <span style={{ color: '#DC2626' }}>*</span> (Search or Add Custom)
+                            Subjects Taught <span style={{ color: '#DC2626' }}>*</span>
                           </label>
                           <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
                             Selected: <strong style={{ color: '#0F6E56' }}>{selectedSubjects.length}</strong>
                           </span>
                         </div>
-                        
+
+                        {/* 🔥 Most Popular / High-Demand Quick Selection */}
+                        <div style={{ marginBottom: '0.85rem', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '12px', padding: '0.75rem 0.85rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.55rem' }}>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#166534', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              🔥 Most Searched Subjects in Gurgaon:
+                            </span>
+                            <span style={{ fontSize: '0.72rem', color: '#15803D' }}>(Tap to quickly add)</span>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                            {[
+                              'Mathematics',
+                              'Physics',
+                              'Chemistry',
+                              'Biology',
+                              'English Language & Literature',
+                              'All Primary Subjects (Class 1 - 5)',
+                              'Science (Class 1 - 10 Combined)',
+                              'Computer Science & Python',
+                              'Social Science (History, Geo, Civics, Eco)',
+                              'Accountancy & Bookkeeping',
+                              'Economics & Microeconomics',
+                              'French / German / Spanish Language',
+                              'JEE Main & Advanced Maths',
+                              'NEET Biology Prep',
+                              'Coding & AI for Kids',
+                              'Abacus & Vedic Mathematics',
+                            ].map(popularSub => {
+                              const isSelected = selectedSubjects.includes(popularSub);
+                              return (
+                                <button
+                                  key={popularSub}
+                                  type="button"
+                                  onClick={() => toggleSelection(popularSub, selectedSubjects, setSelectedSubjects)}
+                                  className="pill-interactive-btn"
+                                  style={{
+                                    padding: '0.32rem 0.7rem',
+                                    borderRadius: '8px',
+                                    border: isSelected ? '1.5px solid #0F6E56' : '1px solid #86EFAC',
+                                    background: isSelected ? 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)' : '#FFFFFF',
+                                    color: isSelected ? '#FFFFFF' : '#14532D',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    boxShadow: isSelected ? '0 3px 8px rgba(15, 110, 86, 0.22)' : '0 1px 2px rgba(0,0,0,0.03)',
+                                  }}
+                                >
+                                  {isSelected ? '✓ ' : '+ '}{popularSub}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
                         {/* Active Subjects Pills */}
                         {selectedSubjects.length > 0 && (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
@@ -2063,7 +2216,7 @@ export default function TutorRegisterLoginPage() {
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <input
                             type="text"
-                            placeholder="Search standard subjects..."
+                            placeholder="Search more subjects (e.g. Psychology, Sanskrit)..."
                             value={subjectSearch}
                             onChange={(e) => setSubjectSearch(e.target.value)}
                             className="form-control"
@@ -2138,7 +2291,7 @@ export default function TutorRegisterLoginPage() {
                       <div className="form-group">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                           <label className="form-label" style={{ margin: 0 }}>
-                            Grade / Classes Taught <span style={{ color: '#DC2626' }}>*</span>
+                            Grade / Classes Taught <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 500 }}>(Optional for Languages / Skills)</span>
                           </label>
                           <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
                             Selected: <strong style={{ color: '#0284C7' }}>{selectedClasses.length}</strong>
@@ -2251,7 +2404,7 @@ export default function TutorRegisterLoginPage() {
                       <div className="form-group">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                           <label className="form-label" style={{ margin: 0 }}>
-                            Affiliated Boards Taught <span style={{ color: '#DC2626' }}>*</span>
+                            Affiliated Boards Taught <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 500 }}>(Optional for Languages / Skills)</span>
                           </label>
                           <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
                             Selected: <strong style={{ color: '#7C3AED' }}>{selectedBoards.length}</strong>
@@ -3483,18 +3636,14 @@ export default function TutorRegisterLoginPage() {
                                 triggerWizardError('field-experienceYears', '⚠️ Total Teaching Experience (Years) is mandatory.');
                                 return;
                               }
+                              if (!degreeDocUrl && !degreeDocFileName) {
+                                triggerWizardError('field-degreeDoc', '⚠️ Highest Qualification Degree / Marksheet Document is MANDATORY. Please upload your degree certificate or marksheet.');
+                                return;
+                              }
                             }
                             if (currentStep === 2) {
                               if (selectedSubjects.length === 0) {
                                 triggerWizardError('field-subjects', '⚠️ Please select at least one Subject you teach.');
-                                return;
-                              }
-                              if (selectedClasses.length === 0) {
-                                triggerWizardError('field-classes', '⚠️ Please select at least one Class / Grade you teach.');
-                                return;
-                              }
-                              if (selectedBoards.length === 0) {
-                                triggerWizardError('field-boards', '⚠️ Please select at least one Board (e.g. CBSE, ICSE, IB).');
                                 return;
                               }
                             }
