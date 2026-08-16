@@ -13,10 +13,13 @@ export async function PATCH(
     const {
       gradeClass,
       subjectsNeeded,
+      budgetMonthly,
+      commissionAmount,
+      status,
       performedBy = 'Counselor Desk',
     } = body;
 
-    if (!gradeClass && !subjectsNeeded) {
+    if (gradeClass === undefined && subjectsNeeded === undefined && budgetMonthly === undefined && commissionAmount === undefined && status === undefined) {
       return NextResponse.json(
         { success: false, error: 'No fields provided to update.' },
         { status: 400 }
@@ -34,32 +37,40 @@ export async function PATCH(
       );
     }
 
-    const newGrade = gradeClass?.trim() || currentLead.gradeClass;
+    const newGrade = gradeClass !== undefined ? (gradeClass.trim() || currentLead.gradeClass) : currentLead.gradeClass;
     let newSubjects = currentLead.subjectsNeeded;
-    if (subjectsNeeded) {
+    if (subjectsNeeded !== undefined) {
       if (Array.isArray(subjectsNeeded)) {
         newSubjects = JSON.stringify(subjectsNeeded);
       } else {
         newSubjects = subjectsNeeded.trim();
       }
     }
+    const newBudget = budgetMonthly !== undefined ? Number(budgetMonthly) : currentLead.budgetMonthly;
+    const newCommission = commissionAmount !== undefined ? Number(commissionAmount) : currentLead.commissionAmount;
+    const newStatus = status !== undefined ? status : currentLead.status;
 
     // Direct MySQL Update to avoid schema lock issues
     await prisma.$executeRawUnsafe(
-      'UPDATE `Lead` SET gradeClass = ?, subjectsNeeded = ?, updatedAt = NOW() WHERE id = ?',
+      'UPDATE `Lead` SET gradeClass = ?, subjectsNeeded = ?, budgetMonthly = ?, commissionAmount = ?, status = ?, updatedAt = NOW() WHERE id = ?',
       newGrade,
       newSubjects,
+      newBudget,
+      newCommission,
+      newStatus,
       leadId
     );
 
     // Log Activity
     const activityId = `act-${Date.now()}`;
-    const activityDesc = `Updated Class & Subjects to: ${newGrade} | ${newSubjects}`;
+    const activityDesc = budgetMonthly !== undefined
+      ? `Updated Tuition Fee to ₹${newBudget} (Commission: ₹${newCommission || 0})`
+      : `Updated Class & Subjects to: ${newGrade} | ${newSubjects}`;
     try {
       await prisma.leadActivity.create({
         data: {
           leadId,
-          actionType: 'NOTE_ADDED',
+          actionType: budgetMonthly !== undefined ? 'STATUS_CHANGED' : 'NOTE_ADDED',
           description: activityDesc,
           performedBy,
         },

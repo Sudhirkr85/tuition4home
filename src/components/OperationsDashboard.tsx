@@ -192,6 +192,13 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
   const [tutorPayoutModeInput, setTutorPayoutModeInput] = useState('UPI Transfer');
   const [tutorPayoutTxnInput, setTutorPayoutTxnInput] = useState('');
 
+  // Edit Tuition Fee & Margin Modal
+  const [feeEditModalItem, setFeeEditModalItem] = useState<FeeLedgerItem | null>(null);
+  const [feeEditAmountInput, setFeeEditAmountInput] = useState<number>(0);
+  const [feeEditCommissionInput, setFeeEditCommissionInput] = useState<number>(0);
+  const [feeEditCommissionType, setFeeEditCommissionType] = useState<'PERCENT' | 'FLAT'>('PERCENT');
+  const [savingFeeEdit, setSavingFeeEdit] = useState(false);
+
   // Pricing & campaign config state
   const [basePrice, setBasePrice] = useState(999);
   const [isOfferActive, setIsOfferActive] = useState(true);
@@ -388,10 +395,12 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
         const dynamicLedgers: FeeLedgerItem[] = data.leads
           .filter((l: any) => l.status === 'TUITION_CONFIRMED' || l.status === 'FEE_PAID' || l.status === 'DEMO_SCHEDULED' || l.status === 'DEMO_COMPLETED' || l.assignedTutor)
           .map((l: any) => {
-            const monthlyFee = Number(l.budgetMonthly) || 8000;
-            const commRate = 25;
-            const commAmt = Math.round(monthlyFee * (commRate / 100));
-            const tutorPayout = monthlyFee - commAmt;
+            const monthlyFee = Number(l.budgetMonthly) || 0;
+            const commAmt = l.commissionAmount !== null && l.commissionAmount !== undefined && Number(l.commissionAmount) > 0
+              ? Number(l.commissionAmount)
+              : (monthlyFee > 0 ? Math.round(monthlyFee * 0.25) : 0);
+            const commRate = monthlyFee > 0 ? Math.round((commAmt / monthlyFee) * 100) : 25;
+            const tutorPayout = Math.max(0, monthlyFee - commAmt);
             const isPaid = l.status === 'TUITION_CONFIRMED' || l.status === 'FEE_PAID';
             const cleanLeadId = String(l.id).replace('LD-', '');
             const tutorDisplayName = typeof l.assignedTutor === 'string' && l.assignedTutor.trim()
@@ -5196,8 +5205,36 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
 
                               {/* 2. Parent Advance Fee */}
                               <td style={{ padding: '0.85rem 1rem' }}>
-                                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: isParentPaid ? '#15803D' : '#B45309' }}>
-                                  ₹{rec.monthlyFee.toLocaleString('en-IN')}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                  <div style={{ fontSize: '0.94rem', fontWeight: 800, color: rec.monthlyFee > 0 ? (isParentPaid ? '#15803D' : '#0F172A') : '#94A3B8' }}>
+                                    {rec.monthlyFee > 0 ? `₹${rec.monthlyFee.toLocaleString('en-IN')}` : '₹0 (Set Fee)'}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setFeeEditModalItem(rec);
+                                      setFeeEditAmountInput(rec.monthlyFee || 0);
+                                      setFeeEditCommissionInput(rec.commissionAmount || (rec.monthlyFee ? Math.round(rec.monthlyFee * 0.25) : 0));
+                                      setFeeEditCommissionType('PERCENT');
+                                    }}
+                                    title="Edit Agreed Fee & Commission Split"
+                                    style={{
+                                      border: '1px solid #CBD5E1',
+                                      backgroundColor: '#F8FAFC',
+                                      borderRadius: '6px',
+                                      padding: '2px 5px',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '2px',
+                                      fontSize: '0.68rem',
+                                      fontWeight: 700,
+                                      color: '#0F6E56',
+                                    }}
+                                  >
+                                    <Edit3 size={11} />
+                                    <span>Edit</span>
+                                  </button>
                                 </div>
                                 <div style={{ marginTop: '3px' }}>
                                   {isParentPaid ? (
@@ -5255,6 +5292,34 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                               {/* 5. Actions */}
                               <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                  {/* Quick Edit Fee Button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setFeeEditModalItem(rec);
+                                      setFeeEditAmountInput(rec.monthlyFee || 0);
+                                      setFeeEditCommissionInput(rec.commissionAmount || (rec.monthlyFee ? Math.round(rec.monthlyFee * 0.25) : 0));
+                                      setFeeEditCommissionType('PERCENT');
+                                    }}
+                                    title="Edit Fee & Margin"
+                                    style={{
+                                      padding: '0.35rem 0.65rem',
+                                      borderRadius: '7px',
+                                      border: '1px solid #CBD5E1',
+                                      backgroundColor: '#FFFFFF',
+                                      color: '#334155',
+                                      fontSize: '0.74rem',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem',
+                                    }}
+                                  >
+                                    <Edit3 size={12} color="#0F6E56" />
+                                    <span>Edit Fee</span>
+                                  </button>
+
                                   {!isParentPaid ? (
                                     <>
                                       {/* WhatsApp Fee Reminder */}
@@ -5859,6 +5924,244 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                   }}
                 >
                   ✓ Confirm Payout Settled
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT TUITION FEE & MARGIN SPLIT */}
+      {feeEditModalItem && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 1200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+          onClick={() => setFeeEditModalItem(null)}
+        >
+          <div
+            className="apple-card"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '20px',
+              padding: '1.75rem',
+              boxShadow: '0 20px 45px rgba(0,0,0,0.2)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
+                  ✏️ Edit Tuition Fee & Split
+                </h3>
+                <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '2px' }}>
+                  {feeEditModalItem.parentName} • {feeEditModalItem.gradeClass} ({feeEditModalItem.subjects})
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFeeEditModalItem(null)}
+                style={{ border: 'none', background: '#F1F5F9', borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer' }}
+              >
+                <X size={15} color="#64748B" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setSavingFeeEdit(true);
+                try {
+                  const res = await fetch(`/api/leads/${feeEditModalItem.leadId}/update`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      budgetMonthly: feeEditAmountInput,
+                      commissionAmount: feeEditCommissionInput,
+                      performedBy: 'Accounts Desk',
+                    }),
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    const commRate = feeEditAmountInput > 0 ? Math.round((feeEditCommissionInput / feeEditAmountInput) * 100) : 25;
+                    const tutorPayout = Math.max(0, feeEditAmountInput - feeEditCommissionInput);
+                    setFeeRecords((prev) =>
+                      prev.map((f) =>
+                        f.id === feeEditModalItem.id
+                          ? {
+                              ...f,
+                              monthlyFee: feeEditAmountInput,
+                              commissionAmount: feeEditCommissionInput,
+                              commissionRate: commRate,
+                              tutorPayoutAmount: tutorPayout,
+                            }
+                          : f
+                      )
+                    );
+                    setCounselorSuccessMsg(`✓ Saved tuition fee of ₹${feeEditAmountInput.toLocaleString('en-IN')} & margin split to database!`);
+                    setTimeout(() => setCounselorSuccessMsg(''), 4000);
+                    setFeeEditModalItem(null);
+                  } else {
+                    alert(data.error || 'Failed to update fee.');
+                  }
+                } catch {
+                  alert('Failed to connect to server.');
+                } finally {
+                  setSavingFeeEdit(false);
+                }
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}
+            >
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Agreed Monthly Tuition Fee (₹)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step={100}
+                  value={feeEditAmountInput}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setFeeEditAmountInput(val);
+                    if (feeEditCommissionType === 'PERCENT') {
+                      setFeeEditCommissionInput(Math.round(val * 0.25));
+                    }
+                  }}
+                  className="form-control"
+                  style={{ borderRadius: '10px', fontWeight: 800, fontSize: '1.15rem', color: '#0F172A' }}
+                  placeholder="e.g. 8000"
+                  required
+                />
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155' }}>
+                    Academy Margin (₹)
+                  </label>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFeeEditCommissionType('PERCENT');
+                        setFeeEditCommissionInput(Math.round(feeEditAmountInput * 0.25));
+                      }}
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        border: '1px solid #CBD5E1',
+                        backgroundColor: feeEditCommissionType === 'PERCENT' ? '#0F172A' : '#FFFFFF',
+                        color: feeEditCommissionType === 'PERCENT' ? '#FFFFFF' : '#475569',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      25%
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFeeEditCommissionType('PERCENT');
+                        setFeeEditCommissionInput(Math.round(feeEditAmountInput * 0.20));
+                      }}
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        border: '1px solid #CBD5E1',
+                        backgroundColor: '#FFFFFF',
+                        color: '#475569',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      20%
+                    </button>
+                  </div>
+                </div>
+                <input
+                  type="number"
+                  min={0}
+                  value={feeEditCommissionInput}
+                  onChange={(e) => {
+                    setFeeEditCommissionInput(Number(e.target.value));
+                    setFeeEditCommissionType('FLAT');
+                  }}
+                  className="form-control"
+                  style={{ borderRadius: '10px', fontWeight: 800, fontSize: '1.05rem', color: '#0284C7' }}
+                  placeholder="e.g. 2000"
+                />
+                <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '3px' }}>
+                  {feeEditAmountInput > 0
+                    ? `Academy retains ${Math.round((feeEditCommissionInput / feeEditAmountInput) * 100)}% of total tuition fee.`
+                    : 'Set total tuition fee first.'}
+                </div>
+              </div>
+
+              {/* Tutor Payout Preview */}
+              <div style={{
+                backgroundColor: '#F8FAFC',
+                borderRadius: '12px',
+                padding: '0.85rem 1rem',
+                border: '1px solid #E2E8F0',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}>
+                <div>
+                  <div style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 700 }}>TUTOR NET PAYOUT</div>
+                  <div style={{ fontSize: '0.8rem', color: '#0F172A', fontWeight: 600 }}>{feeEditModalItem.tutorName}</div>
+                </div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#15803D' }}>
+                  ₹{Math.max(0, feeEditAmountInput - feeEditCommissionInput).toLocaleString('en-IN')}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setFeeEditModalItem(null)}
+                  style={{
+                    flex: 1,
+                    padding: '0.65rem',
+                    borderRadius: '10px',
+                    border: '1px solid #CBD5E1',
+                    backgroundColor: '#FFFFFF',
+                    color: '#334155',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingFeeEdit}
+                  style={{
+                    flex: 2,
+                    padding: '0.65rem',
+                    borderRadius: '10px',
+                    backgroundColor: 'var(--brand-teal)',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(15, 110, 86, 0.25)',
+                  }}
+                >
+                  {savingFeeEdit ? 'Saving...' : '💾 Save Fee to Database'}
                 </button>
               </div>
             </form>
