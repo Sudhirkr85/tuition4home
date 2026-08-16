@@ -99,6 +99,8 @@ export default function TutorRegisterLoginPage() {
   // Profile Wizard Form State
   const [teachingMode, setTeachingMode] = useState<'BOTH' | 'OFFLINE_HOME' | 'ONLINE_LIVE'>('BOTH');
   const [degree, setDegree] = useState('');
+  const [college, setCollege] = useState('');
+  const [passingYear, setPassingYear] = useState('');
   const [experienceYears, setExperienceYears] = useState(2);
   
   // Selectable lists (stored as arrays)
@@ -607,7 +609,12 @@ export default function TutorRegisterLoginPage() {
 
   const handleFinalSubmit = async () => {
     if (!agreeTerms) {
-      setErrorMessage('Please read and agree to the Terms & Conditions and Privacy Policy first.');
+      setErrorMessage('⚠️ Please read and agree to the Terms & Conditions and Privacy Policy first.');
+      return;
+    }
+    if (!idDocUrl && !idDocFileName) {
+      setErrorMessage('⚠️ ID Document Proof is MANDATORY. Please upload your ID proof in Step 6.');
+      setCurrentStep(6);
       return;
     }
     setLoading(true);
@@ -620,7 +627,14 @@ export default function TutorRegisterLoginPage() {
         body: JSON.stringify({
           userId,
           teachingMode,
-          highestDegree: degree,
+          highestDegree: degree.trim(),
+          qualifications: degree.trim() ? [{
+            id: '1',
+            degree: degree.trim(),
+            institute: college.trim(),
+            year: passingYear.trim(),
+            grade: ''
+          }] : [],
           experienceYears,
           subjects: selectedSubjects,
           classes: selectedClasses,
@@ -638,7 +652,7 @@ export default function TutorRegisterLoginPage() {
           introVideoUrl: introVideoUrl || '/placeholder-video.mp4',
           idType,
           idNumber,
-          idDocUrl: idDocUrl || '/placeholder-doc.jpg',
+          idDocUrl: idDocUrl || '',
           status: 'PENDING_INTERVIEW',
         }),
       });
@@ -1609,11 +1623,13 @@ export default function TutorRegisterLoginPage() {
                       </div>
 
                       <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                        <label className="form-label">Highest Qualification / Degree</label>
+                        <label className="form-label">
+                          Highest Qualification / Degree <span style={{ color: '#DC2626' }}>*</span>
+                        </label>
                         <div style={{ position: 'relative' }}>
                           <input
                             type="text"
-                            placeholder="e.g. M.Sc. in Physics (Delhi University) or B.Tech CS (IIT)"
+                            placeholder="e.g. B.Tech Computer Science or M.Sc Physics"
                             value={degree}
                             onChange={(e) => setDegree(e.target.value)}
                             className="form-control"
@@ -1623,8 +1639,33 @@ export default function TutorRegisterLoginPage() {
                         </div>
                       </div>
 
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                        <div className="form-group">
+                          <label className="form-label">College / University Name</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. IIT Delhi, DU, GGSIPU"
+                            value={college}
+                            onChange={(e) => setCollege(e.target.value)}
+                            className="form-control"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Passing Year</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 2022"
+                            value={passingYear}
+                            onChange={(e) => setPassingYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                            className="form-control"
+                          />
+                        </div>
+                      </div>
+
                       <div className="form-group">
-                        <label className="form-label">Total Teaching Experience (Years)</label>
+                        <label className="form-label">
+                          Total Teaching Experience (Years) <span style={{ color: '#DC2626' }}>*</span>
+                        </label>
                         <input
                           type="number"
                           min={0}
@@ -1652,7 +1693,9 @@ export default function TutorRegisterLoginPage() {
 
                       {/* Subjects Section */}
                       <div className="form-group">
-                        <label className="form-label">Subjects Taught (Search or Add Custom)</label>
+                        <label className="form-label">
+                          Subjects Taught <span style={{ color: '#DC2626' }}>*</span> (Search or Add Custom)
+                        </label>
                         
                         {/* Active Subjects Pills */}
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
@@ -1754,7 +1797,9 @@ export default function TutorRegisterLoginPage() {
 
                       {/* Classes Grid */}
                       <div className="form-group">
-                        <label className="form-label">Grade / Classes Taught</label>
+                        <label className="form-label">
+                          Grade / Classes Taught <span style={{ color: '#DC2626' }}>*</span>
+                        </label>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
                           {selectedClasses.map(cl => (
                             <span key={cl} style={{
@@ -1831,7 +1876,9 @@ export default function TutorRegisterLoginPage() {
 
                       {/* Educational Boards */}
                       <div className="form-group">
-                        <label className="form-label">Affiliated Boards Taught</label>
+                        <label className="form-label">
+                          Affiliated Boards Taught <span style={{ color: '#DC2626' }}>*</span>
+                        </label>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
                           {selectedBoards.map(bd => (
                             <span key={bd} style={{
@@ -1920,7 +1967,9 @@ export default function TutorRegisterLoginPage() {
                       </p>
 
                       <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                        <label className="form-label">Preferred Gurgaon Sectors / Areas</label>
+                        <label className="form-label">
+                          Preferred Gurgaon Sectors / Areas <span style={{ color: '#DC2626' }}>*</span>
+                        </label>
                         
                         {/* Active Sector Pills */}
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
@@ -2348,8 +2397,8 @@ export default function TutorRegisterLoginPage() {
                             <li>Keep it strictly between 60 to 90 seconds.</li>
                           </ul>
                         </div>
-                      </div>
 
+                      </div>
                     </div>
                   )}
 
@@ -2358,19 +2407,22 @@ export default function TutorRegisterLoginPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                       <div>
                         <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.45rem' }}>
-                          Step 6: Identity Verification (KYC)
+                          Step 6: Identity Verification (KYC) <span style={{ color: '#DC2626' }}>*</span>
                         </h3>
                         <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-                          Enter your document details. Your documents are securely encrypted in our database.
+                          Upload your government ID to complete verification. Documents are securely encrypted.
                         </p>
                       </div>
 
                       <div className="form-group">
-                        <label className="form-label">Select ID Type</label>
+                        <label className="form-label" style={{ fontWeight: 700 }}>
+                          Select ID Type <span style={{ color: '#DC2626' }}>*</span>
+                        </label>
                         <select
                           value={idType}
                           onChange={(e) => { setIdType(e.target.value); setIdNumber(''); }}
                           className="form-control"
+                          style={{ fontWeight: 600 }}
                         >
                           <option value="AADHAAR_MASKED">Aadhaar Card (UIDAI)</option>
                           <option value="PAN">PAN Card (Income Tax Dept)</option>
@@ -2379,8 +2431,8 @@ export default function TutorRegisterLoginPage() {
                       </div>
 
                       <div className="form-group">
-                        <label className="form-label">
-                          {idType === 'AADHAAR_MASKED' ? '12-Digit Aadhaar Number' : idType === 'PAN' ? '10-Character PAN' : 'Document ID Number'}
+                        <label className="form-label" style={{ fontWeight: 700 }}>
+                          {idType === 'AADHAAR_MASKED' ? '12-Digit Aadhaar Number' : idType === 'PAN' ? '10-Character PAN Number' : 'Document ID Number'} <span style={{ color: '#DC2626' }}>*</span>
                         </label>
                         <input
                           type="text"
@@ -2400,38 +2452,84 @@ export default function TutorRegisterLoginPage() {
                           className="form-control"
                           style={{ letterSpacing: idType === 'AADHAAR_MASKED' ? '0.12rem' : undefined, fontWeight: 700 }}
                         />
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                          {idType === 'AADHAAR_MASKED' ? 'Must be 12 numerical digits.' : idType === 'PAN' ? 'Must be 10 characters (e.g. ABCDE1234F).' : 'Enter your registered license number.'}
+                        </span>
                       </div>
 
+                      {/* Mandatory Document Photo Upload */}
                       <div className="form-group">
-                        <label className="form-label">Upload Document Photo</label>
+                        <label className="form-label" style={{ fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span>
+                            Upload Government ID Document Photo <span style={{ color: '#DC2626' }}>* (Mandatory)</span>
+                          </span>
+                          {idDocFileName ? (
+                            <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                              <CheckCircle2 size={14} color="#059669" /> Document Attached
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.72rem', color: '#DC2626', fontWeight: 700 }}>
+                              Required to proceed
+                            </span>
+                          )}
+                        </label>
+
                         <div style={{
-                          padding: '1.25rem',
-                          borderRadius: '12px',
-                          border: '1.5px dashed var(--border-hairline)',
-                          backgroundColor: '#F8FAFC',
+                          padding: '1.4rem',
+                          borderRadius: '14px',
+                          border: idDocFileName ? '2px solid #059669' : '2px dashed #DC2626',
+                          backgroundColor: idDocFileName ? '#F0FDF4' : '#FEF2F2',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
                           textAlign: 'center',
-                          gap: '0.5rem',
+                          gap: '0.6rem',
+                          transition: 'all 0.2s ease',
                         }}>
-                          <ShieldCheck size={28} color="var(--brand-teal)" />
-                          <div>
-                            <input 
-                              type="file" 
-                              accept="image/*,application/pdf" 
-                              id="kyc-upload" 
-                              onChange={(e) => handleFileChange(e, 'kyc')} 
-                              style={{ display: 'none' }} 
-                            />
-                            <label htmlFor="kyc-upload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
-                              <Upload size={14} />
-                              <span>Select Document Photo</span>
-                            </label>
-                          </div>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                            {idDocFileName ? `Selected: ${idDocFileName}` : 'Format: JPG, PNG, PDF. Max size: 5MB.'}
-                          </span>
+                          {idDocFileName ? (
+                            <>
+                              <div style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <CheckCircle2 size={24} color="#059669" />
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>
+                                  {idDocFileName}
+                                </div>
+                                <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 600, marginTop: '2px' }}>
+                                  ✓ Document ready for verification
+                                </div>
+                              </div>
+                              <label htmlFor="kyc-upload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', marginTop: '0.25rem' }}>
+                                <Upload size={13} />
+                                <span>Change / Re-upload Document</span>
+                              </label>
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <ShieldCheck size={24} color="#DC2626" />
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#991B1B' }}>
+                                  Upload Front Side of {idType === 'AADHAAR_MASKED' ? 'Aadhaar' : idType === 'PAN' ? 'PAN' : 'License'}
+                                </div>
+                                <div style={{ fontSize: '0.74rem', color: '#B91C1C', marginTop: '2px' }}>
+                                  Clear JPG, PNG, or PDF file (Max 5MB)
+                                </div>
+                              </div>
+                              <label htmlFor="kyc-upload" className="btn btn-primary btn-sm" style={{ backgroundColor: '#DC2626', borderColor: '#DC2626', cursor: 'pointer', marginTop: '0.25rem' }}>
+                                <Upload size={14} />
+                                <span>Select Document File *</span>
+                              </label>
+                            </>
+                          )}
+                          <input 
+                            type="file" 
+                            accept="image/jpeg,image/png,image/webp,application/pdf" 
+                            id="kyc-upload" 
+                            onChange={(e) => handleFileChange(e, 'kyc')} 
+                            style={{ display: 'none' }} 
+                          />
                         </div>
                       </div>
 
@@ -2543,22 +2641,59 @@ export default function TutorRegisterLoginPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          // Basic validation per step
-                          if (currentStep === 1 && (!degree || !experienceYears)) {
-                            setErrorMessage('Please enter your highest degree and experience.');
-                            return;
+                          // Comprehensive step validations
+                          if (currentStep === 1) {
+                            if (!degree.trim()) {
+                              setErrorMessage('⚠️ Highest Qualification / Degree is mandatory.');
+                              return;
+                            }
+                            if (experienceYears === undefined || isNaN(experienceYears) || experienceYears < 0) {
+                              setErrorMessage('⚠️ Total Teaching Experience (Years) is mandatory.');
+                              return;
+                            }
                           }
-                          if (currentStep === 2 && (selectedSubjects.length === 0 || selectedClasses.length === 0 || selectedBoards.length === 0)) {
-                            setErrorMessage('Please select at least one subject, class, and board.');
-                            return;
+                          if (currentStep === 2) {
+                            if (selectedSubjects.length === 0) {
+                              setErrorMessage('⚠️ Please select at least one Subject you teach.');
+                              return;
+                            }
+                            if (selectedClasses.length === 0) {
+                              setErrorMessage('⚠️ Please select at least one Class / Grade you teach.');
+                              return;
+                            }
+                            if (selectedBoards.length === 0) {
+                              setErrorMessage('⚠️ Please select at least one Board (e.g. CBSE, ICSE, IB).');
+                              return;
+                            }
                           }
                           if (currentStep === 3 && serviceAreas.length === 0) {
-                            setErrorMessage('Please select at least one preferred sector.');
+                            setErrorMessage('⚠️ Please select at least one preferred sector/area in Gurgaon.');
                             return;
                           }
-                          if (currentStep === 6 && (!idNumber || !idDocUrl)) {
-                            setErrorMessage('Please input your government ID number and upload the ID document photo.');
-                            return;
+                          if (currentStep === 4) {
+                            if (!hourlyRateHome || Number(hourlyRateHome) <= 0) {
+                              setErrorMessage('⚠️ Expected Hourly Rate is mandatory.');
+                              return;
+                            }
+                          }
+                          if (currentStep === 6) {
+                            const cleanId = idNumber.replace(/\s+/g, '');
+                            if (!cleanId) {
+                              setErrorMessage('⚠️ Government ID Number is mandatory.');
+                              return;
+                            }
+                            if (idType === 'AADHAAR_MASKED' && cleanId.length !== 12) {
+                              setErrorMessage('⚠️ Please enter a valid 12-digit Aadhaar Number (12 digits required).');
+                              return;
+                            }
+                            if (idType === 'PAN' && cleanId.length !== 10) {
+                              setErrorMessage('⚠️ Please enter a valid 10-character PAN Number (e.g. ABCDE1234F).');
+                              return;
+                            }
+                            if (!idDocUrl && !idDocFileName) {
+                              setErrorMessage('⚠️ ID Document Proof is MANDATORY! Please upload your ID document photo/PDF before proceeding.');
+                              return;
+                            }
                           }
 
                           setErrorMessage('');

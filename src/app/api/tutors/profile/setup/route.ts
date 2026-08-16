@@ -44,6 +44,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Tutor profile not found.' }, { status: 404 });
     }
 
+    // Validation: Mandatory ID document photo when submitting onboarding profile
+    if (status === 'PENDING_INTERVIEW' && !profile.isVerified) {
+      const hasExistingDoc = profile.kycDoc && profile.kycDoc.idDocUrl && profile.kycDoc.idDocUrl !== '/placeholder-doc.jpg';
+      if (!idDocUrl && !hasExistingDoc) {
+        return NextResponse.json({
+          success: false,
+          error: '⚠️ Government ID Document Proof is MANDATORY. Please upload your ID document photo or PDF to proceed.'
+        }, { status: 400 });
+      }
+    }
+
     // Security Rule: If tutor has been DEACTIVATED/SUSPENDED by Admin, prevent tutor from self-activating
     if (((profile.status as string) === 'SUSPENDED' || (profile.status as string) === 'DEACTIVATED' || (profile.status as string) === 'REJECTED') && body.isAvailable === true) {
       return NextResponse.json({

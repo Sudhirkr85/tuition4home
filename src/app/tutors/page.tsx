@@ -945,10 +945,55 @@ export default function TutorsDirectoryPage() {
                       gap: '0.5rem',
                     }}>
                       <div>
-                        <div style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: 600 }}>ESTIMATED FEE RANGE</div>
-                        <div style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
-                          ₹{tutor.hourlyRateHome} – ₹{Math.round((tutor.hourlyRateHome * 1.4) / 50) * 50}<span style={{ fontSize: '0.74rem', fontWeight: 500, color: '#64748B' }}>/hr</span>
+                        <div style={{ fontSize: '0.66rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '2px', letterSpacing: '0.04em' }}>
+                          ESTIMATED FEE
                         </div>
+
+                        {(!tutor.teachingMode || tutor.teachingMode === 'BOTH' || (tutor.hourlyRateHome && tutor.hourlyRateOnline)) ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                            {/* Home Tuition Rate */}
+                            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '2px', backgroundColor: '#F0FDF4', padding: '2px 6px', borderRadius: '6px' }}>
+                              <span style={{ fontSize: '0.7rem', color: '#0F6E56', fontWeight: 800 }}>🏠 Home:</span>
+                              <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
+                                {tutor.hourlyRateHomeMin && tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMin !== tutor.hourlyRateHomeMax
+                                  ? `₹${tutor.hourlyRateHomeMin}–${tutor.hourlyRateHomeMax}`
+                                  : `₹${tutor.hourlyRateHome || tutor.hourlyRateHomeMin || 600}`}
+                              </span>
+                              <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
+                            </div>
+
+                            {/* Online Tuition Rate */}
+                            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '2px', backgroundColor: '#F0F9FF', padding: '2px 6px', borderRadius: '6px' }}>
+                              <span style={{ fontSize: '0.7rem', color: '#0284C7', fontWeight: 800 }}>💻 Online:</span>
+                              <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
+                                {tutor.hourlyRateOnlineMin && tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMin !== tutor.hourlyRateOnlineMax
+                                  ? `₹${tutor.hourlyRateOnlineMin}–${tutor.hourlyRateOnlineMax}`
+                                  : `₹${tutor.hourlyRateOnline || tutor.hourlyRateOnlineMin || 400}`}
+                              </span>
+                              <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
+                            </div>
+                          </div>
+                        ) : tutor.teachingMode === 'ONLINE_LIVE' ? (
+                          <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '3px', backgroundColor: '#F0F9FF', padding: '3px 8px', borderRadius: '6px' }}>
+                            <span style={{ fontSize: '0.74rem', color: '#0284C7', fontWeight: 800 }}>💻 Online 1-on-1:</span>
+                            <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
+                              {tutor.hourlyRateOnlineMin && tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMin !== tutor.hourlyRateOnlineMax
+                                ? `₹${tutor.hourlyRateOnlineMin} – ₹${tutor.hourlyRateOnlineMax}`
+                                : `₹${tutor.hourlyRateOnline || tutor.hourlyRateOnlineMin || 400}`}
+                            </span>
+                            <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '3px', backgroundColor: '#F0FDF4', padding: '3px 8px', borderRadius: '6px' }}>
+                            <span style={{ fontSize: '0.74rem', color: '#0F6E56', fontWeight: 800 }}>🏠 Home Visit:</span>
+                            <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
+                              {tutor.hourlyRateHomeMin && tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMin !== tutor.hourlyRateHomeMax
+                                ? `₹${tutor.hourlyRateHomeMin} – ₹${tutor.hourlyRateHomeMax}`
+                                : `₹${tutor.hourlyRateHome || tutor.hourlyRateHomeMin || 600}`}
+                            </span>
+                            <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
+                          </div>
+                        )}
                       </div>
 
                       <div style={{ display: 'flex', gap: '0.4rem' }}>

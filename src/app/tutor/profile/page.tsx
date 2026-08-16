@@ -375,24 +375,18 @@ export default function TutorProfileDashboard() {
             setQualifications([{
               id: '1',
               degree: prof.highestDegree,
-              institute: 'Delhi University / Reputed College',
-              year: '2021',
-              grade: 'First Division'
+              institute: '',
+              year: '',
+              grade: ''
             }]);
+          } else {
+            setQualifications([]);
           }
 
           if (prof.experiences && prof.experiences.length > 0) {
             setExperiences(prof.experiences);
-          } else if (prof.experienceYears > 0) {
-            setExperiences([{
-              id: '1',
-              role: 'Senior Private Educator & Subject Expert',
-              organization: 'Gurgaon Home & Online Tutoring',
-              startYear: `${new Date().getFullYear() - (prof.experienceYears || 3)}`,
-              endYear: 'Present',
-              isCurrent: true,
-              description: 'Providing personalized one-on-one conceptual learning and test preparation for students.'
-            }]);
+          } else {
+            setExperiences([]);
           }
 
           setSelectedSubjects(prof.subjects || []);

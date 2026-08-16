@@ -591,17 +591,29 @@ export default async function TutorProfilePage({ params }: PageProps) {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '0.4rem' }}>
                   <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0F172A' }}>
-                    ₹{tutorData.hourlyRateHome} – ₹{Math.round((tutorData.hourlyRateHome * 1.4) / 50) * 50}
+                    {tutorData.hourlyRateHomeMin && tutorData.hourlyRateHomeMax && tutorData.hourlyRateHomeMin !== tutorData.hourlyRateHomeMax ? (
+                      <>₹{tutorData.hourlyRateHomeMin} – ₹{tutorData.hourlyRateHomeMax}</>
+                    ) : tutorData.hourlyRateHomeMin ? (
+                      <>₹{tutorData.hourlyRateHomeMin}</>
+                    ) : tutorData.hourlyRateHome ? (
+                      <>₹{tutorData.hourlyRateHome}</>
+                    ) : (
+                      <>₹500 – ₹1,000</>
+                    )}
                   </div>
                   <div style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600 }}>/ hr (Home Visit)</div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '1.25rem' }}>
                   <div style={{ fontSize: '0.82rem', color: '#047857', fontWeight: 600, padding: '0.35rem 0.65rem', backgroundColor: '#F0FDF4', borderRadius: '6px' }}>
-                    💻 Online 1-on-1: ₹{tutorData.hourlyRateOnline} – ₹{Math.round((tutorData.hourlyRateOnline * 1.3) / 50) * 50}/hr
+                    💻 Online 1-on-1: {tutorData.hourlyRateOnlineMin && tutorData.hourlyRateOnlineMax && tutorData.hourlyRateOnlineMin !== tutorData.hourlyRateOnlineMax ? (
+                      <>₹{tutorData.hourlyRateOnlineMin} – ₹{tutorData.hourlyRateOnlineMax}</>
+                    ) : (
+                      <>₹{tutorData.hourlyRateOnline || 400}</>
+                    )}/hr
                   </div>
                   <div style={{ fontSize: '0.8rem', color: '#64748B', paddingLeft: '0.35rem' }}>
-                    📦 Monthly approx: ₹{tutorData.monthlyRateMin} – ₹{Math.round((tutorData.monthlyRateMin * 1.5) / 500) * 500}/mo
+                    📦 Monthly approx: ₹{tutorData.monthlyRateMin || 6000} – ₹{(tutorData.monthlyRateMin || 6000) * 1.4}/mo
                   </div>
                 </div>
 

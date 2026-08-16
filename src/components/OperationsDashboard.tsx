@@ -386,20 +386,25 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
         setLeads(data.leads);
         // Build dynamic fee ledgers from confirmed real database leads
         const dynamicLedgers: FeeLedgerItem[] = data.leads
-          .filter((l: any) => l.status === 'TUITION_CONFIRMED' || l.status === 'FEE_PAID' || l.status === 'DEMO_SCHEDULED')
+          .filter((l: any) => l.status === 'TUITION_CONFIRMED' || l.status === 'FEE_PAID' || l.status === 'DEMO_SCHEDULED' || l.status === 'DEMO_COMPLETED' || l.assignedTutor)
           .map((l: any) => {
-            const monthlyFee = l.budgetMax || l.budgetMin || 8000;
+            const monthlyFee = Number(l.budgetMonthly) || 8000;
             const commRate = 25;
             const commAmt = Math.round(monthlyFee * (commRate / 100));
             const tutorPayout = monthlyFee - commAmt;
             const isPaid = l.status === 'TUITION_CONFIRMED' || l.status === 'FEE_PAID';
+            const cleanLeadId = String(l.id).replace('LD-', '');
+            const tutorDisplayName = typeof l.assignedTutor === 'string' && l.assignedTutor.trim()
+              ? l.assignedTutor
+              : l.assignedTutor?.name || 'Assigned Educator';
+
             return {
-              id: `FEE-${l.id.replace('LD-', '')}`,
+              id: `FEE-${cleanLeadId}`,
               leadId: l.id,
               parentName: l.parentName || 'Parent (Gurgaon)',
               parentPhone: l.parentPhone || 'N/A',
-              gradeClass: l.grade || 'Tuition Inquiry',
-              subjects: Array.isArray(l.subjects) ? l.subjects.join(', ') : (l.subjects || 'General'),
+              gradeClass: l.gradeClass || l.grade || 'Academic Tuition',
+              subjects: l.subjectsNeeded || (Array.isArray(l.subjects) ? l.subjects.join(', ') : (l.subjects || 'All Subjects')),
               locality: l.locality || 'Gurgaon',
               monthlyFee,
               parentStatus: isPaid ? 'RECEIVED' : 'PENDING',
@@ -407,8 +412,8 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
               parentPaidDate: isPaid ? 'Recent' : undefined,
               commissionRate: commRate,
               commissionAmount: commAmt,
-              tutorName: l.assignedTutor?.name || 'Assigned Educator',
-              tutorPhone: l.assignedTutor?.phone || 'N/A',
+              tutorName: tutorDisplayName,
+              tutorPhone: l.assignedTutorPhone || l.assignedTutor?.phone || 'N/A',
               tutorPayoutAmount: tutorPayout,
               tutorStatus: 'PENDING'
             };

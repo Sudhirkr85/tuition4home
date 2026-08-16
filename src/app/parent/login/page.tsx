@@ -23,6 +23,7 @@ import {
   User,
   HeartHandshake,
 } from 'lucide-react';
+import { signIn } from 'next-auth/react';
 import { SSSAM_OFFICE_DETAILS } from '@/lib/data';
 
 export default function ParentLoginPage() {
@@ -168,10 +169,10 @@ export default function ParentLoginPage() {
     setLoading(true);
     setErrorMsg('');
     try {
-      const { signIn } = await import('next-auth/react');
       await signIn('google', { callbackUrl: '/parent/dashboard' });
-    } catch {
-      setErrorMsg('Google login connection error.');
+    } catch (err: any) {
+      console.error('Google Sign In Error:', err);
+      setErrorMsg('Google login connection error. Please verify Google OAuth setup.');
       setLoading(false);
     }
   };
