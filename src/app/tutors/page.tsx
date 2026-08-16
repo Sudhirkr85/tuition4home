@@ -708,7 +708,7 @@ export default function TutorsDirectoryPage() {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: '#059669', fontWeight: 700 }}>
                 <ShieldCheck size={16} />
-                <span>100% Background Verified by SSSAM Academy</span>
+                <span>100% Background Verified by TuitionForHome</span>
               </div>
             </div>
 

@@ -630,52 +630,11 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <button
                   type="button"
-                  onClick={() => {
-                    if ('geolocation' in navigator) {
-                      setIsReverseGeocoding(true);
-                      navigator.geolocation.getCurrentPosition(
-                        async (pos) => {
-                          const lat = pos.coords.latitude;
-                          const lng = pos.coords.longitude;
-                          setPopupCoords({ lat, lng });
-                          if (leafletPopupMapInstanceRef.current && leafletPopupMarkerRef.current) {
-                            leafletPopupMapInstanceRef.current.setView([lat, lng], 16);
-                            leafletPopupMarkerRef.current.setLatLng([lat, lng]);
-                          }
-                          const addr = await handleReverseGeocode(lat, lng);
-                          setPopupAddress(addr);
-                          setIsReverseGeocoding(false);
-                        },
-                        () => setIsReverseGeocoding(false),
-                        { enableHighAccuracy: true, timeout: 8000 }
-                      );
-                    }
-                  }}
-                  disabled={isReverseGeocoding}
-                  style={{
-                    padding: '0.45rem 0.85rem',
-                    borderRadius: '999px',
-                    border: '1.5px solid #059669',
-                    backgroundColor: '#ECFDF5',
-                    color: '#047857',
-                    fontWeight: 800,
-                    fontSize: '0.76rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    boxShadow: '0 2px 8px rgba(5,150,105,0.12)',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <Crosshair size={13} />
-                  <span>{isReverseGeocoding ? 'Detecting...' : 'Get Current Location'}</span>
-                </button>
-
-                <button
-                  type="button"
                   onClick={() => setShowLocationPopup(false)}
-                  style={{ background: '#F1F5F9', border: 'none', borderRadius: '10px', padding: '0.4rem', cursor: 'pointer', display: 'flex' }}
+                  aria-label="Close location popup"
+                  style={{ background: '#F1F5F9', border: 'none', borderRadius: '10px', padding: '0.45rem', cursor: 'pointer', display: 'flex', transition: 'background 0.15s ease' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#E2E8F0'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F1F5F9'; }}
                 >
                   <X size={18} color="#64748B" />
                 </button>
@@ -760,11 +719,93 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
               )}
             </div>
 
-            {/* Popup Map */}
-            <div
-              ref={popupMapRef}
-              style={{ height: '240px', width: '100%', position: 'relative', zIndex: 10, backgroundColor: '#E2E8F0' }}
-            />
+            {/* Popup Map Container with Floating Animated GPS Radar Pill */}
+            <div style={{ position: 'relative', width: '100%', height: '240px' }}>
+              <div
+                ref={popupMapRef}
+                style={{ height: '100%', width: '100%', zIndex: 10, backgroundColor: '#E2E8F0' }}
+              />
+
+              <style>{`
+                @keyframes gpsFloatingPulseMap {
+                  0% {
+                    box-shadow: 0 0 0 0 rgba(15, 110, 86, 0.65), 0 4px 14px rgba(15, 110, 86, 0.35);
+                    transform: scale(1);
+                  }
+                  50% {
+                    box-shadow: 0 0 0 8px rgba(15, 110, 86, 0), 0 6px 20px rgba(15, 110, 86, 0.45);
+                    transform: scale(1.05);
+                  }
+                  100% {
+                    box-shadow: 0 0 0 0 rgba(15, 110, 86, 0), 0 4px 14px rgba(15, 110, 86, 0.35);
+                    transform: scale(1);
+                  }
+                }
+                @keyframes gpsIconSpinMap {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+              `}</style>
+
+              {/* Sleek Floating Animated GPS Button right on map */}
+              <button
+                type="button"
+                onClick={() => {
+                  if ('geolocation' in navigator) {
+                    setIsReverseGeocoding(true);
+                    navigator.geolocation.getCurrentPosition(
+                      async (pos) => {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        setPopupCoords({ lat, lng });
+                        if (leafletPopupMapInstanceRef.current && leafletPopupMarkerRef.current) {
+                          leafletPopupMapInstanceRef.current.setView([lat, lng], 16);
+                          leafletPopupMarkerRef.current.setLatLng([lat, lng]);
+                        }
+                        const addr = await handleReverseGeocode(lat, lng);
+                        setPopupAddress(addr);
+                        setIsReverseGeocoding(false);
+                      },
+                      () => setIsReverseGeocoding(false),
+                      { enableHighAccuracy: true, timeout: 8000 }
+                    );
+                  }
+                }}
+                disabled={isReverseGeocoding}
+                title="Auto-detect current GPS location"
+                style={{
+                  position: 'absolute',
+                  bottom: '12px',
+                  right: '12px',
+                  zIndex: 1000,
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: '999px',
+                  border: 'none',
+                  background: isReverseGeocoding 
+                    ? '#94A3B8' 
+                    : 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: '0.8rem',
+                  cursor: isReverseGeocoding ? 'wait' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  animation: isReverseGeocoding ? 'none' : 'gpsFloatingPulseMap 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <Crosshair
+                  size={14}
+                  color="#FFFFFF"
+                  style={{
+                    animation: isReverseGeocoding ? 'gpsIconSpinMap 1s linear infinite' : 'none',
+                    flexShrink: 0,
+                  }}
+                />
+                <span>{isReverseGeocoding ? 'Locating...' : '📍 My Location'}</span>
+              </button>
+            </div>
 
             {/* Address Details & Confirm */}
             <div style={{ padding: '1.25rem 1.5rem' }}>

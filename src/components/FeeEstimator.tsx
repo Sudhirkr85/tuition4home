@@ -225,7 +225,7 @@ export default function FeeEstimator({ onBookWithEstimate }: FeeEstimatorProps) 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.75rem', fontSize: '0.85rem', color: '#CBD5E1' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Check size={16} color="#34D399" />
-                    <span>Background-checked educator verified by SSSAM Academy</span>
+                    <span>Background-checked educator verified by TuitionForHome</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Check size={16} color="#34D399" />

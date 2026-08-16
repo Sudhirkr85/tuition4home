@@ -1,5 +1,6 @@
 'use client';
 
+import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -100,6 +101,7 @@ export default function TutorRegisterLoginPage() {
   // Profile Wizard Form State
   const [teachingMode, setTeachingMode] = useState<'BOTH' | 'OFFLINE_HOME' | 'ONLINE_LIVE'>('BOTH');
   const [degree, setDegree] = useState('');
+  const [specialization, setSpecialization] = useState('');
   const [college, setCollege] = useState('');
   const [passingYear, setPassingYear] = useState('');
   const [experienceYears, setExperienceYears] = useState(2);
@@ -119,8 +121,24 @@ export default function TutorRegisterLoginPage() {
   // Search query states for filtering list options
   const [subjectSearch, setSubjectSearch] = useState('');
   const [areaSearch, setAreaSearch] = useState('');
+  const [tutorModalSearch, setTutorModalSearch] = useState('');
+  const [tutorModalSearchResults, setTutorModalSearchResults] = useState<Array<{ name: string; landmark: string; lat: number; lng: number }>>([]);
+  const [wizardErrorField, setWizardErrorField] = useState<string | null>(null);
+
+  const triggerWizardError = (fieldId: string, message: string) => {
+    setErrorMessage(message);
+    setWizardErrorField(fieldId);
+    setTimeout(() => {
+      const el = document.getElementById(fieldId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus();
+      }
+    }, 60);
+  };
   
   // Step 3: Locations & Travel
+  const [locationPrefType, setLocationPrefType] = useState<'BOTH' | 'SECTORS' | 'RADIUS'>('BOTH');
   const [travelRadius, setTravelRadius] = useState(5);
   const [tutorLatitude, setTutorLatitude] = useState<number | null>(null);
   const [tutorLongitude, setTutorLongitude] = useState<number | null>(null);
@@ -148,12 +166,34 @@ export default function TutorRegisterLoginPage() {
 
   // Init tutor location picker map
   useEffect(() => {
-    if (!leafletLib || !showTutorLocationPicker || !tutorPickerMapRef.current || tutorPickerMap) return;
+    if (!leafletLib || !showTutorLocationPicker || !tutorPickerMapRef.current) return;
+    
+    if (tutorPickerMap) {
+      try { tutorPickerMap.remove(); } catch (e) {}
+      setTutorPickerMap(null);
+    }
+    if ((tutorPickerMapRef.current as any)._leaflet_id) {
+      delete (tutorPickerMapRef.current as any)._leaflet_id;
+    }
+
     const timer = setTimeout(() => {
       if (!tutorPickerMapRef.current) return;
-      const center = tutorLatitude && tutorLongitude ? [tutorLatitude, tutorLongitude] : [28.4728, 77.0345];
-      const pMap = leafletLib.map(tutorPickerMapRef.current, { center, zoom: 15, zoomControl: true, attributionControl: false });
-      leafletLib.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(pMap);
+      if ((tutorPickerMapRef.current as any)._leaflet_id) {
+        delete (tutorPickerMapRef.current as any)._leaflet_id;
+      }
+      const center = tutorLatitude && tutorLongitude ? [tutorLatitude, tutorLongitude] : [28.4595, 77.0266];
+      const pMap = leafletLib.map(tutorPickerMapRef.current, {
+        center,
+        zoom: 17,
+        zoomControl: true,
+        attributionControl: false,
+      });
+      leafletLib.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        subdomains: 'abcd',
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        keepBuffer: 8,
+      }).addTo(pMap);
       const markerIcon = leafletLib.divIcon({
         className: 'tutor-loc-pin',
         html: '<div style="display:flex;flex-direction:column;align-items:center;"><div style="width:36px;height:36px;border-radius:50%;background:#0F6E56;border:3px solid #FFF;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(15,110,86,0.5);cursor:grab;"><div style="width:12px;height:12px;border-radius:50%;background:#FFF;"></div></div><div style="width:3px;height:12px;background:#0F6E56;margin-top:-2px;"></div></div>',
@@ -178,13 +218,48 @@ export default function TutorRegisterLoginPage() {
         setIsTutorReverseGeocoding(false);
       });
       setTutorPickerMap(pMap);
+      setTimeout(() => { if (pMap) pMap.invalidateSize(); }, 50);
+      setTimeout(() => { if (pMap) pMap.invalidateSize(); }, 200);
+      setTimeout(() => { if (pMap) pMap.invalidateSize(); }, 500);
+
+      // Auto-fetch Live GPS if location is not yet set
+      if (!tutorLatitude && typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+        setIsDetectingTutorGPS(true);
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            setTutorLatitude(lat);
+            setTutorLongitude(lng);
+            if (pMap && marker) {
+              pMap.setView([lat, lng], 17);
+              marker.setLatLng([lat, lng]);
+              setTimeout(() => { if (pMap) pMap.invalidateSize(); }, 100);
+            }
+            setIsTutorReverseGeocoding(true);
+            const addr = await tutorReverseGeocode(lat, lng);
+            setTutorFormattedAddress(addr);
+            setIsTutorReverseGeocoding(false);
+            setIsDetectingTutorGPS(false);
+          },
+          () => {
+            setIsDetectingTutorGPS(false);
+          },
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      }
     }, 150);
     return () => clearTimeout(timer);
   }, [leafletLib, showTutorLocationPicker]);
 
   useEffect(() => {
     if (!showTutorLocationPicker && tutorPickerMap) {
-      tutorPickerMap.remove(); setTutorPickerMap(null); tutorPickerMarkerRef.current = null;
+      try { tutorPickerMap.remove(); } catch (e) {}
+      setTutorPickerMap(null);
+      tutorPickerMarkerRef.current = null;
+      if (tutorPickerMapRef.current && (tutorPickerMapRef.current as any)._leaflet_id) {
+        delete (tutorPickerMapRef.current as any)._leaflet_id;
+      }
     }
   }, [showTutorLocationPicker]);
   
@@ -974,13 +1049,13 @@ export default function TutorRegisterLoginPage() {
                     {/* Part 1: Motivation */}
                     <div style={{ marginBottom: '1rem' }}>
                       <strong style={{ display: 'block', fontSize: '0.82rem', color: 'var(--brand-teal)', marginBottom: '0.35rem' }}>
-                        🤝 SSSAM Tutor Promise
+                        🤝 TuitionForHome Tutor Promise
                       </strong>
                       <span style={{ fontSize: '0.78rem', color: '#E2E8F0', fontWeight: 700, display: 'block', marginBottom: '0.25rem' }}>
                         &ldquo;Guaranteed On-Time Payments &amp; Zero Fee Hassle&rdquo;
                       </span>
                       <span style={{ fontSize: '0.7rem', color: '#94A3B8', lineHeight: 1.45, display: 'block' }}>
-                        SSSAM Academy handles parent negotiations and manages advance fee collection, guaranteeing your payouts on-time. You focus purely on delivering excellence in teaching!
+                        TuitionForHome handles parent negotiations and manages advance fee collection, guaranteeing your payouts on-time. You focus purely on delivering excellence in teaching!
                       </span>
                     </div>
 
@@ -1136,6 +1211,46 @@ export default function TutorRegisterLoginPage() {
                           {sendingRegOtp ? 'Sending Email Verification Code...' : 'Send Verification Code to Email'}
                           <ArrowRight size={18} />
                         </button>
+
+                        {/* Google Quick Registration / 1-Click Verification */}
+                        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #E2E8F0', textAlign: 'center' }}>
+                          <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
+                            <span style={{ backgroundColor: '#FFFFFF', padding: '0 0.5rem', fontSize: '0.74rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>
+                              OR 1-CLICK VERIFY
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={handleGoogleLogin}
+                            disabled={loading}
+                            className="btn"
+                            style={{
+                              width: '100%',
+                              padding: '0.75rem',
+                              borderRadius: '12px',
+                              border: '1.5px solid #CBD5E1',
+                              backgroundColor: '#FFFFFF',
+                              color: '#0F172A',
+                              fontWeight: 700,
+                              fontSize: '0.88rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.6rem',
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                            }}
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24">
+                              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                            </svg>
+                            <span>Register with Google (Skip Email OTP)</span>
+                          </button>
+                        </div>
                       </form>
                     )}
 
@@ -1237,12 +1352,29 @@ export default function TutorRegisterLoginPage() {
                         </div>
 
                         <div className="form-group">
-                          <label className="form-label">Create Password</label>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                            <label className="form-label" style={{ margin: 0 }}>Create Password</label>
+                            {regPassword.length > 0 && (() => {
+                              const isLen = regPassword.length >= 8;
+                              const isMix = /[a-z]/.test(regPassword) && /[A-Z]/.test(regPassword);
+                              const isNum = /\d/.test(regPassword);
+                              const isSpec = /[^A-Za-z0-9]/.test(regPassword);
+                              const score = [isLen, isMix, isNum, isSpec].filter(Boolean).length;
+                              const labels = ['', 'Weak', 'Fair', 'Good', 'Strong Password'];
+                              const colors = ['', '#EF4444', '#F97316', '#F59E0B', '#10B981'];
+                              return (
+                                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: colors[score] || '#64748B' }}>
+                                  {labels[score] || 'Weak'}
+                                </span>
+                              );
+                            })()}
+                          </div>
+
                           <div style={{ position: 'relative' }}>
                             <input
                               type={showRegPassword ? 'text' : 'password'}
                               required
-                              placeholder="Minimum 6 characters"
+                              placeholder="Create a strong password (8+ chars)"
                               value={regPassword}
                               onChange={(e) => {
                                 setRegPassword(e.target.value);
@@ -1254,12 +1386,12 @@ export default function TutorRegisterLoginPage() {
                                 paddingRight: '2.5rem',
                                 borderColor: (regConfirmPassword.length > 0 && regPassword !== regConfirmPassword) || regErrorField === 'password'
                                   ? '#EF4444'
-                                  : (regConfirmPassword.length > 0 && regPassword === regConfirmPassword && regPassword.length >= 6)
+                                  : (regConfirmPassword.length > 0 && regPassword === regConfirmPassword && regPassword.length >= 8)
                                   ? '#10B981'
                                   : undefined,
                                 boxShadow: (regConfirmPassword.length > 0 && regPassword !== regConfirmPassword) || regErrorField === 'password'
                                   ? '0 0 0 3px rgba(239, 68, 68, 0.18)'
-                                  : (regConfirmPassword.length > 0 && regPassword === regConfirmPassword && regPassword.length >= 6)
+                                  : (regConfirmPassword.length > 0 && regPassword === regConfirmPassword && regPassword.length >= 8)
                                   ? '0 0 0 3px rgba(16, 185, 129, 0.18)'
                                   : undefined,
                               }}
@@ -1269,7 +1401,7 @@ export default function TutorRegisterLoginPage() {
                               color={
                                 (regConfirmPassword.length > 0 && regPassword !== regConfirmPassword) || regErrorField === 'password'
                                   ? '#EF4444'
-                                  : (regConfirmPassword.length > 0 && regPassword === regConfirmPassword && regPassword.length >= 6)
+                                  : (regConfirmPassword.length > 0 && regPassword === regConfirmPassword && regPassword.length >= 8)
                                   ? '#10B981'
                                   : "var(--text-light)"
                               }
@@ -1283,11 +1415,53 @@ export default function TutorRegisterLoginPage() {
                               {showRegPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                           </div>
-                          {regPassword.length > 0 && regPassword.length < 6 && (
-                            <div style={{ fontSize: '0.74rem', color: '#EAB308', fontWeight: 600, marginTop: '0.3rem' }}>
-                              ⚠️ Password must be at least 6 characters
-                            </div>
-                          )}
+
+                          {/* Dynamic Password Strength Progress Bar */}
+                          {regPassword.length > 0 && (() => {
+                            const isLen = regPassword.length >= 8;
+                            const isMix = /[a-z]/.test(regPassword) && /[A-Z]/.test(regPassword);
+                            const isNum = /\d/.test(regPassword);
+                            const isSpec = /[^A-Za-z0-9]/.test(regPassword);
+                            const score = [isLen, isMix, isNum, isSpec].filter(Boolean).length;
+                            const colors = ['#E2E8F0', '#EF4444', '#F97316', '#F59E0B', '#10B981'];
+                            const widthPercent = (score / 4) * 100;
+
+                            return (
+                              <div style={{ marginTop: '0.45rem' }}>
+                                <div style={{ width: '100%', height: '4px', backgroundColor: '#F1F5F9', borderRadius: '999px', overflow: 'hidden' }}>
+                                  <div style={{
+                                    height: '100%',
+                                    width: `${Math.max(15, widthPercent)}%`,
+                                    backgroundColor: colors[score] || '#EF4444',
+                                    borderRadius: '999px',
+                                    transition: 'all 0.25s ease',
+                                  }} />
+                                </div>
+
+                                {/* Security Criteria Checklist Chips (Only show while building password; hide once Strong) */}
+                                {score < 4 && (
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem', marginTop: '0.5rem' }}>
+                                    <div style={{ fontSize: '0.72rem', fontWeight: 600, color: isLen ? '#059669' : '#94A3B8', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                      <span>{isLen ? '✓' : '○'}</span>
+                                      <span>8+ Characters</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.72rem', fontWeight: 600, color: isMix ? '#059669' : '#94A3B8', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                      <span>{isMix ? '✓' : '○'}</span>
+                                      <span>Uppercase &amp; Lowercase</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.72rem', fontWeight: 600, color: isNum ? '#059669' : '#94A3B8', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                      <span>{isNum ? '✓' : '○'}</span>
+                                      <span>At least 1 Number (0-9)</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.72rem', fontWeight: 600, color: isSpec ? '#059669' : '#94A3B8', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                      <span>{isSpec ? '✓' : '○'}</span>
+                                      <span>Special Symbol (@, #, $)</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         <div className="form-group">
@@ -1327,15 +1501,10 @@ export default function TutorRegisterLoginPage() {
                               {showRegConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                           </div>
-                          {/* Live Matching Message */}
+                          {/* Live Non-Matching Error Message Only */}
                           {regConfirmPassword.length > 0 && regPassword !== regConfirmPassword && (
                             <div style={{ fontSize: '0.76rem', color: '#EF4444', fontWeight: 700, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <span>✕ Passwords do not match</span>
-                            </div>
-                          )}
-                          {regConfirmPassword.length > 0 && regPassword === regConfirmPassword && (
-                            <div style={{ fontSize: '0.76rem', color: '#059669', fontWeight: 700, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span>✓ Passwords match</span>
                             </div>
                           )}
                         </div>
@@ -1623,42 +1792,96 @@ export default function TutorRegisterLoginPage() {
                         </div>
                       </div>
 
-                      <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                        <label className="form-label">
-                          Highest Qualification / Degree <span style={{ color: '#DC2626' }}>*</span>
-                        </label>
-                        <div style={{ position: 'relative' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                        <div className="form-group">
+                          <label className="form-label">
+                            Highest Qualification / Degree <span style={{ color: '#DC2626' }}>*</span>
+                          </label>
+                          <div style={{ position: 'relative' }}>
+                            <input
+                              id="field-degree"
+                              type="text"
+                              placeholder="e.g. B.Tech, M.Sc, B.Ed, B.Com, MBA"
+                              value={degree}
+                              onChange={(e) => {
+                                setDegree(e.target.value);
+                                if (wizardErrorField === 'field-degree') setWizardErrorField(null);
+                              }}
+                              className="form-control"
+                              style={{
+                                borderColor: wizardErrorField === 'field-degree' ? '#EF4444' : undefined,
+                                boxShadow: wizardErrorField === 'field-degree' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                              }}
+                              required
+                            />
+                            <GraduationCap size={16} color="var(--text-light)" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                          </div>
+                        </div>
+
+                        <div className="form-group">
+                          <label className="form-label">
+                            Specialization / Major Stream <span style={{ color: '#DC2626' }}>*</span>
+                          </label>
                           <input
+                            id="field-specialization"
                             type="text"
-                            placeholder="e.g. B.Tech Computer Science or M.Sc Physics"
-                            value={degree}
-                            onChange={(e) => setDegree(e.target.value)}
+                            placeholder="e.g. Mathematics, Physics, CS, Commerce"
+                            value={specialization}
+                            onChange={(e) => {
+                              setSpecialization(e.target.value);
+                              if (wizardErrorField === 'field-specialization') setWizardErrorField(null);
+                            }}
                             className="form-control"
+                            style={{
+                              borderColor: wizardErrorField === 'field-specialization' ? '#EF4444' : undefined,
+                              boxShadow: wizardErrorField === 'field-specialization' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                            }}
                             required
                           />
-                          <GraduationCap size={16} color="var(--text-light)" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
                         </div>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
                         <div className="form-group">
-                          <label className="form-label">College / University Name</label>
+                          <label className="form-label">
+                            College / University Name <span style={{ color: '#DC2626' }}>*</span>
+                          </label>
                           <input
+                            id="field-college"
                             type="text"
-                            placeholder="e.g. IIT Delhi, DU, GGSIPU"
+                            placeholder="e.g. Delhi University (DU), IIT, Amity"
                             value={college}
-                            onChange={(e) => setCollege(e.target.value)}
+                            onChange={(e) => {
+                              setCollege(e.target.value);
+                              if (wizardErrorField === 'field-college') setWizardErrorField(null);
+                            }}
                             className="form-control"
+                            style={{
+                              borderColor: wizardErrorField === 'field-college' ? '#EF4444' : undefined,
+                              boxShadow: wizardErrorField === 'field-college' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                            }}
+                            required
                           />
                         </div>
                         <div className="form-group">
-                          <label className="form-label">Passing Year</label>
+                          <label className="form-label">
+                            Passing Year / Status <span style={{ color: '#DC2626' }}>*</span>
+                          </label>
                           <input
+                            id="field-passingYear"
                             type="text"
-                            placeholder="e.g. 2022"
+                            placeholder="e.g. 2023 or Final Year"
                             value={passingYear}
-                            onChange={(e) => setPassingYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                            onChange={(e) => {
+                              setPassingYear(e.target.value);
+                              if (wizardErrorField === 'field-passingYear') setWizardErrorField(null);
+                            }}
                             className="form-control"
+                            style={{
+                              borderColor: wizardErrorField === 'field-passingYear' ? '#EF4444' : undefined,
+                              boxShadow: wizardErrorField === 'field-passingYear' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                            }}
+                            required
                           />
                         </div>
                       </div>
@@ -1668,21 +1891,50 @@ export default function TutorRegisterLoginPage() {
                           Total Teaching Experience (Years) <span style={{ color: '#DC2626' }}>*</span>
                         </label>
                         <input
+                          id="field-experienceYears"
                           type="number"
                           min={0}
                           max={40}
+                          placeholder="e.g. 2"
                           value={experienceYears}
-                          onChange={(e) => setExperienceYears(Number(e.target.value))}
+                          onChange={(e) => {
+                            setExperienceYears(Number(e.target.value));
+                            if (wizardErrorField === 'field-experienceYears') setWizardErrorField(null);
+                          }}
                           className="form-control"
+                          style={{
+                            borderColor: wizardErrorField === 'field-experienceYears' ? '#EF4444' : undefined,
+                            boxShadow: wizardErrorField === 'field-experienceYears' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                          }}
                           required
                         />
                       </div>
                     </div>
                   )}
 
-                  {/* STEP 2: Teaching Expertise (Subjects, Classes, Boards - ALL SEARCHABLE / OTHER WRITE-IN) */}
+                  {/* STEP 2: Subject & Board Expertise */}
                   {currentStep === 2 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      <style>{`
+                        @keyframes tagPopIn {
+                          0% { transform: scale(0.8); opacity: 0; }
+                          60% { transform: scale(1.06); opacity: 1; }
+                          100% { transform: scale(1); opacity: 1; }
+                        }
+                        .animate-tag-pop {
+                          animation: tagPopIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+                        }
+                        .pill-interactive-btn {
+                          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                        }
+                        .pill-interactive-btn:hover {
+                          transform: translateY(-2px);
+                        }
+                        .pill-interactive-btn:active {
+                          transform: scale(0.96);
+                        }
+                      `}</style>
+
                       <div>
                         <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.45rem' }}>
                           Step 2: Subject & Board Expertise
@@ -1694,35 +1946,65 @@ export default function TutorRegisterLoginPage() {
 
                       {/* Subjects Section */}
                       <div className="form-group">
-                        <label className="form-label">
-                          Subjects Taught <span style={{ color: '#DC2626' }}>*</span> (Search or Add Custom)
-                        </label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                          <label className="form-label" style={{ margin: 0 }}>
+                            Subjects Taught <span style={{ color: '#DC2626' }}>*</span> (Search or Add Custom)
+                          </label>
+                          <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                            Selected: <strong style={{ color: '#0F6E56' }}>{selectedSubjects.length}</strong>
+                          </span>
+                        </div>
                         
                         {/* Active Subjects Pills */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                          {selectedSubjects.map(sub => (
-                            <span key={sub} style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.3rem',
-                              backgroundColor: 'var(--brand-teal-light)',
-                              color: 'var(--brand-teal)',
-                              padding: '0.35rem 0.75rem',
-                              borderRadius: '999px',
-                              fontSize: '0.8rem',
-                              fontWeight: 700,
-                            }}>
-                              <span>{sub}</span>
-                              <button
-                                type="button"
-                                onClick={() => setSelectedSubjects(selectedSubjects.filter(s => s !== sub))}
-                                style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex' }}
-                              >
-                                <X size={13} />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
+                        {selectedSubjects.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                            {selectedSubjects.map(sub => (
+                              <span key={sub} className="animate-tag-pop" style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+                                color: '#065F46',
+                                border: '1px solid #A7F3D0',
+                                padding: '0.35rem 0.8rem',
+                                borderRadius: '999px',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                boxShadow: '0 2px 8px rgba(15, 110, 86, 0.08)',
+                                transition: 'all 0.18s ease',
+                              }}>
+                                <span>{sub}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedSubjects(selectedSubjects.filter(s => s !== sub))}
+                                  style={{
+                                    background: 'rgba(6, 95, 70, 0.12)',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '18px',
+                                    height: '18px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#065F46',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#EF4444';
+                                    e.currentTarget.style.color = '#FFFFFF';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = 'rgba(6, 95, 70, 0.12)';
+                                    e.currentTarget.style.color = '#065F46';
+                                  }}
+                                >
+                                  <X size={11} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
 
                         {/* Search & Custom Input row */}
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -1732,6 +2014,7 @@ export default function TutorRegisterLoginPage() {
                             value={subjectSearch}
                             onChange={(e) => setSubjectSearch(e.target.value)}
                             className="form-control"
+                            style={{ borderRadius: '10px' }}
                           />
                           <div style={{ display: 'flex', gap: '0.3rem' }}>
                             <input
@@ -1740,7 +2023,7 @@ export default function TutorRegisterLoginPage() {
                               value={customSubject}
                               onChange={(e) => setCustomSubject(e.target.value)}
                               className="form-control"
-                              style={{ minWidth: '180px' }}
+                              style={{ minWidth: '180px', borderRadius: '10px' }}
                             />
                             <button
                               type="button"
@@ -1750,8 +2033,8 @@ export default function TutorRegisterLoginPage() {
                                   setCustomSubject('');
                                 }
                               }}
-                              className="btn btn-secondary"
-                              style={{ padding: '0 0.85rem' }}
+                              className="btn btn-secondary pill-interactive-btn"
+                              style={{ padding: '0 0.9rem', borderRadius: '10px' }}
                             >
                               <Plus size={16} />
                             </button>
@@ -1760,15 +2043,15 @@ export default function TutorRegisterLoginPage() {
 
                         {/* Filtered Subject Options list */}
                         <div style={{ 
-                          marginTop: '0.5rem', 
-                          maxHeight: '130px', 
+                          marginTop: '0.6rem', 
+                          maxHeight: '140px', 
                           overflowY: 'auto', 
-                          border: '1px solid var(--border-hairline)', 
-                          borderRadius: '8px', 
-                          padding: '0.5rem',
+                          border: '1.5px solid var(--border-hairline)', 
+                          borderRadius: '12px', 
+                          padding: '0.6rem',
                           display: 'flex',
                           flexWrap: 'wrap',
-                          gap: '0.4rem',
+                          gap: '0.45rem',
                           backgroundColor: '#F8FAFC'
                         }}>
                           {filteredSubjects.map(sub => {
@@ -1778,15 +2061,17 @@ export default function TutorRegisterLoginPage() {
                                 key={sub}
                                 type="button"
                                 onClick={() => toggleSelection(sub, selectedSubjects, setSelectedSubjects)}
+                                className="pill-interactive-btn"
                                 style={{
-                                  padding: '0.3rem 0.65rem',
-                                  borderRadius: '6px',
-                                  border: `1px solid ${isSelected ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
-                                  backgroundColor: isSelected ? 'var(--brand-teal)' : '#FFFFFF',
-                                  color: isSelected ? '#FFFFFF' : 'var(--text-main)',
-                                  fontSize: '0.75rem',
-                                  fontWeight: 600,
+                                  padding: '0.35rem 0.75rem',
+                                  borderRadius: '8px',
+                                  border: isSelected ? '1.5px solid #0F6E56' : '1px solid #CBD5E1',
+                                  background: isSelected ? 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)' : '#FFFFFF',
+                                  color: isSelected ? '#FFFFFF' : '#1E293B',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
                                   cursor: 'pointer',
+                                  boxShadow: isSelected ? '0 4px 12px rgba(15, 110, 86, 0.25)' : '0 1px 3px rgba(0,0,0,0.04)',
                                 }}
                               >
                                 {isSelected ? '✓ ' : '+ '} {sub}
@@ -1798,33 +2083,63 @@ export default function TutorRegisterLoginPage() {
 
                       {/* Classes Grid */}
                       <div className="form-group">
-                        <label className="form-label">
-                          Grade / Classes Taught <span style={{ color: '#DC2626' }}>*</span>
-                        </label>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                          {selectedClasses.map(cl => (
-                            <span key={cl} style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.3rem',
-                              backgroundColor: '#E0F2FE',
-                              color: '#0369A1',
-                              padding: '0.35rem 0.75rem',
-                              borderRadius: '999px',
-                              fontSize: '0.8rem',
-                              fontWeight: 700,
-                            }}>
-                              <span>{cl}</span>
-                              <button
-                                type="button"
-                                onClick={() => setSelectedClasses(selectedClasses.filter(c => c !== cl))}
-                                style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
-                              >
-                                <X size={13} />
-                              </button>
-                            </span>
-                          ))}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                          <label className="form-label" style={{ margin: 0 }}>
+                            Grade / Classes Taught <span style={{ color: '#DC2626' }}>*</span>
+                          </label>
+                          <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                            Selected: <strong style={{ color: '#0284C7' }}>{selectedClasses.length}</strong>
+                          </span>
                         </div>
+
+                        {selectedClasses.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                            {selectedClasses.map(cl => (
+                              <span key={cl} className="animate-tag-pop" style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                background: 'linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%)',
+                                color: '#0369A1',
+                                border: '1px solid #7DD3FC',
+                                padding: '0.35rem 0.8rem',
+                                borderRadius: '999px',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                boxShadow: '0 2px 8px rgba(2, 132, 199, 0.1)',
+                              }}>
+                                <span>{cl}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedClasses(selectedClasses.filter(c => c !== cl))}
+                                  style={{
+                                    background: 'rgba(3, 105, 161, 0.12)',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '18px',
+                                    height: '18px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#0369A1',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#EF4444';
+                                    e.currentTarget.style.color = '#FFFFFF';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = 'rgba(3, 105, 161, 0.12)';
+                                    e.currentTarget.style.color = '#0369A1';
+                                  }}
+                                >
+                                  <X size={11} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
 
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                           {CLASS_OPTIONS.map(c => {
@@ -1834,31 +2149,34 @@ export default function TutorRegisterLoginPage() {
                                 key={c}
                                 type="button"
                                 onClick={() => toggleSelection(c, selectedClasses, setSelectedClasses)}
+                                className="pill-interactive-btn"
                                 style={{
-                                  padding: '0.45rem 0.85rem',
-                                  borderRadius: '8px',
-                                  border: `1.5px solid ${isSelected ? '#0284C7' : 'var(--border-hairline)'}`,
-                                  backgroundColor: isSelected ? '#E0F2FE' : '#FFFFFF',
-                                  color: isSelected ? '#0369A1' : 'var(--text-main)',
+                                  padding: '0.5rem 0.9rem',
+                                  borderRadius: '10px',
+                                  border: isSelected ? '1.5px solid #0284C7' : '1px solid #CBD5E1',
+                                  background: isSelected ? 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)' : '#FFFFFF',
+                                  color: isSelected ? '#FFFFFF' : '#1E293B',
                                   fontSize: '0.82rem',
-                                  fontWeight: 600,
+                                  fontWeight: 700,
                                   cursor: 'pointer',
+                                  boxShadow: isSelected ? '0 4px 12px rgba(2, 132, 199, 0.25)' : '0 1px 3px rgba(0,0,0,0.04)',
                                 }}
                               >
-                                {c}
+                                {isSelected ? '✓ ' : ''}{c}
                               </button>
                             );
                           })}
                         </div>
 
                         {/* Custom write-in Class */}
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', maxWidth: '320px' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', maxWidth: '340px' }}>
                           <input
                             type="text"
-                            placeholder="Type custom class..."
+                            placeholder="Type custom class (e.g. Nursery, Olympiad)..."
                             value={customClass}
                             onChange={(e) => setCustomClass(e.target.value)}
                             className="form-control"
+                            style={{ borderRadius: '10px' }}
                           />
                           <button
                             type="button"
@@ -1868,7 +2186,8 @@ export default function TutorRegisterLoginPage() {
                                 setCustomClass('');
                               }
                             }}
-                            className="btn btn-secondary"
+                            className="btn btn-secondary pill-interactive-btn"
+                            style={{ padding: '0 0.9rem', borderRadius: '10px' }}
                           >
                             <Plus size={16} />
                           </button>
@@ -1877,33 +2196,63 @@ export default function TutorRegisterLoginPage() {
 
                       {/* Educational Boards */}
                       <div className="form-group">
-                        <label className="form-label">
-                          Affiliated Boards Taught <span style={{ color: '#DC2626' }}>*</span>
-                        </label>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                          {selectedBoards.map(bd => (
-                            <span key={bd} style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.3rem',
-                              backgroundColor: '#F3E8FF',
-                              color: '#6B21A8',
-                              padding: '0.35rem 0.75rem',
-                              borderRadius: '999px',
-                              fontSize: '0.8rem',
-                              fontWeight: 700,
-                            }}>
-                              <span>{bd}</span>
-                              <button
-                                type="button"
-                                onClick={() => setSelectedBoards(selectedBoards.filter(b => b !== bd))}
-                                style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
-                              >
-                                <X size={13} />
-                              </button>
-                            </span>
-                          ))}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                          <label className="form-label" style={{ margin: 0 }}>
+                            Affiliated Boards Taught <span style={{ color: '#DC2626' }}>*</span>
+                          </label>
+                          <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                            Selected: <strong style={{ color: '#7C3AED' }}>{selectedBoards.length}</strong>
+                          </span>
                         </div>
+
+                        {selectedBoards.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                            {selectedBoards.map(bd => (
+                              <span key={bd} className="animate-tag-pop" style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                background: 'linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%)',
+                                color: '#6B21A8',
+                                border: '1px solid #D8B4FE',
+                                padding: '0.35rem 0.8rem',
+                                borderRadius: '999px',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                boxShadow: '0 2px 8px rgba(124, 58, 237, 0.1)',
+                              }}>
+                                <span>{bd}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedBoards(selectedBoards.filter(b => b !== bd))}
+                                  style={{
+                                    background: 'rgba(107, 33, 168, 0.12)',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '18px',
+                                    height: '18px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#6B21A8',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#EF4444';
+                                    e.currentTarget.style.color = '#FFFFFF';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = 'rgba(107, 33, 168, 0.12)';
+                                    e.currentTarget.style.color = '#6B21A8';
+                                  }}
+                                >
+                                  <X size={11} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
 
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                           {BOARD_OPTIONS.map(b => {
@@ -1913,31 +2262,34 @@ export default function TutorRegisterLoginPage() {
                                 key={b}
                                 type="button"
                                 onClick={() => toggleSelection(b, selectedBoards, setSelectedBoards)}
+                                className="pill-interactive-btn"
                                 style={{
-                                  padding: '0.45rem 0.85rem',
-                                  borderRadius: '8px',
-                                  border: `1.5px solid ${isSelected ? '#8B5CF6' : 'var(--border-hairline)'}`,
-                                  backgroundColor: isSelected ? '#F3E8FF' : '#FFFFFF',
-                                  color: isSelected ? '#6B21A8' : 'var(--text-main)',
+                                  padding: '0.5rem 0.9rem',
+                                  borderRadius: '10px',
+                                  border: isSelected ? '1.5px solid #7C3AED' : '1px solid #CBD5E1',
+                                  background: isSelected ? 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)' : '#FFFFFF',
+                                  color: isSelected ? '#FFFFFF' : '#1E293B',
                                   fontSize: '0.82rem',
-                                  fontWeight: 600,
+                                  fontWeight: 700,
                                   cursor: 'pointer',
+                                  boxShadow: isSelected ? '0 4px 12px rgba(124, 58, 237, 0.25)' : '0 1px 3px rgba(0,0,0,0.04)',
                                 }}
                               >
-                                {b}
+                                {isSelected ? '✓ ' : ''}{b}
                               </button>
                             );
                           })}
                         </div>
 
                         {/* Custom write-in Board */}
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', maxWidth: '320px' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', maxWidth: '340px' }}>
                           <input
                             type="text"
-                            placeholder="Type custom board..."
+                            placeholder="Type custom board (e.g. State Board, NIOS)..."
                             value={customBoard}
                             onChange={(e) => setCustomBoard(e.target.value)}
                             className="form-control"
+                            style={{ borderRadius: '10px' }}
                           />
                           <button
                             type="button"
@@ -1947,7 +2299,8 @@ export default function TutorRegisterLoginPage() {
                                 setCustomBoard('');
                               }
                             }}
-                            className="btn btn-secondary"
+                            className="btn btn-secondary pill-interactive-btn"
+                            style={{ padding: '0 0.9rem', borderRadius: '10px' }}
                           >
                             <Plus size={16} />
                           </button>
@@ -1963,183 +2316,314 @@ export default function TutorRegisterLoginPage() {
                       <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.45rem' }}>
                         Step 3: Location Preferences & Travel Radius
                       </h3>
-                      <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                        Select the preferred locations in Gurgaon you can visit for offline/home tuition.
+                      <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
+                        Choose how you want to match with nearby Gurgaon students.
                       </p>
 
-                      <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                        <label className="form-label">
-                          Preferred Gurgaon Sectors / Areas <span style={{ color: '#DC2626' }}>*</span>
-                        </label>
-                        
-                        {/* Active Sector Pills */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                          {serviceAreas.map(area => (
-                            <span key={area} style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.3rem',
-                              backgroundColor: 'var(--brand-teal-light)',
-                              color: 'var(--brand-teal)',
-                              padding: '0.35rem 0.75rem',
-                              borderRadius: '999px',
-                              fontSize: '0.8rem',
-                              fontWeight: 700,
-                            }}>
-                              <span>{area}</span>
-                              <button
-                                type="button"
-                                onClick={() => setServiceAreas(serviceAreas.filter(a => a !== area))}
-                                style={{ background: 'none', border: 'none', color: 'inherit', display: 'flex' }}
-                              >
-                                <X size={13} />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
+                      {/* Animated Mode Switcher: Both vs Sectors vs Radius */}
+                      <div style={{
+                        backgroundColor: '#F1F5F9',
+                        padding: '0.35rem',
+                        borderRadius: '16px',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                        gap: '0.35rem',
+                        marginBottom: '1.5rem',
+                        border: '1px solid #E2E8F0',
+                      }}>
+                        {[
+                          { id: 'BOTH', label: '⚡ Both (Recommended)', subtitle: 'Sectors + Travel Radius' },
+                          { id: 'SECTORS', label: '📍 Specific Sectors', subtitle: 'Choose from list / custom' },
+                          { id: 'RADIUS', label: '🎯 Travel Radius', subtitle: 'KM from your Home GPS' },
+                        ].map((tab) => {
+                          const isActive = locationPrefType === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => setLocationPrefType(tab.id as any)}
+                              style={{
+                                padding: '0.65rem 0.6rem',
+                                borderRadius: '12px',
+                                border: 'none',
+                                background: isActive ? 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)' : 'transparent',
+                                color: isActive ? '#FFFFFF' : '#475569',
+                                fontWeight: 800,
+                                fontSize: '0.82rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                                boxShadow: isActive ? '0 4px 14px rgba(15, 110, 86, 0.3)' : 'none',
+                                transform: isActive ? 'scale(1.02)' : 'scale(1)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '2px',
+                              }}
+                            >
+                              <span>{tab.label}</span>
+                              <span style={{ fontSize: '0.68rem', opacity: isActive ? 0.92 : 0.65, fontWeight: 500 }}>
+                                {tab.subtitle}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
 
-                        {/* Search & Custom sector row */}
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <input
-                            type="text"
-                            placeholder="Search Gurgaon sectors..."
-                            value={areaSearch}
-                            onChange={(e) => setAreaSearch(e.target.value)}
-                            className="form-control"
-                          />
-                          <div style={{ display: 'flex', gap: '0.3rem' }}>
+                      {/* 1. SECTORS SECTION (Shown in 'BOTH' or 'SECTORS' mode) */}
+                      {(locationPrefType === 'BOTH' || locationPrefType === 'SECTORS') && (
+                        <div
+                          id="field-serviceAreas"
+                          className="form-group"
+                          style={{
+                            marginBottom: '1.5rem',
+                            transition: 'all 0.3s ease',
+                            padding: wizardErrorField === 'field-serviceAreas' ? '0.75rem' : '0',
+                            borderRadius: '16px',
+                            border: wizardErrorField === 'field-serviceAreas' ? '2px solid #EF4444' : 'none',
+                            backgroundColor: wizardErrorField === 'field-serviceAreas' ? '#FEF2F2' : 'transparent',
+                            boxShadow: wizardErrorField === 'field-serviceAreas' ? '0 0 0 4px rgba(239, 68, 68, 0.2)' : 'none',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                            <label className="form-label" style={{ margin: 0 }}>
+                              Preferred Gurgaon Sectors / Areas <span style={{ color: '#DC2626' }}>*</span>
+                            </label>
+                            <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                              Selected: <strong style={{ color: '#0F6E56' }}>{serviceAreas.length}</strong> sectors
+                            </span>
+                          </div>
+                          
+                          {/* Active Sector Pills */}
+                          {serviceAreas.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                              {serviceAreas.map(area => (
+                                <span key={area} style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.3rem',
+                                  backgroundColor: 'var(--brand-teal-light)',
+                                  color: 'var(--brand-teal)',
+                                  padding: '0.35rem 0.75rem',
+                                  borderRadius: '999px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 700,
+                                }}>
+                                  <span>{area}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setServiceAreas(serviceAreas.filter(a => a !== area));
+                                      if (wizardErrorField === 'field-serviceAreas') setWizardErrorField(null);
+                                    }}
+                                    style={{ background: 'none', border: 'none', color: 'inherit', display: 'flex', cursor: 'pointer' }}
+                                  >
+                                    <X size={13} />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Search & Custom sector row */}
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <input
                               type="text"
-                              placeholder="Type Custom Sector..."
-                              value={customArea}
-                              onChange={(e) => setCustomArea(e.target.value)}
+                              placeholder="Search Gurgaon sectors (e.g. Sector 56, DLF Phase 5)..."
+                              value={areaSearch}
+                              onChange={(e) => setAreaSearch(e.target.value)}
                               className="form-control"
-                              style={{ minWidth: '180px' }}
                             />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (customArea.trim() && !serviceAreas.includes(customArea.trim())) {
-                                  setServiceAreas([...serviceAreas, customArea.trim()]);
-                                  setCustomArea('');
-                                }
-                              }}
-                              className="btn btn-secondary"
-                              style={{ padding: '0 0.85rem' }}
-                            >
-                              <Plus size={16} />
-                            </button>
+                            <div style={{ display: 'flex', gap: '0.3rem' }}>
+                              <input
+                                type="text"
+                                placeholder="Type Custom Sector..."
+                                value={customArea}
+                                onChange={(e) => setCustomArea(e.target.value)}
+                                className="form-control"
+                                style={{ minWidth: '160px' }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (customArea.trim() && !serviceAreas.includes(customArea.trim())) {
+                                    setServiceAreas([...serviceAreas, customArea.trim()]);
+                                    setCustomArea('');
+                                    if (wizardErrorField === 'field-serviceAreas') setWizardErrorField(null);
+                                  }
+                                }}
+                                className="btn btn-secondary"
+                                style={{ padding: '0 0.85rem' }}
+                              >
+                                <Plus size={16} />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Filtered Sectors List */}
+                          <div style={{ 
+                            marginTop: '0.5rem', 
+                            maxHeight: '140px', 
+                            overflowY: 'auto', 
+                            border: '1px solid var(--border-hairline)', 
+                            borderRadius: '12px', 
+                            padding: '0.75rem',
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                            gap: '0.4rem',
+                            backgroundColor: '#F8FAFC'
+                          }}>
+                            {filteredSectors.map(loc => {
+                              const isSelected = serviceAreas.includes(loc.name);
+                              return (
+                                <button
+                                  key={loc.slug}
+                                  type="button"
+                                  onClick={() => {
+                                    toggleSelection(loc.name, serviceAreas, setServiceAreas);
+                                    if (wizardErrorField === 'field-serviceAreas') setWizardErrorField(null);
+                                  }}
+                                  style={{
+                                    padding: '0.45rem',
+                                    borderRadius: '8px',
+                                    border: `1px solid ${isSelected ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
+                                    backgroundColor: isSelected ? 'var(--brand-teal-light)' : '#FFFFFF',
+                                    color: isSelected ? 'var(--brand-teal)' : 'var(--text-main)',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 600,
+                                    textAlign: 'left',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  {isSelected ? '✓ ' : '+ '} {loc.name}
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
+                      )}
 
-                        {/* Filtered Sectors List */}
-                        <div style={{ 
-                          marginTop: '0.5rem', 
-                          maxHeight: '140px', 
-                          overflowY: 'auto', 
-                          border: '1px solid var(--border-hairline)', 
-                          borderRadius: '12px', 
-                          padding: '0.75rem',
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                          gap: '0.4rem',
-                          backgroundColor: '#F8FAFC'
-                        }}>
-                          {filteredSectors.map(loc => {
-                            const isSelected = serviceAreas.includes(loc.name);
-                            return (
-                              <button
-                                key={loc.slug}
-                                type="button"
-                                onClick={() => toggleSelection(loc.name, serviceAreas, setServiceAreas)}
+                      {/* 2. TRAVEL RADIUS & HOME GPS SECTION (Shown in 'BOTH' or 'RADIUS' mode) */}
+                      {(locationPrefType === 'BOTH' || locationPrefType === 'RADIUS') && (
+                        <div style={{ transition: 'all 0.3s ease' }}>
+                          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                              <label className="form-label" style={{ margin: 0 }}>
+                                Maximum Travel Radius: <strong style={{ color: '#0F6E56' }}>{travelRadius} KM</strong> from Home
+                              </label>
+                              <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                                Home visit range
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              {[3, 5, 8, 12, 15, 20, 30].map((km) => (
+                                <button
+                                  key={km}
+                                  type="button"
+                                  onClick={() => setTravelRadius(km)}
+                                  style={{
+                                    flex: 1,
+                                    minWidth: '55px',
+                                    padding: '0.65rem 0',
+                                    borderRadius: '10px',
+                                    border: `1.5px solid ${travelRadius === km ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
+                                    background: travelRadius === km ? 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)' : '#FFFFFF',
+                                    color: travelRadius === km ? '#FFFFFF' : 'var(--text-main)',
+                                    fontWeight: 800,
+                                    fontSize: '0.82rem',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease',
+                                    boxShadow: travelRadius === km ? '0 2px 8px rgba(15, 110, 86, 0.25)' : 'none',
+                                  }}
+                                >
+                                  {km} KM
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* GPS Home Location Picker */}
+                          {(teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') && (
+                            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                              <label className="form-label">
+                                📍 Your Home / Base Location (for proximity matching) <span style={{ color: '#DC2626' }}>*</span>
+                              </label>
+                              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                                Set your location so counselors assign student leads closest to you within your {travelRadius} KM radius.
+                              </p>
+
+                              <div
+                                id="field-baseLocation"
+                                tabIndex={0}
+                                onClick={() => {
+                                  setShowTutorLocationPicker(true);
+                                  if (wizardErrorField === 'field-baseLocation') setWizardErrorField(null);
+                                }}
                                 style={{
-                                  padding: '0.45rem',
-                                  borderRadius: '8px',
-                                  border: `1px solid ${isSelected ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
-                                  backgroundColor: isSelected ? 'var(--brand-teal-light)' : '#FFFFFF',
-                                  color: isSelected ? 'var(--brand-teal)' : 'var(--text-main)',
-                                  fontSize: '0.8rem',
-                                  fontWeight: 600,
-                                  textAlign: 'left',
+                                  border: wizardErrorField === 'field-baseLocation'
+                                    ? '2.5px solid #EF4444'
+                                    : (tutorLatitude ? '2px solid #0F6E56' : '2px dashed #CBD5E1'),
+                                  borderRadius: '14px',
+                                  padding: '0.85rem 1rem',
                                   cursor: 'pointer',
+                                  backgroundColor: wizardErrorField === 'field-baseLocation'
+                                    ? '#FEF2F2'
+                                    : (tutorLatitude ? '#F0FDF4' : '#F8FAFC'),
+                                  display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                  boxShadow: wizardErrorField === 'field-baseLocation'
+                                    ? '0 0 0 4px rgba(239, 68, 68, 0.22)'
+                                    : 'none',
+                                  outline: 'none',
+                                  transition: 'all 0.2s ease',
                                 }}
                               >
-                                {isSelected ? '✓ ' : '+ '} {loc.name}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">Maximum Home Visit Travel Radius (KM from your location)</label>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          {[3, 5, 8, 12, 15, 20, 30].map((km) => (
-                            <button
-                              key={km}
-                              type="button"
-                              onClick={() => setTravelRadius(km)}
-                              style={{
-                                flex: 1,
-                                padding: '0.75rem 0',
-                                borderRadius: '8px',
-                                border: `1.5px solid ${travelRadius === km ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
-                                backgroundColor: travelRadius === km ? 'var(--brand-teal)' : '#FFFFFF',
-                                color: travelRadius === km ? '#FFFFFF' : 'var(--text-main)',
-                                fontWeight: 700,
-                                fontSize: '0.85rem',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              {km} KM
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* GPS Home Location Picker */}
-                      {(teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') && (
-                        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                          <label className="form-label">📍 Your Home / Base Location (for proximity matching)</label>
-                          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                            Set your current location so we can match you with nearby parents. This helps counselors assign students closest to you.
-                          </p>
-
-                          <div
-                            onClick={() => setShowTutorLocationPicker(true)}
-                            style={{
-                              border: tutorLatitude ? '2px solid #0F6E56' : '2px dashed #CBD5E1',
-                              borderRadius: '14px',
-                              padding: '0.85rem 1rem',
-                              cursor: 'pointer',
-                              backgroundColor: tutorLatitude ? '#F0FDF4' : '#F8FAFC',
-                              display: 'flex', alignItems: 'center', gap: '0.75rem',
-                              transition: 'all 0.2s ease',
-                            }}
-                          >
-                            <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: tutorLatitude ? '#DCFCE7' : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              <MapPin size={18} color={tutorLatitude ? '#059669' : '#94A3B8'} />
+                                <div style={{
+                                  width: '40px',
+                                  height: '40px',
+                                  borderRadius: '12px',
+                                  backgroundColor: wizardErrorField === 'field-baseLocation'
+                                    ? '#FEE2E2'
+                                    : (tutorLatitude ? '#DCFCE7' : '#E2E8F0'),
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  flexShrink: 0
+                                }}>
+                                  <MapPin size={18} color={wizardErrorField === 'field-baseLocation' ? '#EF4444' : (tutorLatitude ? '#059669' : '#94A3B8')} />
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  {tutorLatitude ? (
+                                    <>
+                                      <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                        <CheckCircle2 size={14} color="#059669" />
+                                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tutorFormattedAddress || 'Location Set'}</span>
+                                      </div>
+                                      <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>Tap to change</div>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div style={{ fontSize: '0.88rem', fontWeight: 700, color: wizardErrorField === 'field-baseLocation' ? '#DC2626' : '#64748B' }}>
+                                        {wizardErrorField === 'field-baseLocation' ? '⚠️ Please tap here to set your location' : '📍 Tap to set your home location'}
+                                      </div>
+                                      <div style={{ fontSize: '0.72rem', color: wizardErrorField === 'field-baseLocation' ? '#EF4444' : '#94A3B8', marginTop: '2px' }}>
+                                        Helps match nearest students to you
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                                <div style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  color: wizardErrorField === 'field-baseLocation' ? '#FFFFFF' : '#0F6E56',
+                                  backgroundColor: wizardErrorField === 'field-baseLocation' ? '#EF4444' : '#ECFDF5',
+                                  padding: '0.3rem 0.6rem',
+                                  borderRadius: '8px',
+                                  flexShrink: 0
+                                }}>
+                                  {tutorLatitude ? 'Change' : 'Set'}
+                                </div>
+                              </div>
                             </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              {tutorLatitude ? (
-                                <>
-                                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                    <CheckCircle2 size={14} color="#059669" />
-                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tutorFormattedAddress || 'Location Set'}</span>
-                                  </div>
-                                  <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>Tap to change</div>
-                                </>
-                              ) : (
-                                <>
-                                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#64748B' }}>📍 Tap to set your home location</div>
-                                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '2px' }}>Helps match nearest students to you</div>
-                                </>
-                              )}
-                            </div>
-                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0F6E56', backgroundColor: '#ECFDF5', padding: '0.3rem 0.6rem', borderRadius: '8px', flexShrink: 0 }}>
-                              {tutorLatitude ? 'Change' : 'Set'}
-                            </div>
-                          </div>
+                          )}
                         </div>
                       )}
 
@@ -2148,7 +2632,7 @@ export default function TutorRegisterLoginPage() {
 
                   {/* STEP 4: Pricing & Rates */}
                   {currentStep === 4 && (
-                    <div>
+<div>
                       <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.45rem' }}>
                         Step 4: Expected Hourly Rates (Price Ranges)
                       </h3>
@@ -2165,6 +2649,7 @@ export default function TutorRegisterLoginPage() {
                             border: '1.5px solid var(--border-hairline)',
                             borderRadius: '16px',
                             padding: '1.25rem',
+                            boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
                           }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--brand-teal)' }}>
                               <Home size={18} />
@@ -2173,30 +2658,56 @@ export default function TutorRegisterLoginPage() {
                             
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                               <div className="form-group">
-                                <label className="form-label">Minimum Expected (per hour)</label>
+                                <label className="form-label">
+                                  Minimum Expected (per hour) <span style={{ color: '#DC2626' }}>*</span>
+                                </label>
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                  <span style={{ padding: '0.75rem', backgroundColor: '#F1F5F9', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '8px 0 0 8px', fontWeight: 700 }}>₹</span>
+                                  <span style={{ padding: '0.75rem 0.9rem', backgroundColor: '#F1F5F9', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '10px 0 0 10px', fontWeight: 700 }}>₹</span>
                                   <input
+                                    id="field-hourlyRateHomeMin"
                                     type="number"
-                                    min={300}
-                                    value={hourlyRateHomeMin}
-                                    onChange={(e) => setHourlyRateHomeMin(Number(e.target.value))}
+                                    min={50}
+                                    max={10000}
+                                    value={hourlyRateHomeMin || ''}
+                                    onChange={(e) => {
+                                      setHourlyRateHomeMin(Number(e.target.value));
+                                      if (wizardErrorField === 'field-hourlyRateHomeMin') setWizardErrorField(null);
+                                    }}
                                     className="form-control"
-                                    style={{ borderRadius: '0 8px 8px 0' }}
+                                    style={{
+                                      borderRadius: '0 10px 10px 0',
+                                      borderColor: wizardErrorField === 'field-hourlyRateHomeMin' ? '#EF4444' : undefined,
+                                      boxShadow: wizardErrorField === 'field-hourlyRateHomeMin' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                                    }}
+                                    placeholder="e.g. 600"
+                                    required
                                   />
                                 </div>
                               </div>
                               <div className="form-group">
-                                <label className="form-label">Maximum Expected (per hour)</label>
+                                <label className="form-label">
+                                  Maximum Expected (per hour) <span style={{ color: '#DC2626' }}>*</span>
+                                </label>
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                  <span style={{ padding: '0.75rem', backgroundColor: '#F1F5F9', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '8px 0 0 8px', fontWeight: 700 }}>₹</span>
+                                  <span style={{ padding: '0.75rem 0.9rem', backgroundColor: '#F1F5F9', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '10px 0 0 10px', fontWeight: 700 }}>₹</span>
                                   <input
+                                    id="field-hourlyRateHomeMax"
                                     type="number"
-                                    min={hourlyRateHomeMin}
-                                    value={hourlyRateHomeMax}
-                                    onChange={(e) => setHourlyRateHomeMax(Number(e.target.value))}
+                                    min={hourlyRateHomeMin || 50}
+                                    max={10000}
+                                    value={hourlyRateHomeMax || ''}
+                                    onChange={(e) => {
+                                      setHourlyRateHomeMax(Number(e.target.value));
+                                      if (wizardErrorField === 'field-hourlyRateHomeMax') setWizardErrorField(null);
+                                    }}
                                     className="form-control"
-                                    style={{ borderRadius: '0 8px 8px 0' }}
+                                    style={{
+                                      borderRadius: '0 10px 10px 0',
+                                      borderColor: wizardErrorField === 'field-hourlyRateHomeMax' ? '#EF4444' : undefined,
+                                      boxShadow: wizardErrorField === 'field-hourlyRateHomeMax' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                                    }}
+                                    placeholder="e.g. 1200"
+                                    required
                                   />
                                 </div>
                               </div>
@@ -2211,6 +2722,7 @@ export default function TutorRegisterLoginPage() {
                             border: '1.5px solid var(--border-hairline)',
                             borderRadius: '16px',
                             padding: '1.25rem',
+                            boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
                           }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--brand-teal)' }}>
                               <Video size={18} />
@@ -2219,36 +2731,148 @@ export default function TutorRegisterLoginPage() {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                               <div className="form-group">
-                                <label className="form-label">Minimum Expected (per hour)</label>
+                                <label className="form-label">
+                                  Minimum Expected (per hour) <span style={{ color: '#DC2626' }}>*</span>
+                                </label>
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                  <span style={{ padding: '0.75rem', backgroundColor: '#F1F5F9', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '8px 0 0 8px', fontWeight: 700 }}>₹</span>
+                                  <span style={{ padding: '0.75rem 0.9rem', backgroundColor: '#F1F5F9', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '10px 0 0 10px', fontWeight: 700 }}>₹</span>
                                   <input
+                                    id="field-hourlyRateOnlineMin"
                                     type="number"
-                                    min={200}
-                                    value={hourlyRateOnlineMin}
-                                    onChange={(e) => setHourlyRateOnlineMin(Number(e.target.value))}
+                                    min={50}
+                                    max={10000}
+                                    value={hourlyRateOnlineMin || ''}
+                                    onChange={(e) => {
+                                      setHourlyRateOnlineMin(Number(e.target.value));
+                                      if (wizardErrorField === 'field-hourlyRateOnlineMin') setWizardErrorField(null);
+                                    }}
                                     className="form-control"
-                                    style={{ borderRadius: '0 8px 8px 0' }}
+                                    style={{
+                                      borderRadius: '0 10px 10px 0',
+                                      borderColor: wizardErrorField === 'field-hourlyRateOnlineMin' ? '#EF4444' : undefined,
+                                      boxShadow: wizardErrorField === 'field-hourlyRateOnlineMin' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                                    }}
+                                    placeholder="e.g. 500"
+                                    required
                                   />
                                 </div>
                               </div>
                               <div className="form-group">
-                                <label className="form-label">Maximum Expected (per hour)</label>
+                                <label className="form-label">
+                                  Maximum Expected (per hour) <span style={{ color: '#DC2626' }}>*</span>
+                                </label>
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                  <span style={{ padding: '0.75rem', backgroundColor: '#F1F5F9', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '8px 0 0 8px', fontWeight: 700 }}>₹</span>
+                                  <span style={{ padding: '0.75rem 0.9rem', backgroundColor: '#F1F5F9', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '10px 0 0 10px', fontWeight: 700 }}>₹</span>
                                   <input
+                                    id="field-hourlyRateOnlineMax"
                                     type="number"
-                                    min={hourlyRateOnlineMin}
-                                    value={hourlyRateOnlineMax}
-                                    onChange={(e) => setHourlyRateOnlineMax(Number(e.target.value))}
+                                    min={hourlyRateOnlineMin || 50}
+                                    max={10000}
+                                    value={hourlyRateOnlineMax || ''}
+                                    onChange={(e) => {
+                                      setHourlyRateOnlineMax(Number(e.target.value));
+                                      if (wizardErrorField === 'field-hourlyRateOnlineMax') setWizardErrorField(null);
+                                    }}
                                     className="form-control"
-                                    style={{ borderRadius: '0 8px 8px 0' }}
+                                    style={{
+                                      borderRadius: '0 10px 10px 0',
+                                      borderColor: wizardErrorField === 'field-hourlyRateOnlineMax' ? '#EF4444' : undefined,
+                                      boxShadow: wizardErrorField === 'field-hourlyRateOnlineMax' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                                    }}
+                                    placeholder="e.g. 1000"
+                                    required
                                   />
                                 </div>
                               </div>
                             </div>
                           </div>
                         )}
+
+                        {/* Animated Projected Monthly Earnings Card (Home Visit & Online Breakdown) */}
+                        {(() => {
+                          const showHome = teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME';
+                          const showOnline = teachingMode === 'BOTH' || teachingMode === 'ONLINE_LIVE';
+                          const homeMinMonthly = (hourlyRateHomeMin || 0) * 12 * 4;
+                          const homeMaxMonthly = (hourlyRateHomeMax || 0) * 16 * 4;
+                          const onlineMinMonthly = (hourlyRateOnlineMin || 0) * 12 * 4;
+                          const onlineMaxMonthly = (hourlyRateOnlineMax || 0) * 16 * 4;
+
+                          return (
+                            <div style={{
+                              background: 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)',
+                              borderRadius: '16px',
+                              padding: '1.2rem 1.4rem',
+                              color: '#FFFFFF',
+                              boxShadow: '0 8px 24px rgba(15, 110, 86, 0.25)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.85rem',
+                              transition: 'all 0.3s ease',
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.18)', paddingBottom: '0.6rem' }}>
+                                <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.5px', opacity: 0.9, fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                  <span>💰 Projected Monthly Earnings (12-16 hrs/week)</span>
+                                </div>
+                                <div style={{
+                                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                  padding: '0.25rem 0.7rem',
+                                  borderRadius: '999px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  backdropFilter: 'blur(4px)',
+                                }}>
+                                  ⚡ Real-time Estimate
+                                </div>
+                              </div>
+
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: showHome && showOnline ? 'repeat(auto-fit, minmax(200px, 1fr))' : '1fr',
+                                gap: '0.85rem',
+                              }}>
+                                {showHome && (
+                                  <div style={{
+                                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                                    borderRadius: '12px',
+                                    padding: '0.85rem 1rem',
+                                    border: '1px solid rgba(255, 255, 255, 0.18)',
+                                  }}>
+                                    <div style={{ fontSize: '0.74rem', opacity: 0.9, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                      <span>🏡 Home Visit Tuition</span>
+                                    </div>
+                                    <div style={{ fontSize: '1.2rem', fontWeight: 800, marginTop: '4px', letterSpacing: '-0.2px' }}>
+                                      ₹{homeMinMonthly.toLocaleString('en-IN')} – ₹{homeMaxMonthly.toLocaleString('en-IN')}
+                                      <span style={{ fontSize: '0.75rem', fontWeight: 500, opacity: 0.85, marginLeft: '4px' }}>/ month</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.7rem', opacity: 0.8, marginTop: '2px' }}>
+                                      Based on ₹{hourlyRateHomeMin || 0} - ₹{hourlyRateHomeMax || 0}/hr
+                                    </div>
+                                  </div>
+                                )}
+
+                                {showOnline && (
+                                  <div style={{
+                                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                                    borderRadius: '12px',
+                                    padding: '0.85rem 1rem',
+                                    border: '1px solid rgba(255, 255, 255, 0.18)',
+                                  }}>
+                                    <div style={{ fontSize: '0.74rem', opacity: 0.9, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                      <span>💻 Online Live 1-on-1</span>
+                                    </div>
+                                    <div style={{ fontSize: '1.2rem', fontWeight: 800, marginTop: '4px', letterSpacing: '-0.2px' }}>
+                                      ₹{onlineMinMonthly.toLocaleString('en-IN')} – ₹{onlineMaxMonthly.toLocaleString('en-IN')}
+                                      <span style={{ fontSize: '0.75rem', fontWeight: 500, opacity: 0.85, marginLeft: '4px' }}>/ month</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.7rem', opacity: 0.8, marginTop: '2px' }}>
+                                      Based on ₹{hourlyRateOnlineMin || 0} - ₹{hourlyRateOnlineMax || 0}/hr
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                       </div>
                     </div>
@@ -2268,42 +2892,52 @@ export default function TutorRegisterLoginPage() {
 
                       {/* Profile Photo */}
                       <div className="form-group">
-                        <label className="form-label">Tutor Profile Photo (Headshot)</label>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '1.25rem',
-                          padding: '1.1rem',
-                          borderRadius: '12px',
-                          border: '1.5px dashed var(--border-hairline)',
-                          backgroundColor: '#F8FAFC',
-                        }}>
+                        <label className="form-label">
+                          Tutor Profile Photo (Headshot) <span style={{ color: '#DC2626' }}>*</span>
+                        </label>
+                        <div
+                          id="field-profilePhoto"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1.25rem',
+                            padding: '1.1rem',
+                            borderRadius: '16px',
+                            border: wizardErrorField === 'field-profilePhoto' ? '2px solid #EF4444' : '1.5px dashed var(--border-hairline)',
+                            backgroundColor: wizardErrorField === 'field-profilePhoto' ? '#FEF2F2' : '#F8FAFC',
+                            boxShadow: wizardErrorField === 'field-profilePhoto' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : 'none',
+                            transition: 'all 0.25s ease',
+                          }}
+                        >
                           {profilePhotoUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img 
                               src={profilePhotoUrl} 
                               alt="Preview" 
-                              style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--brand-teal)' }} 
+                              style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '2.5px solid var(--brand-teal)', boxShadow: '0 4px 12px rgba(15, 110, 86, 0.25)' }} 
                             />
                           ) : (
-                            <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <User size={26} color="var(--text-light)" />
+                            <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: wizardErrorField === 'field-profilePhoto' ? '#FEE2E2' : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <User size={28} color={wizardErrorField === 'field-profilePhoto' ? '#EF4444' : 'var(--text-light)'} />
                             </div>
                           )}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                             <input 
                               type="file" 
                               accept="image/*" 
                               id="photo-upload" 
-                              onChange={(e) => handleFileChange(e, 'photo')} 
+                              onChange={(e) => {
+                                handleFileChange(e, 'photo');
+                                if (wizardErrorField === 'field-profilePhoto') setWizardErrorField(null);
+                              }} 
                               style={{ display: 'none' }} 
                             />
-                            <label htmlFor="photo-upload" className="btn btn-secondary btn-sm" style={{ alignSelf: 'flex-start', cursor: 'pointer' }}>
+                            <label htmlFor="photo-upload" className="btn btn-secondary btn-sm" style={{ alignSelf: 'flex-start', cursor: 'pointer', borderRadius: '8px' }}>
                               <Upload size={14} />
-                              <span>Select Photo</span>
+                              <span>{profilePhotoUrl ? 'Change Photo' : 'Select Photo'}</span>
                             </label>
-                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                              {profilePhotoName ? `Selected: ${profilePhotoName}` : 'Format: JPG, PNG. Clear face photo.'}
+                            <span style={{ fontSize: '0.74rem', color: wizardErrorField === 'field-profilePhoto' ? '#DC2626' : 'var(--text-muted)', fontWeight: wizardErrorField === 'field-profilePhoto' ? 700 : 400 }}>
+                              {profilePhotoName ? `Selected: ${profilePhotoName}` : wizardErrorField === 'field-profilePhoto' ? '⚠️ Required: Upload a clear face photo.' : 'Format: JPG, PNG. Clear face photo.'}
                             </span>
                           </div>
                         </div>
@@ -2311,7 +2945,50 @@ export default function TutorRegisterLoginPage() {
 
                       {/* Intro Video */}
                       <div className="form-group">
-                        <label className="form-label">Introductory Video (60-90 Seconds)</label>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
+                          <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <span>Introductory Video (60-90 Seconds)</span>
+                            <span style={{ color: '#0F6E56', fontWeight: 800, fontSize: '0.76rem', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.15rem 0.55rem', borderRadius: '999px' }}>
+                              ⚡ Highly Recommended
+                            </span>
+                          </label>
+                          <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600, backgroundColor: '#F1F5F9', padding: '0.2rem 0.55rem', borderRadius: '6px' }}>
+                            Optional to skip
+                          </span>
+                        </div>
+
+                        {/* Top Tutor Benefits Card */}
+                        <div style={{
+                          background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%)',
+                          border: '1.5px solid #A7F3D0',
+                          borderRadius: '14px',
+                          padding: '0.9rem 1.1rem',
+                          marginBottom: '0.85rem',
+                          boxShadow: '0 2px 8px rgba(15, 110, 86, 0.05)',
+                        }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#065F46', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Sparkles size={15} color="#059669" />
+                            <span>Why add an Intro Video? (Exclusive Benefits):</span>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.55rem', fontSize: '0.75rem', color: '#047857' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <span>🚀</span>
+                              <span><strong>3x More Parent Callbacks</strong> — Parents choose tutors they can see & hear.</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <span>⚡</span>
+                              <span><strong>Fast-Track Profile Approval</strong> — Prioritized audit review within 4 hours.</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <span>💰</span>
+                              <span><strong>Command Higher Fees</strong> — Easily justify higher rates (₹800–₹1800+/hr).</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                              <span>⭐</span>
+                              <span><strong>Verified Star Badge</strong> — Ranks on the top of Gurgaon parent searches.</span>
+                            </div>
+                          </div>
+                        </div>
                         
                         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
                           <button
@@ -2322,9 +2999,11 @@ export default function TutorRegisterLoginPage() {
                               backgroundColor: introVideoSource === 'link' ? 'var(--brand-teal)' : '#FFFFFF',
                               color: introVideoSource === 'link' ? '#FFFFFF' : 'var(--text-main)',
                               border: '1.5px solid var(--border-hairline)',
+                              borderRadius: '8px',
+                              fontWeight: 700,
                             }}
                           >
-                            Paste Video Link
+                            Paste Video Link (YouTube / Drive)
                           </button>
                           <button
                             type="button"
@@ -2334,9 +3013,11 @@ export default function TutorRegisterLoginPage() {
                               backgroundColor: introVideoSource === 'upload' ? 'var(--brand-teal)' : '#FFFFFF',
                               color: introVideoSource === 'upload' ? '#FFFFFF' : 'var(--text-main)',
                               border: '1.5px solid var(--border-hairline)',
+                              borderRadius: '8px',
+                              fontWeight: 700,
                             }}
                           >
-                            Upload Video File
+                            Upload Video File (MP4/MOV)
                           </button>
                         </div>
 
@@ -2348,6 +3029,7 @@ export default function TutorRegisterLoginPage() {
                               value={introVideoUrl.startsWith('data:') ? '' : introVideoUrl}
                               onChange={(e) => setIntroVideoUrl(e.target.value)}
                               className="form-control"
+                              style={{ borderRadius: '10px' }}
                             />
                           </div>
                         ) : (
@@ -2371,7 +3053,7 @@ export default function TutorRegisterLoginPage() {
                                 onChange={(e) => handleFileChange(e, 'video')} 
                                 style={{ display: 'none' }} 
                               />
-                              <label htmlFor="video-upload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
+                              <label htmlFor="video-upload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', borderRadius: '8px' }}>
                                 <Upload size={14} />
                                 <span>Select Video File</span>
                               </label>
@@ -2423,11 +3105,11 @@ export default function TutorRegisterLoginPage() {
                           color: 'var(--text-muted)',
                           lineHeight: 1.5,
                         }}>
-                          <strong>💡 How to record a perfect intro video:</strong>
+                          <strong>💡 Quick Tips to Record a 60s Intro Video:</strong>
                           <ul style={{ paddingLeft: '1.25rem', marginTop: '0.25rem' }}>
-                            <li>Introduce yourself, qualification, and teaching experience.</li>
-                            <li>Explain your teaching technique (e.g. practical examples, solving past papers).</li>
-                            <li>Keep it strictly between 60 to 90 seconds.</li>
+                            <li>Introduce your name, degree/college, and subjects you teach.</li>
+                            <li>Highlight your teaching methodology (practical tricks, concept building, regular tests).</li>
+                            <li>Keep lighting clear, camera at eye level, and speak confidently for 60–90 seconds.</li>
                           </ul>
                         </div>
 
@@ -2468,25 +3150,39 @@ export default function TutorRegisterLoginPage() {
                           {idType === 'AADHAAR_MASKED' ? '12-Digit Aadhaar Number' : idType === 'PAN' ? '10-Character PAN Number' : 'Document ID Number'} <span style={{ color: '#DC2626' }}>*</span>
                         </label>
                         <input
+                          id="field-idNumber"
                           type="text"
                           required
-                          placeholder={idType === 'AADHAAR_MASKED' ? '5234 2389 4823' : 'ABCDE1234F'}
+                          maxLength={idType === 'AADHAAR_MASKED' ? 14 : idType === 'PAN' ? 10 : 16}
+                          placeholder={idType === 'AADHAAR_MASKED' ? '5234 2389 4823' : idType === 'PAN' ? 'ABCDE1234F' : 'DL-1420110012345'}
                           value={idNumber}
                           onChange={(e) => {
                             const val = e.target.value;
+                            if (wizardErrorField === 'field-idNumber') setWizardErrorField(null);
                             if (idType === 'AADHAAR_MASKED') {
                               const rawDigits = val.replace(/\D/g, '').slice(0, 12);
                               const formatted = rawDigits.replace(/(\d{4})(?=\d)/g, '$1 ');
                               setIdNumber(formatted);
+                            } else if (idType === 'PAN') {
+                              const cleanPan = val.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 10);
+                              setIdNumber(cleanPan);
                             } else {
-                              setIdNumber(val.toUpperCase().slice(0, 15));
+                              const cleanDl = val.replace(/[^a-zA-Z0-9-]/g, '').toUpperCase().slice(0, 16);
+                              setIdNumber(cleanDl);
                             }
                           }}
                           className="form-control"
-                          style={{ letterSpacing: idType === 'AADHAAR_MASKED' ? '0.12rem' : undefined, fontWeight: 700 }}
+                          style={{
+                            letterSpacing: '0.12rem',
+                            textTransform: 'uppercase',
+                            fontWeight: 700,
+                            borderRadius: '10px',
+                            borderColor: wizardErrorField === 'field-idNumber' ? '#EF4444' : undefined,
+                            boxShadow: wizardErrorField === 'field-idNumber' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                          }}
                         />
                         <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
-                          {idType === 'AADHAAR_MASKED' ? 'Must be 12 numerical digits.' : idType === 'PAN' ? 'Must be 10 characters (e.g. ABCDE1234F).' : 'Enter your registered license number.'}
+                          {idType === 'AADHAAR_MASKED' ? 'Must be 12 numerical digits.' : idType === 'PAN' ? 'Format: 5 letters, 4 digits, 1 letter (e.g. ABCDE1234F).' : 'Enter your registered license number.'}
                         </span>
                       </div>
 
@@ -2494,7 +3190,7 @@ export default function TutorRegisterLoginPage() {
                       <div className="form-group">
                         <label className="form-label" style={{ fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span>
-                            Upload Government ID Document Photo <span style={{ color: '#DC2626' }}>* (Mandatory)</span>
+                            Upload Government ID Document Photo <span style={{ color: '#DC2626' }}>*</span>
                           </span>
                           {idDocFileName ? (
                             <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -2507,18 +3203,30 @@ export default function TutorRegisterLoginPage() {
                           )}
                         </label>
 
-                        <div style={{
-                          padding: '1.4rem',
-                          borderRadius: '14px',
-                          border: idDocFileName ? '2px solid #059669' : '2px dashed #DC2626',
-                          backgroundColor: idDocFileName ? '#F0FDF4' : '#FEF2F2',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          textAlign: 'center',
-                          gap: '0.6rem',
-                          transition: 'all 0.2s ease',
-                        }}>
+                        <div
+                          id="field-idDoc"
+                          tabIndex={0}
+                          style={{
+                            padding: '1.4rem',
+                            borderRadius: '14px',
+                            border: idDocFileName
+                              ? '2px solid #059669'
+                              : (wizardErrorField === 'field-idDoc' ? '2.5px solid #EF4444' : '2px dashed #DC2626'),
+                            backgroundColor: idDocFileName
+                              ? '#F0FDF4'
+                              : (wizardErrorField === 'field-idDoc' ? '#FEF2F2' : '#FEF2F2'),
+                            boxShadow: wizardErrorField === 'field-idDoc'
+                              ? '0 0 0 4px rgba(239, 68, 68, 0.22)'
+                              : 'none',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            textAlign: 'center',
+                            gap: '0.6rem',
+                            outline: 'none',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
                           {idDocFileName ? (
                             <>
                               <div style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2674,62 +3382,116 @@ export default function TutorRegisterLoginPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          // Comprehensive step validations
+                          // Comprehensive step validations with auto-focus & red outline
                           if (currentStep === 1) {
                             if (!degree.trim()) {
-                              setErrorMessage('⚠️ Highest Qualification / Degree is mandatory.');
+                              triggerWizardError('field-degree', '⚠️ Highest Qualification / Degree is mandatory (e.g. B.Tech, M.Sc, B.Ed).');
+                              return;
+                            }
+                            if (!specialization.trim()) {
+                              triggerWizardError('field-specialization', '⚠️ Specialization / Major Stream is mandatory (e.g. Mathematics, Physics, CS).');
+                              return;
+                            }
+                            if (!college.trim()) {
+                              triggerWizardError('field-college', '⚠️ College / University Name is mandatory (e.g. Delhi University, IIT).');
+                              return;
+                            }
+                            if (!passingYear.trim()) {
+                              triggerWizardError('field-passingYear', '⚠️ Passing Year / Status is mandatory (e.g. 2023 or Final Year).');
                               return;
                             }
                             if (experienceYears === undefined || isNaN(experienceYears) || experienceYears < 0) {
-                              setErrorMessage('⚠️ Total Teaching Experience (Years) is mandatory.');
+                              triggerWizardError('field-experienceYears', '⚠️ Total Teaching Experience (Years) is mandatory.');
                               return;
                             }
                           }
                           if (currentStep === 2) {
                             if (selectedSubjects.length === 0) {
-                              setErrorMessage('⚠️ Please select at least one Subject you teach.');
+                              triggerWizardError('field-subjects', '⚠️ Please select at least one Subject you teach.');
                               return;
                             }
                             if (selectedClasses.length === 0) {
-                              setErrorMessage('⚠️ Please select at least one Class / Grade you teach.');
+                              triggerWizardError('field-classes', '⚠️ Please select at least one Class / Grade you teach.');
                               return;
                             }
                             if (selectedBoards.length === 0) {
-                              setErrorMessage('⚠️ Please select at least one Board (e.g. CBSE, ICSE, IB).');
+                              triggerWizardError('field-boards', '⚠️ Please select at least one Board (e.g. CBSE, ICSE, IB).');
                               return;
                             }
                           }
-                          if (currentStep === 3 && serviceAreas.length === 0) {
-                            setErrorMessage('⚠️ Please select at least one preferred sector/area in Gurgaon.');
-                            return;
+                          if (currentStep === 3) {
+                            if (locationPrefType === 'SECTORS' && serviceAreas.length === 0) {
+                              triggerWizardError('field-serviceAreas', '⚠️ Preferred Gurgaon Sectors are MANDATORY! Please select at least one sector you can visit.');
+                              return;
+                            }
+                            if (locationPrefType === 'RADIUS' && (!tutorLatitude || !tutorFormattedAddress)) {
+                              triggerWizardError('field-baseLocation', '⚠️ Home/Base Location is MANDATORY! Please tap on the map to set your location.');
+                              return;
+                            }
+                            if (locationPrefType === 'BOTH') {
+                              if (serviceAreas.length === 0) {
+                                triggerWizardError('field-serviceAreas', '⚠️ Preferred Gurgaon Sectors are MANDATORY! Please select at least one sector.');
+                                return;
+                              }
+                              if ((teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') && (!tutorLatitude || !tutorFormattedAddress)) {
+                                triggerWizardError('field-baseLocation', '⚠️ Home/Base Location is MANDATORY! Please tap on the map to set your base location.');
+                                return;
+                              }
+                            }
                           }
                           if (currentStep === 4) {
-                            if (!hourlyRateHomeMin || Number(hourlyRateHomeMin) <= 0) {
-                              setErrorMessage('⚠️ Expected Hourly Rate is mandatory.');
+                            if (teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') {
+                              if (!hourlyRateHomeMin || Number(hourlyRateHomeMin) < 50) {
+                                triggerWizardError('field-hourlyRateHomeMin', '⚠️ Home Visit Minimum Hourly Rate is mandatory (min ₹50/hr).');
+                                return;
+                              }
+                              if (!hourlyRateHomeMax || Number(hourlyRateHomeMax) < Number(hourlyRateHomeMin)) {
+                                triggerWizardError('field-hourlyRateHomeMax', '⚠️ Home Visit Maximum Rate cannot be less than Minimum rate.');
+                                return;
+                              }
+                            }
+                            if (teachingMode === 'BOTH' || teachingMode === 'ONLINE_LIVE') {
+                              if (!hourlyRateOnlineMin || Number(hourlyRateOnlineMin) < 50) {
+                                triggerWizardError('field-hourlyRateOnlineMin', '⚠️ Online Minimum Hourly Rate is mandatory (min ₹50/hr).');
+                                return;
+                              }
+                              if (!hourlyRateOnlineMax || Number(hourlyRateOnlineMax) < Number(hourlyRateOnlineMin)) {
+                                triggerWizardError('field-hourlyRateOnlineMax', '⚠️ Online Maximum Rate cannot be less than Minimum rate.');
+                                return;
+                              }
+                            }
+                          }
+                          if (currentStep === 5) {
+                            if (!profilePhotoUrl && !profilePhotoName) {
+                              triggerWizardError('field-profilePhoto', '⚠️ Tutor Profile Photo is mandatory! Please upload a clear face photo before proceeding.');
                               return;
                             }
                           }
                           if (currentStep === 6) {
                             const cleanId = idNumber.replace(/\s+/g, '');
                             if (!cleanId) {
-                              setErrorMessage('⚠️ Government ID Number is mandatory.');
+                              triggerWizardError('field-idNumber', '⚠️ Government ID Number is mandatory.');
                               return;
                             }
                             if (idType === 'AADHAAR_MASKED' && cleanId.length !== 12) {
-                              setErrorMessage('⚠️ Please enter a valid 12-digit Aadhaar Number (12 digits required).');
+                              triggerWizardError('field-idNumber', '⚠️ Please enter a valid 12-digit Aadhaar Number (12 digits required).');
                               return;
                             }
-                            if (idType === 'PAN' && cleanId.length !== 10) {
-                              setErrorMessage('⚠️ Please enter a valid 10-character PAN Number (e.g. ABCDE1234F).');
-                              return;
+                            if (idType === 'PAN') {
+                              const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+                              if (!panRegex.test(cleanId)) {
+                                triggerWizardError('field-idNumber', '⚠️ Please enter a valid 10-character PAN (format: 5 letters, 4 digits, 1 letter, e.g. ABCDE1234F).');
+                                return;
+                              }
                             }
                             if (!idDocUrl && !idDocFileName) {
-                              setErrorMessage('⚠️ ID Document Proof is MANDATORY! Please upload your ID document photo/PDF before proceeding.');
+                              triggerWizardError('field-idDoc', '⚠️ ID Document Proof is MANDATORY! Please upload your ID document photo/PDF before proceeding.');
                               return;
                             }
                           }
 
                           setErrorMessage('');
+                          setWizardErrorField(null);
                           setCurrentStep(currentStep + 1);
                         }}
                         className="btn btn-primary"
@@ -2763,57 +3525,80 @@ export default function TutorRegisterLoginPage() {
                ONBOARDING COMPLETION SUCCESS SCREEN
                ========================================================================= */
             <div className="container" style={{ maxWidth: '780px' }}>
-              <div className="apple-card" style={{ padding: '3.5rem 2.5rem', textAlign: 'center' }}>
+              <div className="apple-card" style={{ padding: '3.5rem 2.5rem', textAlign: 'center', backgroundColor: '#FFFFFF' }}>
                 <div style={{
                   width: '72px',
                   height: '72px',
                   borderRadius: '50%',
-                  backgroundColor: 'var(--brand-teal-light)',
-                  color: 'var(--brand-teal)',
+                  backgroundColor: '#ECFDF5',
+                  color: '#0F6E56',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto 1.5rem auto',
+                  boxShadow: '0 8px 24px rgba(15, 110, 86, 0.15)',
                 }}>
                   <CheckCircle2 size={42} />
                 </div>
 
-                <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+                <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.5rem', letterSpacing: '-0.5px' }}>
                   Application Submitted Successfully! 🎉
                 </h2>
 
-                <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.6, maxWidth: '560px', margin: '0 auto 2rem auto' }}>
-                  Welcome aboard, <strong>{userName}</strong>! Your account has been registered. Your application status is currently: <strong>Pending Interview Verification</strong>.
+                <p style={{ color: '#64748B', fontSize: '1rem', lineHeight: 1.6, maxWidth: '580px', margin: '0 auto 1.75rem auto' }}>
+                  Welcome aboard, <strong>{userName}</strong>! Your tutor profile has been registered on <strong>TuitionForHome</strong>. Your application status is currently: <span style={{ color: '#0F6E56', fontWeight: 700, backgroundColor: '#ECFDF5', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>Pending Interview Verification</span>.
                 </p>
 
                 <div style={{
                   backgroundColor: '#F8FAFC',
-                  border: '1.5px solid var(--border-hairline)',
+                  border: '1.5px solid #E2E8F0',
                   borderRadius: '16px',
                   padding: '1.5rem',
-                  maxWidth: '520px',
-                  margin: '0 auto 2rem auto',
+                  maxWidth: '560px',
+                  margin: '0 auto 1.75rem auto',
                   textAlign: 'left',
                 }}>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <ShieldCheck size={16} color="var(--brand-teal)" />
+                  <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <ShieldCheck size={18} color="#0F6E56" />
                     <span>WHAT HAPPENS NEXT?</span>
                   </div>
-                  <ul style={{ paddingLeft: '1.25rem', fontSize: '0.82rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                    <li>Our administrative auditors will review your qualifications and intro video.</li>
-                    <li>You will receive a call within 24 hours to schedule your online video interview or walk-in.</li>
-                    <li>Once approved, your tutor profile will be set to <strong>Active & Verified</strong>, and you can start matching with parent leads!</li>
+                  <ul style={{ paddingLeft: '1.25rem', fontSize: '0.84rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '0.55rem', lineHeight: 1.5 }}>
+                    <li>Our administrative auditors at <strong>SSSAM Academy (Sector 14, Gurugram)</strong> will review your qualifications and intro video.</li>
+                    <li>You will receive a call within 24 hours to schedule your online video interview or physical walk-in evaluation.</li>
+                    <li>Once approved, your tutor profile will be set to <strong>Active &amp; Verified</strong>, and you will start receiving matched parent leads!</li>
                   </ul>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+                {/* SSSAM Academy Helpline Card */}
+                <div style={{
+                  backgroundColor: '#F0FDF4',
+                  border: '1px solid #BBF7D0',
+                  borderRadius: '12px',
+                  padding: '1rem',
+                  maxWidth: '560px',
+                  margin: '0 auto 2rem auto',
+                  fontSize: '0.84rem',
+                  color: '#166534',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Phone size={16} color="#166534" />
+                    <span><strong>Helpline Support:</strong> +91 92170 31899 / +91 95174 47689</span>
+                  </div>
+                  <span style={{ fontSize: '0.76rem', color: '#15803D', fontWeight: 600 }}>Mon–Sun: 9 AM – 9 PM</span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                   <a href="/tutor/profile" className="btn btn-primary" style={{ backgroundColor: 'var(--brand-teal)' }}>
                     <span>Go to Profile Dashboard</span>
                     <ArrowRight size={14} />
                   </a>
-                  <a href="/counselor" className="btn btn-secondary">
-                    <span>Counselor Desk (Preview)</span>
-                    <ExternalLink size={14} />
+                  <a href="/" className="btn btn-secondary">
+                    <span>Back to Home</span>
                   </a>
                   <button type="button" onClick={handleLogout} className="btn btn-secondary" style={{ color: '#B91C1C', borderColor: '#FCA5A5' }}>
                     <span>Log Out</span>
@@ -2942,29 +3727,211 @@ export default function TutorRegisterLoginPage() {
           style={{ position: 'fixed', inset: 0, zIndex: 2500, backgroundColor: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(4px)' }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowTutorLocationPicker(false); }}
         >
-          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', width: '100%', maxWidth: '500px', maxHeight: '85vh', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '1.1rem 1.25rem', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '24px', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflow: 'hidden', boxShadow: '0 25px 80px rgba(0,0,0,0.35)', display: 'flex', flexDirection: 'column', border: '1px solid #E2E8F0' }}>
+            {/* Modal Header */}
+            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>📍 Set Your Home Location</h3>
-                <p style={{ fontSize: '0.75rem', color: '#64748B', margin: '2px 0 0 0' }}>Drag pin or tap on the map</p>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>📍 Set Your Home Location</h3>
+                <p style={{ fontSize: '0.75rem', color: '#64748B', margin: '2px 0 0 0' }}>Search sector, drag pin, or tap on map</p>
               </div>
-              <button type="button" onClick={() => setShowTutorLocationPicker(false)} style={{ background: '#F1F5F9', border: 'none', borderRadius: '10px', padding: '0.4rem', cursor: 'pointer', display: 'flex' }}>
+              <button
+                type="button"
+                onClick={() => setShowTutorLocationPicker(false)}
+                aria-label="Close"
+                style={{ background: '#F1F5F9', border: 'none', borderRadius: '10px', padding: '0.45rem', cursor: 'pointer', display: 'flex', transition: 'background 0.15s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#E2E8F0'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F1F5F9'; }}
+              >
                 <X size={18} color="#64748B" />
               </button>
             </div>
 
-            <div ref={tutorPickerMapRef} style={{ height: '250px', width: '100%', position: 'relative', zIndex: 10 }} />
+            {/* Sector Search Box with Dropdown */}
+            <div style={{ padding: '0.75rem 1.25rem 0.5rem', backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', position: 'relative' }}>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  placeholder="Search Gurgaon sector, colony, or landmark..."
+                  value={tutorModalSearch}
+                  onChange={(e) => {
+                    const q = e.target.value;
+                    setTutorModalSearch(q);
+                    if (q.trim().length >= 2) {
+                      const lower = q.toLowerCase();
+                      const matches = GURGAON_LOCALITIES.filter(
+                        loc => loc.name.toLowerCase().includes(lower) || loc.landmark.toLowerCase().includes(lower)
+                      ).slice(0, 5).map(loc => ({
+                        name: loc.name,
+                        landmark: loc.landmark,
+                        lat: loc.lat,
+                        lng: loc.lng,
+                      }));
+                      setTutorModalSearchResults(matches);
+                    } else {
+                      setTutorModalSearchResults([]);
+                    }
+                  }}
+                  className="form-control"
+                  style={{
+                    paddingLeft: '1rem',
+                    paddingRight: tutorModalSearch ? '2rem' : '1rem',
+                    borderRadius: '10px',
+                    fontSize: '0.84rem',
+                    backgroundColor: '#FFFFFF',
+                  }}
+                />
+                {tutorModalSearch && (
+                  <button
+                    type="button"
+                    onClick={() => { setTutorModalSearch(''); setTutorModalSearchResults([]); }}
+                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
 
-            <div style={{ padding: '1rem 1.25rem' }}>
-              <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '0.75rem 0.9rem', marginBottom: '0.85rem' }}>
-                <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.25rem' }}>YOUR ADDRESS</div>
+              {/* Autocomplete Dropdown */}
+              {tutorModalSearchResults.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '1.25rem',
+                  right: '1.25rem',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '12px',
+                  boxShadow: '0 12px 32px rgba(0,0,0,0.18)',
+                  border: '1.5px solid #E2E8F0',
+                  zIndex: 2000,
+                  maxHeight: '180px',
+                  overflowY: 'auto',
+                  marginTop: '4px',
+                }}>
+                  {tutorModalSearchResults.map((res, i) => (
+                    <div
+                      key={i}
+                      onClick={async () => {
+                        setTutorLatitude(res.lat);
+                        setTutorLongitude(res.lng);
+                        if (tutorPickerMap && tutorPickerMarkerRef.current) {
+                          tutorPickerMap.setView([res.lat, res.lng], 17);
+                          tutorPickerMarkerRef.current.setLatLng([res.lat, res.lng]);
+                          setTimeout(() => { if (tutorPickerMap) tutorPickerMap.invalidateSize(); }, 60);
+                        }
+                        setIsTutorReverseGeocoding(true);
+                        setTutorModalSearch('');
+                        setTutorModalSearchResults([]);
+                        const addr = await tutorReverseGeocode(res.lat, res.lng);
+                        setTutorFormattedAddress(addr || res.name);
+                        setIsTutorReverseGeocoding(false);
+                      }}
+                      style={{
+                        padding: '0.6rem 0.9rem',
+                        borderBottom: i < tutorModalSearchResults.length - 1 ? '1px solid #F1F5F9' : 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F0FDF4')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
+                    >
+                      <MapPin size={14} color="#059669" style={{ flexShrink: 0 }} />
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F172A' }}>{res.name}</div>
+                        <div style={{ fontSize: '0.72rem', color: '#64748B' }}>{res.landmark}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Map Container with Floating Animated GPS Radar Pill */}
+            <div style={{ position: 'relative', width: '100%', height: '280px', backgroundColor: '#E2E8F0', overflow: 'hidden' }}>
+              <div ref={tutorPickerMapRef} style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }} />
+
+              <style>{`
+                @keyframes tutorGpsFloatingPulse {
+                  0% {
+                    box-shadow: 0 0 0 0 rgba(15, 110, 86, 0.65), 0 4px 14px rgba(15, 110, 86, 0.35);
+                    transform: scale(1);
+                  }
+                  50% {
+                    box-shadow: 0 0 0 8px rgba(15, 110, 86, 0), 0 6px 20px rgba(15, 110, 86, 0.45);
+                    transform: scale(1.05);
+                  }
+                  100% {
+                    box-shadow: 0 0 0 0 rgba(15, 110, 86, 0), 0 4px 14px rgba(15, 110, 86, 0.35);
+                    transform: scale(1);
+                  }
+                }
+              `}</style>
+
+              {/* Sleek Floating Animated GPS Button right on map */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!('geolocation' in navigator)) return;
+                  setIsDetectingTutorGPS(true);
+                  navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                      const lat = pos.coords.latitude; const lng = pos.coords.longitude;
+                      setTutorLatitude(lat); setTutorLongitude(lng);
+                      if (tutorPickerMap && tutorPickerMarkerRef.current) {
+                        tutorPickerMap.setView([lat, lng], 17);
+                        tutorPickerMarkerRef.current.setLatLng([lat, lng]);
+                        setTimeout(() => { if (tutorPickerMap) tutorPickerMap.invalidateSize(); }, 60);
+                      }
+                      setIsTutorReverseGeocoding(true);
+                      const addr = await tutorReverseGeocode(lat, lng);
+                      setTutorFormattedAddress(addr);
+                      setIsTutorReverseGeocoding(false); setIsDetectingTutorGPS(false);
+                    },
+                    () => { setIsDetectingTutorGPS(false); },
+                    { enableHighAccuracy: true, timeout: 8000 }
+                  );
+                }}
+                disabled={isDetectingTutorGPS}
+                title="Detect My Location"
+                style={{
+                  position: 'absolute',
+                  bottom: '12px',
+                  right: '12px',
+                  zIndex: 1000,
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: '999px',
+                  border: 'none',
+                  background: isDetectingTutorGPS 
+                    ? '#94A3B8' 
+                    : 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: '0.8rem',
+                  cursor: isDetectingTutorGPS ? 'wait' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  animation: isDetectingTutorGPS ? 'none' : 'tutorGpsFloatingPulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <MapPin size={14} color="#FFFFFF" style={{ flexShrink: 0 }} />
+                <span>{isDetectingTutorGPS ? 'Locating...' : '📍 My Location'}</span>
+              </button>
+            </div>
+
+            {/* Address Details & Confirm Action */}
+            <div style={{ padding: '1.15rem 1.25rem' }}>
+              <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '0.75rem 0.95rem', marginBottom: '0.85rem' }}>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.25rem' }}>DETECTED ADDRESS</div>
                 <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   {isTutorReverseGeocoding ? (
                     <span style={{ color: '#94A3B8', fontWeight: 600 }}>Detecting address...</span>
                   ) : (
                     <>
                       {tutorFormattedAddress && <CheckCircle2 size={14} color="#059669" />}
-                      <span>{tutorFormattedAddress || 'Tap on the map to select'}</span>
+                      <span>{tutorFormattedAddress || 'Tap on the map or search to select'}</span>
                     </>
                   )}
                 </div>
@@ -2973,46 +3940,31 @@ export default function TutorRegisterLoginPage() {
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: '0.65rem' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!('geolocation' in navigator)) return;
-                    setIsDetectingTutorGPS(true);
-                    navigator.geolocation.getCurrentPosition(
-                      async (pos) => {
-                        const lat = pos.coords.latitude; const lng = pos.coords.longitude;
-                        setTutorLatitude(lat); setTutorLongitude(lng);
-                        if (tutorPickerMap && tutorPickerMarkerRef.current) {
-                          tutorPickerMap.setView([lat, lng], 16);
-                          tutorPickerMarkerRef.current.setLatLng([lat, lng]);
-                        }
-                        setIsTutorReverseGeocoding(true);
-                        const addr = await tutorReverseGeocode(lat, lng);
-                        setTutorFormattedAddress(addr);
-                        setIsTutorReverseGeocoding(false); setIsDetectingTutorGPS(false);
-                      },
-                      () => { setIsDetectingTutorGPS(false); },
-                      { enableHighAccuracy: true, timeout: 8000 }
-                    );
-                  }}
-                  disabled={isDetectingTutorGPS}
-                  style={{ flex: 1, padding: '0.65rem', borderRadius: '12px', border: '1px solid #E2E8F0', background: '#FFFFFF', color: '#334155', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}
-                >
-                  <MapPin size={14} />
-                  {isDetectingTutorGPS ? 'Detecting...' : 'Use Current Location'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowTutorLocationPicker(false)}
-                  disabled={!tutorLatitude || isTutorReverseGeocoding}
-                  style={{ flex: 1.5, padding: '0.65rem', borderRadius: '12px', border: 'none', background: tutorLatitude ? '#0F6E56' : '#CBD5E1', color: '#FFFFFF', fontWeight: 800, fontSize: '0.82rem', cursor: tutorLatitude ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', boxShadow: tutorLatitude ? '0 4px 14px rgba(15,110,86,0.3)' : 'none' }}
-                >
-                  <CheckCircle2 size={14} />
-                  Confirm Location
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowTutorLocationPicker(false)}
+                disabled={!tutorLatitude || isTutorReverseGeocoding}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: tutorLatitude ? 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)' : '#CBD5E1',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: '0.88rem',
+                  cursor: tutorLatitude ? 'pointer' : 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.4rem',
+                  boxShadow: tutorLatitude ? '0 4px 16px rgba(15,110,86,0.3)' : 'none',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <CheckCircle2 size={16} />
+                <span>Confirm Location</span>
+              </button>
             </div>
           </div>
         </div>
