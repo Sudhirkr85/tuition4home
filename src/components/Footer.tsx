@@ -43,7 +43,7 @@ export default function Footer() {
             </div>
 
             <p style={{ color: '#94A3B8', fontSize: '0.92rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-              Gurgaon&apos;s premier managed home & online tuition mediation network. Connecting parents with verified, background-checked Indian educators with a 100% satisfaction guarantee.
+              TuitionForHome is a tutoring mediation and management service operated by SSSAM Academy, Gurugram. Connecting parents with verified, background-checked Indian educators with transparent matching standards.
             </p>
 
             {/* Social Media Links */}
@@ -215,9 +215,13 @@ export default function Footer() {
           <div>
             © {new Date().getFullYear()} <strong>TuitionForHome</strong>. Powered by SSSAM Academy. All rights reserved.
           </div>
-          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
             <Link href="/" style={{ color: '#94A3B8' }}>Privacy Policy</Link>
-            <Link href="/" style={{ color: '#94A3B8' }}>Terms of Service</Link>
+            <Link href="/tutor/register" style={{ color: '#94A3B8' }}>Tutor Agreement</Link>
+            <Link href="/#how-it-works" style={{ color: '#94A3B8' }}>Payment Policy</Link>
+            <Link href="/#how-it-works" style={{ color: '#94A3B8' }}>Cancellation Policy</Link>
+            <a href={`tel:${SSSAM_OFFICE_DETAILS.phones[0]}`} style={{ color: '#94A3B8' }}>Grievance Support</a>
+            <a href={`mailto:${SSSAM_OFFICE_DETAILS.email}`} style={{ color: '#94A3B8' }}>Contact</a>
             <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8' }}>Sitemap (XML)</a>
             <Link href="/counselor" style={{ color: '#94A3B8' }}>Counselor Desk</Link>
             <Link href="/admin" style={{ color: '#94A3B8' }}>Admin Portal</Link>

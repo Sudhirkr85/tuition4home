@@ -4832,7 +4832,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                                     `👤 *Parent:* ${lead.parentName ? lead.parentName.trim().charAt(0).toUpperCase() + lead.parentName.trim().slice(1) : ''} (${lead.parentPhone})\n` +
                                     `📚 *Class:* ${lead.gradeClass.replace(/\s*\([^)]+\)/g, '')} (${subjects.replace(/\s*\(Class\s*[^)]+\)/gi, '').replace(/\s*\([^)]+\)/g, '').trim()})\n` +
                                     `📍 *Locality:* ${lead.locality}, Gurgaon\n` +
-                                    `💻 *Mode:* ${lead.preferredMode === 'ONLINE_LIVE' || lead.preferredMode === 'Online' ? 'Online' : 'Home Visit'}\n\n` +
+                                    `💻 *Mode:* ${lead.preferredMode === 'ONLINE_LIVE' ? 'Online' : 'Home Visit'}\n\n` +
                                     `Please contact the parent to confirm your session timing.`
                                   )}`}
                                   target="_blank"
@@ -4871,7 +4871,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                                 `📍 *Location:* ${lead.locality}, Gurgaon\n` +
                                 `📚 *Subject:* ${subjects.replace(/\s*\(Class\s*[^)]+\)/gi, '').replace(/\s*\([^)]+\)/g, '').trim()}\n` +
                                 `🎓 *Assigned Educator:* ${(lead.assignedTutor || assignedTutorObj.name || '').trim().charAt(0).toUpperCase() + (lead.assignedTutor || assignedTutorObj.name || '').trim().slice(1)} (${assignedTutorObj.highestDegree?.toUpperCase() || 'Verified Educator'})\n` +
-                                `💻 *Mode:* ${lead.preferredMode === 'ONLINE_LIVE' || lead.preferredMode === 'Online' ? 'Online (Live 1-on-1)' : 'Home Visit'}\n\n` +
+                                `💻 *Mode:* ${lead.preferredMode === 'ONLINE_LIVE' ? 'Online (Live 1-on-1)' : 'Home Visit'}\n\n` +
                                 `Please coordinate mutually convenient timings for the 1st session.`
                               )}`}
                               target="_blank"
@@ -7046,13 +7046,20 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                     'REPLACE_REQ': 'REPLACEMENT_REQUESTED',
                   };
 
+                  const milestoneLabelMap: Record<string, string> = {
+                    '1ST_SESSION_PENDING': '1st Class Scheduled',
+                    '1ST_SESSION_DONE': '1st Class Completed & Ongoing',
+                    'FEE_PAID': 'Monthly Fee Deposited',
+                    'REPLACE_REQ': 'Replacement Requested',
+                  };
+
                   try {
                     await fetch(`/api/leads/${milestoneModal.lead.id}/followup`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
                         status: statusMap[targetKey] || targetKey,
-                        notes: `Milestone updated to: ${milestoneConfig[targetKey]?.label || targetKey}`,
+                        notes: `Milestone updated to: ${milestoneLabelMap[targetKey] || targetKey}`,
                         performedBy: actorName,
                         actionType: 'STATUS_CHANGE',
                       }),
@@ -7061,7 +7068,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                     console.error('Failed to sync milestone followup:', err);
                   }
 
-                  setCounselorSuccessMsg(`Successfully updated milestone to "${milestoneConfig[targetKey]?.label || targetKey}" for ${milestoneModal.parentName}`);
+                  setCounselorSuccessMsg(`Successfully updated milestone to "${milestoneLabelMap[targetKey] || targetKey}" for ${milestoneModal.parentName}`);
                   setTimeout(() => setCounselorSuccessMsg(''), 3500);
                   setMilestoneModal(null);
                   refreshAllData();

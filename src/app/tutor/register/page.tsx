@@ -37,6 +37,10 @@ import {
   User,
   ExternalLink,
   AlertCircle,
+  CreditCard,
+  Info,
+  HelpCircle,
+  Check,
 } from 'lucide-react';
 
 export default function TutorRegisterLoginPage() {
@@ -283,9 +287,14 @@ export default function TutorRegisterLoginPage() {
   const [idDocUrl, setIdDocUrl] = useState('');
   const [idDocFileName, setIdDocFileName] = useState('');
   
-  // Step 7: Agreement & T&Cs Modal
+  // Step 7: Agreement, Privacy & Consent States
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreeCommission, setAgreeCommission] = useState(false);
+  const [agreeVerification, setAgreeVerification] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [consentMarketing, setConsentMarketing] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState<'agreement' | 'commission' | 'verification' | 'privacy' | 'waiver' | 'grievance'>('agreement');
   
   // Submission Lifecycle
   const [loading, setLoading] = useState(false);
@@ -685,7 +694,7 @@ export default function TutorRegisterLoginPage() {
 
   const handleFinalSubmit = async () => {
     if (!agreeTerms) {
-      setErrorMessage('⚠️ Please read and agree to the Terms & Conditions and Privacy Policy first.');
+      setErrorMessage('⚠️ Please review and accept the agreement terms before completing registration.');
       return;
     }
     if (!idDocUrl && !idDocFileName) {
@@ -729,6 +738,7 @@ export default function TutorRegisterLoginPage() {
           idType,
           idNumber,
           idDocUrl: idDocUrl || '',
+          consentMarketing,
           status: 'PENDING_INTERVIEW',
         }),
       });
@@ -3288,62 +3298,172 @@ export default function TutorRegisterLoginPage() {
                     </div>
                   )}
 
-                  {/* STEP 7: Agreement & terms popup */}
+                  {/* STEP 7: Privacy & Service Agreement */}
                   {currentStep === 7 && (
-                    <div>
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.45rem' }}>
-                        Step 7: Privacy & Service Agreement
-                      </h3>
-                      <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                        Review and accept our terms to complete your application.
-                      </p>
-
-                      {/* Agreement Text Preview */}
-                      <div style={{
-                        backgroundColor: '#FFFFFF',
-                        border: '1.5px solid var(--border-hairline)',
-                        borderRadius: '12px',
-                        padding: '1.25rem',
-                        fontSize: '0.85rem',
-                        color: 'var(--text-main)',
-                        lineHeight: 1.6,
-                        marginBottom: '1.5rem',
-                      }}>
-                        <p style={{ marginBottom: '0.75rem' }}>
-                          By checking the agreement box below, you signify that you have read, understood, and agreed to the service protocols, payment commissions, screening interviews, and data safety terms of <strong>TuitionForHome (Operated by SSSAM Academy)</strong>.
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      <div>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', color: '#0F6E56', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.25rem 0.65rem', borderRadius: '999px', marginBottom: '0.5rem' }}>
+                          <span>STEP 7 OF 7</span>
+                        </div>
+                        <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.35rem', letterSpacing: '-0.3px' }}>
+                          Step 7: Privacy &amp; Service Agreement
+                        </h3>
+                        <p style={{ fontSize: '0.9rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
+                          Review and accept our terms to complete your application.
                         </p>
-                        
-                        <button 
-                          type="button" 
-                          onClick={() => setShowTermsModal(true)} 
-                          className="btn btn-secondary btn-sm"
-                          style={{ color: 'var(--brand-teal)', border: '1.5px solid var(--brand-teal)', fontWeight: 700 }}
-                        >
-                          <FileText size={14} />
-                          <span>Read Full Wording & Legal Policy (View Details)</span>
-                        </button>
                       </div>
 
-                      {/* Checkbox */}
+                      {/* Main Agreement Overview Card */}
                       <div style={{
+                        backgroundColor: '#FFFFFF',
+                        border: '1.5px solid #E2E8F0',
+                        borderRadius: '16px',
+                        padding: '1.35rem',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1rem',
+                      }}>
+                        <p style={{ fontSize: '0.88rem', color: '#334155', lineHeight: 1.6, margin: 0 }}>
+                          By checking the agreement box below, you signify that you have read, understood, and agreed to the service protocols, payment commissions, screening interviews, and data safety terms of <strong>TuitionForHome (Operated by SSSAM Academy)</strong>.
+                        </p>
+
+                        {/* View Details / Read Legal Policy Button */}
+                        <div style={{ textAlign: 'center', margin: '0.25rem 0' }}>
+                          <button
+                            type="button"
+                            onClick={() => setShowTermsModal(true)}
+                            className="btn btn-secondary"
+                            style={{
+                              borderColor: '#0F6E56',
+                              color: '#0F6E56',
+                              backgroundColor: '#F0FDF4',
+                              fontWeight: 700,
+                              fontSize: '0.85rem',
+                              padding: '0.6rem 1.25rem',
+                              borderRadius: '10px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                            }}
+                          >
+                            <FileText size={16} />
+                            <span>Read Full Wording &amp; Legal Policy (View Details)</span>
+                          </button>
+                        </div>
+
+                        {/* Summary Feature Bullets */}
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                          gap: '0.65rem',
+                          backgroundColor: '#F8FAFC',
+                          padding: '1rem',
+                          borderRadius: '12px',
+                          border: '1px solid #E2E8F0',
+                          fontSize: '0.8rem',
+                          color: '#475569',
+                          lineHeight: 1.5,
+                        }}>
+                          <div>
+                            <strong style={{ color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '2px' }}>
+                              <span>💰 1st-Month Commission</span>
+                            </strong>
+                            100% first month bureau matching fee; regular scheduled payouts from Month 2 onwards.
+                          </div>
+                          <div>
+                            <strong style={{ color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '2px' }}>
+                              <span>🛡️ Mandatory Interview</span>
+                            </strong>
+                            Telephonic screening followed by a brief video call or Sector 14 center walk-in.
+                          </div>
+                          <div>
+                            <strong style={{ color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '2px' }}>
+                              <span>🔒 Document Safety</span>
+                            </strong>
+                            Encrypted internal audit review only; IDs are never shown publicly or shared with parents.
+                          </div>
+                          <div>
+                            <strong style={{ color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '2px' }}>
+                              <span>🏷️ Verification Fee Waiver</span>
+                            </strong>
+                            Standard ₹999 registration fee is 100% waived under our current promotional drive (₹0).
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Single Mandatory Agreement Checkbox */}
+                      <label style={{
                         display: 'flex',
                         alignItems: 'flex-start',
-                        gap: '0.75rem',
-                        backgroundColor: 'var(--bg-app)',
-                        padding: '1.1rem',
+                        gap: '0.85rem',
+                        padding: '1rem 1.15rem',
                         borderRadius: '12px',
-                        border: '1px solid var(--border-hairline)',
+                        backgroundColor: agreeTerms ? '#F0FDF4' : '#F8FAFC',
+                        border: agreeTerms ? '1.5px solid #86EFAC' : '1.5px solid #CBD5E1',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
                       }}>
                         <input
                           type="checkbox"
-                          id="agree-checkbox"
+                          id="agree-terms-main-check"
                           checked={agreeTerms}
                           onChange={(e) => setAgreeTerms(e.target.checked)}
-                          style={{ marginTop: '4px', width: '18px', height: '18px', accentColor: 'var(--brand-teal)', cursor: 'pointer' }}
+                          style={{ marginTop: '3px', width: '20px', height: '20px', accentColor: '#0F6E56', cursor: 'pointer', flexShrink: 0 }}
                         />
-                        <label htmlFor="agree-checkbox" style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 600, cursor: 'pointer', lineHeight: 1.5 }}>
-                          I agree to SSSAM Academy's terms of service, full 1st-month commission allocation, mandatory interview verification, marketing promotion rights, and encrypted document safety regulations.
-                        </label>
+                        <div style={{ fontSize: '0.88rem', color: '#1E293B', fontWeight: 600, lineHeight: 1.5 }}>
+                          I agree to SSSAM Academy &amp; TuitionForHome&apos;s terms of service, full 1st-month commission allocation, mandatory interview verification, and encrypted document safety regulations.
+                        </div>
+                      </label>
+
+                      {/* Optional Marketing Consent Checkbox */}
+                      <label style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '0.85rem',
+                        padding: '0.85rem 1.15rem',
+                        borderRadius: '12px',
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid #E2E8F0',
+                        cursor: 'pointer',
+                      }}>
+                        <input
+                          type="checkbox"
+                          id="consent-marketing-check"
+                          checked={consentMarketing}
+                          onChange={(e) => setConsentMarketing(e.target.checked)}
+                          style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#0F6E56', cursor: 'pointer', flexShrink: 0 }}
+                        />
+                        <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.45 }}>
+                          <strong style={{ color: '#0F172A' }}>(Optional)</strong> I consent to TuitionForHome showcasing my verified tutor profile, intro video, and teaching credentials on social media to generate student inquiries.
+                        </div>
+                      </label>
+
+                      {/* Quick Policy Links Bar */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '1.25rem',
+                        flexWrap: 'wrap',
+                        fontSize: '0.76rem',
+                        color: '#64748B',
+                      }}>
+                        <button type="button" onClick={() => { setLegalModalTab('agreement'); setShowTermsModal(true); }} style={{ background: 'none', border: 'none', color: '#0F6E56', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
+                          Tutor Agreement
+                        </button>
+                        <span>•</span>
+                        <button type="button" onClick={() => { setLegalModalTab('commission'); setShowTermsModal(true); }} style={{ background: 'none', border: 'none', color: '#0F6E56', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
+                          Payment &amp; Commission
+                        </button>
+                        <span>•</span>
+                        <button type="button" onClick={() => { setLegalModalTab('privacy'); setShowTermsModal(true); }} style={{ background: 'none', border: 'none', color: '#0F6E56', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
+                          Privacy Policy
+                        </button>
+                        <span>•</span>
+                        <button type="button" onClick={() => { setLegalModalTab('grievance'); setShowTermsModal(true); }} style={{ background: 'none', border: 'none', color: '#0F6E56', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
+                          Support &amp; Grievance
+                        </button>
                       </div>
 
                     </div>
@@ -3352,167 +3472,180 @@ export default function TutorRegisterLoginPage() {
                   {/* Wizard navigation buttons */}
                   <div style={{
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
                     marginTop: '2.5rem',
                     paddingTop: '1.5rem',
                     borderTop: '1px solid var(--border-hairline)',
                   }}>
-                    {currentStep > 1 ? (
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep(currentStep - 1)}
-                        className="btn btn-secondary"
-                      >
-                        <ArrowLeft size={16} />
-                        <span>Back</span>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="btn btn-secondary"
-                        style={{ color: '#B91C1C', borderColor: '#FCA5A5' }}
-                      >
-                        Logout / Exit
-                      </button>
-                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      {currentStep > 1 ? (
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(currentStep - 1)}
+                          className="btn btn-secondary"
+                        >
+                          <ArrowLeft size={16} />
+                          <span>Back</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleLogout}
+                          className="btn btn-secondary"
+                          style={{ color: '#B91C1C', borderColor: '#FCA5A5' }}
+                        >
+                          Logout / Exit
+                        </button>
+                      )}
 
-                    {currentStep < totalSteps ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          // Comprehensive step validations with auto-focus & red outline
-                          if (currentStep === 1) {
-                            if (!degree.trim()) {
-                              triggerWizardError('field-degree', '⚠️ Highest Qualification / Degree is mandatory (e.g. B.Tech, M.Sc, B.Ed).');
-                              return;
-                            }
-                            if (!specialization.trim()) {
-                              triggerWizardError('field-specialization', '⚠️ Specialization / Major Stream is mandatory (e.g. Mathematics, Physics, CS).');
-                              return;
-                            }
-                            if (!college.trim()) {
-                              triggerWizardError('field-college', '⚠️ College / University Name is mandatory (e.g. Delhi University, IIT).');
-                              return;
-                            }
-                            if (!passingYear.trim()) {
-                              triggerWizardError('field-passingYear', '⚠️ Passing Year / Status is mandatory (e.g. 2023 or Final Year).');
-                              return;
-                            }
-                            if (experienceYears === undefined || isNaN(experienceYears) || experienceYears < 0) {
-                              triggerWizardError('field-experienceYears', '⚠️ Total Teaching Experience (Years) is mandatory.');
-                              return;
-                            }
-                          }
-                          if (currentStep === 2) {
-                            if (selectedSubjects.length === 0) {
-                              triggerWizardError('field-subjects', '⚠️ Please select at least one Subject you teach.');
-                              return;
-                            }
-                            if (selectedClasses.length === 0) {
-                              triggerWizardError('field-classes', '⚠️ Please select at least one Class / Grade you teach.');
-                              return;
-                            }
-                            if (selectedBoards.length === 0) {
-                              triggerWizardError('field-boards', '⚠️ Please select at least one Board (e.g. CBSE, ICSE, IB).');
-                              return;
-                            }
-                          }
-                          if (currentStep === 3) {
-                            if (locationPrefType === 'SECTORS' && serviceAreas.length === 0) {
-                              triggerWizardError('field-serviceAreas', '⚠️ Preferred Gurgaon Sectors are MANDATORY! Please select at least one sector you can visit.');
-                              return;
-                            }
-                            if (locationPrefType === 'RADIUS' && (!tutorLatitude || !tutorFormattedAddress)) {
-                              triggerWizardError('field-baseLocation', '⚠️ Home/Base Location is MANDATORY! Please tap on the map to set your location.');
-                              return;
-                            }
-                            if (locationPrefType === 'BOTH') {
-                              if (serviceAreas.length === 0) {
-                                triggerWizardError('field-serviceAreas', '⚠️ Preferred Gurgaon Sectors are MANDATORY! Please select at least one sector.');
+                      {currentStep < totalSteps ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Comprehensive step validations with auto-focus & red outline
+                            if (currentStep === 1) {
+                              if (!degree.trim()) {
+                                triggerWizardError('field-degree', '⚠️ Highest Qualification / Degree is mandatory (e.g. B.Tech, M.Sc, B.Ed).');
                                 return;
                               }
-                              if ((teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') && (!tutorLatitude || !tutorFormattedAddress)) {
-                                triggerWizardError('field-baseLocation', '⚠️ Home/Base Location is MANDATORY! Please tap on the map to set your base location.');
+                              if (!specialization.trim()) {
+                                triggerWizardError('field-specialization', '⚠️ Specialization / Major Stream is mandatory (e.g. Mathematics, Physics, CS).');
+                                return;
+                              }
+                              if (!college.trim()) {
+                                triggerWizardError('field-college', '⚠️ College / University Name is mandatory (e.g. Delhi University, IIT).');
+                                return;
+                              }
+                              if (!passingYear.trim()) {
+                                triggerWizardError('field-passingYear', '⚠️ Passing Year / Status is mandatory (e.g. 2023 or Final Year).');
+                                return;
+                              }
+                              if (experienceYears === undefined || isNaN(experienceYears) || experienceYears < 0) {
+                                triggerWizardError('field-experienceYears', '⚠️ Total Teaching Experience (Years) is mandatory.');
                                 return;
                               }
                             }
-                          }
-                          if (currentStep === 4) {
-                            if (teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') {
-                              if (!hourlyRateHomeMin || Number(hourlyRateHomeMin) < 50) {
-                                triggerWizardError('field-hourlyRateHomeMin', '⚠️ Home Visit Minimum Hourly Rate is mandatory (min ₹50/hr).');
+                            if (currentStep === 2) {
+                              if (selectedSubjects.length === 0) {
+                                triggerWizardError('field-subjects', '⚠️ Please select at least one Subject you teach.');
                                 return;
                               }
-                              if (!hourlyRateHomeMax || Number(hourlyRateHomeMax) < Number(hourlyRateHomeMin)) {
-                                triggerWizardError('field-hourlyRateHomeMax', '⚠️ Home Visit Maximum Rate cannot be less than Minimum rate.');
+                              if (selectedClasses.length === 0) {
+                                triggerWizardError('field-classes', '⚠️ Please select at least one Class / Grade you teach.');
                                 return;
                               }
-                            }
-                            if (teachingMode === 'BOTH' || teachingMode === 'ONLINE_LIVE') {
-                              if (!hourlyRateOnlineMin || Number(hourlyRateOnlineMin) < 50) {
-                                triggerWizardError('field-hourlyRateOnlineMin', '⚠️ Online Minimum Hourly Rate is mandatory (min ₹50/hr).');
-                                return;
-                              }
-                              if (!hourlyRateOnlineMax || Number(hourlyRateOnlineMax) < Number(hourlyRateOnlineMin)) {
-                                triggerWizardError('field-hourlyRateOnlineMax', '⚠️ Online Maximum Rate cannot be less than Minimum rate.');
+                              if (selectedBoards.length === 0) {
+                                triggerWizardError('field-boards', '⚠️ Please select at least one Board (e.g. CBSE, ICSE, IB).');
                                 return;
                               }
                             }
-                          }
-                          if (currentStep === 5) {
-                            if (!profilePhotoUrl && !profilePhotoName) {
-                              triggerWizardError('field-profilePhoto', '⚠️ Tutor Profile Photo is mandatory! Please upload a clear face photo before proceeding.');
-                              return;
+                            if (currentStep === 3) {
+                              if (locationPrefType === 'SECTORS' && serviceAreas.length === 0) {
+                                triggerWizardError('field-serviceAreas', '⚠️ Preferred Gurgaon Sectors are MANDATORY! Please select at least one sector you can visit.');
+                                return;
+                              }
+                              if (locationPrefType === 'RADIUS' && (!tutorLatitude || !tutorFormattedAddress)) {
+                                triggerWizardError('field-baseLocation', '⚠️ Home/Base Location is MANDATORY! Please tap on the map to set your location.');
+                                return;
+                              }
+                              if (locationPrefType === 'BOTH') {
+                                if (serviceAreas.length === 0) {
+                                  triggerWizardError('field-serviceAreas', '⚠️ Preferred Gurgaon Sectors are MANDATORY! Please select at least one sector.');
+                                  return;
+                                }
+                                if ((teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') && (!tutorLatitude || !tutorFormattedAddress)) {
+                                  triggerWizardError('field-baseLocation', '⚠️ Home/Base Location is MANDATORY! Please tap on the map to set your base location.');
+                                  return;
+                                }
+                              }
                             }
-                          }
-                          if (currentStep === 6) {
-                            const cleanId = idNumber.replace(/\s+/g, '');
-                            if (!cleanId) {
-                              triggerWizardError('field-idNumber', '⚠️ Government ID Number is mandatory.');
-                              return;
+                            if (currentStep === 4) {
+                              if (teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') {
+                                if (!hourlyRateHomeMin || Number(hourlyRateHomeMin) < 50) {
+                                  triggerWizardError('field-hourlyRateHomeMin', '⚠️ Home Visit Minimum Hourly Rate is mandatory (min ₹50/hr).');
+                                  return;
+                                }
+                                if (!hourlyRateHomeMax || Number(hourlyRateHomeMax) < Number(hourlyRateHomeMin)) {
+                                  triggerWizardError('field-hourlyRateHomeMax', '⚠️ Home Visit Maximum Rate cannot be less than Minimum rate.');
+                                  return;
+                                }
+                              }
+                              if (teachingMode === 'BOTH' || teachingMode === 'ONLINE_LIVE') {
+                                if (!hourlyRateOnlineMin || Number(hourlyRateOnlineMin) < 50) {
+                                  triggerWizardError('field-hourlyRateOnlineMin', '⚠️ Online Minimum Hourly Rate is mandatory (min ₹50/hr).');
+                                  return;
+                                }
+                                if (!hourlyRateOnlineMax || Number(hourlyRateOnlineMax) < Number(hourlyRateOnlineMin)) {
+                                  triggerWizardError('field-hourlyRateOnlineMax', '⚠️ Online Maximum Rate cannot be less than Minimum rate.');
+                                  return;
+                                }
+                              }
                             }
-                            if (idType === 'AADHAAR_MASKED' && cleanId.length !== 12) {
-                              triggerWizardError('field-idNumber', '⚠️ Please enter a valid 12-digit Aadhaar Number (12 digits required).');
-                              return;
-                            }
-                            if (idType === 'PAN') {
-                              const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
-                              if (!panRegex.test(cleanId)) {
-                                triggerWizardError('field-idNumber', '⚠️ Please enter a valid 10-character PAN (format: 5 letters, 4 digits, 1 letter, e.g. ABCDE1234F).');
+                            if (currentStep === 5) {
+                              if (!profilePhotoUrl && !profilePhotoName) {
+                                triggerWizardError('field-profilePhoto', '⚠️ Tutor Profile Photo is mandatory! Please upload a clear face photo before proceeding.');
                                 return;
                               }
                             }
-                            if (!idDocUrl && !idDocFileName) {
-                              triggerWizardError('field-idDoc', '⚠️ ID Document Proof is MANDATORY! Please upload your ID document photo/PDF before proceeding.');
-                              return;
+                            if (currentStep === 6) {
+                              const cleanId = idNumber.replace(/\s+/g, '');
+                              if (!cleanId) {
+                                triggerWizardError('field-idNumber', '⚠️ Government ID Number is mandatory.');
+                                return;
+                              }
+                              if (idType === 'AADHAAR_MASKED' && cleanId.length !== 12) {
+                                triggerWizardError('field-idNumber', '⚠️ Please enter a valid 12-digit Aadhaar Number (12 digits required).');
+                                return;
+                              }
+                              if (idType === 'PAN') {
+                                const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+                                if (!panRegex.test(cleanId)) {
+                                  triggerWizardError('field-idNumber', '⚠️ Please enter a valid 10-character PAN (format: 5 letters, 4 digits, 1 letter, e.g. ABCDE1234F).');
+                                  return;
+                                }
+                              }
+                              if (!idDocUrl && !idDocFileName) {
+                                triggerWizardError('field-idDoc', '⚠️ ID Document Proof is MANDATORY! Please upload your ID document photo/PDF before proceeding.');
+                                return;
+                              }
                             }
-                          }
 
-                          setErrorMessage('');
-                          setWizardErrorField(null);
-                          setCurrentStep(currentStep + 1);
-                        }}
-                        className="btn btn-primary"
-                      >
-                        <span>Next Step</span>
-                        <ArrowRight size={16} />
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleFinalSubmit}
-                        disabled={loading || !agreeTerms}
-                        className="btn btn-primary btn-lg"
-                        style={{
-                          backgroundColor: agreeTerms ? 'var(--brand-teal)' : '#CBD5E1',
-                          cursor: agreeTerms ? 'pointer' : 'not-allowed',
-                        }}
-                      >
-                        <Sparkles size={18} />
-                        <span>{loading ? 'Submitting Profile...' : 'Submit & Register Profile'}</span>
-                      </button>
+                            setErrorMessage('');
+                            setWizardErrorField(null);
+                            setCurrentStep(currentStep + 1);
+                          }}
+                          className="btn btn-primary"
+                        >
+                          <span>Next Step</span>
+                          <ArrowRight size={16} />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleFinalSubmit}
+                          disabled={loading || !agreeTerms}
+                          className="btn btn-primary btn-lg"
+                          style={{
+                            backgroundColor: agreeTerms ? 'var(--brand-teal)' : '#94A3B8',
+                            cursor: agreeTerms ? 'pointer' : 'not-allowed',
+                            padding: '0.85rem 1.75rem',
+                            fontSize: '1rem',
+                            fontWeight: 800,
+                            borderRadius: '12px',
+                            boxShadow: agreeTerms ? '0 8px 24px rgba(15, 110, 86, 0.28)' : 'none',
+                          }}
+                        >
+                          <Sparkles size={18} />
+                          <span>{loading ? 'Completing Registration...' : 'Complete Registration'}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {currentStep === 7 && (
+                      <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#64748B', lineHeight: 1.4 }}>
+                        By completing registration, you confirm that the information you have provided is accurate and that you have accepted the required terms above.
+                      </div>
                     )}
                   </div>
 
@@ -3611,109 +3744,283 @@ export default function TutorRegisterLoginPage() {
       </main>
 
       {/* =========================================================================
-         TERMS AND CONDITIONS MODAL POPUP (LONG LEGAL TEXT)
+         TERMS AND CONDITIONS MODAL POPUP (TABBED TRANSPARENT LEGAL VIEWER)
          ========================================================================= */}
       {showTermsModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 2000,
-          padding: '1.5rem',
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            padding: '1.25rem',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowTermsModal(false); }}
+        >
           <div className="apple-card" style={{
             backgroundColor: '#FFFFFF',
-            maxWidth: '640px',
+            maxWidth: '740px',
             width: '100%',
-            maxHeight: '85vh',
+            maxHeight: '88vh',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
             padding: 0,
-            borderRadius: '16px',
-            boxShadow: '0 20px 48px rgba(0, 0, 0, 0.15)',
+            borderRadius: '20px',
+            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.22)',
+            border: '1px solid #E2E8F0',
           }}>
             {/* Modal Header */}
             <div style={{
-              padding: '1.25rem 1.75rem',
-              borderBottom: '1px solid var(--border-hairline)',
+              padding: '1.2rem 1.5rem',
+              borderBottom: '1px solid #E2E8F0',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               backgroundColor: '#F8FAFC'
             }}>
-              <strong style={{ fontSize: '1.1rem', color: '#0F172A' }}>SSSAM Academy - Tutor Agreement</strong>
+              <div>
+                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F6E56', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  TuitionForHome • Operated by SSSAM Academy
+                </div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: '2px 0 0 0' }}>
+                  Terms, Privacy &amp; Platform Policies
+                </h3>
+              </div>
               <button 
                 type="button" 
                 onClick={() => setShowTermsModal(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
+                aria-label="Close modal"
+                style={{ background: '#F1F5F9', border: 'none', borderRadius: '10px', padding: '0.45rem', cursor: 'pointer', display: 'flex', color: '#64748B', transition: 'background 0.15s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#E2E8F0'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F1F5F9'; }}
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Modal Body (Dense Legal Wording) */}
+            {/* Modal Tabs Bar */}
+            <div style={{
+              display: 'flex',
+              overflowX: 'auto',
+              borderBottom: '1px solid #E2E8F0',
+              backgroundColor: '#FFFFFF',
+              padding: '0 1rem',
+              gap: '0.25rem',
+            }}>
+              {[
+                { key: 'agreement', label: 'Tutor Agreement' },
+                { key: 'commission', label: 'Payment & Commission' },
+                { key: 'verification', label: 'Verification Process' },
+                { key: 'privacy', label: 'Privacy Policy' },
+                { key: 'waiver', label: 'Fee & Waiver' },
+                { key: 'grievance', label: 'Support & Grievance' },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setLegalModalTab(tab.key as any)}
+                  style={{
+                    padding: '0.75rem 0.9rem',
+                    fontSize: '0.8rem',
+                    fontWeight: legalModalTab === tab.key ? 800 : 600,
+                    color: legalModalTab === tab.key ? '#0F6E56' : '#64748B',
+                    border: 'none',
+                    background: 'none',
+                    borderBottom: legalModalTab === tab.key ? '2.5px solid #0F6E56' : '2.5px solid transparent',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Modal Body */}
             <div style={{
               padding: '1.75rem',
               overflowY: 'auto',
-              fontSize: '0.78rem',
+              fontSize: '0.85rem',
               color: '#334155',
               lineHeight: '1.65',
-              textAlign: 'justify'
             }}>
-              <h4 style={{ fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.5rem', color: '#0F172A' }}>SECTION 1: IDENTITY DATA PRIVACY & ENCRYPTION PROTOCOLS</h4>
-              <p style={{ marginBottom: '1rem' }}>
-                TuitionForHome (the "Bureau"), operated and supervised by SSSAM Academy, sector 14 Gurgaon, adheres to the Digital Personal Data Protection (DPDP) Act of India. Tutors uploading credentials and identification documents (including Aadhaar Card, PAN Card, and Driving License) hereby consent that all such government ID records will be stored in an encrypted format. Standard cryptographic hashing and AES-256 block-cipher structures are applied to prevent unauthorized data exposure. The complete documentation remains confidential and is restricted to the internal administrative audit desk. Masked visual tags containing only the last four digits of the verified document shall be accessible to the tutor profile settings.
-              </p>
+              
+              {/* TAB 1: Tutor Service Agreement */}
+              {legalModalTab === 'agreement' && (
+                <div>
+                  <h4 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.65rem', color: '#0F172A' }}>
+                    1. Tutor Service Agreement &amp; Platform Guidelines
+                  </h4>
+                  <p style={{ marginBottom: '0.85rem' }}>
+                    TuitionForHome provides student-matching, scheduling coordination, and administrative mediation for qualified educators in Gurugram, operating under the institutional supervision of SSSAM Academy (Sector 14, Gurugram).
+                  </p>
+                  <div style={{ backgroundColor: '#F8FAFC', padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0', marginBottom: '1rem' }}>
+                    <strong style={{ color: '#0F172A', display: 'block', marginBottom: '0.35rem' }}>• Platform Integrity &amp; Lead Management:</strong>
+                    To protect tutors, students, and parents, assignments introduced through TuitionForHome should remain within the platform&apos;s documented communication and payment process. Documented sessions ensure transparent dispute resolution, verified review tracking, and prompt teacher disbursements. Serious or repeated violations of platform integrity may result in suspension or review of the tutor account in accordance with platform policies.
+                  </div>
+                  <p style={{ marginBottom: '0.5rem' }}>
+                    <strong>• Educator Code of Conduct:</strong> Tutors agree to maintain high professional standards, regular punctuality, student safety precautions during home visits, and adherence to the academic curriculum prescribed by the student&apos;s board (CBSE, ICSE, IB, IGCSE, State Board).
+                  </p>
+                </div>
+              )}
 
-              <h4 style={{ fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.5rem', color: '#0F172A' }}>SECTION 2: PROHIBITION OF DIRECT OR COLLUSIVE DEALS</h4>
-              <p style={{ marginBottom: '1rem' }}>
-                Tutors registered under SSSAM Academy are strictly prohibited from entering into private, direct, collusive, or bypass agreements with students or parents matched and assigned by the Bureau. All communication, scheduling, demos, and billing must be logged through the platform channels. Any attempt to collect payments directly, share private billing details, or circumvent the Academy's service portal will trigger immediate and permanent account suspension, forfeiture of accrued bonuses, blacklisting across Gurgaon educational networks, and legal recovery proceedings to claim double the equivalent bureau matching fees.
-              </p>
+              {/* TAB 2: Payment & Commission Policy */}
+              {legalModalTab === 'commission' && (
+                <div>
+                  <h4 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.65rem', color: '#0F172A' }}>
+                    2. Payment &amp; Commission Structure (Important Information)
+                  </h4>
+                  <p style={{ marginBottom: '0.85rem' }}>
+                    Our commercial matching model is designed to provide tutors with sustained, long-term student engagements while keeping platform management transparent:
+                  </p>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <div style={{ backgroundColor: '#F0FDF4', padding: '0.9rem 1rem', borderRadius: '12px', border: '1px solid #BBF7D0' }}>
+                      <strong style={{ color: '#166534', display: 'block', marginBottom: '2px' }}>💰 First-Month Bureau Commission:</strong>
+                      For every finalized student assignment, a platform management commission equivalent to 100% of the first calendar month&apos;s tuition fee (or first 30 days of active tuition) is retained by TuitionForHome for marketing acquisition, parent counseling, background safety checks, and continuous coordination.
+                    </div>
+                    <div style={{ backgroundColor: '#F8FAFC', padding: '0.9rem 1rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                      <strong style={{ color: '#0F172A', display: 'block', marginBottom: '2px' }}>🗓️ Regular Payouts from Month 2 Onwards:</strong>
+                      The client (parent/student) is instructed to deposit the first month&apos;s fees directly with the platform. Starting from Month 2 and all subsequent months, tutors receive their full scheduled tuition payments directly or via the platform per the agreed hourly/monthly rates.
+                    </div>
+                    <div style={{ backgroundColor: '#F8FAFC', padding: '0.9rem 1rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                      <strong style={{ color: '#0F172A', display: 'block', marginBottom: '2px' }}>🛡️ Student Discontinuation &amp; Pro-Rata Protection:</strong>
+                      If an assigned student stops or cancels tuition before completing 30 days due to scheduling mismatch or unforeseen circumstances, the tutor is protected through pro-rata settlement or prompt priority reassignment to an equivalent student lead without additional matching deductions.
+                    </div>
+                  </div>
+                </div>
+              )}
 
-              <h4 style={{ fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.5rem', color: '#0F172A' }}>SECTION 3: COMMISSION FEE RETENTION STRUCTURE (100% FIRST MONTH FEE)</h4>
-              <p style={{ marginBottom: '1rem' }}>
-                For every lead assignment finalized, the Bureau charges a matching and management commission equivalent to <strong>one hundred percent (100%) of the tuition fees generated during the first calendar month</strong> (or first 30 days of active tuition). The client (parent/student) is instructed to pay the first month's fees directly to SSSAM Academy. The tutor is legally bound to conduct all assigned sessions during this first month as part of the onboarding registry requirements, with no payout generated for this initial period. Sub-allocations, commission splits, or staggered payouts (e.g. 50/50 split option) are subject to discretionary approvals by the counselor desk.
-              </p>
+              {/* TAB 3: Verification & Activation */}
+              {legalModalTab === 'verification' && (
+                <div>
+                  <h4 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.65rem', color: '#0F172A' }}>
+                    3. Profile Verification &amp; Interview Screening
+                  </h4>
+                  <p style={{ marginBottom: '0.85rem' }}>
+                    To uphold educational trust for Gurgaon parents, tutor profile activation requires three simple verification steps:
+                  </p>
+                  <ol style={{ paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <li><strong>Telephonic Screening:</strong> A brief discussion regarding your academic specialization, teaching philosophy, and preferred localities.</li>
+                    <li><strong>Online Video Call or Center Walk-In:</strong> A 10-minute interaction with our counselor team (or in person at SSSAM Academy, Sector 14 Gurugram) to verify communication fluency and subject proficiency.</li>
+                    <li><strong>Document Audit:</strong> Secure authentication of academic degrees and government identification proof.</li>
+                  </ol>
+                  <p style={{ margin: 0 }}>
+                    Once verified, profile badges (Verified Tutor, Star Mentor) and direct student inquiry notifications will be activated on your account.
+                  </p>
+                </div>
+              )}
 
-              <h4 style={{ fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.5rem', color: '#0F172A' }}>SECTION 4: REGISTRATION FEE WAIVER CONDITIONS</h4>
-              <p style={{ marginBottom: '1rem' }}>
-                The standard tutor registration and verification fee of INR 999 (Nine Hundred and Ninety-Nine Rupees Only) is waived under promotional seasonal drives. Tutors acknowledge that this waiver is not an absolute right and is subject to promotional availability. Tutors must verify with the SSSAM Academy helpline or Gurgaon sector 14 walk-in support to confirm if the free verification drive is active for their registered profile at the time of database approval.
-              </p>
+              {/* TAB 4: Privacy Policy */}
+              {legalModalTab === 'privacy' && (
+                <div>
+                  <h4 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.65rem', color: '#0F172A' }}>
+                    4. Privacy Policy &amp; Document Protection
+                  </h4>
+                  <p style={{ marginBottom: '0.85rem' }}>
+                    We treat your personal data and identification documents with the highest degree of confidentiality:
+                  </p>
+                  <ul style={{ paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <li><strong>Collected Data:</strong> Contact details, educational credentials, and government ID (Aadhaar / PAN / Driving License).</li>
+                    <li><strong>Purpose of Collection:</strong> Strictly used for verifying identity, conducting tutor safety audits, and validating qualifications.</li>
+                    <li><strong>Access Control:</strong> Document proofs are restricted solely to authorized internal administrative auditors at SSSAM Academy. Unmasked ID documents are NEVER displayed publicly or shared with parents/students.</li>
+                    <li><strong>Data Rights &amp; Deletion:</strong> Tutors retain the right to update, correct, or request the deletion of their personal records at any time by contacting our support desk at <code>support@tuitionforhome.com</code>.</li>
+                  </ul>
+                </div>
+              )}
 
-              <h4 style={{ fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.5rem', color: '#0F172A' }}>SECTION 5: MANDATORY INTERVIEW SCREENING AND PROFILE ACTIVATION</h4>
-              <p style={{ marginBottom: '1rem' }}>
-                Initial online registry does not constitute profile activation. Tutors must successfully pass a telephonic screening, followed by a mandatory online video call interview or physical walk-in evaluation at the physical office center. Profile badges (Verified, Star, Senior) and pricing limits are dynamically calibrated based on customer reviews, compliance track record, qualification checks, and active parent ratings.
-              </p>
+              {/* TAB 5: Registration Fee & Promotional Waiver */}
+              {legalModalTab === 'waiver' && (
+                <div>
+                  <h4 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.65rem', color: '#0F172A' }}>
+                    5. Verification Fee &amp; Promotional Waiver Policy
+                  </h4>
+                  <p style={{ marginBottom: '0.85rem' }}>
+                    TuitionForHome operates seasonal promotional drives to encourage top educators in Gurgaon to join our network:
+                  </p>
+                  <div style={{ backgroundColor: '#F8FAFC', padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', fontWeight: 700 }}>
+                      <span>Standard Tutor Onboarding Fee:</span>
+                      <span style={{ textDecoration: 'line-through', color: '#64748B' }}>₹999</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontWeight: 800, color: '#0F6E56' }}>
+                      <span>Current Promotional Onboarding Fee:</span>
+                      <span>₹0 (100% Free Drive)</span>
+                    </div>
+                    <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0, lineHeight: 1.5 }}>
+                      Any applicable fee will be clearly disclosed before payment is requested. TuitionForHome will not treat an undisclosed fee as payable.
+                    </p>
+                  </div>
+                </div>
+              )}
 
-              <h4 style={{ fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.5rem', color: '#0F172A' }}>SECTION 6: SOCIAL MEDIA PROMOTION AND MARKETING CONSENT</h4>
-              <p style={{ marginBottom: '1rem' }}>
-                Registered tutors grant SSSAM Academy and TuitionForHome royalty-free, perpetual, and non-exclusive rights to publish, share, and promote their introductory video clips, educational degree details, and profile photos across social media channels (including Facebook, Instagram, Google Maps, YouTube, and digital ads) to generate student leads and match tutoring assignments.
-              </p>
+              {/* TAB 6: Support & Grievance Desk */}
+              {legalModalTab === 'grievance' && (
+                <div>
+                  <h4 style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '0.65rem', color: '#0F172A' }}>
+                    6. Grievance Redressal, Support &amp; Contact
+                  </h4>
+                  <p style={{ marginBottom: '0.85rem' }}>
+                    For questions regarding your application, verification schedule, fee disbursements, or document updates:
+                  </p>
+                  <div style={{ backgroundColor: '#F8FAFC', padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem' }}>
+                    <div><strong>🏢 Physical Center:</strong> SSSAM Academy, M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001 (Near HUDA Market).</div>
+                    <div><strong>📞 Phone / WhatsApp Helpline:</strong> +91 92170 31899 / +91 95174 47689</div>
+                    <div><strong>✉️ Support Email:</strong> support@tuitionforhome.com / info@tuitionforhome.com</div>
+                    <div><strong>⏰ Office Hours:</strong> Monday to Sunday, 9:00 AM – 9:00 PM</div>
+                  </div>
+                </div>
+              )}
+
             </div>
 
             {/* Modal Footer */}
             <div style={{
-              padding: '1.25rem 1.75rem',
-              borderTop: '1px solid var(--border-hairline)',
+              padding: '1.1rem 1.5rem',
+              borderTop: '1px solid #E2E8F0',
               display: 'flex',
-              justifyContent: 'flex-end',
-              backgroundColor: '#F8FAFC'
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#F8FAFC',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
             }}>
-              <button
-                type="button"
-                onClick={() => { setAgreeTerms(true); setShowTermsModal(false); }}
-                className="btn btn-primary btn-sm"
-              >
-                <span>Accept Terms & Exit</span>
-              </button>
+              <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                TuitionForHome • Sector 14, Gurugram
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(false)}
+                  className="btn btn-secondary btn-sm"
+                  style={{ borderRadius: '8px' }}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (legalModalTab === 'agreement') setAgreeTerms(true);
+                    if (legalModalTab === 'commission') setAgreeCommission(true);
+                    if (legalModalTab === 'verification') setAgreeVerification(true);
+                    if (legalModalTab === 'privacy') setAgreePrivacy(true);
+                    setShowTermsModal(false);
+                  }}
+                  className="btn btn-primary btn-sm"
+                  style={{ backgroundColor: 'var(--brand-teal)', borderRadius: '8px', fontWeight: 700 }}
+                >
+                  <span>I Understand &amp; Accept</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -3763,8 +4070,8 @@ export default function TutorRegisterLoginPage() {
                       ).slice(0, 5).map(loc => ({
                         name: loc.name,
                         landmark: loc.landmark,
-                        lat: loc.lat,
-                        lng: loc.lng,
+                        lat: loc.lat ?? 28.4595,
+                        lng: loc.lng ?? 77.0266,
                       }));
                       setTutorModalSearchResults(matches);
                     } else {

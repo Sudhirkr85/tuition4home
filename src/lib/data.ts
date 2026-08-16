@@ -4,6 +4,8 @@ export interface LocalityInfo {
   pincode: string;
   landmark: string;
   activeTutorsCount: number;
+  lat?: number;
+  lng?: number;
 }
 
 export interface MockTutor {
