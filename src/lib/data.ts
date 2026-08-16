@@ -25,7 +25,11 @@ export interface MockTutor {
   latitude?: number;
   longitude?: number;
   hourlyRateHome: number;
+  hourlyRateHomeMin?: number;
+  hourlyRateHomeMax?: number;
   hourlyRateOnline: number;
+  hourlyRateOnlineMin?: number;
+  hourlyRateOnlineMax?: number;
   monthlyRateMin: number;
   isVerified: boolean;
   hasPoliceCheck: boolean;

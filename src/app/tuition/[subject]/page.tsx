@@ -311,10 +311,16 @@ export default async function SubjectPage({ params }: PageProps) {
                       <div>
                         <h4 style={{ fontSize: '1.1rem', fontWeight: 800 }}>{tutor.name}</h4>
                         <div style={{ fontSize: '0.78rem', color: 'var(--color-blue-600)', fontWeight: 700 }}>{tutor.badge}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--color-slate-600)' }}>
-                          <Star size={12} color="var(--color-amber-500)" fill="var(--color-amber-500)" />
-                          <strong>{tutor.rating}</strong> ({tutor.totalReviews} reviews)
-                        </div>
+                        {tutor.totalReviews > 0 && tutor.rating > 0 ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--color-slate-600)' }}>
+                            <Star size={12} color="var(--color-amber-500)" fill="var(--color-amber-500)" />
+                            <strong>{tutor.rating}</strong> ({tutor.totalReviews} {tutor.totalReviews === 1 ? 'review' : 'reviews'})
+                          </div>
+                        ) : (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.74rem', color: '#059669', fontWeight: 700, backgroundColor: '#ECFDF5', padding: '1px 6px', borderRadius: '4px', marginTop: '2px' }}>
+                            <span>✨ New Verified Tutor</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 

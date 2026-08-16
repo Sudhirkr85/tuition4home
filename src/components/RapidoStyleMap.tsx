@@ -260,8 +260,53 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
           iconAnchor: [30, 15],
         });
 
+        const homeMin = tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600;
+        const homeMax = tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMax !== homeMin ? tutor.hourlyRateHomeMax : Math.round((homeMin * 1.4) / 50) * 50;
+        const onlineMin = tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500;
+        const onlineMax = tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMax !== onlineMin ? tutor.hourlyRateOnlineMax : Math.round((onlineMin * 1.4) / 50) * 50;
+
+        let priceHtml = '';
+        if (!tutor.teachingMode || tutor.teachingMode === 'BOTH') {
+          priceHtml = `<div>🏠 Home: ₹${homeMin}–₹${homeMax}/hr</div><div style="margin-top:2px;">💻 Online: ₹${onlineMin}–₹${onlineMax}/hr</div>`;
+        } else if (tutor.teachingMode === 'ONLINE_LIVE') {
+          priceHtml = `<div>💻 Online: ₹${onlineMin}–₹${onlineMax}/hr</div>`;
+        } else {
+          priceHtml = `<div>🏠 Home: ₹${homeMin}–₹${homeMax}/hr</div>`;
+        }
+
+        const popupContent = `
+          <div style="font-family: system-ui, -apple-system, sans-serif; padding: 4px; min-width: 190px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              ${tutorAvatar ? `<img src="${tutorAvatar}" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1.5px solid #059669;" />` : ''}
+              <div>
+                <div style="font-weight: 800; font-size: 13px; color: #0F172A;">${tutorName}</div>
+                <div style="font-size: 10px; color: #047857; font-weight: 700;">✓ SSSAM Verified</div>
+              </div>
+            </div>
+            <div style="font-size: 11px; color: #475569; margin-bottom: 8px; line-height: 1.4;">
+              <div style="font-weight: 700; color: #334155;">🎓 ${tutor.highestDegree || 'Verified Educator'}</div>
+              <div style="color: #0F766E; font-weight: 700; margin-top: 3px; font-size: 11px;">
+                ${priceHtml}
+              </div>
+            </div>
+            <a href="/tutors/${tutor.id}" style="display: flex; align-items: center; justify-content: center; gap: 4px; background: #0F172A; color: #FFFFFF; text-decoration: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 800;">
+              <span>View Profile</span>
+              <span>↗</span>
+            </a>
+          </div>
+        `;
+
         const tMarker = L.marker([tLat, tLng], { icon: tutorIcon }).addTo(map);
-        tMarker.on('click', () => setSelectedTutor(tutor));
+        tMarker.bindPopup(popupContent, {
+          closeButton: true,
+          offset: [0, -10],
+          className: 'custom-map-popup',
+        });
+
+        tMarker.on('click', () => {
+          setSelectedTutor(tutor);
+          tMarker.openPopup();
+        });
       } catch (err) {
         console.warn('Tutor marker error:', err);
       }
@@ -482,8 +527,27 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
                   <span>{selectedTutor.name}</span>
                   <span style={{ fontSize: '0.68rem', color: '#047857', fontWeight: 700, backgroundColor: '#DCFCE7', padding: '0.1rem 0.4rem', borderRadius: '6px' }}>✓ SSSAM Verified</span>
                 </div>
-                <div style={{ fontSize: '0.76rem', color: '#475569', marginTop: '2px' }}>
-                  {selectedTutor.highestDegree} • ₹{selectedTutor.hourlyRateHome}/hr
+                <div style={{ fontSize: '0.74rem', color: '#475569', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: 600 }}>{selectedTutor.highestDegree}</span>
+                  <span>•</span>
+                  {(!selectedTutor.teachingMode || selectedTutor.teachingMode === 'BOTH') ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                      <span style={{ color: '#0F6E56', fontWeight: 700, backgroundColor: '#F0FDF4', padding: '1px 5px', borderRadius: '4px' }}>
+                        🏠 Home: ₹{selectedTutor.hourlyRateHomeMin || selectedTutor.hourlyRateHome || 600}–₹{selectedTutor.hourlyRateHomeMax && selectedTutor.hourlyRateHomeMax !== selectedTutor.hourlyRateHomeMin ? selectedTutor.hourlyRateHomeMax : Math.round(((selectedTutor.hourlyRateHomeMin || selectedTutor.hourlyRateHome || 600) * 1.4) / 50) * 50}/hr
+                      </span>
+                      <span style={{ color: '#0284C7', fontWeight: 700, backgroundColor: '#F0F9FF', padding: '1px 5px', borderRadius: '4px' }}>
+                        💻 Online: ₹{selectedTutor.hourlyRateOnlineMin || selectedTutor.hourlyRateOnline || 500}–₹{selectedTutor.hourlyRateOnlineMax && selectedTutor.hourlyRateOnlineMax !== selectedTutor.hourlyRateOnlineMin ? selectedTutor.hourlyRateOnlineMax : Math.round(((selectedTutor.hourlyRateOnlineMin || selectedTutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}/hr
+                      </span>
+                    </span>
+                  ) : selectedTutor.teachingMode === 'ONLINE_LIVE' ? (
+                    <span style={{ color: '#0284C7', fontWeight: 700, backgroundColor: '#F0F9FF', padding: '1px 5px', borderRadius: '4px' }}>
+                      💻 Online: ₹{selectedTutor.hourlyRateOnlineMin || selectedTutor.hourlyRateOnline || 500}–₹{selectedTutor.hourlyRateOnlineMax && selectedTutor.hourlyRateOnlineMax !== selectedTutor.hourlyRateOnlineMin ? selectedTutor.hourlyRateOnlineMax : Math.round(((selectedTutor.hourlyRateOnlineMin || selectedTutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}/hr
+                    </span>
+                  ) : (
+                    <span style={{ color: '#0F6E56', fontWeight: 700, backgroundColor: '#F0FDF4', padding: '1px 5px', borderRadius: '4px' }}>
+                      🏠 Home Visit: ₹{selectedTutor.hourlyRateHomeMin || selectedTutor.hourlyRateHome || 600}–₹{selectedTutor.hourlyRateHomeMax && selectedTutor.hourlyRateHomeMax !== selectedTutor.hourlyRateHomeMin ? selectedTutor.hourlyRateHomeMax : Math.round(((selectedTutor.hourlyRateHomeMin || selectedTutor.hourlyRateHome || 600) * 1.4) / 50) * 50}/hr
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

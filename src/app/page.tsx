@@ -841,11 +841,17 @@ export default function HomePage() {
                       <div style={{ fontSize: '0.78rem', color: '#0F6E56', fontWeight: 700, margin: '2px 0' }}>
                         {tutor.badge}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                        <Star size={13} color="var(--brand-amber)" fill="var(--brand-amber)" />
-                        <strong>{tutor.rating}</strong>
-                        <span>({tutor.totalReviews} reviews)</span>
-                      </div>
+                      {tutor.totalReviews > 0 && tutor.rating > 0 ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                          <Star size={13} color="var(--brand-amber)" fill="var(--brand-amber)" />
+                          <strong>{tutor.rating}</strong>
+                          <span>({tutor.totalReviews} {tutor.totalReviews === 1 ? 'review' : 'reviews'})</span>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.74rem', color: '#059669', fontWeight: 700, backgroundColor: '#ECFDF5', padding: '1px 6px', borderRadius: '4px', marginTop: '2px' }}>
+                          <span>✨ New Verified Tutor</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -971,9 +977,7 @@ export default function HomePage() {
                           <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '2px', backgroundColor: '#F0FDF4', padding: '2px 6px', borderRadius: '6px' }}>
                             <span style={{ fontSize: '0.7rem', color: '#0F6E56', fontWeight: 800 }}>🏠 Home:</span>
                             <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
-                              {tutor.hourlyRateHomeMin && tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMin !== tutor.hourlyRateHomeMax
-                                ? `₹${tutor.hourlyRateHomeMin}–${tutor.hourlyRateHomeMax}`
-                                : `₹${tutor.hourlyRateHome || tutor.hourlyRateHomeMin || 600}`}
+                              ₹{tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600}–₹{tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMax !== tutor.hourlyRateHomeMin ? tutor.hourlyRateHomeMax : Math.round(((tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600) * 1.4) / 50) * 50}
                             </span>
                             <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
                           </div>
@@ -982,9 +986,7 @@ export default function HomePage() {
                           <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '2px', backgroundColor: '#F0F9FF', padding: '2px 6px', borderRadius: '6px' }}>
                             <span style={{ fontSize: '0.7rem', color: '#0284C7', fontWeight: 800 }}>💻 Online:</span>
                             <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
-                              {tutor.hourlyRateOnlineMin && tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMin !== tutor.hourlyRateOnlineMax
-                                ? `₹${tutor.hourlyRateOnlineMin}–${tutor.hourlyRateOnlineMax}`
-                                : `₹${tutor.hourlyRateOnline || tutor.hourlyRateOnlineMin || 400}`}
+                              ₹{tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500}–₹{tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMax !== tutor.hourlyRateOnlineMin ? tutor.hourlyRateOnlineMax : Math.round(((tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}
                             </span>
                             <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
                           </div>
@@ -993,9 +995,7 @@ export default function HomePage() {
                         <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '3px', backgroundColor: '#F0F9FF', padding: '3px 8px', borderRadius: '6px' }}>
                           <span style={{ fontSize: '0.74rem', color: '#0284C7', fontWeight: 800 }}>💻 Online 1-on-1:</span>
                           <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
-                            {tutor.hourlyRateOnlineMin && tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMin !== tutor.hourlyRateOnlineMax
-                              ? `₹${tutor.hourlyRateOnlineMin} – ₹${tutor.hourlyRateOnlineMax}`
-                              : `₹${tutor.hourlyRateOnline || tutor.hourlyRateOnlineMin || 400}`}
+                            ₹{tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500} – ₹{tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMax !== tutor.hourlyRateOnlineMin ? tutor.hourlyRateOnlineMax : Math.round(((tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}
                           </span>
                           <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
                         </div>
@@ -1003,9 +1003,7 @@ export default function HomePage() {
                         <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '3px', backgroundColor: '#F0FDF4', padding: '3px 8px', borderRadius: '6px' }}>
                           <span style={{ fontSize: '0.74rem', color: '#0F6E56', fontWeight: 800 }}>🏠 Home Visit:</span>
                           <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
-                            {tutor.hourlyRateHomeMin && tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMin !== tutor.hourlyRateHomeMax
-                              ? `₹${tutor.hourlyRateHomeMin} – ₹${tutor.hourlyRateHomeMax}`
-                              : `₹${tutor.hourlyRateHome || tutor.hourlyRateHomeMin || 600}`}
+                            ₹{tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600} – ₹{tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMax !== tutor.hourlyRateHomeMin ? tutor.hourlyRateHomeMax : Math.round(((tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600) * 1.4) / 50) * 50}
                           </span>
                           <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
                         </div>

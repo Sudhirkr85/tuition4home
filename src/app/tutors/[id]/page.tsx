@@ -25,6 +25,7 @@ import {
   Briefcase,
 } from 'lucide-react';
 import Link from 'next/link';
+import { getVideoSourceInfo } from '@/lib/video';
 
 interface PageProps {
   params: {
@@ -112,8 +113,12 @@ export default async function TutorProfilePage({ params }: PageProps) {
         boards,
         serviceAreas,
         travelRadiusKm: dbProfile.travelRadiusKm || 5,
-        hourlyRateHome: dbProfile.hourlyRateHome || dbProfile.hourlyRateHomeMin || 500,
-        hourlyRateOnline: dbProfile.hourlyRateOnline || dbProfile.hourlyRateOnlineMin || 400,
+        hourlyRateHome: dbProfile.hourlyRateHome || dbProfile.hourlyRateHomeMin || 600,
+        hourlyRateHomeMin: dbProfile.hourlyRateHomeMin || dbProfile.hourlyRateHome || 600,
+        hourlyRateHomeMax: dbProfile.hourlyRateHomeMax || (dbProfile.hourlyRateHome ? Math.round((dbProfile.hourlyRateHome * 1.4) / 50) * 50 : 900),
+        hourlyRateOnline: dbProfile.hourlyRateOnline || dbProfile.hourlyRateOnlineMin || 500,
+        hourlyRateOnlineMin: dbProfile.hourlyRateOnlineMin || dbProfile.hourlyRateOnline || 500,
+        hourlyRateOnlineMax: dbProfile.hourlyRateOnlineMax || (dbProfile.hourlyRateOnline ? Math.round((dbProfile.hourlyRateOnline * 1.4) / 50) * 50 : 750),
         monthlyRateMin: dbProfile.monthlyRateMin || 5000,
         isVerified: dbProfile.isVerified,
         hasPoliceCheck: dbProfile.hasPoliceCheck,
@@ -458,45 +463,67 @@ export default async function TutorProfilePage({ params }: PageProps) {
                 </div>
               </div>
 
-              {/* 60s Video Audition & Teaching Introduction (Optional) */}
-              {tutorData.introVideoUrl && tutorData.introVideoUrl.trim() !== '' ? (
-                <div className="apple-card" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Award size={18} color="#0F6E56" />
-                      <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                        60-Second Video Introduction &amp; Audition
-                      </h2>
-                    </div>
-                    <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>Duration: {tutorData.videoDuration || 'Audition'}</span>
-                  </div>
+              {/* 60s Video Audition & Teaching Introduction */}
+              {(() => {
+                const videoInfo = getVideoSourceInfo(tutorData.introVideoUrl);
+                if (!videoInfo.isEmbeddable) return null;
 
-                  <div style={{
-                    position: 'relative',
-                    width: '100%',
-                    paddingTop: '56.25%',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    backgroundColor: '#0F172A',
-                    boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
-                  }}>
-                    <iframe
-                      src={tutorData.introVideoUrl}
-                      title={`${tutorData.name} Video Intro`}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        border: 'none',
-                      }}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
+                return (
+                  <div className="apple-card" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Award size={18} color="#0F6E56" />
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                          60-Second Video Introduction &amp; Audition
+                        </h2>
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>Duration: {tutorData.videoDuration || 'Audition'}</span>
+                    </div>
+
+                    <div style={{
+                      position: 'relative',
+                      width: '100%',
+                      paddingTop: '56.25%',
+                      borderRadius: '16px',
+                      overflow: 'hidden',
+                      backgroundColor: '#0F172A',
+                      boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
+                    }}>
+                      {videoInfo.type === 'youtube' || videoInfo.type === 'vimeo' || videoInfo.type === 'gdrive' ? (
+                        <iframe
+                          src={videoInfo.embedUrl}
+                          title={`${tutorData.name} Video Intro`}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            border: 'none',
+                          }}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      ) : (
+                        <video
+                          src={videoInfo.embedUrl}
+                          controls
+                          playsInline
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            backgroundColor: '#000000',
+                            objectFit: 'contain',
+                          }}
+                        />
+                      )}
+                    </div>
                   </div>
-                </div>
-              ) : null}
+                );
+              })()}
 
               {/* About & Teaching Methodology */}
               <div className="apple-card" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
@@ -585,35 +612,36 @@ export default async function TutorProfilePage({ params }: PageProps) {
             {/* RIGHT COLUMN: Full-Height Balanced Information Suite */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
               {/* Card 1: Tuition Fee & 1-Click Request */}
+              {/* Card 1: Tuition Fee & 1-Click Request */}
               <div className="apple-card" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1.5px solid #CBD5E1', boxShadow: '0 12px 30px -8px rgba(0,0,0,0.08)' }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
                   ESTIMATED TUITION FEE RANGE
                 </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '0.4rem' }}>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0F172A' }}>
-                    {tutorData.hourlyRateHomeMin && tutorData.hourlyRateHomeMax && tutorData.hourlyRateHomeMin !== tutorData.hourlyRateHomeMax ? (
-                      <>₹{tutorData.hourlyRateHomeMin} – ₹{tutorData.hourlyRateHomeMax}</>
-                    ) : tutorData.hourlyRateHomeMin ? (
-                      <>₹{tutorData.hourlyRateHomeMin}</>
-                    ) : tutorData.hourlyRateHome ? (
-                      <>₹{tutorData.hourlyRateHome}</>
-                    ) : (
-                      <>₹500 – ₹1,000</>
-                    )}
+
+                {tutorData.teachingMode === 'ONLINE_LIVE' ? (
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                    <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0F172A' }}>
+                      ₹{tutorData.hourlyRateOnlineMin || 500} – ₹{tutorData.hourlyRateOnlineMax && tutorData.hourlyRateOnlineMax !== tutorData.hourlyRateOnlineMin ? tutorData.hourlyRateOnlineMax : Math.round(((tutorData.hourlyRateOnlineMin || 500) * 1.4) / 50) * 50}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600 }}>/ hr (Online 1-on-1)</div>
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600 }}>/ hr (Home Visit)</div>
-                </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                    <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0F172A' }}>
+                      ₹{tutorData.hourlyRateHomeMin || 600} – ₹{tutorData.hourlyRateHomeMax && tutorData.hourlyRateHomeMax !== tutorData.hourlyRateHomeMin ? tutorData.hourlyRateHomeMax : Math.round(((tutorData.hourlyRateHomeMin || 600) * 1.4) / 50) * 50}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600 }}>/ hr (Home Visit)</div>
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '1.25rem' }}>
-                  <div style={{ fontSize: '0.82rem', color: '#047857', fontWeight: 600, padding: '0.35rem 0.65rem', backgroundColor: '#F0FDF4', borderRadius: '6px' }}>
-                    💻 Online 1-on-1: {tutorData.hourlyRateOnlineMin && tutorData.hourlyRateOnlineMax && tutorData.hourlyRateOnlineMin !== tutorData.hourlyRateOnlineMax ? (
-                      <>₹{tutorData.hourlyRateOnlineMin} – ₹{tutorData.hourlyRateOnlineMax}</>
-                    ) : (
-                      <>₹{tutorData.hourlyRateOnline || 400}</>
-                    )}/hr
-                  </div>
+                  {(!tutorData.teachingMode || tutorData.teachingMode === 'BOTH') && (
+                    <div style={{ fontSize: '0.82rem', color: '#0369A1', fontWeight: 700, padding: '0.35rem 0.65rem', backgroundColor: '#F0F9FF', borderRadius: '6px' }}>
+                      💻 Online 1-on-1: ₹{tutorData.hourlyRateOnlineMin || 500} – ₹{tutorData.hourlyRateOnlineMax && tutorData.hourlyRateOnlineMax !== tutorData.hourlyRateOnlineMin ? tutorData.hourlyRateOnlineMax : Math.round(((tutorData.hourlyRateOnlineMin || 500) * 1.4) / 50) * 50}/hr
+                    </div>
+                  )}
                   <div style={{ fontSize: '0.8rem', color: '#64748B', paddingLeft: '0.35rem' }}>
-                    📦 Monthly approx: ₹{tutorData.monthlyRateMin || 6000} – ₹{(tutorData.monthlyRateMin || 6000) * 1.4}/mo
+                    📦 Monthly approx: ₹{(tutorData.monthlyRateMin || 5000).toLocaleString('en-IN')} – ₹{(Math.round((tutorData.monthlyRateMin || 5000) * 1.4 / 500) * 500).toLocaleString('en-IN')}/mo
                   </div>
                 </div>
 

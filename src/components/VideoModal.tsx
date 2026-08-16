@@ -4,6 +4,8 @@ import React from 'react';
 import { X, ShieldCheck, Play } from 'lucide-react';
 import { MockTutor } from '@/lib/data';
 
+import { getVideoSourceInfo } from '@/lib/video';
+
 interface VideoModalProps {
   tutor: MockTutor | null;
   onClose: () => void;
@@ -13,16 +15,7 @@ interface VideoModalProps {
 export default function VideoModal({ tutor, onClose, onSelectTutor }: VideoModalProps) {
   if (!tutor) return null;
 
-  // Check if introVideoUrl is a valid video link (youtube, vimeo, mp4, etc.)
-  const rawVideoUrl = tutor.introVideoUrl || '';
-  const isValidVideoUrl = Boolean(
-    rawVideoUrl &&
-    (rawVideoUrl.includes('youtube.com') ||
-     rawVideoUrl.includes('youtu.be') ||
-     rawVideoUrl.includes('vimeo.com') ||
-     rawVideoUrl.includes('cloudinary.com') ||
-     rawVideoUrl.endsWith('.mp4'))
-  );
+  const videoInfo = getVideoSourceInfo(tutor.introVideoUrl);
 
   return (
     <div
@@ -81,11 +74,11 @@ export default function VideoModal({ tutor, onClose, onSelectTutor }: VideoModal
           <X size={20} color="#FFFFFF" strokeWidth={3} />
         </button>
 
-        {/* Video Player or Placeholder Area */}
+        {/* Video Player Area */}
         <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', backgroundColor: '#0F172A' }}>
-          {isValidVideoUrl ? (
+          {videoInfo.isEmbeddable && (videoInfo.type === 'youtube' || videoInfo.type === 'vimeo' || videoInfo.type === 'gdrive') ? (
             <iframe
-              src={`${rawVideoUrl}${rawVideoUrl.includes('?') ? '&' : '?'}autoplay=1&rel=0`}
+              src={videoInfo.embedUrl}
               title={`Video Intro: ${tutor.name}`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
@@ -96,6 +89,22 @@ export default function VideoModal({ tutor, onClose, onSelectTutor }: VideoModal
                 width: '100%',
                 height: '100%',
                 border: 'none',
+              }}
+            />
+          ) : videoInfo.isEmbeddable && videoInfo.type === 'direct' ? (
+            <video
+              src={videoInfo.embedUrl}
+              controls
+              autoPlay
+              playsInline
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                backgroundColor: '#000000',
+                objectFit: 'contain',
               }}
             />
           ) : (

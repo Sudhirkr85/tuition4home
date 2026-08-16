@@ -49,6 +49,8 @@ import {
   CalendarClock,
   Clock,
   Pencil,
+  Edit3,
+  Edit,
   Trash2,
   Key,
   Copy,
@@ -5701,10 +5703,14 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                 </label>
                 <input
                   type="number"
-                  value={parentPayAmountInput}
-                  onChange={(e) => setParentPayAmountInput(Number(e.target.value))}
+                  value={parentPayAmountInput === 0 ? '' : parentPayAmountInput}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    setParentPayAmountInput(raw === '' ? 0 : Number(raw));
+                  }}
                   className="form-control"
                   style={{ borderRadius: '10px', fontWeight: 800, fontSize: '1.1rem', color: '#15803D' }}
+                  placeholder="Enter amount received (₹)"
                   required
                 />
               </div>
@@ -5854,10 +5860,14 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                 </label>
                 <input
                   type="number"
-                  value={tutorPayoutAmountInput}
-                  onChange={(e) => setTutorPayoutAmountInput(Number(e.target.value))}
+                  value={tutorPayoutAmountInput === 0 ? '' : tutorPayoutAmountInput}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    setTutorPayoutAmountInput(raw === '' ? 0 : Number(raw));
+                  }}
                   className="form-control"
                   style={{ borderRadius: '10px', fontWeight: 800, fontSize: '1.1rem', color: '#0F172A' }}
+                  placeholder="Enter payout amount (₹)"
                   required
                 />
               </div>
@@ -6030,9 +6040,10 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                   type="number"
                   min={0}
                   step={100}
-                  value={feeEditAmountInput}
+                  value={feeEditAmountInput === 0 ? '' : feeEditAmountInput}
                   onChange={(e) => {
-                    const val = Number(e.target.value);
+                    const raw = e.target.value;
+                    const val = raw === '' ? 0 : Number(raw);
                     setFeeEditAmountInput(val);
                     if (feeEditCommissionType === 'PERCENT') {
                       setFeeEditCommissionInput(Math.round(val * 0.25));
@@ -6040,7 +6051,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                   }}
                   className="form-control"
                   style={{ borderRadius: '10px', fontWeight: 800, fontSize: '1.15rem', color: '#0F172A' }}
-                  placeholder="e.g. 8000"
+                  placeholder="Enter tuition fee (e.g. 8000)"
                   required
                 />
               </div>
@@ -6094,14 +6105,16 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                 <input
                   type="number"
                   min={0}
-                  value={feeEditCommissionInput}
+                  value={feeEditCommissionInput === 0 ? '' : feeEditCommissionInput}
                   onChange={(e) => {
-                    setFeeEditCommissionInput(Number(e.target.value));
+                    const raw = e.target.value;
+                    const val = raw === '' ? 0 : Number(raw);
+                    setFeeEditCommissionInput(val);
                     setFeeEditCommissionType('FLAT');
                   }}
                   className="form-control"
                   style={{ borderRadius: '10px', fontWeight: 800, fontSize: '1.05rem', color: '#0284C7' }}
-                  placeholder="e.g. 2000"
+                  placeholder="Enter commission (e.g. 2000)"
                 />
                 <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '3px' }}>
                   {feeEditAmountInput > 0

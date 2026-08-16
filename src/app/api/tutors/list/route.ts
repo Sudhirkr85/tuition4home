@@ -69,7 +69,7 @@ export async function GET(req: Request) {
       const reviewCount = approvedRev.length;
       const calculatedRating = reviewCount > 0
         ? Math.round((approvedRev.reduce((acc: number, r: any) => acc + r.rating, 0) / reviewCount) * 10) / 10
-        : (tp.rating || 5.0);
+        : (tp.rating && Number(tp.rating) > 0 ? Number(tp.rating) : 0);
 
       return {
         id: tp.id,

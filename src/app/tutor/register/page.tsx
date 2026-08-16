@@ -10,6 +10,7 @@ import {
   BOARD_OPTIONS,
   SSSAM_OFFICE_DETAILS,
 } from '@/lib/data';
+import { getVideoSourceInfo } from '@/lib/video';
 import {
   GraduationCap,
   ShieldCheck,
@@ -2381,6 +2382,38 @@ export default function TutorRegisterLoginPage() {
                           </div>
                         )}
 
+                        {/* Live Video Preview in Step 5 */}
+                        {(() => {
+                          const videoInfo = getVideoSourceInfo(introVideoUrl);
+                          if (!videoInfo.isEmbeddable) return null;
+                          return (
+                            <div style={{ marginTop: '0.85rem', borderRadius: '12px', overflow: 'hidden', border: '1.5px solid var(--border-teal)', backgroundColor: '#0F172A' }}>
+                              <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
+                                {videoInfo.type === 'youtube' || videoInfo.type === 'vimeo' || videoInfo.type === 'gdrive' ? (
+                                  <iframe
+                                    src={videoInfo.embedUrl}
+                                    title="Video Preview"
+                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                  />
+                                ) : (
+                                  <video
+                                    src={videoInfo.embedUrl}
+                                    controls
+                                    playsInline
+                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }}
+                                  />
+                                )}
+                              </div>
+                              <div style={{ padding: '0.5rem 0.75rem', backgroundColor: '#F0FDF4', color: '#15803D', fontSize: '0.74rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <CheckCircle2 size={14} color="#15803D" />
+                                <span>✓ Live Video Preview Active ({videoInfo.type === 'youtube' ? 'YouTube Link Embed' : 'Direct Video File'})</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
                         <div style={{
                           marginTop: '0.75rem',
                           padding: '0.85rem',
@@ -2671,7 +2704,7 @@ export default function TutorRegisterLoginPage() {
                             return;
                           }
                           if (currentStep === 4) {
-                            if (!hourlyRateHome || Number(hourlyRateHome) <= 0) {
+                            if (!hourlyRateHomeMin || Number(hourlyRateHomeMin) <= 0) {
                               setErrorMessage('⚠️ Expected Hourly Rate is mandatory.');
                               return;
                             }
