@@ -24,7 +24,7 @@ const authOptions: NextAuthOptions = {
               data: {
                 name: user.name || 'Google User',
                 email: user.email,
-                role: 'PARENT',
+                role: 'TUTOR',
                 phone: '',
               },
             });

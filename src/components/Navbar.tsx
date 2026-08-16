@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { signOut, useSession } from 'next-auth/react';
 import { Phone, Menu, X, ShieldCheck, UserCheck, ChevronRight, LogOut, User, Settings } from 'lucide-react';
 import { SSSAM_OFFICE_DETAILS } from '@/lib/data';
 
@@ -17,7 +18,29 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
   const desktopDropdownRef = useRef<HTMLDivElement>(null);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Read sessions from localStorage on mount & storage events
+  const { data: authSession } = useSession();
+
+  // Read sessions from localStorage & NextAuth on mount & storage events
+  useEffect(() => {
+    if (authSession?.user?.email) {
+      const email = authSession.user.email;
+      const name = authSession.user.name || 'Google Educator';
+      const image = authSession.user.image || '';
+      const userId = (authSession.user as any).id || `GGL-${email.split('@')[0]}`;
+      const role = (authSession.user as any).role;
+
+      if (role === 'PARENT') {
+        const pObj = { userId, name, email, image };
+        setParentSession(pObj);
+        try { localStorage.setItem('parent_session', JSON.stringify(pObj)); } catch {}
+      } else {
+        const tObj = { userId, name, email, image, avatarUrl: image };
+        setTutorSession(tObj);
+        try { localStorage.setItem('tutor_session', JSON.stringify(tObj)); } catch {}
+      }
+    }
+  }, [authSession]);
+
   useEffect(() => {
     const checkSessions = () => {
       const tutorRaw = localStorage.getItem('tutor_session');
@@ -40,14 +63,14 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               .catch(() => {});
           }
         } catch {}
-      } else {
+      } else if (!authSession?.user?.email) {
         setTutorSession(null);
       }
 
       const parentRaw = localStorage.getItem('parent_session');
       if (parentRaw) {
         try { setParentSession(JSON.parse(parentRaw)); } catch {}
-      } else {
+      } else if (!authSession?.user?.email) {
         setParentSession(null);
       }
     };
@@ -71,19 +94,21 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
       document.removeEventListener('mousedown', handleClick);
       window.removeEventListener('storage', checkSessions);
     };
-  }, []);
+  }, [authSession]);
 
-  const handleTutorLogout = () => {
+  const handleTutorLogout = async () => {
     localStorage.removeItem('tutor_session');
     setTutorSession(null);
     setDropdownOpen(false);
+    try { await signOut({ redirect: false }); } catch {}
     window.location.href = '/tutor/register';
   };
 
-  const handleParentLogout = () => {
+  const handleParentLogout = async () => {
     localStorage.removeItem('parent_session');
     setParentSession(null);
     setDropdownOpen(false);
+    try { await signOut({ redirect: false }); } catch {}
     window.location.href = '/parent/login';
   };
 

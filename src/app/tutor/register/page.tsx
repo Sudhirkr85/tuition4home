@@ -2,6 +2,7 @@
 
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect } from 'react';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import {
@@ -295,10 +296,54 @@ export default function TutorRegisterLoginPage() {
   const [consentMarketing, setConsentMarketing] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   
+  const { data: authSession } = useSession();
+
   // Submission Lifecycle
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
+
+  // Sync real NextAuth Google session
+  useEffect(() => {
+    if (authSession?.user?.email) {
+      const email = authSession.user.email;
+      const name = authSession.user.name || 'Google Educator';
+      const id = (authSession.user as any).id || `GGL-${email.split('@')[0]}`;
+      const image = authSession.user.image || '';
+
+      const sessionObj = {
+        userId: id,
+        name: name,
+        email: email,
+        image: image,
+        avatarUrl: image,
+        loginAt: Date.now(),
+        expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000,
+      };
+
+      try {
+        localStorage.setItem('tutor_session', JSON.stringify(sessionObj));
+      } catch {}
+
+      setUserId(id);
+      setUserName(name);
+      setUserEmail(email);
+      if (image && !profilePhotoUrl) {
+        setProfilePhotoUrl(image);
+      }
+      setIsLoggedIn(true);
+
+      // Check if tutor already completed registration
+      fetch(`/api/tutors/profile/setup?userId=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.success && d.profile && d.profile.status !== 'DRAFT') {
+            window.location.href = '/tutor/profile';
+          }
+        })
+        .catch(() => {});
+    }
+  }, [authSession]);
 
   const triggerShake = () => {
     setShakeForm(true);
@@ -576,7 +621,7 @@ export default function TutorRegisterLoginPage() {
     e.preventDefault();
     setErrorMessage('');
     if (!otpContact) {
-      setErrorMessage('Please enter email or mobile number.');
+      setErrorMessage('Please enter your email address.');
       return;
     }
 
@@ -639,25 +684,17 @@ export default function TutorRegisterLoginPage() {
     }
   };
 
-  // Google OAuth Login Simulation
-  const handleGoogleLogin = () => {
+  // Handle Real Google 1-Click Login via NextAuth
+  const handleGoogleLogin = async () => {
     setLoading(true);
-    setTimeout(() => {
-      const session = { 
-        userId: `GGL-${Math.floor(10000 + Math.random() * 90000)}`, 
-        name: 'Google Educator Alum', 
-        email: 'google.educator@example.com',
-        loginAt: Date.now(),
-        expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000,
-      };
-      localStorage.setItem('tutor_session', JSON.stringify(session));
-      setUserId(session.userId);
-      setUserName(session.name);
-      setUserEmail(session.email);
-      setIsLoggedIn(true);
-      setCurrentStep(1);
+    setErrorMessage('');
+    try {
+      await signIn('google', { callbackUrl: '/tutor/register' });
+    } catch (err: any) {
+      console.error('Google Sign In Error:', err);
+      setErrorMessage('Failed to connect to Google Login.');
       setLoading(false);
-    }, 1200);
+    }
   };
 
   // Helper selectors
@@ -756,7 +793,7 @@ export default function TutorRegisterLoginPage() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.removeItem('tutor_session');
     setIsLoggedIn(false);
     setUserId('');
@@ -764,6 +801,10 @@ export default function TutorRegisterLoginPage() {
     setUserEmail('');
     setCurrentStep(1);
     setSubmitted(false);
+    try {
+      await signOut({ redirect: false });
+    } catch {}
+    window.location.href = '/tutor/register';
   };
 
   // Filter subject list
@@ -1573,12 +1614,12 @@ export default function TutorRegisterLoginPage() {
                     {loginMethod === 'password' ? (
                       <form onSubmit={handlePasswordLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                         <div className="form-group">
-                          <label className="form-label">Email or Mobile Number</label>
+                          <label className="form-label">Email Address</label>
                           <div style={{ position: 'relative' }}>
                             <input
                               type="text"
                               required
-                              placeholder="amit@example.com or mobile"
+                              placeholder="amit@example.com"
                               value={loginContact}
                               onChange={(e) => {
                                 setLoginContact(e.target.value);
@@ -1644,13 +1685,13 @@ export default function TutorRegisterLoginPage() {
                     ) : (
                       <form onSubmit={isOtpSent ? handleVerifyOtp : handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                         <div className="form-group">
-                          <label className="form-label">Email or Mobile Number</label>
+                          <label className="form-label">Email Address</label>
                           <div style={{ position: 'relative' }}>
                             <input
-                              type="text"
+                              type="email"
                               required
                               disabled={isOtpSent}
-                              placeholder="amit@example.com or mobile"
+                              placeholder="amit@example.com"
                               value={otpContact}
                               onChange={(e) => setOtpContact(e.target.value)}
                               className="form-control"
@@ -1658,6 +1699,9 @@ export default function TutorRegisterLoginPage() {
                             />
                             <Mail size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
                           </div>
+                          <span style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '4px', display: 'block' }}>
+                            Verification OTP will be sent directly to your email inbox.
+                          </span>
                         </div>
 
                         {isOtpSent && (

@@ -84,6 +84,8 @@ export const metadata: Metadata = {
   },
 };
 
+import Providers from '@/components/Providers';
+
 export default function RootLayout({
   children,
 }: {
@@ -159,7 +161,11 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={outfit.className}>{children}</body>
+      <body className={outfit.className}>
+        <Providers>
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }
