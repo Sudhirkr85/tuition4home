@@ -2259,7 +2259,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                             <td style={{ padding: '0.9rem 1.25rem', fontSize: '0.84rem', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                                 <Phone size={13} color="var(--text-muted)" />
-                                <span style={{ fontWeight: 600 }}>+91 {csl.phone || '95174 47689'}</span>
+                                <span style={{ fontWeight: 600 }}>+91 {csl.phone || '92170 31899'}</span>
                               </div>
                             </td>
 
@@ -2391,7 +2391,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                           <Phone size={13} color="var(--text-muted)" style={{ flexShrink: 0 }} />
-                          <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>+91 {csl.phone || '95174 47689'}</span>
+                          <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>+91 {csl.phone || '92170 31899'}</span>
                         </div>
                       </div>
 
@@ -5146,7 +5146,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                       ₹{netCommissionTotal.toLocaleString('en-IN')}
                     </div>
                     <div style={{ fontSize: '0.74rem', color: '#0369A1', marginTop: '2px' }}>
-                      Bureau retained 25% margin
+                      Academy retained 25% margin
                     </div>
                   </div>
 
@@ -6340,7 +6340,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                 </label>
                 <input
                   type="tel"
-                  placeholder="e.g. 9517447689"
+                  placeholder="e.g. 9217031899"
                   maxLength={10}
                   value={newCounselorPhone}
                   onChange={(e) => setNewCounselorPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
@@ -6712,7 +6712,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                 </label>
                 <input
                   type="tel"
-                  placeholder="e.g. 9517447689"
+                  placeholder="e.g. 9217031899"
                   maxLength={10}
                   value={editCounselorPhone}
                   onChange={(e) => setEditCounselorPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}

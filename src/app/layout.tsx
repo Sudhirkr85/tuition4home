@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     'online tutor india',
     'cbse class 10 home tutor gurgaon',
     'ib tutor gurgaon',
-    'tuition bureau sector 14 gurgaon',
+    'home tuition academy sector 14 gurgaon',
     'SSSAM Academy',
   ],
   authors: [{ name: 'SSSAM Academy', url: 'https://sssamacademy.com' }],
@@ -105,8 +105,8 @@ export default function RootLayout({
               logo: 'https://sssamacademy.com/assets/logo.webp',
               image: 'https://sssamacademy.com/assets/home_page.webp',
               description:
-                'Premier home and online tuition bureau in Gurgaon connecting parents with background-verified educators for CBSE, ICSE, IB & Cambridge curricula.',
-              telephone: ['+919517447689', '+919217031899'],
+                'Premier home and online tutoring platform in Gurgaon connecting parents with background-verified educators for CBSE, ICSE, IB & Cambridge curricula.',
+              telephone: ['+919217031899'],
               email: 'info@sssamacademy.com',
               address: {
                 '@type': 'PostalAddress',

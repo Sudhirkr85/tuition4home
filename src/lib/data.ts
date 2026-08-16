@@ -212,7 +212,7 @@ export const SSSAM_OFFICE_DETAILS = {
   operatorName: 'SSSAM Academy',
   address: 'M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001',
   geo: { lat: 28.4703, lng: 77.0418 },
-  phones: ['+91 92170 31899', '+91 95174 47689'],
+  phones: ['+91 92170 31899'],
   email: 'info@tuitionforhome.com', // General default contact/info
   contactEmail: 'contact@tuitionforhome.com',
   supportEmail: 'support@tuitionforhome.com',

@@ -9,7 +9,7 @@ interface StickyMobileBarProps {
 }
 
 export default function StickyMobileBar({ onOpenBooking }: StickyMobileBarProps) {
-  const whatsappUrl = `https://wa.me/919517447689?text=${encodeURIComponent(
+  const whatsappUrl = `https://wa.me/919217031899?text=${encodeURIComponent(
     'Hello TuitionForHome, I am looking for a verified home/online tutor in Gurgaon. Please share available teachers.'
   )}`;
 

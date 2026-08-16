@@ -3377,7 +3377,7 @@ export default function TutorRegisterLoginPage() {
                           style={{ marginTop: '3px', width: '20px', height: '20px', accentColor: '#0F6E56', cursor: 'pointer', flexShrink: 0 }}
                         />
                         <div style={{ fontSize: '0.88rem', color: '#1E293B', fontWeight: 600, lineHeight: 1.5 }}>
-                          I agree to TuitionForHome &amp; SSSAM Academy&apos;s terms of service, full 1st-month commission allocation, mandatory interview verification, and encrypted document safety regulations.
+                          I agree to TuitionForHome &amp; SSSAM Academy&apos;s terms of service, full 1st-month commission allocation, mandatory interview verification, profile &amp; social media promotion rights, and encrypted document safety regulations.
                         </div>
                       </label>
                     </div>
@@ -3634,7 +3634,7 @@ export default function TutorRegisterLoginPage() {
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Phone size={16} color="#166534" />
-                    <span><strong>Helpline Support:</strong> +91 92170 31899 / +91 95174 47689</span>
+                    <span><strong>Helpline Support:</strong> +91 92170 31899</span>
                   </div>
                   <span style={{ fontSize: '0.76rem', color: '#15803D', fontWeight: 600 }}>Mon–Sun: 9 AM – 9 PM</span>
                 </div>
@@ -3737,7 +3737,7 @@ export default function TutorRegisterLoginPage() {
                   1. Identity Data Privacy &amp; Encryption Protocols
                 </h4>
                 <p style={{ margin: 0 }}>
-                  TuitionForHome (the &quot;Bureau&quot;), operated and supervised by SSSAM Academy, Sector 14 Gurugram, adheres to the Digital Personal Data Protection (DPDP) Act of India. Tutors uploading credentials and identification documents (including Aadhaar Card, PAN Card, and Driving License) hereby consent that all such government ID records will be stored in an encrypted format. The documentation remains confidential and is restricted to the internal administrative audit desk. Unmasked document files are never shared with parents or displayed publicly.
+                  TuitionForHome, operated and supervised by SSSAM Academy, Sector 14 Gurugram, adheres to the Digital Personal Data Protection (DPDP) Act of India. Tutors uploading credentials and identification documents (including Aadhaar Card, PAN Card, and Driving License) hereby consent that all such government ID records will be stored in an encrypted format. The documentation remains confidential and is restricted to the internal administrative audit desk. Unmasked document files are never shared with parents or displayed publicly.
                 </p>
               </div>
 
@@ -3746,9 +3746,13 @@ export default function TutorRegisterLoginPage() {
                 <h4 style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: '0.45rem', color: '#0F172A' }}>
                   2. Platform Service Standards &amp; Booking Integrity
                 </h4>
-                <p style={{ margin: 0 }}>
+                <p style={{ marginBottom: '0.5rem' }}>
                   TuitionForHome provides matched student opportunities, scheduling coordination, and administrative mediation for qualified educators in Gurugram. All introduced sessions, scheduling confirmations, and billing must be logged through the official platform channels to guarantee documented dispute resolution, verified rating accreditation, and transparent parent management. Tutors agree to maintain high professional standards, regular punctuality, student safety precautions during home visits, and adherence to the student&apos;s curriculum (CBSE, ICSE, IB, IGCSE, State Board).
                 </p>
+                <div style={{ backgroundColor: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.8rem', color: '#475569', lineHeight: 1.55 }}>
+                  <strong style={{ color: '#0F172A', display: 'block', marginBottom: '2px' }}>📢 Profile &amp; Social Media Promotion Rights:</strong>
+                  Tutors grant TuitionForHome and SSSAM Academy the non-exclusive right to showcase and promote their verified tutor badge, introduction video, academic credentials, and teaching achievements across official websites, search engines, and social media channels (YouTube, Instagram, Facebook, LinkedIn) to generate direct student inquiries and tutoring leads.
+                </div>
               </div>
 
               {/* SECTION 3 */}
@@ -3792,7 +3796,7 @@ export default function TutorRegisterLoginPage() {
                 </h4>
                 <div style={{ backgroundColor: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.8rem', color: '#475569', lineHeight: 1.55, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   <div><strong>🏢 Physical Center:</strong> SSSAM Academy, M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001 (Near HUDA Market).</div>
-                  <div><strong>📞 Helpline / WhatsApp:</strong> +91 92170 31899 / +91 95174 47689</div>
+                  <div><strong>📞 Helpline / WhatsApp:</strong> +91 92170 31899</div>
                   <div><strong>✉️ Support Email:</strong> support@tuitionforhome.com / info@tuitionforhome.com</div>
                   <div><strong>⏰ Office Timings:</strong> Monday to Sunday, 9:00 AM – 9:00 PM</div>
                 </div>

@@ -757,7 +757,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                 </div>
               </div>
 
-              {/* Card 4: Verified Physical Bureau Card */}
+              {/* Card 4: Verified Physical Academy Center Card */}
               <div className="apple-card" style={{ padding: '1.5rem', backgroundColor: '#FFFFFF', borderRadius: '20px', border: '1px solid #E2E8F0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                   <Building2 size={16} color="#0F6E56" />

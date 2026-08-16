@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS `PlatformConfig` (
     `offerTitle` VARCHAR(191) NOT NULL DEFAULT 'Academic Session Special Drive',
     `offerSubtext` VARCHAR(191) NOT NULL DEFAULT '100% Verification Fee Waiver for Gurgaon & NCR Educators',
     `officeAddress` VARCHAR(191) NOT NULL DEFAULT 'M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001',
-    `helplinePhones` VARCHAR(191) NOT NULL DEFAULT '+91 95174 47689, +91 92170 31899',
+    `helplinePhones` VARCHAR(191) NOT NULL DEFAULT '+91 92170 31899',
     `supportEmail` VARCHAR(191) NOT NULL DEFAULT 'info@sssamacademy.com',
     `mapProvider` VARCHAR(191) NOT NULL DEFAULT 'GOOGLE_MAPS',
     `googleMapsApiKey` VARCHAR(191) NULL,

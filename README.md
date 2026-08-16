@@ -535,7 +535,7 @@ sudo nano /etc/nginx/sites-available/tuitionforhome
 * **Operating Institute:** **SSSAM Academy**
 * **Address:** M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001
 * **Geographical Coordinates:** `28.4703° N, 77.0418° E`
-* **Direct Counselor Helplines:** `+91 92170 31899` / `+91 95174 47689`
+* **Direct Counselor Helplines:** `+91 92170 31899`
 * **Official Emails:**
   - Support & Queries: `support@tuitionforhome.com`
   - General Info: `info@tuitionforhome.com` / `contact@tuitionforhome.com`

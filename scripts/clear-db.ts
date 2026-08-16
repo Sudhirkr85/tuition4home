@@ -41,7 +41,7 @@ async function main() {
       offerTitle: 'Academic Session Special Drive',
       offerSubtext: '100% Verification Fee Waiver for Gurgaon & NCR Educators',
       officeAddress: 'M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001',
-      helplinePhones: '+91 95174 47689, +91 92170 31899',
+      helplinePhones: '+91 92170 31899',
       supportEmail: 'info@sssamacademy.com',
       mapProvider: 'OPENSTREETMAP',
       googleMapsUsageCount: 0,
