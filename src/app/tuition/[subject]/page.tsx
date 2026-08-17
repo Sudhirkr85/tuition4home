@@ -309,8 +309,11 @@ export default async function SubjectPage({ params }: PageProps) {
                 <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-slate-900)', marginBottom: '0.25rem' }}>
                   {item.avgHourlyFee}
                 </div>
-                <div style={{ fontSize: '0.88rem', color: 'var(--color-blue-600)', fontWeight: 600, marginBottom: '1.5rem' }}>
+                <div style={{ fontSize: '0.88rem', color: 'var(--color-blue-600)', fontWeight: 600, marginBottom: '0.4rem' }}>
                   Monthly approx: {item.avgMonthlyFee} (3–4 classes/week)
+                </div>
+                <div style={{ fontSize: '0.74rem', color: 'var(--color-slate-500)', marginBottom: '1.25rem' }}>
+                  *Price varies based on tutor experience, grade &amp; learning mode.
                 </div>
 
                 <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '1.25rem', marginBottom: '1.5rem' }}>

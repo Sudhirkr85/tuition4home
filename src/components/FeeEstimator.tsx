@@ -220,8 +220,12 @@ export default function FeeEstimator({ onBookWithEstimate }: FeeEstimatorProps) 
                   <span style={{ fontSize: '1rem', color: '#94A3B8', fontWeight: 500 }}> / month</span>
                 </div>
 
-                <div style={{ fontSize: '0.88rem', color: '#93C5FD', marginBottom: '1.5rem' }}>
+                <div style={{ fontSize: '0.88rem', color: '#93C5FD', marginBottom: '0.4rem' }}>
                   ≈ ₹{currentFee.hourly}/hour • {currentFee.classesPerMonth} personalized classes per month
+                </div>
+
+                <div style={{ fontSize: '0.74rem', color: '#94A3B8', marginBottom: '1.25rem' }}>
+                  *Estimated benchmark. Exact price varies on tutor experience &amp; qualifications.
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.75rem', fontSize: '0.85rem', color: '#CBD5E1' }}>
