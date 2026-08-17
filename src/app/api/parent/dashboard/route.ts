@@ -7,23 +7,42 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
+    const email = searchParams.get('email');
 
-    if (!userId) {
-      return NextResponse.json({ success: false, error: 'Parent User ID is required.' }, { status: 400 });
+    if (!userId && !email) {
+      return NextResponse.json({ success: false, error: 'Parent User ID or Email is required.' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        image: true,
-        role: true,
-        createdAt: true,
-      }
-    });
+    let user = null;
+    if (userId) {
+      user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          image: true,
+          role: true,
+          createdAt: true,
+        }
+      });
+    }
+
+    if (!user && email) {
+      user = await prisma.user.findUnique({
+        where: { email: email.toLowerCase().trim() },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          image: true,
+          role: true,
+          createdAt: true,
+        }
+      });
+    }
 
     if (!user) {
       return NextResponse.json({ success: false, error: 'Parent account not found.' }, { status: 404 });
@@ -31,7 +50,7 @@ export async function GET(req: Request) {
 
     // 1. Fetch Demo Bookings / Leads submitted by this parent
     const leads = await prisma.lead.findMany({
-      where: { parentId: userId },
+      where: { parentId: user.id },
       orderBy: { createdAt: 'desc' },
       include: {
         assignedTutor: {
@@ -44,7 +63,7 @@ export async function GET(req: Request) {
 
     // 2. Fetch Reviews submitted by this parent
     const reviews = await prisma.review.findMany({
-      where: { reviewerId: userId },
+      where: { reviewerId: user.id },
       orderBy: { createdAt: 'desc' },
       include: {
         tutor: {

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import {
@@ -316,6 +317,7 @@ export default function TutorProfileDashboard() {
   const [introVideoUrl, setIntroVideoUrl] = useState('');
   const [idStatus, setIdStatus] = useState<'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
   const [idRejectionNote, setIdRejectionNote] = useState('');
+  const { data: authSession, status: authStatus } = useSession();
   const [degreeStatus, setDegreeStatus] = useState<'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
   const [degreeRejectionNote, setDegreeRejectionNote] = useState('');
   const [isPublicVisibility, setIsPublicVisibility] = useState(true);
@@ -324,27 +326,64 @@ export default function TutorProfileDashboard() {
 
   // Load session and fetch database profile details
   useEffect(() => {
-    const savedUser = localStorage.getItem('tutor_session');
-    if (!savedUser) {
-      // Redirect to login if no session is active
-      window.location.href = '/tutor/register';
+    if (authStatus === 'loading') {
       return;
     }
-    
-    const parsed = JSON.parse(savedUser);
 
-    // 60-day session expiry check
-    if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
-      localStorage.removeItem('tutor_session');
+    const savedUser = localStorage.getItem('tutor_session');
+    let effectiveUserId = '';
+
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+          localStorage.removeItem('tutor_session');
+          window.location.href = '/tutor/register';
+          return;
+        }
+        effectiveUserId = parsed.userId;
+        setUserId(parsed.userId);
+        setUserName(parsed.name);
+        setUserEmail(parsed.email);
+        if (parsed.avatarUrl || parsed.image) {
+          setAvatarUrl(parsed.avatarUrl || parsed.image);
+        }
+      } catch {}
+    } else if (authStatus === 'authenticated' && authSession?.user?.email) {
+      const email = authSession.user.email;
+      const name = authSession.user.name || 'Educator';
+      const id = (authSession.user as any).id || `GGL-${email.split('@')[0]}`;
+      const image = authSession.user.image || '';
+
+      const sessionObj = {
+        userId: id,
+        name: name,
+        email: email,
+        image: image,
+        avatarUrl: image,
+        loginAt: Date.now(),
+        expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000,
+      };
+
+      try {
+        localStorage.setItem('tutor_session', JSON.stringify(sessionObj));
+        window.dispatchEvent(new Event('storage'));
+      } catch {}
+
+      effectiveUserId = id;
+      setUserId(id);
+      setUserName(name);
+      setUserEmail(email);
+      setAvatarUrl(image);
+    } else if (authStatus === 'unauthenticated' && !savedUser) {
       window.location.href = '/tutor/register';
       return;
     }
-    setUserId(parsed.userId);
-    setUserName(parsed.name);
-    setUserEmail(parsed.email);
+
+    if (!effectiveUserId) return;
 
     // Fetch live profile details
-    fetch(`/api/tutors/profile/setup?userId=${parsed.userId}`)
+    fetch(`/api/tutors/profile/setup?userId=${encodeURIComponent(effectiveUserId)}`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.profile) {
@@ -353,7 +392,7 @@ export default function TutorProfileDashboard() {
           setIsVerified(prof.isVerified);
           setHasPoliceCheck(prof.hasPoliceCheck || false);
           setRating(prof.rating || 5.0);
-          setAvatarUrl(prof.avatarUrl || parsed.avatarUrl || parsed.image || '');
+          setAvatarUrl(prof.avatarUrl || '');
           if (prof.avatarUrl) {
             try {
               const session = JSON.parse(localStorage.getItem('tutor_session') || '{}');
@@ -417,10 +456,10 @@ export default function TutorProfileDashboard() {
 
           // Set the official hosted review & profile link for this tutor
           const origin = typeof window !== 'undefined' ? window.location.origin : 'https://tuitionforhome.com';
-          setReviewLink(`${origin}/tutor/review/${parsed.userId}`);
+          setReviewLink(`${origin}/tutor/review/${effectiveUserId}`);
 
           // Fetch reviews for this tutor
-          fetch(`/api/tutors/reviews?userId=${parsed.userId}`)
+          fetch(`/api/tutors/reviews?userId=${encodeURIComponent(effectiveUserId)}`)
             .then(r => r.json())
             .then(rd => {
               if (rd.success) setReviews(rd.reviews || []);
@@ -439,7 +478,7 @@ export default function TutorProfileDashboard() {
         setErrorMsg('Network error fetching profile details.');
         setLoading(false);
       });
-  }, []);
+  }, [authStatus, authSession]);
 
   // Handle direct profile picture upload from Camera icon or file picker
   const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

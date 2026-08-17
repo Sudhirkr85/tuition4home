@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { 
@@ -61,6 +62,7 @@ interface ParentReview {
 
 export default function ParentDashboardPage() {
   const router = useRouter();
+  const { data: authSession, status: authStatus } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [parentSession, setParentSession] = useState<{ 
@@ -120,48 +122,104 @@ export default function ParentDashboardPage() {
 
   // Check auth session & load latest profile from DB
   useEffect(() => {
-    const saved = localStorage.getItem('parent_session');
-    if (!saved) {
-      router.push('/parent/login');
+    // If NextAuth session is currently verifying, wait
+    if (authStatus === 'loading') {
       return;
     }
 
-    try {
-      const parsed = JSON.parse(saved);
-      setParentSession(parsed);
-      setParentName(parsed.name || '');
-      setParentPhone(parsed.phone || '');
-      setParentImage(parsed.image || null);
+    const saved = localStorage.getItem('parent_session');
 
-      fetch(`/api/parent/dashboard?userId=${parsed.userId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            setLeads(data.leads || []);
-            setReviews(data.reviews || []);
-            if (data.parent) {
+    // Case 1: Existing local session
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setParentSession(parsed);
+        setParentName(parsed.name || '');
+        setParentPhone(parsed.phone || '');
+        setParentImage(parsed.image || null);
+
+        const queryParam = parsed.userId ? `userId=${encodeURIComponent(parsed.userId)}` : `email=${encodeURIComponent(parsed.email)}`;
+        fetch(`/api/parent/dashboard?${queryParam}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.parent) {
+              setLeads(data.leads || []);
+              setReviews(data.reviews || []);
               setParentName(data.parent.name || parsed.name);
               setParentPhone(data.parent.phone || '');
               if (data.parent.image) {
                 setParentImage(data.parent.image);
-                // Update local storage
-                const updatedSession = { ...parsed, name: data.parent.name, image: data.parent.image, phone: data.parent.phone };
-                localStorage.setItem('parent_session', JSON.stringify(updatedSession));
-                setParentSession(updatedSession);
               }
+              const updatedSession = {
+                ...parsed,
+                userId: data.parent.id,
+                name: data.parent.name,
+                image: data.parent.image || parsed.image,
+                phone: data.parent.phone || parsed.phone,
+              };
+              localStorage.setItem('parent_session', JSON.stringify(updatedSession));
+              setParentSession(updatedSession);
             }
+          })
+          .catch(err => console.error('Failed to load parent dashboard:', err))
+          .finally(() => setLoading(false));
+        return;
+      } catch {}
+    }
+
+    // Case 2: Direct Google Login via NextAuth (no localStorage yet)
+    if (authStatus === 'authenticated' && authSession?.user?.email) {
+      const email = authSession.user.email;
+      fetch(`/api/parent/dashboard?email=${encodeURIComponent(email)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.parent) {
+            const newSession = {
+              userId: data.parent.id,
+              name: data.parent.name || authSession.user?.name || 'Parent',
+              email: data.parent.email,
+              phone: data.parent.phone || '',
+              image: data.parent.image || authSession.user?.image || '',
+            };
+            localStorage.setItem('parent_session', JSON.stringify(newSession));
+            window.dispatchEvent(new Event('storage'));
+            setParentSession(newSession);
+            setParentName(newSession.name);
+            setParentPhone(newSession.phone);
+            setParentImage(newSession.image);
+            setLeads(data.leads || []);
+            setReviews(data.reviews || []);
+          } else {
+            const fallbackSession = {
+              userId: (authSession.user as any).id || `GGL-${email.split('@')[0]}`,
+              name: authSession.user?.name || 'Parent',
+              email: email,
+              phone: (authSession.user as any).phone || '',
+              image: authSession.user?.image || '',
+            };
+            localStorage.setItem('parent_session', JSON.stringify(fallbackSession));
+            window.dispatchEvent(new Event('storage'));
+            setParentSession(fallbackSession);
+            setParentName(fallbackSession.name);
           }
         })
-        .catch(err => console.error('Failed to load parent dashboard:', err))
+        .catch(err => console.error('Failed to load Google parent dashboard:', err))
         .finally(() => setLoading(false));
-    } catch {
+      return;
+    }
+
+    // Case 3: Fully unauthenticated
+    if (authStatus === 'unauthenticated' && !saved) {
       router.push('/parent/login');
     }
-  }, [router]);
+  }, [authStatus, authSession, router]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.removeItem('parent_session');
     window.dispatchEvent(new Event('storage'));
+    try {
+      await signOut({ redirect: false });
+    } catch {}
     router.push('/parent/login');
   };
 

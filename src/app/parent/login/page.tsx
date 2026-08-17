@@ -23,11 +23,12 @@ import {
   User,
   HeartHandshake,
 } from 'lucide-react';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { SSSAM_OFFICE_DETAILS } from '@/lib/data';
 
 export default function ParentLoginPage() {
   const router = useRouter();
+  const { data: authSession, status: authStatus } = useSession();
   const [email, setEmail] = useState('');
   const [parentName, setParentName] = useState('');
   const [phone, setPhone] = useState('');
@@ -41,10 +42,10 @@ export default function ParentLoginPage() {
   // If already logged in, redirect to parent dashboard
   useEffect(() => {
     const saved = localStorage.getItem('parent_session');
-    if (saved) {
+    if (saved || (authStatus === 'authenticated' && authSession?.user?.email)) {
       router.push('/parent/dashboard');
     }
-  }, [router]);
+  }, [router, authStatus, authSession]);
 
   // Step 1: Send OTP to Email
   const handleSendOtp = async (e: React.FormEvent) => {

@@ -30,15 +30,44 @@ export async function POST(req: Request) {
       status        // final state e.g., 'PENDING_INTERVIEW'
     } = body;
 
-    if (!userId) {
-      return NextResponse.json({ success: false, error: 'User ID is required.' }, { status: 400 });
+    if (!userId && !body.email) {
+      return NextResponse.json({ success: false, error: 'User ID or Email is required.' }, { status: 400 });
     }
 
-    // Verify user exists and has a profile
-    const profile = await prisma.tutorProfile.findUnique({
+    // Verify user exists and has a profile (or auto-create draft profile if user exists)
+    let profile = userId ? await prisma.tutorProfile.findUnique({
       where: { userId },
       include: { kycDoc: true }
-    });
+    }) : null;
+
+    if (!profile) {
+      let user = userId ? await prisma.user.findUnique({
+        where: { id: userId },
+      }) : null;
+
+      if (!user && body.email) {
+        user = await prisma.user.findUnique({
+          where: { email: body.email.toLowerCase().trim() },
+        });
+      }
+
+      if (user) {
+        if (user.role !== 'TUTOR') {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { role: 'TUTOR' },
+          });
+        }
+        profile = await prisma.tutorProfile.create({
+          data: {
+            userId: user.id,
+            status: 'DRAFT',
+            experienceYears: 0,
+          },
+          include: { kycDoc: true }
+        });
+      }
+    }
 
     if (!profile) {
       return NextResponse.json({ success: false, error: 'Tutor profile not found.' }, { status: 404 });
@@ -181,27 +210,48 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
+    const email = searchParams.get('email');
 
-    if (!userId) {
-      return NextResponse.json({ success: false, error: 'User ID is required.' }, { status: 400 });
+    if (!userId && !email) {
+      return NextResponse.json({ success: false, error: 'User ID or Email is required.' }, { status: 400 });
     }
 
-    let profile = await prisma.tutorProfile.findUnique({
-      where: { userId },
-      include: {
-        kycDoc: true,
-        user: true,
-      }
-    });
-
-    if (!profile) {
+    let profile = null;
+    if (userId) {
       profile = await prisma.tutorProfile.findUnique({
-        where: { id: userId },
+        where: { userId },
         include: {
           kycDoc: true,
           user: true,
         }
       });
+
+      if (!profile) {
+        profile = await prisma.tutorProfile.findUnique({
+          where: { id: userId },
+          include: {
+            kycDoc: true,
+            user: true,
+          }
+        });
+      }
+    }
+
+    if (!profile && email) {
+      const user = await prisma.user.findUnique({
+        where: { email: email.toLowerCase().trim() },
+        include: {
+          tutorProfile: {
+            include: {
+              kycDoc: true,
+              user: true,
+            }
+          }
+        }
+      });
+      if (user?.tutorProfile) {
+        profile = user.tutorProfile;
+      }
     }
 
     if (!profile) {
