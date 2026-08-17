@@ -6,6 +6,7 @@ export interface LocalityInfo {
   activeTutorsCount: number;
   lat?: number;
   lng?: number;
+  schools?: string[];
 }
 
 export interface MockTutor {
@@ -43,26 +44,41 @@ export interface MockTutor {
 }
 
 export const GURGAON_LOCALITIES: LocalityInfo[] = [
-  { slug: 'dlf-phase-5', name: 'DLF Phase 5', pincode: '122009', landmark: 'The Aralias, Magnolias, Horizon Centre', activeTutorsCount: 0 },
-  { slug: 'golf-course-road', name: 'Golf Course Road', pincode: '122002', landmark: 'One Horizon, Mega Mall, Sector 42', activeTutorsCount: 0 },
-  { slug: 'golf-course-extension', name: 'Golf Course Extension (Sector 65-66)', pincode: '122018', landmark: 'M3M Golfestate, Emerald Hills, Trump Towers', activeTutorsCount: 0 },
-  { slug: 'dlf-phase-1', name: 'DLF Phase 1', pincode: '122002', landmark: 'Silver Oaks, Mega Mall, Qutab Plaza', activeTutorsCount: 0 },
-  { slug: 'dlf-phase-2', name: 'DLF Phase 2', pincode: '122002', landmark: 'Cyber City, Oakwood, Jacaranda Marg', activeTutorsCount: 0 },
-  { slug: 'dlf-phase-3', name: 'DLF Phase 3 & Cyber City', pincode: '122002', landmark: 'Moulsari Avenue, Ambience Mall, Cyber Hub', activeTutorsCount: 0 },
-  { slug: 'dlf-phase-4', name: 'DLF Phase 4', pincode: '122009', landmark: 'Galleria Market, Supermart, Ridgewood', activeTutorsCount: 0 },
-  { slug: 'sohna-road', name: 'Sohna Road', pincode: '122018', landmark: 'Vatika City, Malibu Town, Subhash Chowk', activeTutorsCount: 0 },
-  { slug: 'nirvana-country', name: 'Nirvana Country (Sector 50)', pincode: '122018', landmark: 'South City 2, Unitech Fresco', activeTutorsCount: 0 },
-  { slug: 'south-city-gurgaon', name: 'South City 1 & 2', pincode: '122001', landmark: 'Unitech Arcadia, Nirvana South, Sector 49', activeTutorsCount: 0 },
-  { slug: 'sector-51-mayfield', name: 'Sector 51 & Mayfield Garden', pincode: '122003', landmark: 'Mayfield Garden, Artemis Hospital, Samaspur', activeTutorsCount: 0 },
-  { slug: 'sector-56', name: 'Sector 56', pincode: '122011', landmark: 'HUDA Market, Rapid Metro, Kendriya Vihar', activeTutorsCount: 0 },
-  { slug: 'sector-57', name: 'Sector 57', pincode: '122003', landmark: 'Hong Kong Bazaar, Sushant Lok 3', activeTutorsCount: 0 },
-  { slug: 'sector-14', name: 'Sector 14 & Old DLF', pincode: '122001', landmark: 'SSSAM Academy Center, HUDA Market', activeTutorsCount: 0 },
-  { slug: 'sector-47-uniworld', name: 'Sector 47 & Malibu Town', pincode: '122018', landmark: 'Uniworld Gardens, Malibu Town, ILD Spire', activeTutorsCount: 0 },
-  { slug: 'sector-48', name: 'Sector 48', pincode: '122018', landmark: 'Vipul Greens, Central Park, JMD Megapolis', activeTutorsCount: 0 },
-  { slug: 'dwarka-expressway', name: 'Dwarka Expressway (Sector 102-109)', pincode: '122006', landmark: 'ATS Tourmaline, Sobha City, Puri Diplomatic', activeTutorsCount: 0 },
-  { slug: 'palam-vihar', name: 'Palam Vihar', pincode: '122017', landmark: 'Ansal Plaza, Chiranjiv Bharati School', activeTutorsCount: 0 },
-  { slug: 'sector-82', name: 'New Gurgaon (Sector 82-84)', pincode: '122004', landmark: 'Vatika India Next, Mapsko', activeTutorsCount: 0 },
-  { slug: 'sushant-lok-1', name: 'Sushant Lok 1', pincode: '122009', landmark: 'Gold Souk, Vyapar Kendra, Fortis', activeTutorsCount: 0 },
+  { slug: 'dlf-phase-5', name: 'DLF Phase 5', pincode: '122009', landmark: 'The Aralias, Magnolias, Horizon Centre', activeTutorsCount: 0, schools: ['The Shri Ram School Aravali', 'Shiv Nadar School', 'DPS International'] },
+  { slug: 'golf-course-road', name: 'Golf Course Road', pincode: '122002', landmark: 'One Horizon, Mega Mall, Sector 42', activeTutorsCount: 0, schools: ['GD Goenka World School', 'Suncity School', 'Alpine Convent'] },
+  { slug: 'golf-course-extension', name: 'Golf Course Extension (Sector 65-66)', pincode: '122018', landmark: 'M3M Golfestate, Emerald Hills, Trump Towers', activeTutorsCount: 0, schools: ['Pathways School', 'K.R. Mangalam World School'] },
+  { slug: 'dlf-phase-1', name: 'DLF Phase 1', pincode: '122002', landmark: 'Silver Oaks, Mega Mall, Qutab Plaza', activeTutorsCount: 0, schools: ['Blue Bells Model School', 'Delhi Public School Maruti Kunj'] },
+  { slug: 'dlf-phase-2', name: 'DLF Phase 2', pincode: '122002', landmark: 'Cyber City, Oakwood, Jacaranda Marg', activeTutorsCount: 0, schools: ['Euro International School', 'Ryan International'] },
+  { slug: 'dlf-phase-3', name: 'DLF Phase 3 & Cyber City', pincode: '122002', landmark: 'Moulsari Avenue, Ambience Mall, Cyber Hub', activeTutorsCount: 0, schools: ['The Millennium School', 'Amity International'] },
+  { slug: 'dlf-phase-4', name: 'DLF Phase 4', pincode: '122009', landmark: 'Galleria Market, Supermart, Ridgewood', activeTutorsCount: 0, schools: ['Lancers International School', 'Salwan Public School'] },
+  { slug: 'sohna-road', name: 'Sohna Road', pincode: '122018', landmark: 'Vatika City, Malibu Town, Subhash Chowk', activeTutorsCount: 0, schools: ['GD Goenka Public School', 'Manav Rachna International'] },
+  { slug: 'nirvana-country', name: 'Nirvana Country (Sector 50)', pincode: '122018', landmark: 'South City 2, Unitech Fresco', activeTutorsCount: 0, schools: ['Lotus Valley International', 'Suncity World School'] },
+  { slug: 'south-city-gurgaon', name: 'South City 1 & 2', pincode: '122001', landmark: 'Unitech Arcadia, Nirvana South, Sector 49', activeTutorsCount: 0, schools: ['The Heritage School', 'Apeejay School'] },
+  { slug: 'sector-51-mayfield', name: 'Sector 51 & Mayfield Garden', pincode: '122003', landmark: 'Mayfield Garden, Artemis Hospital, Samaspur', activeTutorsCount: 0, schools: ['Shalom Hills International', 'Paras World School'] },
+  { slug: 'sector-56', name: 'Sector 56', pincode: '122011', landmark: 'HUDA Market, Rapid Metro, Kendriya Vihar', activeTutorsCount: 0, schools: ['DAV Public School Sector 56', 'Presidium School'] },
+  { slug: 'sector-57', name: 'Sector 57', pincode: '122003', landmark: 'Hong Kong Bazaar, Sushant Lok 3', activeTutorsCount: 0, schools: ['Scottish High International', 'Vivekananda School'] },
+  { slug: 'sector-14', name: 'Sector 14 & Old DLF', pincode: '122001', landmark: 'SSSAM Academy Center, HUDA Market', activeTutorsCount: 0, schools: ['St. Paul School Sector 14', 'Dronacharya Govt. College Area Schools'] },
+  { slug: 'sector-47-uniworld', name: 'Sector 47 & Malibu Town', pincode: '122018', landmark: 'Uniworld Gardens, Malibu Town, ILD Spire', activeTutorsCount: 0, schools: ['Gems Modern Academy', 'Wisdom High International'] },
+  { slug: 'sector-48', name: 'Sector 48', pincode: '122018', landmark: 'Vipul Greens, Central Park, JMD Megapolis', activeTutorsCount: 0, schools: ['CCA School', 'Manav Rachna'] },
+  { slug: 'dwarka-expressway', name: 'Dwarka Expressway (Sector 102-109)', pincode: '122006', landmark: 'ATS Tourmaline, Sobha City, Puri Diplomatic', activeTutorsCount: 0, schools: ['KIIT World School', 'Indus World School'] },
+  { slug: 'palam-vihar', name: 'Palam Vihar', pincode: '122017', landmark: 'Ansal Plaza, Chiranjiv Bharati School', activeTutorsCount: 0, schools: ['Chiranjiv Bharati School', 'Bal Bharti Public School'] },
+  { slug: 'sector-82', name: 'New Gurgaon (Sector 82-84)', pincode: '122004', landmark: 'Vatika India Next, Mapsko', activeTutorsCount: 0, schools: ['Shree Ram Global School', 'MDN Edify Education'] },
+  { slug: 'sushant-lok-1', name: 'Sushant Lok 1', pincode: '122009', landmark: 'Gold Souk, Vyapar Kendra, Fortis', activeTutorsCount: 0, schools: ['St. Xaviers School', 'DPS Sushant Lok'] },
+  { slug: 'sector-45', name: 'Sector 45', pincode: '122003', landmark: 'HUDA City Centre Metro, DPS Gurgaon', activeTutorsCount: 0, schools: ['Delhi Public School Sector 45', 'Amity International Sector 46'] },
+  { slug: 'sector-46', name: 'Sector 46', pincode: '122003', landmark: 'Rapid Metro, Mini Secretariat, IFFCO Chowk', activeTutorsCount: 0, schools: ['Amity International School', 'The Shriram Millennium'] },
+  { slug: 'sector-49-50', name: 'Sector 49 & 50', pincode: '122018', landmark: 'Unitech Cyber Park, Nirvana Country Gate', activeTutorsCount: 0, schools: ['Lotus Valley International', 'The Northstar School'] },
+  { slug: 'sector-52-53', name: 'Sector 52 & 53', pincode: '122003', landmark: 'Golf Course Road Extension, Rapid Metro Phase II', activeTutorsCount: 0, schools: ['Alpine Convent School', 'Euro International School'] },
+  { slug: 'sector-54-55', name: 'Sector 54 & 55', pincode: '122003', landmark: 'Golf Course Road, DLF The Ultima', activeTutorsCount: 0, schools: ['Pathways World School', 'Suncity School'] },
+  { slug: 'sector-62-63', name: 'Sector 62 & 63', pincode: '122011', landmark: 'Vatika Business Park, Iris Tech Park', activeTutorsCount: 0, schools: ['The Heritage School Sector 62', 'St. Xaviers High School'] },
+  { slug: 'sector-67-68', name: 'Sector 67 & 68', pincode: '122018', landmark: 'JMD Megapolis, Bestech Business Tower', activeTutorsCount: 0, schools: ['GD Goenka Public School', 'K.R. Mangalam GRS'] },
+  { slug: 'sector-69-70', name: 'Sector 69 & 70', pincode: '122101', landmark: 'Tata Primanti, Sohna Road Extension', activeTutorsCount: 0, schools: ['Delhi World Public School', 'RPS International'] },
+  { slug: 'sector-72-73-74', name: 'Sector 72, 73 & 74', pincode: '122004', landmark: 'Southern Periphery, Badshahpur', activeTutorsCount: 0, schools: ['Ryan International Sector 74', 'Pragati Public School'] },
+  { slug: 'sector-84-85-86', name: 'Sector 84, 85 & 86', pincode: '122004', landmark: 'New Gurgaon, Raheja Navodaya, Mapsko Royal Ville', activeTutorsCount: 0, schools: ['GD Goenka International', 'Indus World School'] },
+  { slug: 'sector-89-90-91', name: 'Sector 89, 90 & 91', pincode: '122505', landmark: 'New Gurgaon Hub, KMP Expressway Side', activeTutorsCount: 0, schools: ['Shree Ram Millennium', 'KIIT World School'] },
+  { slug: 'sector-92-95', name: 'Sector 92 & 95', pincode: '122505', landmark: 'Atul Kataria Chowk, Manesar Border', activeTutorsCount: 0, schools: ['Blue Bells School', 'Presidium School'] },
+  { slug: 'sushant-lok-2-3', name: 'Sushant Lok 2 & 3', pincode: '122009', landmark: 'Near Huda City Centre, Sector 55-56 Border', activeTutorsCount: 0, schools: ['Scottish High International', 'Vivekananda School'] },
+  { slug: 'ardee-city', name: 'Ardee City', pincode: '122003', landmark: 'Near Sector 52, Krishna Chowk', activeTutorsCount: 0, schools: ['Alpine Convent', 'Euro International School'] },
+  { slug: 'sun-city', name: 'Sun City (Sector 54)', pincode: '122011', landmark: 'Unitech Sun City, Golf Course Road', activeTutorsCount: 0, schools: ['Suncity School', 'Amity International'] },
 ];
 
 export const SUBJECT_OPTIONS = [

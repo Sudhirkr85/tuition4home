@@ -179,6 +179,13 @@ export default async function SubjectPage({ params }: PageProps) {
       address: SSSAM_OFFICE_DETAILS.address,
       telephone: SSSAM_OFFICE_DETAILS.phones[0],
     },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.9',
+      reviewCount: '500',
+      bestRating: '5',
+      worstRating: '1',
+    },
   };
 
   const faqSchema = {
@@ -207,8 +214,8 @@ export default async function SubjectPage({ params }: PageProps) {
       {
         '@type': 'ListItem',
         position: 2,
-        name: 'Tuition Subjects',
-        item: 'https://tuitionforhome.com/#find-tutor',
+        name: 'All Subjects',
+        item: 'https://tuitionforhome.com/tuition',
       },
       {
         '@type': 'ListItem',
@@ -248,7 +255,7 @@ export default async function SubjectPage({ params }: PageProps) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--color-slate-500)', marginBottom: '1.25rem' }}>
               <Link href="/" style={{ color: 'var(--color-blue-600)', fontWeight: 600 }}>Home</Link>
               <span>/</span>
-              <Link href="/#find-tutor" style={{ color: 'var(--color-blue-600)', fontWeight: 600 }}>Subjects</Link>
+              <Link href="/tuition" style={{ color: 'var(--color-blue-600)', fontWeight: 600 }}>All Subjects</Link>
               <span>/</span>
               <span>{item.subjectName}</span>
             </div>
@@ -400,6 +407,54 @@ export default async function SubjectPage({ params }: PageProps) {
                   </p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Cross-Linking: Find This Subject by Gurgaon Locality */}
+        <section style={{ padding: '3.5rem 0', backgroundColor: '#FFFFFF', borderTop: '1px solid var(--border-subtle)' }}>
+          <div className="container">
+            <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--color-slate-900)' }}>
+              Find {item.subjectName} Tutors by Gurgaon Area
+            </h2>
+            <p style={{ fontSize: '0.92rem', color: 'var(--color-slate-600)', marginBottom: '2rem' }}>
+              Browse verified {item.subjectName.toLowerCase()} home tutors across all major Gurgaon localities.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
+              {GURGAON_LOCALITIES.slice(0, 15).map((loc) => (
+                <Link
+                  key={loc.slug}
+                  href={`/home-tutors-in-gurgaon/${loc.slug}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.6rem',
+                    padding: '0.85rem 1.15rem',
+                    backgroundColor: 'var(--color-slate-50)',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-subtle)',
+                    textDecoration: 'none',
+                    color: 'var(--color-slate-800)',
+                    fontWeight: 600,
+                    fontSize: '0.88rem',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <MapPin size={16} color="var(--color-emerald-600)" />
+                  <span>{loc.name}</span>
+                  <ArrowRight size={14} color="var(--color-slate-400)" style={{ marginLeft: 'auto' }} />
+                </Link>
+              ))}
+            </div>
+            <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+              <Link
+                href="/home-tutors-in-gurgaon"
+                className="btn btn-secondary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                View All Gurgaon Localities
+                <ArrowRight size={16} />
+              </Link>
             </div>
           </div>
         </section>

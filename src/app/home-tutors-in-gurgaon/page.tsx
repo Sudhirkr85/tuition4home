@@ -7,7 +7,7 @@ import { GURGAON_LOCALITIES, SSSAM_OFFICE_DETAILS } from '@/lib/data';
 
 export const metadata: Metadata = {
   title: 'Home Tutors in Gurgaon — All Localities | Verified by SSSAM Academy',
-  description: 'Find verified home tutors across 20+ Gurgaon localities — DLF Phase 1-5, Golf Course Road, Sohna Road, Nirvana Country, Sector 56 & more. Background-checked educators by SSSAM Academy.',
+  description: 'Find verified home tutors across 35+ Gurgaon localities — DLF Phase 1-5, Golf Course Road, Sohna Road, Nirvana Country, Sector 56, Sector 45 & more. Background-checked educators by SSSAM Academy.',
   alternates: { canonical: '/home-tutors-in-gurgaon' },
 };
 
@@ -22,7 +22,7 @@ export default function GurgaonLocalitiesHubPage() {
               Home Tutors in Gurgaon — All Localities
             </h1>
             <p className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto">
-              Find verified, background-checked home tutors across 20+ premium localities in Gurgaon. 
+              Find verified, background-checked home tutors across 35+ premium localities and sectors in Gurgaon. 
               Powered by SSSAM Academy.
             </p>
           </div>

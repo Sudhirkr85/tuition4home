@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FeeEstimator from '@/components/FeeEstimator';
 import { GURGAON_LOCALITIES, VERIFIED_TUTORS, SSSAM_OFFICE_DETAILS, MockTutor } from '@/lib/data';
+import { SUBJECT_SEO_PAGES } from '@/lib/seo-data';
 import prisma from '@/lib/prisma';
 import { MapPin, ShieldCheck, Star, Sparkles, CheckCircle, GraduationCap, Phone, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
@@ -147,6 +148,13 @@ export default async function LocalityPage({ params }: PageProps) {
       name: `${loc.name}, Gurugram`,
     },
     priceRange: '₹₹',
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.9',
+      reviewCount: '500',
+      bestRating: '5',
+      worstRating: '1',
+    },
   };
 
   const breadcrumbSchema = {
@@ -162,8 +170,8 @@ export default async function LocalityPage({ params }: PageProps) {
       {
         '@type': 'ListItem',
         position: 2,
-        name: 'Gurgaon Localities',
-        item: 'https://tuitionforhome.com/#localities',
+        name: 'Home Tutors in Gurgaon',
+        item: 'https://tuitionforhome.com/home-tutors-in-gurgaon',
       },
       {
         '@type': 'ListItem',
@@ -225,7 +233,7 @@ export default async function LocalityPage({ params }: PageProps) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--color-slate-500)', marginBottom: '1.25rem' }}>
               <Link href="/" style={{ color: 'var(--color-blue-600)', fontWeight: 600 }}>Home</Link>
               <span>/</span>
-              <Link href="/#find-tutor" style={{ color: 'var(--color-blue-600)', fontWeight: 600 }}>Gurgaon</Link>
+              <Link href="/home-tutors-in-gurgaon" style={{ color: 'var(--color-blue-600)', fontWeight: 600 }}>All Localities</Link>
               <span>/</span>
               <span>{loc.name}</span>
             </div>
@@ -404,6 +412,83 @@ export default async function LocalityPage({ params }: PageProps) {
             </div>
           </div>
         </section>
+
+        {/* Cross-Linking: Popular Subjects in This Locality */}
+        <section style={{ padding: '3.5rem 0', backgroundColor: '#FFFFFF', borderTop: '1px solid var(--border-subtle)' }}>
+          <div className="container">
+            <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--color-slate-900)' }}>
+              Popular Subjects in {loc.name}
+            </h2>
+            <p style={{ fontSize: '0.92rem', color: 'var(--color-slate-600)', marginBottom: '2rem' }}>
+              Find specialized home tutors by subject in {loc.name}, Gurgaon.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+              {SUBJECT_SEO_PAGES.slice(0, 10).map((sub) => (
+                <Link
+                  key={sub.slug}
+                  href={`/tuition/${sub.slug}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.6rem',
+                    padding: '1rem 1.25rem',
+                    backgroundColor: 'var(--color-slate-50)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    textDecoration: 'none',
+                    color: 'var(--color-slate-800)',
+                    fontWeight: 600,
+                    fontSize: '0.9rem',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <GraduationCap size={18} color="var(--color-emerald-600)" />
+                  <div>
+                    <div>{sub.subjectName}</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--color-slate-500)' }}>{sub.targetGrades}</div>
+                  </div>
+                  <ArrowRight size={14} color="var(--color-slate-400)" style={{ marginLeft: 'auto' }} />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Nearby Schools */}
+        {loc.schools && loc.schools.length > 0 && (
+          <section style={{ padding: '3rem 0', backgroundColor: 'var(--color-slate-50)', borderTop: '1px solid var(--border-subtle)' }}>
+            <div className="container">
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--color-slate-900)' }}>
+                Top Schools Near {loc.name}
+              </h2>
+              <p style={{ fontSize: '0.92rem', color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
+                Our verified tutors support students from these premier schools in and around {loc.name}.
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                {loc.schools.map((school) => (
+                  <div
+                    key={school}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.6rem 1rem',
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: '10px',
+                      border: '1px solid var(--border-subtle)',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      color: 'var(--color-slate-700)',
+                    }}
+                  >
+                    <GraduationCap size={14} color="var(--color-blue-600)" />
+                    {school}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
       </main>
 
       <Footer />

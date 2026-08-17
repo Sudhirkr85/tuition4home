@@ -7,7 +7,7 @@ import { SUBJECT_SEO_PAGES } from '@/lib/seo-data';
 
 export const metadata: Metadata = {
   title: 'Home Tuition in Gurgaon — All Subjects & Boards | TuitionForHome',
-  description: 'Explore subject-wise home tutors in Gurgaon — Maths, Physics, Chemistry, Biology, IB/IGCSE, Coding, Commerce & more. Verified educators by SSSAM Academy, Sector 14.',
+  description: 'Explore 25+ subject-wise home tutors in Gurgaon — Maths, Physics, Chemistry, Biology, IB/IGCSE, Coding, Commerce, French & more. Verified educators by SSSAM Academy, Sector 14.',
   alternates: { canonical: '/tuition' },
 };
 
@@ -22,7 +22,7 @@ export default function TuitionHubPage() {
               Home Tuition in Gurgaon — All Subjects
             </h1>
             <p className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto">
-              Find specialized home tutors for CBSE, ICSE, IB, IGCSE and competitive exams. 
+              Find specialized home tutors for 25+ subjects across CBSE, ICSE, IB, IGCSE and competitive exams (JEE/NEET/CUET). 
               Verified educators for every subject and grade.
             </p>
           </div>

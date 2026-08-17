@@ -93,7 +93,7 @@ The platform supports three distinct learning models:
 * 🔒 **AES-256 Encrypted KYC Vault:** Government IDs (Aadhaar, Driving License, PAN) are encrypted at rest with AES-256-CBC, storing only masked last 4 digits publicly.
 * 🏷️ **Dynamic Festival Promotion Engine:** Super Admin can adjust the ₹999 verification badge fee to ₹0 (100% Free Waiver) or custom promotional pricing in real-time.
 * 📱 **Telecaller Operations Desk:** 1-Click WhatsApp (`wa.me`) message dispatch, phone dialers, digital WhatsApp demo slips, and UPI QR invoice generation.
-* 📈 **Programmatic Locality & Subject SEO Matrix:** Dynamic pre-rendered landing pages for 20+ Gurgaon localities and high-ticket subjects (NEET, JEE, CBSE 10/12, IB Diploma, Python/Coding).
+* 📈 **Programmatic Locality & Subject SEO Matrix:** Dynamic pre-rendered landing pages for 35+ Gurgaon localities and 25+ high-ticket subjects (NEET, JEE, CBSE 10/12, IB Diploma, Python/Coding, Languages).
 
 ---
 
@@ -164,16 +164,19 @@ The platform integrates a dynamic, interactive map experience (`RapidoStyleMap.t
 The platform is designed to dominate organic Google rankings across Gurgaon and Delhi NCR through programmatic routes and JSON-LD structured data:
 
 ### 6.1 Programmatic URL Architecture
-* **City Pillar Route:** `/home-tutors-in-gurgaon`
-* **Locality Dynamic Matrix:** `/home-tutors-in-gurgaon/[locality]` (20+ sectors pre-rendered: `dlf-phase-5`, `golf-course-road`, `sohna-road`, `nirvana-country`, `sector-56`, `sector-14`, `palam-vihar`, etc.)
-* **Subject Dynamic Matrix:** `/tuition/[subject]` (`maths-home-tutor-in-gurgaon`, `physics-home-tutor-in-gurgaon`, `chemistry-home-tutor-in-gurgaon`, `computer-science-python-tutor-in-gurgaon`, `accounts-commerce-home-tutor-in-gurgaon`, `ib-igcse-tutors-in-gurgaon`)
-* **XML Sitemap & Robots:** Dynamic `/sitemap.xml` and `/robots.txt` generated via Next.js App Router.
+* **City Pillar Hub:** `/home-tutors-in-gurgaon` (Directory of all 35+ Gurgaon sectors)
+* **Locality Dynamic Matrix:** `/home-tutors-in-gurgaon/[locality]` (35+ sectors pre-rendered: `dlf-phase-5`, `golf-course-road`, `sohna-road`, `nirvana-country`, `sector-56`, `sector-14`, `sector-45`, `sector-84-85-86`, `palam-vihar`, etc. with localized nearby school associations)
+* **Subject Pillar Hub:** `/tuition` (Directory of all 25+ subjects)
+* **Subject Dynamic Matrix:** `/tuition/[subject]` (25+ subjects pre-rendered: `maths-home-tutor-in-gurgaon`, `physics-home-tutor-in-gurgaon`, `english-home-tutor-in-gurgaon`, `jee-home-tutor-in-gurgaon`, `neet-home-tutor-in-gurgaon`, `ib-igcse-tutors-in-gurgaon`, etc.)
+* **Bidirectional Cross-Linking:** Every locality page dynamically links to high-intent subject pages, and every subject page links back to Gurgaon locality hubs.
+* **XML Sitemap & Robots:** Dynamic `/sitemap.xml` and `/robots.txt` generated via Next.js App Router (68+ indexed routes).
 
 ### 6.2 Schema.org Structured Data
-Each locality and subject page automatically injects rich JSON-LD:
+Each locality, subject, and directory page automatically injects rich JSON-LD:
 * `LocalBusiness` & `EducationalOrganization` with exact geo-coordinates (`28.4703° N, 77.0418° E`) and SSSAM Academy address.
-* `AggregateRating` for Google 5-star rich search snippets.
-* `FAQPage` schema on every locality landing page to capture Google's "People Also Ask" (PAA) boxes.
+* `AggregateRating` (4.9/5 based on 500+ verified parent ratings) for Google SERP Star Rich Snippets.
+* `FAQPage` schema on every locality and subject landing page to capture Google's "People Also Ask" (PAA) rich snippets.
+* `Course` schema for subject-specific curriculum pages.
 * `Person` schema for verified tutor profiles (personal contact details masked for privacy).
 
 ---
