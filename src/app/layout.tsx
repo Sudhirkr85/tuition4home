@@ -176,6 +176,50 @@ export default function RootLayout({
             }),
           }}
         />
+        {/* Schema.org FAQPage for Google PAA & Rich Snippets */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: [
+                {
+                  '@type': 'Question',
+                  name: 'How does TuitionForHome verify and screen home tutors in Gurgaon & Delhi NCR?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Every educator undergoes a strict 3-stage auditing pipeline by SSSAM Academy: Aadhaar KYC background verification, in-person academic degree audit, and a 60-second video teaching audition.',
+                  },
+                },
+                {
+                  '@type': 'Question',
+                  name: 'What are the home tuition fees in Gurgaon, Dwarka, and South Delhi?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Tuition rates typically range from ₹600 to ₹1,500/hr for CBSE/ICSE and ₹1,500 to ₹2,500/hr for IB/IGCSE curricula, with transparent online fee estimation.',
+                  },
+                },
+                {
+                  '@type': 'Question',
+                  name: 'What happens if my child is not satisfied with the allocated tutor?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'TuitionForHome provides a 100% Free Tutor Replacement Guarantee within 24 hours at zero extra charge.',
+                  },
+                },
+                {
+                  '@type': 'Question',
+                  name: 'Can we visit your physical center in Sector 14 Gurugram?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Yes! TuitionForHome is operated by SSSAM Academy at M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram. Parents are welcome to visit our counseling desk or attend offline trial classes.',
+                  },
+                },
+              ],
+            }),
+          }}
+        />
       </head>
       <body className={outfit.className}>
         <Providers>

@@ -52,6 +52,12 @@ import {
   MessageSquare,
   Smartphone,
   Globe,
+  ChevronDown,
+  HelpCircle,
+  Check,
+  Headphones,
+  RotateCcw,
+  BadgeCheck,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -74,6 +80,7 @@ export default function HomePage() {
   const [selectedShowcaseSector, setSelectedShowcaseSector] = useState<string>('All Sectors');
   const [selectedShowcaseGender, setSelectedShowcaseGender] = useState<'ALL' | 'FEMALE' | 'MALE'>('ALL');
   const [platformConfig, setPlatformConfig] = useState<any>(null);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   // Fetch live verified tutors, dynamic sectors & platform config from MySQL database
   useEffect(() => {
@@ -1199,28 +1206,120 @@ export default function HomePage() {
         </section>
 
         {/* =========================================================================
-            8. GURGAON LOCALITIES SEO DIRECTORY GRID (100% Dynamic from DB)
+            8. WHY CHOOSE TUITIONFORHOME (6 PILLARS OF TRUST)
             ========================================================================= */}
-        <section aria-label="Frequently Asked Questions" style={{ padding: '4.5rem 0', backgroundColor: 'var(--bg-app)' }}>
+        <section aria-label="Why Choose TuitionForHome" style={{ padding: '5rem 0', backgroundColor: '#FFFFFF', borderTop: '1px solid var(--border-subtle)' }}>
           <div className="container">
-            <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 2.5rem auto' }}>
+            <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 3rem auto' }}>
               <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
-                <MapPin size={14} />
-                <span>HYPER-LOCAL COVERAGE</span>
+                <BadgeCheck size={14} />
+                <span>THE SSSAM ACADEMY ADVANTAGE</span>
               </div>
-              <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>
-                Home Tutors Available in Your Gurgaon Sector
+              <h2 style={{ fontSize: 'clamp(1.85rem, 3.5vw, 2.5rem)', fontWeight: 800, color: 'var(--text-main)' }}>
+                Why Gurgaon &amp; Delhi NCR Parents Trust TuitionForHome
               </h2>
-              <p style={{ color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-                {totalVerifiedTutors
-                  ? `Over ${totalVerifiedTutors} verified teachers ready to travel across all residential sectors of Gurgaon.`
-                  : 'Verified 1-on-1 home and online educators available across all residential sectors of Gurgaon.'}
+              <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '0.5rem', lineHeight: 1.6 }}>
+                Unlike anonymous aggregator websites, every educator on our platform is verified in-person at our physical institute in Sector 14, Gurugram.
               </p>
             </div>
 
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: '1.5rem',
+            }}>
+              {/* Card 1 */}
+              <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#065F46' }}>
+                  <Building2 size={24} />
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>Physical Center Anchor</h3>
+                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                  Backed by SSSAM Academy at Sector 14, Old DLF, Gurugram. You have a real physical address, helpline numbers, and center classrooms for trial classes.
+                </p>
+              </div>
+
+              {/* Card 2 */}
+              <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#F0F9FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0369A1' }}>
+                  <ShieldCheck size={24} />
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>In-Person KYC &amp; Degree Audit</h3>
+                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                  Every tutor’s degree certificates, Aadhaar KYC, address, and past teaching track record are audited before granting the verified educator badge.
+                </p>
+              </div>
+
+              {/* Card 3 */}
+              <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B45309' }}>
+                  <Video size={24} />
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>60-Second Video Intro Auditions</h3>
+                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                  Watch concise video introduction clips of shortlisted teachers to judge communication clarity, accent, and subject confidence before scheduling.
+                </p>
+              </div>
+
+              {/* Card 4 */}
+              <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#FDF2F8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#BE185D' }}>
+                  <RotateCcw size={24} />
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>100% Free Replacement Guarantee</h3>
+                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                  If your child does not connect with the tutor’s style, our counselors assign an alternate top-matched educator within 24 hours at no extra charge.
+                </p>
+              </div>
+
+              {/* Card 5 */}
+              <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6D28D9' }}>
+                  <Award size={24} />
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>Top Gurgaon &amp; Delhi School Alignment</h3>
+                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                  Experienced mentors for CBSE, ICSE, IB (DP/MYP), and Cambridge (IGCSE) aligned with The Shri Ram School, DPS, Heritage, and Pathways curricula.
+                </p>
+              </div>
+
+              {/* Card 6 */}
+              <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#065F46' }}>
+                  <Headphones size={24} />
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>Dedicated Academic Counselor</h3>
+                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                  Get 1-on-1 human assistance via phone and WhatsApp. We monitor attendance, test score progress, and parent feedback continuously.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            9. GURGAON & DELHI NCR LOCALITIES SEO DIRECTORY GRID
+            ========================================================================= */}
+        <section aria-label="Hyper-Local Area Directory" style={{ padding: '4.5rem 0', backgroundColor: 'var(--bg-app)' }}>
+          <div className="container">
+            <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 2.5rem auto' }}>
+              <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
+                <MapPin size={14} />
+                <span>HYPER-LOCAL COVERAGE (45+ AREAS)</span>
+              </div>
+              <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>
+                Home Tutors Available Across Gurgaon &amp; Delhi NCR
+              </h2>
+              <p style={{ color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+                {totalVerifiedTutors
+                  ? `Over ${totalVerifiedTutors} verified educators ready to travel across DLF, Golf Course, Sohna Rd, Dwarka, Vasant Kunj & Saket.`
+                  : 'Verified 1-on-1 home and online educators available across all sectors of Gurgaon and prime South/West Delhi hubs.'}
+              </p>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
               gap: '1rem',
             }}>
               {dynamicLocalities.map((loc) => (
@@ -1238,24 +1337,110 @@ export default function HomePage() {
                   }}
                 >
                   <div>
-                    <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)' }}>
+                    <div style={{ fontWeight: 800, fontSize: '0.96rem', color: 'var(--text-main)' }}>
                       {loc.name}
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '2px', lineClamp: 1 }}>
                       {loc.landmark}
                     </div>
                   </div>
-                  {loc.activeTutorsCount > 0 ? (
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0F6E56', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.25rem 0.65rem', borderRadius: '999px', whiteSpace: 'nowrap' }}>
-                      {loc.activeTutorsCount} {loc.activeTutorsCount === 1 ? 'Tutor' : 'Tutors'}
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0369A1', backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD', padding: '0.25rem 0.65rem', borderRadius: '999px', whiteSpace: 'nowrap' }}>
-                      Explore Sector →
-                    </span>
-                  )}
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#065F46', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.25rem 0.65rem', borderRadius: '999px', whiteSpace: 'nowrap' }}>
+                    Explore →
+                  </span>
                 </Link>
               ))}
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+              <Link href="/home-tutors-in-gurgaon" className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span>View Full Gurgaon &amp; Delhi Directory</span>
+                <ChevronRight size={16} />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            10. FREQUENTLY ASKED QUESTIONS (FAQ ACCORDION)
+            ========================================================================= */}
+        <section aria-label="Frequently Asked Questions" style={{ padding: '5rem 0', backgroundColor: '#FFFFFF', borderTop: '1px solid var(--border-subtle)' }}>
+          <div className="container" style={{ maxWidth: '840px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+              <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
+                <HelpCircle size={14} />
+                <span>GOT QUESTIONS?</span>
+              </div>
+              <h2 style={{ fontSize: 'clamp(1.85rem, 3.5vw, 2.5rem)', fontWeight: 800, color: 'var(--text-main)' }}>
+                Frequently Asked Questions
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '0.5rem' }}>
+                Everything you need to know about finding, verifying, and hiring home tutors in Gurgaon and Delhi NCR.
+              </p>
+            </div>
+
+            {/* FAQ Accordion List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {[
+                {
+                  q: 'How does TuitionForHome verify and screen home tutors in Gurgaon & Delhi NCR?',
+                  a: 'Every educator undergoes a strict 3-stage auditing pipeline by SSSAM Academy: (1) Aadhaar & government ID background verification, (2) In-person degree & academic transcript verification, (3) 60-second video teaching audition evaluating communication, accent, and subject mastery. Only the top 5% of applicants are approved as ACTIVE_VERIFIED.',
+                },
+                {
+                  q: 'What are the home tuition fees in Gurgaon, Dwarka, and South Delhi?',
+                  a: 'Tuition rates depend on the grade and curriculum: Primary (Classes 1–5): ₹600 – ₹900/hr, Middle School (Classes 6–8): ₹700 – ₹1,000/hr, Secondary (Classes 9–10): ₹800 – ₹1,200/hr, Senior Secondary & NEET/JEE (Classes 11–12): ₹900 – ₹1,500/hr, and IB / Cambridge (MYP/DP): ₹1,500 – ₹2,500/hr. You can use our live Fee Calculator to get an instant estimate with zero hidden commissions.',
+                },
+                {
+                  q: 'What happens if my child is not comfortable or satisfied with the allocated tutor?',
+                  a: 'We offer a 100% Free Tutor Replacement Guarantee. If you feel the teaching chemistry or speed does not match your child’s learning style, our dedicated academic counselors will arrange an alternate top-rated educator within 24 hours at zero extra charge.',
+                },
+                {
+                  q: 'Do you provide tutors for CBSE, ICSE, IB Diploma, and Cambridge IGCSE boards?',
+                  a: 'Yes! We specialize in board-specific tutors familiar with the curriculum and exam patterns of premier schools like The Shri Ram School, DPS Sector 45 & Vasant Kunj, The Heritage School, Pathways World School, and Scottish High International.',
+                },
+                {
+                  q: 'Can I request a verified female home tutor for my child?',
+                  a: 'Absolutely. Over 45% of our verified teaching faculty are experienced lady educators. You can specify a preference for a female tutor during your inquiry, and all female tutors have verified background and address credentials.',
+                },
+                {
+                  q: 'Can we visit your physical center in Sector 14 Gurugram or take classes there?',
+                  a: 'Yes! TuitionForHome is operated by SSSAM Academy located at M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram. Parents are welcome to visit our center to meet our academic counselors, review tutor profiles in person, or attend sessions in our offline center classrooms.',
+                },
+              ].map((faq, idx) => {
+                const isOpen = openFaqIndex === idx;
+                return (
+                  <div
+                    key={idx}
+                    className="apple-card"
+                    style={{
+                      padding: '1.25rem 1.5rem',
+                      border: '1px solid var(--border-subtle)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      backgroundColor: isOpen ? '#F0FDF9' : '#FFFFFF',
+                    }}
+                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: isOpen ? '#065F46' : 'var(--text-main)', margin: 0 }}>
+                        {faq.q}
+                      </h3>
+                      <div style={{
+                        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.2s ease',
+                        color: isOpen ? '#065F46' : 'var(--text-muted)',
+                        flexShrink: 0,
+                      }}>
+                        <ChevronDown size={20} />
+                      </div>
+                    </div>
+                    {isOpen && (
+                      <p style={{ marginTop: '0.85rem', color: 'var(--color-slate-700)', fontSize: '0.93rem', lineHeight: 1.65, borderTop: '1px solid rgba(6, 95, 70, 0.1)', paddingTop: '0.85rem' }}>
+                        {faq.a}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
