@@ -151,12 +151,14 @@ interface RegisteredParentItem {
   leads: any[];
 }
 
+export type AdminTab = 'OVERVIEW' | 'COUNSELORS' | 'LEADS' | 'TUTOR_ALLOCATION' | 'PARENTS' | 'COORDINATION' | 'FEES_PAYOUTS' | 'PRICING_CAMPAIGNS';
+
 export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'admin' | 'counselor' }) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [adminUser, setAdminUser] = useState<any>(null);
 
-  const [activeAdminTab, setActiveAdminTab] = useState<'OVERVIEW' | 'COUNSELORS' | 'LEADS' | 'TUTOR_ALLOCATION' | 'PARENTS' | 'COORDINATION' | 'FEES_PAYOUTS' | 'PRICING_CAMPAIGNS'>(portalMode === 'counselor' ? 'LEADS' : 'OVERVIEW');
+  const [activeAdminTab, setActiveAdminTab] = useState<AdminTab>(portalMode === 'counselor' ? 'LEADS' : 'OVERVIEW');
   const [selectedTutorForLeads, setSelectedTutorForLeads] = useState<any>(null);
 
   // Registered Parents Directory State
