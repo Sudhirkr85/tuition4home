@@ -98,6 +98,7 @@ export async function GET(req: Request) {
         monthlyRateMin: tp.monthlyRateMin || 6000,
         isVerified: tp.isVerified,
         hasPoliceCheck: tp.hasPoliceCheck,
+        gender: tp.gender || 'FEMALE',
         rating: calculatedRating,
         totalReviews: reviewCount,
         bio: tp.bio || '',

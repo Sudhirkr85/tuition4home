@@ -1897,12 +1897,12 @@ export default function TutorRegisterLoginPage() {
                         <label className="form-label">
                           Gender <span style={{ color: '#DC2626' }}>*</span>
                           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 400, marginLeft: '0.5rem' }}>
-                            (Helps us match you with families requesting Lady Tutors or Home Tutors)
+                            (Helps us match you with families requesting Female Home Tutors)
                           </span>
                         </label>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
                           {[
-                            { id: 'FEMALE', label: 'Female 👩', desc: 'Lady Educator' },
+                            { id: 'FEMALE', label: 'Female 👩', desc: 'Female Educator' },
                             { id: 'MALE', label: 'Male 👨', desc: 'Male Educator' },
                             { id: 'OTHER', label: 'Other 👤', desc: 'Educator' },
                           ].map((g) => {

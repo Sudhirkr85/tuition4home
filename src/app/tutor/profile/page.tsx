@@ -2380,11 +2380,11 @@ export default function TutorProfileDashboard() {
                       Gender / Identity Category
                     </strong>
                     <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.75rem' }}>
-                      Helps match you with Gurgaon parents requesting Verified Lady Tutors or Home Tutors.
+                      Helps match you with Gurgaon parents requesting Verified Female Tutors or Home Tutors.
                     </span>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
                       {[
-                        { id: 'FEMALE', label: 'Female 👩', desc: 'Lady Educator' },
+                        { id: 'FEMALE', label: 'Female 👩', desc: 'Female Educator' },
                         { id: 'MALE', label: 'Male 👨', desc: 'Male Educator' },
                         { id: 'OTHER', label: 'Other 👤', desc: 'Educator' },
                       ].map((g) => {

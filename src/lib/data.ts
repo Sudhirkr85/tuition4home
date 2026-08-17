@@ -18,6 +18,7 @@ export interface MockTutor {
   videoDuration: string;
   highestDegree: string;
   experienceYears: number;
+  gender?: string;
   teachingMode: 'OFFLINE_HOME' | 'ONLINE_LIVE' | 'BOTH';
   subjects: string[];
   classes: string[];

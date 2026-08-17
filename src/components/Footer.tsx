@@ -163,7 +163,7 @@ export default function Footer() {
               <span>Subject Tuitions (Gurgaon)</span>
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.85rem' }}>
-              <Link href="/tuition/female-home-tutors-in-gurgaon" style={{ color: '#FDE047', fontWeight: 700 }} className="hover-link">• Verified Female Lady Tutors</Link>
+              <Link href="/tuition/female-home-tutors-in-gurgaon" style={{ color: '#FDE047', fontWeight: 700 }} className="hover-link">• Verified Female Home Tutors</Link>
               <Link href="/tuition/primary-school-home-tutor-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• Primary School (Class 1-5 Foundation)</Link>
               <Link href="/tuition/maths-home-tutor-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• Mathematics Home Tutors</Link>
               <Link href="/tuition/physics-home-tutor-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• Physics & NEET/JEE Tutors</Link>

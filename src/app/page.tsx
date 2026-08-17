@@ -72,6 +72,7 @@ export default function HomePage() {
   const [dynamicLocalities, setDynamicLocalities] = useState<LocalityInfo[]>(GURGAON_LOCALITIES);
   const [totalVerifiedTutors, setTotalVerifiedTutors] = useState<string>('');
   const [selectedShowcaseSector, setSelectedShowcaseSector] = useState<string>('All Sectors');
+  const [selectedShowcaseGender, setSelectedShowcaseGender] = useState<'ALL' | 'FEMALE' | 'MALE'>('ALL');
   const [platformConfig, setPlatformConfig] = useState<any>(null);
 
   // Fetch live verified tutors, dynamic sectors & platform config from MySQL database
@@ -729,6 +730,53 @@ export default function HomePage() {
               </Link>
             </div>
 
+            {/* Quick Specialty / Lady Tutor Highlight Bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Filter By:
+              </span>
+              {[
+                { id: 'ALL', label: '🌐 All Verified Tutors' },
+                { id: 'FEMALE', label: '👩 Female Tutors Only', highlight: true },
+                { id: 'MALE', label: '👨 Male Tutors' },
+              ].map((cat) => {
+                const isSel = selectedShowcaseGender === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSelectedShowcaseGender(cat.id as any)}
+                    style={{
+                      padding: '0.45rem 1rem',
+                      borderRadius: '999px',
+                      fontSize: '0.84rem',
+                      fontWeight: 800,
+                      border: isSel 
+                        ? (cat.highlight ? '2px solid #0D9488' : '2px solid #0F172A') 
+                        : (cat.highlight ? '2px solid #CCFBF1' : '1px solid #E2E8F0'),
+                      backgroundColor: isSel 
+                        ? (cat.highlight ? '#0F766E' : '#0F172A') 
+                        : (cat.highlight ? '#F0FDFA' : '#FFFFFF'),
+                      color: isSel ? '#FFFFFF' : (cat.highlight ? '#0F766E' : '#334155'),
+                      cursor: 'pointer',
+                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                      boxShadow: isSel ? '0 4px 12px rgba(13, 148, 136, 0.25)' : '0 1px 2px rgba(0,0,0,0.03)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                    }}
+                  >
+                    <span>{cat.label}</span>
+                    {cat.highlight && !isSel && (
+                      <span style={{ backgroundColor: '#0D9488', color: '#FFFFFF', fontSize: '0.65rem', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 900 }}>
+                        POPULAR
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Interactive Sector Selector Filter Pills */}
             <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.65rem', marginBottom: '2rem', scrollbarWidth: 'none' }}>
               {['All Sectors', 'DLF Phase 5', 'Golf Course Road', 'Sector 14 & Old DLF', 'Sohna Road', 'Sector 56', 'Nirvana Country', 'Sushant Lok 1', 'DLF Phase 1', 'Cyber City', 'Sector 57', 'Sector 48'].map((sec) => {
@@ -758,21 +806,25 @@ export default function HomePage() {
               })}
             </div>
 
-            {/* Tutors Grid (Filtered Dynamically by Selected Sector) */}
+            {/* Tutors Grid (Filtered Dynamically by Selected Sector & Gender) */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
               gap: '1.75rem',
             }}>
               {(() => {
+                const baseList = selectedShowcaseGender === 'ALL'
+                  ? dynamicTutors
+                  : dynamicTutors.filter(t => (t.gender || '').toUpperCase() === selectedShowcaseGender);
+
                 const filtered = selectedShowcaseSector === 'All Sectors'
-                  ? dynamicTutors.slice(0, 6)
+                  ? baseList.slice(0, 6)
                   : (() => {
-                      const matched = dynamicTutors.filter(t => 
+                      const matched = baseList.filter(t => 
                         t.serviceAreas.some(area => area.toLowerCase().includes(selectedShowcaseSector.toLowerCase()))
                       );
                       if (matched.length >= 6) return matched.slice(0, 6);
-                      const remaining = dynamicTutors.filter(t => !matched.some(m => m.id === t.id));
+                      const remaining = baseList.filter(t => !matched.some(m => m.id === t.id));
                       return [...matched, ...remaining].slice(0, 6);
                     })();
 
@@ -859,8 +911,15 @@ export default function HomePage() {
                           {tutor.name}
                         </h3>
                       </Link>
-                      <div style={{ fontSize: '0.78rem', color: '#0F6E56', fontWeight: 700, margin: '2px 0' }}>
-                        {tutor.badge}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', margin: '2px 0' }}>
+                        <span style={{ fontSize: '0.78rem', color: '#0F6E56', fontWeight: 700 }}>
+                          {tutor.badge}
+                        </span>
+                        {tutor.gender?.toUpperCase() === 'FEMALE' && (
+                          <span style={{ backgroundColor: '#F0FDFA', color: '#0F766E', fontSize: '0.7rem', fontWeight: 800, padding: '1px 5px', borderRadius: '4px', border: '1px solid #CCFBF1' }}>
+                            👩 Female Educator
+                          </span>
+                        )}
                       </div>
                       {tutor.totalReviews > 0 && tutor.rating > 0 ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>

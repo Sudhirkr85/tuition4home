@@ -38,6 +38,7 @@ export default function TutorsDirectoryPage() {
   const [localitySearchText, setLocalitySearchText] = useState('');
   const [localityDropdownOpen, setLocalityDropdownOpen] = useState(false);
   const localityRef = useRef<HTMLDivElement>(null);
+  const [selectedGender, setSelectedGender] = useState<'ALL' | 'FEMALE' | 'MALE'>('ALL');
   const [selectedMode, setSelectedMode] = useState<'ALL' | 'OFFLINE_HOME' | 'ONLINE_LIVE'>('ALL');
   const [selectedPriceRange, setSelectedPriceRange] = useState<'ALL' | 'UNDER_800' | '800_1200' | 'ABOVE_1200'>('ALL');
   const [sortBy, setSortBy] = useState<'RATING' | 'EXPERIENCE' | 'PRICE_LOW' | 'PRICE_HIGH'>('RATING');
@@ -121,6 +122,13 @@ export default function TutorsDirectoryPage() {
   const filteredTutors = useMemo(() => {
     return tutors
       .filter((tut) => {
+        // Gender filter
+        if (selectedGender === 'FEMALE') {
+          if (tut.gender && tut.gender.toUpperCase() !== 'FEMALE') return false;
+        } else if (selectedGender === 'MALE') {
+          if (tut.gender && tut.gender.toUpperCase() !== 'MALE') return false;
+        }
+
         // Mode filter
         if (selectedMode !== 'ALL') {
           if (selectedMode === 'OFFLINE_HOME' && tut.teachingMode === 'ONLINE_LIVE') return false;
@@ -158,17 +166,19 @@ export default function TutorsDirectoryPage() {
         if (sortBy === 'PRICE_HIGH') return b.hourlyRateHome - a.hourlyRateHome;
         return 0;
       });
-  }, [tutors, selectedMode, selectedPriceRange, selectedLocality, searchQuery, sortBy]);
+  }, [tutors, selectedGender, selectedMode, selectedPriceRange, selectedLocality, searchQuery, sortBy]);
 
   // Check if any filter is actively applied
   const isFilterActive =
     searchQuery.trim() !== '' ||
+    selectedGender !== 'ALL' ||
     selectedLocality !== 'ALL' ||
     selectedMode !== 'ALL' ||
     selectedPriceRange !== 'ALL';
 
   const handleResetAllFilters = () => {
     setSearchQuery('');
+    setSelectedGender('ALL');
     setSelectedLocality('ALL');
     setLocalitySearchText('');
     setSelectedMode('ALL');
@@ -595,6 +605,61 @@ export default function TutorsDirectoryPage() {
                       <option value="800_1200">₹800 – ₹1,200 / hr</option>
                       <option value="ABOVE_1200">Above ₹1,200 / hr</option>
                     </select>
+                  </div>
+
+                  {/* Gender Filter Buttons */}
+                  <div className="mode-btn-group" style={{ display: 'inline-flex', borderRadius: '10px', overflow: 'hidden', border: '1.5px solid #E2E8F0' }}>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedGender('ALL'); setCurrentPage(1); }}
+                      style={{
+                        padding: '0 0.85rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        backgroundColor: selectedGender === 'ALL' ? '#0F172A' : '#FFFFFF',
+                        color: selectedGender === 'ALL' ? '#FFFFFF' : '#475569',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedGender('FEMALE'); setCurrentPage(1); }}
+                      style={{
+                        padding: '0 0.85rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        backgroundColor: selectedGender === 'FEMALE' ? '#0F6E56' : '#FFFFFF',
+                        color: selectedGender === 'FEMALE' ? '#FFFFFF' : '#475569',
+                        borderLeft: '1px solid #E2E8F0',
+                        borderRight: '1px solid #E2E8F0',
+                        borderTop: 'none',
+                        borderBottom: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      👩 Female Tutors
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedGender('MALE'); setCurrentPage(1); }}
+                      style={{
+                        padding: '0 0.85rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        backgroundColor: selectedGender === 'MALE' ? '#0F6E56' : '#FFFFFF',
+                        color: selectedGender === 'MALE' ? '#FFFFFF' : '#475569',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      👨 Male Tutors
+                    </button>
                   </div>
 
                   {/* Mode Buttons */}
