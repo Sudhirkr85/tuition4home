@@ -113,8 +113,12 @@ function StepCard({ stepNumber, title, badgeText, description, icon, accentColor
 const Step1Illustration = () => (
   <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
     <img
-      src="/images/how-it-works/step1_location.jpg"
+      src="/images/how-it-works/step1_location.webp"
       alt="Select Mode and Sector"
+      width={600}
+      height={328}
+      loading="lazy"
+      decoding="async"
       style={{
         width: '100%',
         height: '100%',
@@ -128,8 +132,12 @@ const Step1Illustration = () => (
 const Step2Illustration = () => (
   <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
     <img
-      src="/images/how-it-works/step2_matching.jpg"
+      src="/images/how-it-works/step2_matching.webp"
       alt="Counselor Proximity Match"
+      width={600}
+      height={330}
+      loading="lazy"
+      decoding="async"
       style={{
         width: '100%',
         height: '100%',
@@ -143,8 +151,12 @@ const Step2Illustration = () => (
 const Step3Illustration = () => (
   <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
     <img
-      src="/images/how-it-works/step3_teaching.jpg"
+      src="/images/how-it-works/step3_teaching.webp"
       alt="1st In-Person Academic Class"
+      width={600}
+      height={328}
+      loading="lazy"
+      decoding="async"
       style={{
         width: '100%',
         height: '100%',
@@ -158,8 +170,12 @@ const Step3Illustration = () => (
 const Step4Illustration = () => (
   <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
     <img
-      src="/images/how-it-works/step4_guarantee.jpg"
+      src="/images/how-it-works/step4_guarantee.webp"
       alt="100% Parent Guarantee"
+      width={600}
+      height={328}
+      loading="lazy"
+      decoding="async"
       style={{
         width: '100%',
         height: '100%',

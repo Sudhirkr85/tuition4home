@@ -94,7 +94,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/logo.png" type="image/png" />
+        <link rel="icon" href="/logo.webp" type="image/webp" />
+        <link rel="preconnect" href="https://a.basemaps.cartocdn.com" />
+        <link rel="preconnect" href="https://b.basemaps.cartocdn.com" />
+        <link rel="dns-prefetch" href="https://a.basemaps.cartocdn.com" />
         {/* Schema.org LocalBusiness & EducationalOrganization */}
         <script
           type="application/ld+json"

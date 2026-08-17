@@ -321,12 +321,12 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
             <span>Operated &amp; Verified by <strong>SSSAM Academy</strong> • Sector 14, Gurugram</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ display: 'none', color: '#94A3B8' }} className="desktop-nav">
+            <span style={{ display: 'none', color: '#CBD5E1' }} className="desktop-nav">
               📍 M24 Ground Floor, Old DLF Colony
             </span>
             <a
               href={`tel:${SSSAM_OFFICE_DETAILS.phones[0]}`}
-              style={{ color: '#93C5FD', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.72rem' }}
+              style={{ color: '#67E8F9', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.74rem' }}
             >
               <Phone size={12} />
               <span>Helpline: {SSSAM_OFFICE_DETAILS.phones[0]}</span>
@@ -341,18 +341,18 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/tuitionforhome.png"
+            src="/tuitionforhome.webp"
             alt="TuitionForHome Logo"
-            style={{ height: '44px', width: 'auto', objectFit: 'contain', borderRadius: '6px' }}
+            style={{ height: '38px', width: 'auto', objectFit: 'contain', borderRadius: '6px' }}
           />
         </Link>
 
         {/* Desktop Navigation Links */}
         <nav className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', whiteSpace: 'nowrap' }}>
-          <Link href="/" style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--brand-teal)', textDecoration: 'none' }}>Home</Link>
-          <Link href="/tutors" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)', textDecoration: 'none' }}>Find Tutors</Link>
-          <Link href="/#how-it-works" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)', textDecoration: 'none' }}>How It Works</Link>
-          <Link href="/#fee-estimator" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)', textDecoration: 'none' }}>Fee Estimator</Link>
+          <Link href="/" style={{ fontSize: '0.9rem', fontWeight: 700, color: '#065F46', textDecoration: 'none' }}>Home</Link>
+          <Link href="/tutors" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Find Tutors</Link>
+          <Link href="/#how-it-works" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>How It Works</Link>
+          <Link href="/#fee-estimator" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Fee Estimator</Link>
         </nav>
 
         {/* Desktop Actions */}
@@ -384,7 +384,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
           ) : (
             /* ── Logged-out: Login + Book buttons ── */
             <>
-              <Link href="/parent/login" style={{ fontSize: '0.84rem', fontWeight: 700, color: '#2563EB', textDecoration: 'none', padding: '0.35rem 0.55rem' }}>
+              <Link href="/parent/login" style={{ fontSize: '0.84rem', fontWeight: 700, color: '#1D4ED8', textDecoration: 'none', padding: '0.35rem 0.55rem' }}>
                 Parent Login
               </Link>
               <Link href="/tutor/register" className="btn btn-secondary btn-sm" style={{ textDecoration: 'none', padding: '0.45rem 0.75rem', fontSize: '0.82rem' }}>
@@ -400,7 +400,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
                   }
                 }}
                 className="btn btn-primary btn-sm"
-                style={{ textDecoration: 'none', padding: '0.45rem 0.9rem', fontSize: '0.84rem' }}
+                style={{ textDecoration: 'none', padding: '0.45rem 0.9rem', fontSize: '0.84rem', backgroundColor: '#065F46' }}
               >
                 <span>Request Tutor</span>
                 <div className="btn-arrow"><ChevronRight size={14} /></div>

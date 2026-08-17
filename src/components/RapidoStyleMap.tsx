@@ -219,7 +219,11 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
         iconAnchor: [14, 14],
       });
 
-      L.marker([currentCoords.lat, currentCoords.lng], { icon: parentIcon }).addTo(map);
+      L.marker([currentCoords.lat, currentCoords.lng], {
+        icon: parentIcon,
+        title: 'Selected Parent Location',
+        alt: 'Selected Location Pin',
+      }).addTo(map);
     } catch {
       // Parent marker fallback
     }
@@ -296,7 +300,11 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
           </div>
         `;
 
-        const tMarker = L.marker([tLat, tLng], { icon: tutorIcon }).addTo(map);
+        const tMarker = L.marker([tLat, tLng], {
+          icon: tutorIcon,
+          title: `Tutor: ${tutor.name}`,
+          alt: `Location marker for tutor ${tutor.name}`,
+        }).addTo(map);
         tMarker.bindPopup(popupContent, {
           closeButton: true,
           offset: [0, -10],
@@ -366,6 +374,8 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
 
       const marker = L.marker([popupCoords.lat, popupCoords.lng], {
         icon: markerIcon,
+        title: 'Selected Location Pin',
+        alt: 'Selected Location Pin',
         draggable: true,
       }).addTo(pMap);
 
@@ -471,9 +481,9 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
                 <span className="pulse-emerald" />
                 <span>📍 LIVE LOCATION PROXIMITY ENGINE</span>
               </div>
-              <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '2px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '2px' }}>
                 Nearby Verified Tutors in Your Sector
-              </h4>
+              </h3>
             </div>
 
             <button

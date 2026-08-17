@@ -136,7 +136,7 @@ export default function FeeEstimator({ onBookWithEstimate }: FeeEstimatorProps) 
                     </div>
                     <div style={{ textAlign: 'left' }}>
                       <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-main)' }}>Online 1-on-1</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--brand-emerald)', fontWeight: 600 }}>Save ~25%</div>
+                      <div style={{ fontSize: '0.75rem', color: '#15803D', fontWeight: 700 }}>Save ~25%</div>
                     </div>
                   </button>
                 </div>
@@ -144,8 +144,10 @@ export default function FeeEstimator({ onBookWithEstimate }: FeeEstimatorProps) 
 
               {/* Grade Selection */}
               <div>
-                <label className="form-label">2. Select Grade Level</label>
+                <label htmlFor="fee-estimator-grade" className="form-label">2. Select Grade Level</label>
                 <select
+                  id="fee-estimator-grade"
+                  aria-label="Select Grade Level"
                   value={grade}
                   onChange={(e) => setGrade(e.target.value)}
                   className="form-control"
@@ -163,7 +165,7 @@ export default function FeeEstimator({ onBookWithEstimate }: FeeEstimatorProps) 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                   <label className="form-label" style={{ margin: 0 }}>3. Frequency of Classes</label>
-                  <span style={{ fontWeight: 700, color: 'var(--brand-blue)', fontSize: '0.9rem' }}>
+                  <span style={{ fontWeight: 700, color: '#1D4ED8', fontSize: '0.9rem' }}>
                     {daysPerWeek} Days / Week ({daysPerWeek * 4} Classes/Month)
                   </span>
                 </div>

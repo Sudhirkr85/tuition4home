@@ -29,7 +29,7 @@ export default function Footer() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/tuitionforhome.png"
+                src="/tuitionforhome.webp"
                 alt="TuitionForHome Logo"
                 style={{
                   height: '42px',
@@ -138,10 +138,10 @@ export default function Footer() {
 
           {/* Col 2: Gurgaon Sector Quick Links */}
           <div>
-            <h4 style={{ color: '#FFFFFF', fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3 style={{ color: '#FFFFFF', fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <MapPin size={18} color="#2DD4BF" />
               <span>Home Tutors in Gurgaon</span>
-            </h4>
+            </h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem', fontSize: '0.85rem' }}>
               {GURGAON_LOCALITIES.slice(0, 10).map((loc) => (
                 <Link
@@ -158,10 +158,10 @@ export default function Footer() {
 
           {/* Col 3: Subject Specializations */}
           <div>
-            <h4 style={{ color: '#FFFFFF', fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3 style={{ color: '#FFFFFF', fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <GraduationCap size={18} color="#2DD4BF" />
               <span>Subject Tuitions (Gurgaon)</span>
-            </h4>
+            </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.85rem' }}>
               <Link href="/tuition/maths-home-tutor-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• Mathematics Home Tutors</Link>
               <Link href="/tuition/physics-home-tutor-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• Physics & NEET/JEE Tutors</Link>
@@ -174,9 +174,9 @@ export default function Footer() {
 
           {/* Col 4: SSSAM Physical Office & Contact */}
           <div>
-            <h4 style={{ color: '#FFFFFF', fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem' }}>
+            <h3 style={{ color: '#FFFFFF', fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem' }}>
               Office & Support Desks
-            </h4>
+            </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.88rem', color: '#CBD5E1' }}>
               <div style={{ display: 'flex', gap: '0.65rem' }}>
                 <MapPin size={18} color="#2DD4BF" style={{ flexShrink: 0, marginTop: '2px' }} />

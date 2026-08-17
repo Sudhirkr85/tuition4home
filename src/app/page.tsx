@@ -2,14 +2,26 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import FeeEstimator from '@/components/FeeEstimator';
-import BookingModal from '@/components/BookingModal';
-import VideoModal from '@/components/VideoModal';
-import StickyMobileBar from '@/components/StickyMobileBar';
-import RapidoStyleMap from '@/components/RapidoStyleMap';
 import HowItWorks from '@/components/HowItWorks';
+import StickyMobileBar from '@/components/StickyMobileBar';
+
+const FeeEstimator = dynamic(() => import('@/components/FeeEstimator'), {
+  ssr: true,
+  loading: () => <div style={{ minHeight: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading Fee Calculator...</div>,
+});
+const BookingModal = dynamic(() => import('@/components/BookingModal'), {
+  ssr: false,
+});
+const VideoModal = dynamic(() => import('@/components/VideoModal'), {
+  ssr: false,
+});
+const RapidoStyleMap = dynamic(() => import('@/components/RapidoStyleMap'), {
+  ssr: false,
+  loading: () => <div style={{ height: '480px', backgroundColor: '#F8FAFC', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}>Loading Gurgaon Tutors Map...</div>,
+});
 
 import {
   GURGAON_LOCALITIES,
@@ -154,8 +166,8 @@ export default function HomePage() {
     name: 'TuitionForHome',
     alternateName: 'SSSAM Academy Tuition Services',
     url: 'https://tuitionforhome.com',
-    logo: 'https://tuitionforhome.com/logo.png',
-    image: 'https://tuitionforhome.com/hero_young_teacher_girl_student_cutout.jpg',
+    logo: 'https://tuitionforhome.com/logo.webp',
+    image: 'https://tuitionforhome.com/hero_young_teacher_girl_student_cutout.webp',
     description: 'Verified home tutors in Gurgaon and online tutors for CBSE, ICSE, IB & Coding by SSSAM Academy.',
     telephone: '+91 92170 31899',
     email: 'info@tuitionforhome.com',
@@ -202,7 +214,7 @@ export default function HomePage() {
         {/* =========================================================================
             1. APPLE-STYLE MINIMALIST HERO SECTION (SEO & TRUST OPTIMIZED)
             ========================================================================= */}
-        <section style={{
+        <section aria-label="Hero Search and Overview" style={{
           paddingTop: '1.5rem',
           paddingBottom: '3.5rem',
           backgroundColor: '#FFFFFF',
@@ -513,8 +525,13 @@ export default function HomePage() {
                 <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/hero_young_teacher_girl_student_cutout.png"
+                    src="/hero_young_teacher_girl_student_cutout.webp"
                     alt="Home tutor teaching CBSE student in Gurgaon"
+                    width={490}
+                    height={360}
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
                     style={{
                       width: '100%',
                       maxWidth: '490px',
@@ -577,7 +594,7 @@ export default function HomePage() {
             2. RAPIDO-STYLE INTERACTIVE VISUAL PROXIMITY MAP (IF OFFLINE HOME TUITION)
             ========================================================================= */}
         {searchMode === 'OFFLINE_HOME' && (
-          <section style={{ padding: '3.5rem 0 1rem 0' }}>
+          <section aria-label="Interactive Gurgaon Tutor Map" style={{ padding: '3.5rem 0 1rem 0' }}>
             <div className="container">
               <RapidoStyleMap
                 onLocationSelected={(data) => {
@@ -603,7 +620,7 @@ export default function HomePage() {
         {/* =========================================================================
             4. FIGMA SCREENSHOT 3 STYLE: MOBILE EXPERIENCE CARD
             ========================================================================= */}
-        <section style={{ padding: '2.5rem 0 3.75rem 0', backgroundColor: '#FFFFFF' }}>
+        <section aria-label="WhatsApp and SMS Class Confirmation" style={{ padding: '2.5rem 0 3.75rem 0', backgroundColor: '#FFFFFF' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: '2.25rem' }}>
               <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
@@ -629,9 +646,13 @@ export default function HomePage() {
               <div style={{ textAlign: 'center' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/mobile_whatsapp_mockup.jpg"
+                  src="/mobile_whatsapp_mockup.webp"
                   alt="Mobile Class Confirmation Mockup"
-                  style={{ width: '100%', maxWidth: '380px', borderRadius: '20px', boxShadow: 'var(--shadow-hover)' }}
+                  width={380}
+                  height={284}
+                  loading="lazy"
+                  decoding="async"
+                  style={{ width: '100%', maxWidth: '380px', height: 'auto', borderRadius: '20px', boxShadow: 'var(--shadow-hover)' }}
                 />
               </div>
 
@@ -686,7 +707,7 @@ export default function HomePage() {
         {/* =========================================================================
             5. VERIFIED TUTORS SHOWCASE (FIGMA SOFT CARDS - DYNAMIC BY SECTOR)
             ========================================================================= */}
-        <section id="find-tutor" style={{ padding: '5rem 0', backgroundColor: 'var(--bg-app)' }}>
+        <section id="find-tutor" aria-label="Verified Tutors in Gurgaon" style={{ padding: '5rem 0', backgroundColor: 'var(--bg-app)' }}>
           <div className="container">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.75rem' }}>
               <div>
@@ -834,9 +855,9 @@ export default function HomePage() {
 
                     <div style={{ flex: 1 }}>
                       <Link href={`/tutors/${tutor.id}`} style={{ textDecoration: 'none' }}>
-                        <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                           {tutor.name}
-                        </h4>
+                        </h3>
                       </Link>
                       <div style={{ fontSize: '0.78rem', color: '#0F6E56', fontWeight: 700, margin: '2px 0' }}>
                         {tutor.badge}
@@ -1054,7 +1075,7 @@ export default function HomePage() {
         {/* =========================================================================
             7. SSSAM ACADEMY PHYSICAL CENTER TRUST SECTION
             ========================================================================= */}
-        <section style={{ padding: '5rem 0', backgroundColor: '#FFFFFF' }}>
+        <section aria-label="Why Parents Trust SSSAM Academy" style={{ padding: '5rem 0', backgroundColor: '#FFFFFF' }}>
           <div className="container">
             <div className="apple-card" style={{
               backgroundColor: '#0F172A',
@@ -1144,7 +1165,7 @@ export default function HomePage() {
         {/* =========================================================================
             8. GURGAON LOCALITIES SEO DIRECTORY GRID (100% Dynamic from DB)
             ========================================================================= */}
-        <section style={{ padding: '4.5rem 0', backgroundColor: 'var(--bg-app)' }}>
+        <section aria-label="Frequently Asked Questions" style={{ padding: '4.5rem 0', backgroundColor: 'var(--bg-app)' }}>
           <div className="container">
             <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 2.5rem auto' }}>
               <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
@@ -1193,7 +1214,7 @@ export default function HomePage() {
                       {loc.activeTutorsCount} {loc.activeTutorsCount === 1 ? 'Tutor' : 'Tutors'}
                     </span>
                   ) : (
-                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#0284C7', backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD', padding: '0.25rem 0.65rem', borderRadius: '999px', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0369A1', backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD', padding: '0.25rem 0.65rem', borderRadius: '999px', whiteSpace: 'nowrap' }}>
                       Explore Sector →
                     </span>
                   )}
