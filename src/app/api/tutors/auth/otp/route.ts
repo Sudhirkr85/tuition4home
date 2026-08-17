@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
     // Generate a random 6-digit OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60000); // 10 minutes expiry
+    const expiresAt = new Date(Date.now() + 5 * 60000); // 5 minutes expiry
 
     // Save the OTP in the database
     await prisma.emailOtpToken.create({
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
             <div style="font-size: 32px; font-weight: 900; letter-spacing: 6px; color: #0F6E56; background-color: #ffffff; padding: 12px 24px; border-radius: 8px; display: inline-block; border: 2px dashed #0F6E56;">
               ${otpCode}
             </div>
-            <p style="color: #94A3B8; font-size: 12px; margin: 12px 0 0 0;">Valid for 10 minutes. Please do not share this code.</p>
+            <p style="color: #94A3B8; font-size: 12px; margin: 12px 0 0 0;">Valid for 5 minutes. Please do not share this code.</p>
           </div>
 
           <div style="border-top: 1px solid #E2E8F0; margin-top: 24px; padding-top: 16px; text-align: center; font-size: 11px; color: #94A3B8;">

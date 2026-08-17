@@ -459,10 +459,27 @@ export default function TutorRegisterLoginPage() {
   const [regEmailVerified, setRegEmailVerified] = useState(false);
   const [sendingRegOtp, setSendingRegOtp] = useState(false);
   const [verifyingRegOtp, setVerifyingRegOtp] = useState(false);
+  const [resendTimer, setResendTimer] = useState(60);
+  const [otpExpiryTimer, setOtpExpiryTimer] = useState(300);
+  const [emailFocused, setEmailFocused] = useState(false);
+
+  // OTP Countdown Timers
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (regStep === 'OTP') {
+      interval = setInterval(() => {
+        setResendTimer((prev) => (prev > 0 ? prev - 1 : 0));
+        setOtpExpiryTimer((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [regStep]);
 
   // Step 1: Send Email OTP for Registration
-  const handleSendRegOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendRegOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setErrorMessage('');
     
     if (!regName.trim()) {
@@ -490,6 +507,8 @@ export default function TutorRegisterLoginPage() {
       });
       const data = await res.json();
       if (data.success) {
+        setResendTimer(60);
+        setOtpExpiryTimer(300);
         setRegStep('OTP');
       } else {
         setErrorMessage(data.error || 'Failed to send verification code.');
@@ -1280,9 +1299,15 @@ export default function TutorRegisterLoginPage() {
                             <input
                               type="text"
                               required
+                              autoCapitalize="words"
                               placeholder="e.g. Amit Kumar"
                               value={regName}
-                              onChange={(e) => setRegName(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                // Automatically capitalize first letter of each word
+                                const formatted = val.replace(/\b[a-z]/g, (char) => char.toUpperCase());
+                                setRegName(formatted);
+                              }}
                               className="form-control"
                               style={{ paddingLeft: '2.5rem' }}
                             />
@@ -1306,20 +1331,108 @@ export default function TutorRegisterLoginPage() {
                           </div>
                         </div>
 
-                        <div className="form-group">
+                        <div className="form-group" style={{ position: 'relative' }}>
                           <label className="form-label">Email Address (OTP Sent Here)</label>
                           <div style={{ position: 'relative' }}>
                             <input
                               type="email"
                               required
-                              placeholder="amit@example.com"
+                              autoCapitalize="none"
+                              autoCorrect="off"
+                              placeholder="amit@gmail.com"
                               value={regEmail}
-                              onChange={(e) => setRegEmail(e.target.value)}
+                              onFocus={() => setEmailFocused(true)}
+                              onBlur={() => {
+                                // Small timeout so mouse click on suggestion is registered
+                                setTimeout(() => setEmailFocused(false), 200);
+                              }}
+                              onChange={(e) => setRegEmail(e.target.value.toLowerCase().trim())}
                               className="form-control"
                               style={{ paddingLeft: '2.5rem' }}
                             />
                             <Mail size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
                           </div>
+
+                          {/* Email Auto-Suggestions Dropdown after @ */}
+                          {emailFocused && regEmail.includes('@') && (() => {
+                            const [userPart, domainPart = ''] = regEmail.split('@');
+                            const commonDomains = ['gmail.com', 'outlook.com', 'yahoo.com', 'icloud.com', 'hotmail.com'];
+                            const matchingDomains = commonDomains.filter((d) =>
+                              d.startsWith(domainPart) && d !== domainPart
+                            );
+                            if (matchingDomains.length === 0 || !userPart) return null;
+                            return (
+                              <div style={{
+                                position: 'absolute',
+                                top: 'calc(100% + 4px)',
+                                left: 0,
+                                right: 0,
+                                zIndex: 50,
+                                backgroundColor: '#FFFFFF',
+                                border: '1.5px solid #0D9488',
+                                borderRadius: '10px',
+                                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)',
+                                overflow: 'hidden',
+                              }}>
+                                <div style={{ padding: '0.35rem 0.65rem', fontSize: '0.68rem', fontWeight: 800, color: '#0F766E', backgroundColor: '#F0FDFA', borderBottom: '1px solid #CCFBF1' }}>
+                                  SUGGESTIONS (TAP TO AUTO-FILL)
+                                </div>
+                                {matchingDomains.map((domain) => (
+                                  <button
+                                    key={domain}
+                                    type="button"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      setRegEmail(`${userPart}@${domain}`);
+                                      setEmailFocused(false);
+                                    }}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      width: '100%',
+                                      textAlign: 'left',
+                                      padding: '0.55rem 0.85rem',
+                                      fontSize: '0.86rem',
+                                      fontWeight: 600,
+                                      color: '#1E293B',
+                                      backgroundColor: '#FFFFFF',
+                                      border: 'none',
+                                      borderBottom: '1px solid #F1F5F9',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    <span style={{ color: '#0F766E', fontWeight: 700 }}>{userPart}</span>
+                                    <span style={{ color: '#2563EB', fontWeight: 800 }}>@{domain}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            );
+                          })()}
+
+                          {/* Quick Domain Tap Chips */}
+                          {regEmail && !regEmail.includes('@') && (
+                            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
+                              {['@gmail.com', '@outlook.com', '@yahoo.com', '@icloud.com'].map((dm) => (
+                                <button
+                                  key={dm}
+                                  type="button"
+                                  onClick={() => setRegEmail(`${regEmail}${dm}`)}
+                                  style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '0.2rem 0.5rem',
+                                    borderRadius: '6px',
+                                    backgroundColor: '#F1F5F9',
+                                    border: '1px solid #E2E8F0',
+                                    color: '#0F766E',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  {dm}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
 
                         <button
@@ -1349,7 +1462,26 @@ export default function TutorRegisterLoginPage() {
                         </div>
 
                         <div className="form-group">
-                          <label className="form-label">6-Digit Verification Code</label>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                            <label className="form-label" style={{ margin: 0 }}>6-Digit Verification Code</label>
+                            {otpExpiryTimer > 0 ? (
+                              <span style={{
+                                fontSize: '0.75rem',
+                                color: otpExpiryTimer < 60 ? '#DC2626' : '#0F766E',
+                                fontWeight: 700,
+                                backgroundColor: otpExpiryTimer < 60 ? '#FEF2F2' : '#F0FDFA',
+                                padding: '0.15rem 0.5rem',
+                                borderRadius: '6px',
+                                border: otpExpiryTimer < 60 ? '1px solid #FECACA' : '1px solid #CCFBF1'
+                              }}>
+                                ⏱️ Expires in {Math.floor(otpExpiryTimer / 60).toString().padStart(2, '0')}:{(otpExpiryTimer % 60).toString().padStart(2, '0')}
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: '0.75rem', color: '#DC2626', fontWeight: 800, backgroundColor: '#FEF2F2', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #FECACA' }}>
+                                ⚠️ Code Expired
+                              </span>
+                            )}
+                          </div>
                           <input
                             type="text"
                             required
@@ -1371,7 +1503,7 @@ export default function TutorRegisterLoginPage() {
 
                         <button
                           type="submit"
-                          disabled={verifyingRegOtp || regOtpCode.length !== 6}
+                          disabled={verifyingRegOtp || regOtpCode.length !== 6 || otpExpiryTimer === 0}
                           className="btn btn-primary"
                           style={{ padding: '0.9rem', fontSize: '0.95rem', width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-teal)' }}
                         >
@@ -1388,14 +1520,27 @@ export default function TutorRegisterLoginPage() {
                             ← Change Details
                           </button>
 
-                          <button
-                            type="button"
-                            onClick={handleSendRegOtp}
-                            disabled={sendingRegOtp}
-                            style={{ background: 'none', border: 'none', color: '#2563EB', fontWeight: 700, cursor: 'pointer' }}
-                          >
-                            {sendingRegOtp ? 'Resending...' : 'Resend Code'}
-                          </button>
+                          {resendTimer > 0 ? (
+                            <span style={{ color: '#94A3B8', fontWeight: 600, fontSize: '0.82rem' }}>
+                              Resend Code in <strong style={{ color: '#0F766E' }}>{resendTimer}s</strong>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleSendRegOtp()}
+                              disabled={sendingRegOtp}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#2563EB',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
+                              }}
+                            >
+                              {sendingRegOtp ? 'Resending...' : 'Resend Code'}
+                            </button>
+                          )}
                         </div>
                       </form>
                     )}
@@ -1857,7 +2002,7 @@ export default function TutorRegisterLoginPage() {
 
                       <div style={{ marginBottom: '1.5rem' }}>
                         <label className="form-label">Preferred Teaching Mode</label>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
                           {[
                             { id: 'BOTH', title: 'Both Modes', desc: 'Home & Online', icon: Sparkles },
                             { id: 'OFFLINE_HOME', title: 'Home Tuition', desc: 'Visit Student Home', icon: Home },
@@ -1871,22 +2016,25 @@ export default function TutorRegisterLoginPage() {
                                 type="button"
                                 onClick={() => setTeachingMode(m.id as any)}
                                 style={{
-                                  padding: '1rem 0.85rem',
+                                  padding: '0.85rem 0.35rem',
                                   borderRadius: '12px',
-                                  border: `2.5px solid ${isSelected ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
+                                  border: `2px solid ${isSelected ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
                                   backgroundColor: isSelected ? 'var(--bg-app)' : '#FFFFFF',
                                   color: isSelected ? 'var(--brand-teal)' : 'var(--text-main)',
                                   display: 'flex',
                                   flexDirection: 'column',
                                   alignItems: 'center',
-                                  gap: '0.35rem',
+                                  justifyContent: 'center',
+                                  textAlign: 'center',
+                                  gap: '0.25rem',
                                   cursor: 'pointer',
                                   transition: 'all 0.2s ease',
+                                  minWidth: 0,
                                 }}
                               >
-                                <IconComponent size={22} color={isSelected ? 'var(--brand-teal)' : 'var(--text-muted)'} />
-                                <div style={{ fontWeight: 800, fontSize: '0.88rem' }}>{m.title}</div>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.desc}</div>
+                                <IconComponent size={20} color={isSelected ? 'var(--brand-teal)' : 'var(--text-muted)'} />
+                                <div style={{ fontWeight: 800, fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{m.title}</div>
+                                <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', lineHeight: 1.1 }}>{m.desc}</div>
                               </button>
                             );
                           })}
@@ -1896,11 +2044,11 @@ export default function TutorRegisterLoginPage() {
                       <div style={{ marginBottom: '1.5rem' }}>
                         <label className="form-label">
                           Gender <span style={{ color: '#DC2626' }}>*</span>
-                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 400, marginLeft: '0.5rem' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400, marginLeft: '0.4rem', display: 'block' }}>
                             (Helps us match you with families requesting Female Home Tutors)
                           </span>
                         </label>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
                           {[
                             { id: 'FEMALE', label: 'Female 👩', desc: 'Female Educator' },
                             { id: 'MALE', label: 'Male 👨', desc: 'Male Educator' },
@@ -1913,7 +2061,7 @@ export default function TutorRegisterLoginPage() {
                                 type="button"
                                 onClick={() => setGender(g.id as any)}
                                 style={{
-                                  padding: '0.85rem 0.75rem',
+                                  padding: '0.85rem 0.35rem',
                                   borderRadius: '12px',
                                   border: `2px solid ${isSelected ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
                                   backgroundColor: isSelected ? 'var(--bg-app)' : '#FFFFFF',
@@ -1921,13 +2069,16 @@ export default function TutorRegisterLoginPage() {
                                   display: 'flex',
                                   flexDirection: 'column',
                                   alignItems: 'center',
+                                  justifyContent: 'center',
+                                  textAlign: 'center',
                                   gap: '0.2rem',
                                   cursor: 'pointer',
                                   transition: 'all 0.2s ease',
+                                  minWidth: 0,
                                 }}
                               >
-                                <div style={{ fontWeight: 800, fontSize: '0.92rem' }}>{g.label}</div>
-                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{g.desc}</div>
+                                <div style={{ fontWeight: 800, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{g.label}</div>
+                                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.1 }}>{g.desc}</div>
                               </button>
                             );
                           })}

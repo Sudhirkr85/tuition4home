@@ -730,10 +730,19 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Quick Specialty / Lady Tutor Highlight Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Filter By:
+            {/* Quick Specialty / Gender Highlight Bar */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.65rem',
+              overflowX: 'auto',
+              padding: '0.2rem 0.25rem 0.65rem 0.25rem',
+              marginBottom: '0.75rem',
+              scrollbarWidth: 'none',
+              WebkitOverflowScrolling: 'touch',
+            }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                Filter:
               </span>
               {[
                 { id: 'ALL', label: '🌐 All Verified Tutors' },
@@ -747,10 +756,12 @@ export default function HomePage() {
                     type="button"
                     onClick={() => setSelectedShowcaseGender(cat.id as any)}
                     style={{
-                      padding: '0.45rem 1rem',
+                      padding: '0.45rem 0.95rem',
                       borderRadius: '999px',
-                      fontSize: '0.84rem',
+                      fontSize: '0.82rem',
                       fontWeight: 800,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
                       border: isSel 
                         ? (cat.highlight ? '2px solid #0D9488' : '2px solid #0F172A') 
                         : (cat.highlight ? '2px solid #CCFBF1' : '1px solid #E2E8F0'),
@@ -778,7 +789,15 @@ export default function HomePage() {
             </div>
 
             {/* Interactive Sector Selector Filter Pills */}
-            <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.65rem', marginBottom: '2rem', scrollbarWidth: 'none' }}>
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              overflowX: 'auto',
+              padding: '0.2rem 0.25rem 0.75rem 0.25rem',
+              marginBottom: '1.75rem',
+              scrollbarWidth: 'none',
+              WebkitOverflowScrolling: 'touch',
+            }}>
               {['All Sectors', 'DLF Phase 5', 'Golf Course Road', 'Sector 14 & Old DLF', 'Sohna Road', 'Sector 56', 'Nirvana Country', 'Sushant Lok 1', 'DLF Phase 1', 'Cyber City', 'Sector 57', 'Sector 48'].map((sec) => {
                 const isSel = selectedShowcaseSector === sec;
                 return (
@@ -791,11 +810,12 @@ export default function HomePage() {
                       borderRadius: '999px',
                       fontSize: '0.82rem',
                       fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
                       border: isSel ? '1.5px solid #0F6E56' : '1px solid #E2E8F0',
                       backgroundColor: isSel ? '#0F6E56' : '#FFFFFF',
                       color: isSel ? '#FFFFFF' : '#334155',
                       cursor: 'pointer',
-                      whiteSpace: 'nowrap',
                       transition: 'all 0.2s ease',
                       boxShadow: isSel ? '0 4px 12px rgba(15,110,86,0.2)' : '0 1px 3px rgba(0,0,0,0.03)',
                     }}

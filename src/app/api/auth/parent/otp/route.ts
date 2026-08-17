@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     // ── Action 1: SEND OTP ──────────────────────────────────────────────────
     if (action === 'SEND_OTP') {
       const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
       // Delete old OTPs for this email
       await prisma.emailOtpToken.deleteMany({
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
             <div style="font-size: 32px; font-weight: 900; letter-spacing: 6px; color: #0F6E56; background-color: #ffffff; padding: 12px 24px; border-radius: 8px; display: inline-block; border: 2px dashed #0F6E56;">
               ${generatedCode}
             </div>
-            <p style="color: #94A3B8; font-size: 12px; margin: 12px 0 0 0;">Valid for 15 minutes. Please do not share this code.</p>
+            <p style="color: #94A3B8; font-size: 12px; margin: 12px 0 0 0;">Valid for 5 minutes. Please do not share this code.</p>
           </div>
 
           <p style="font-size: 13px; color: #64748B; line-height: 1.5; margin: 0;">
