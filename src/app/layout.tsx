@@ -32,10 +32,10 @@ export const metadata: Metadata = {
   authors: [{ name: 'SSSAM Academy', url: 'https://sssamacademy.com' }],
   icons: {
     icon: [
-      { url: '/logo.png', sizes: 'any' },
+      { url: '/logo.webp', type: 'image/webp' },
       { url: '/logo.png', type: 'image/png', sizes: '192x192' },
     ],
-    shortcut: '/logo.png',
+    shortcut: '/logo.webp',
     apple: '/logo.png',
   },
   alternates: {
