@@ -1043,58 +1043,107 @@ export default function TutorProfileDashboard() {
                   if (hasDegree) strength += 20;
                   if (hasIdDoc) strength += 15;
 
+                  // 100% Complete: Sleek 1-Line Compact Badge (Saves Vertical Space)
+                  if (strength >= 100) {
+                    return (
+                      <div style={{
+                        marginTop: '1rem',
+                        padding: '0.65rem 0.85rem',
+                        backgroundColor: '#ECFDF5',
+                        border: '1px solid #A7F3D0',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.5rem',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                          <span style={{ fontSize: '0.85rem' }}>✨</span>
+                          <div>
+                            <strong style={{ fontSize: '0.76rem', color: '#065F46', display: 'block', fontWeight: 800 }}>
+                              Profile 100% Complete
+                            </strong>
+                            <span style={{ fontSize: '0.68rem', color: '#047857' }}>All details verified</span>
+                          </div>
+                        </div>
+                        <span style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          backgroundColor: '#10B981',
+                          color: '#FFFFFF',
+                          padding: '0.2rem 0.55rem',
+                          borderRadius: '999px',
+                          letterSpacing: '0.02em',
+                        }}>
+                          100%
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  // Incomplete (<100%): Compact Card with only Pending Actions
+                  const missingItems = [
+                    !hasPhoto && { label: 'Add Profile Photo', pct: '+15%', tab: 'BASIC' },
+                    !hasSubjects && { label: 'Select Subjects & Grades', pct: '+20%', tab: 'SUBJECTS' },
+                    !hasBaseLoc && { label: 'Set Base Location & Radius', pct: '+15%', tab: 'LOCATION' },
+                    !hasDegree && { label: 'Add Qualification & Degree', pct: '+20%', tab: 'QUALIFICATIONS' },
+                    !hasIdDoc && { label: 'Upload Govt ID for KYC', pct: '+15%', tab: 'KYC' },
+                  ].filter(Boolean) as { label: string; pct: string; tab: string }[];
+
                   return (
                     <div style={{
-                      marginTop: '1.25rem',
-                      padding: '1rem',
+                      marginTop: '1rem',
+                      padding: '0.85rem 1rem',
                       backgroundColor: '#FFFFFF',
                       border: '1.5px solid var(--border-hairline)',
-                      borderRadius: '16px',
+                      borderRadius: '14px',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
                         <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-main)' }}>Profile Strength</span>
-                        <span style={{ fontSize: '0.78rem', fontWeight: 900, color: strength >= 80 ? 'var(--brand-teal)' : strength >= 50 ? '#D97706' : '#EF4444' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 900, color: strength >= 50 ? '#D97706' : '#EF4444' }}>
                           {strength}%
                         </span>
                       </div>
 
-                      <div style={{ width: '100%', height: '7px', backgroundColor: '#E2E8F0', borderRadius: '999px', overflow: 'hidden', marginBottom: '0.65rem' }}>
+                      <div style={{ width: '100%', height: '6px', backgroundColor: '#E2E8F0', borderRadius: '999px', overflow: 'hidden', marginBottom: '0.55rem' }}>
                         <div style={{
                           width: `${strength}%`,
                           height: '100%',
-                          backgroundColor: strength >= 80 ? 'var(--brand-teal)' : strength >= 50 ? '#F59E0B' : '#EF4444',
+                          backgroundColor: strength >= 50 ? '#F59E0B' : '#EF4444',
                           borderRadius: '999px',
                           transition: 'width 0.4s ease'
                         }} />
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.71rem', color: 'var(--text-muted)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: hasPhoto ? '#059669' : '#94A3B8', fontWeight: hasPhoto ? 700 : 500 }}>
-                          <span>{hasPhoto ? '✓' : '○'}</span>
-                          <span>{hasPhoto ? 'Profile Photo Uploaded' : 'Add Profile Photo (+15%)'}</span>
+                      {missingItems.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.66rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Next steps:</span>
+                          {missingItems.slice(0, 2).map((item, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setActiveTab(item.tab as any)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: '0.15rem 0',
+                                textAlign: 'left',
+                                color: 'var(--brand-teal)',
+                                fontWeight: 600,
+                                fontSize: '0.71rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between'
+                              }}
+                            >
+                              <span>+ {item.label}</span>
+                              <span style={{ color: '#D97706', fontWeight: 700, fontSize: '0.67rem' }}>{item.pct}</span>
+                            </button>
+                          ))}
                         </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: hasSubjects ? '#059669' : '#94A3B8', fontWeight: hasSubjects ? 700 : 500 }}>
-                          <span>{hasSubjects ? '✓' : '○'}</span>
-                          <span>{hasSubjects ? 'Subjects & Grades Set' : 'Select Teaching Subjects (+20%)'}</span>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: hasBaseLoc ? '#059669' : '#94A3B8', fontWeight: hasBaseLoc ? 700 : 500 }}>
-                          <span>{hasBaseLoc ? '✓' : '○'}</span>
-                          <span>{hasBaseLoc ? 'Base Location Configured' : 'Set Base Location & Radius (+15%)'}</span>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: hasDegree ? '#059669' : '#94A3B8', fontWeight: hasDegree ? 700 : 500 }}>
-                          <span>{hasDegree ? '✓' : '○'}</span>
-                          <span>{hasDegree ? 'Degrees & Qualifications Added' : 'Add Qualifications & Bio (+20%)'}</span>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: hasIdDoc ? '#059669' : '#94A3B8', fontWeight: hasIdDoc ? 700 : 500 }}>
-                          <span>{hasIdDoc ? '✓' : '○'}</span>
-                          <span>{hasIdDoc ? 'KYC Verification Uploaded' : 'Upload Govt ID for KYC (+15%)'}</span>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -3331,12 +3380,12 @@ export default function TutorProfileDashboard() {
                           </span>
                         </div>
 
-                        <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#D97706', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <Star size={20} fill="#D97706" color="#D97706" />
+                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: reviews && reviews.length > 0 ? '#D97706' : 'var(--brand-teal)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <Star size={18} fill={reviews && reviews.length > 0 ? '#D97706' : 'var(--brand-teal)'} color={reviews && reviews.length > 0 ? '#D97706' : 'var(--brand-teal)'} />
                           <span>
                             {reviews && reviews.length > 0
-                              ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
-                              : '5.0'} / 5.0
+                              ? `${(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)} / 5.0`
+                              : 'New Verified Educator'}
                           </span>
                         </div>
                       </div>

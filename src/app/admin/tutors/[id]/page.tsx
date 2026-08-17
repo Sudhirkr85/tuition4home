@@ -770,21 +770,21 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
           </div>
 
           {/* Section 3: Final Profile Approval & Activation */}
-          <div style={{ backgroundColor: 'radial-gradient(circle at 50% 20%, #0F172A 0%, #020617 100%)', color: '#FFFFFF', padding: '2rem', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 30px rgba(0,0,0,0.15)' }}>
+          <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', color: '#FFFFFF', padding: '1.5rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.25rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
+              <div style={{ flex: 1, minWidth: '280px' }}>
+                <h3 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#FFFFFF', letterSpacing: '0.01em' }}>
                   3. Final Profile Activation Command
                 </h3>
-                <p style={{ fontSize: '0.82rem', color: '#94A3B8', marginTop: '0.25rem', margin: 0 }}>
+                <p style={{ fontSize: '0.82rem', color: '#CBD5E1', marginTop: '0.35rem', margin: 0, lineHeight: 1.45 }}>
                   Activating the tutor grants official SSSAM Verified status and lists them in live parent matching searches across Gurgaon.
                 </p>
 
-                <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.75rem', fontSize: '0.8rem' }}>
-                  <span style={{ color: idStatus === 'APPROVED' ? '#4ADE80' : '#F87171', fontWeight: 700 }}>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
+                  <span style={{ color: idStatus === 'APPROVED' ? '#4ADE80' : '#FCA5A5', fontWeight: 700, backgroundColor: idStatus === 'APPROVED' ? 'rgba(74, 222, 128, 0.12)' : 'rgba(239, 68, 68, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>
                     {idStatus === 'APPROVED' ? '✓ Govt ID Approved' : '× Govt ID Pending/Rejected'}
                   </span>
-                  <span style={{ color: degreeStatus === 'APPROVED' ? '#4ADE80' : '#F87171', fontWeight: 700 }}>
+                  <span style={{ color: degreeStatus === 'APPROVED' ? '#4ADE80' : '#FCA5A5', fontWeight: 700, backgroundColor: degreeStatus === 'APPROVED' ? 'rgba(74, 222, 128, 0.12)' : 'rgba(239, 68, 68, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>
                     {degreeStatus === 'APPROVED' ? '✓ Degree Approved' : '× Degree Pending/Rejected'}
                   </span>
                 </div>
@@ -796,18 +796,19 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
                 onClick={() => requestActionConfirmation('APPROVE_FINAL')}
                 className="btn btn-primary"
                 style={{
-                  padding: '0.85rem 1.85rem',
-                  fontSize: '0.95rem',
+                  padding: '0.85rem 1.65rem',
+                  fontSize: '0.92rem',
                   fontWeight: 800,
-                  backgroundColor: isFullyApproved ? '#059669' : 'var(--brand-teal)',
-                  borderColor: isFullyApproved ? '#059669' : 'var(--brand-teal)',
+                  backgroundColor: isFullyApproved ? '#059669' : '#0D9488',
+                  borderColor: isFullyApproved ? '#059669' : '#0D9488',
                   boxShadow: '0 4px 20px rgba(13, 148, 136, 0.4)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem'
+                  gap: '0.5rem',
+                  cursor: (actionLoading || isFullyApproved) ? 'not-allowed' : 'pointer'
                 }}
               >
-                <UserCheck size={20} />
+                <UserCheck size={18} />
                 <span>{isFullyApproved ? 'Profile Fully Activated & Verified ✓' : '🏆 Complete & Approve Final Profile'}</span>
               </button>
             </div>

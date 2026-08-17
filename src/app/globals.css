@@ -628,7 +628,7 @@ h3 {
   width: 100%;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .desktop-only-table {
     display: none !important;
   }
@@ -667,6 +667,120 @@ h3 {
 @media (max-width: 768px) {
   .admin-main-container {
     padding: 0.85rem 0.65rem !important;
+  }
+}
+
+/* =========================================================================
+   ADMIN & COUNSELOR PORTAL RESPONSIVE ARCHITECTURE
+   ========================================================================= */
+.admin-dashboard-grid {
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  gap: 1.5rem;
+  align-items: flex-start;
+  transition: all 0.25s ease;
+  width: 100%;
+}
+
+.admin-dashboard-grid.sidebar-closed {
+  grid-template-columns: 1fr !important;
+}
+
+.admin-sidebar {
+  position: sticky;
+  top: 80px;
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.admin-mobile-backdrop {
+  display: none;
+}
+
+/* Compact 2x2 Bento KPI Cards on Mobile */
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem !important;
+    margin-bottom: 1rem !important;
+  }
+  .admin-kpi-card {
+    padding: 0.85rem 0.75rem !important;
+    border-radius: 14px !important;
+  }
+  .admin-kpi-card .kpi-label {
+    font-size: 0.66rem !important;
+    letter-spacing: 0.02em !important;
+  }
+  .admin-kpi-card .kpi-value {
+    font-size: 1.25rem !important;
+    margin-top: 0.2rem !important;
+  }
+  .admin-kpi-card .kpi-subtext {
+    font-size: 0.65rem !important;
+    line-height: 1.25 !important;
+    margin-top: 2px !important;
+  }
+  .admin-kpi-card .kpi-icon-box {
+    width: 26px !important;
+    height: 26px !important;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 1024px) {
+  .admin-dashboard-grid {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .admin-mobile-backdrop {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 1100;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .admin-sidebar-mobile-drawer {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 300px !important;
+    max-width: 85vw !important;
+    height: 100vh !important;
+    background: #FFFFFF !important;
+    z-index: 1200 !important;
+    overflow-y: auto !important;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 0 16px 16px 0 !important;
+    padding: 1.25rem !important;
+    animation: slideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
   }
 }
 

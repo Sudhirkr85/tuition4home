@@ -414,8 +414,9 @@ export default function TutorRegisterLoginPage() {
           console.error('Failed to parse draft details', e);
         }
       }
-    }
-  }, []);
+    } catch {}
+  }
+}, []);
 
   // Save draft whenever wizard states change
   useEffect(() => {

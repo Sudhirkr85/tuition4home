@@ -367,6 +367,20 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
     }
   }, [portalMode]);
 
+  // Auto-collapse sidebar on mobile screens on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 1024) {
+      setIsSidebarOpen(false);
+    }
+  }, []);
+
+  const handleTabSwitch = (tab: AdminTab) => {
+    setActiveAdminTab(tab);
+    if (typeof window !== 'undefined' && window.innerWidth <= 1024) {
+      setIsSidebarOpen(false);
+    }
+  };
+
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       if (portalMode === 'counselor') {
@@ -1094,28 +1108,33 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          {/* Sidebar Toggle Button */}
+          {/* Glassmorphic Animated Menu Button (Option 1) */}
           <button
             type="button"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.35rem',
-              backgroundColor: '#1E293B',
-              border: '1px solid #334155',
-              color: '#F8FAFC',
-              padding: '0.35rem 0.65rem',
-              borderRadius: '8px',
-              fontSize: '0.76rem',
-              fontWeight: 700,
+              gap: '0.45rem',
+              backgroundColor: isSidebarOpen ? 'rgba(56, 189, 248, 0.16)' : 'rgba(255, 255, 255, 0.08)',
+              border: isSidebarOpen ? '1px solid #38BDF8' : '1px solid rgba(255, 255, 255, 0.16)',
+              color: isSidebarOpen ? '#38BDF8' : '#F8FAFC',
+              padding: '0.4rem 0.75rem',
+              borderRadius: '10px',
+              fontSize: '0.78rem',
+              fontWeight: 750,
               cursor: 'pointer',
-              transition: 'all 0.15s ease',
+              boxShadow: isSidebarOpen ? '0 0 12px rgba(56, 189, 248, 0.25)' : '0 1px 3px rgba(0,0,0,0.2)',
+              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
-            title={isSidebarOpen ? 'Hide Navigation Sidebar' : 'Show Navigation Sidebar'}
+            title={isSidebarOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
           >
-            {isSidebarOpen ? <PanelLeftClose size={13} color="#38BDF8" /> : <PanelLeftOpen size={13} color="#38BDF8" />}
-            <span>{isSidebarOpen ? 'Menu' : 'Menu'}</span>
+            {isSidebarOpen ? (
+              <X size={15} color="#38BDF8" style={{ transition: 'transform 0.2s ease', transform: 'rotate(90deg)' }} />
+            ) : (
+              <Menu size={15} color="#F8FAFC" />
+            )}
+            <span>{isSidebarOpen ? 'Close' : 'Menu'}</span>
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -1142,32 +1161,14 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
         <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
           {/* Main Grid: Collapsible Left Sidebar + Right Content Area */}
           <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isSidebarOpen ? '270px 1fr' : '1fr',
-              gap: '1.5rem',
-              alignItems: 'flex-start',
-              transition: 'grid-template-columns 0.25s ease',
-            }}
+            className={`admin-dashboard-grid ${!isSidebarOpen ? 'sidebar-closed' : ''}`}
           >
             
-            {/* LEFT STICKY SIDEBAR (COLLAPSIBLE) */}
+            {/* LEFT SIDEBAR (STICKY ON DESKTOP, SLIDE-OVER DRAWER ON MOBILE) */}
             {isSidebarOpen && (
-              <aside
-                style={{
-                  position: 'sticky',
-                  top: '80px',
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: '16px',
-                  border: '1px solid #E2E8F0',
-                  padding: '1.25rem',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1.25rem',
-                  animation: 'fadeIn 0.2s ease',
-                }}
-              >
+              <>
+                <div className="admin-mobile-backdrop" onClick={() => setIsSidebarOpen(false)} />
+                <aside className="admin-sidebar admin-sidebar-mobile-drawer">
                 {/* Brand Header with Collapse X button */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
@@ -1214,7 +1215,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                   {portalMode !== 'counselor' && adminUser?.role !== 'TELECALLER' && (
                     <button
                       type="button"
-                      onClick={() => setActiveAdminTab('OVERVIEW')}
+                      onClick={() => handleTabSwitch('OVERVIEW')}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -1246,7 +1247,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                   {portalMode !== 'counselor' && adminUser?.role !== 'TELECALLER' && (
                     <button
                       type="button"
-                      onClick={() => setActiveAdminTab('COUNSELORS')}
+                      onClick={() => handleTabSwitch('COUNSELORS')}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -1289,7 +1290,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                   {/* Nav 3: Shared Lead Desk */}
                   <button
                     type="button"
-                    onClick={() => setActiveAdminTab('LEADS')}
+                    onClick={() => handleTabSwitch('LEADS')}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -1331,7 +1332,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                   {/* Nav 4: Tutor Lead Allocator */}
                   <button
                     type="button"
-                    onClick={() => setActiveAdminTab('TUTOR_ALLOCATION')}
+                    onClick={() => handleTabSwitch('TUTOR_ALLOCATION')}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -1372,7 +1373,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                   {/* Nav 4.2: Parent & Student Directory */}
                   <button
                     type="button"
-                    onClick={() => setActiveAdminTab('PARENTS')}
+                    onClick={() => handleTabSwitch('PARENTS')}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -1414,7 +1415,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                   {/* Nav 4.5: Tutor-Parent Coordination Desk */}
                   <button
                     type="button"
-                    onClick={() => setActiveAdminTab('COORDINATION')}
+                    onClick={() => handleTabSwitch('COORDINATION')}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -1457,7 +1458,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                   {portalMode !== 'counselor' && adminUser?.role !== 'TELECALLER' && (
                     <button
                       type="button"
-                      onClick={() => setActiveAdminTab('FEES_PAYOUTS')}
+                      onClick={() => handleTabSwitch('FEES_PAYOUTS')}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -1501,7 +1502,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                   {portalMode !== 'counselor' && adminUser?.role !== 'TELECALLER' && (
                     <button
                       type="button"
-                      onClick={() => setActiveAdminTab('PRICING_CAMPAIGNS')}
+                      onClick={() => handleTabSwitch('PRICING_CAMPAIGNS')}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -1592,14 +1593,15 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                   </button>
                 </div>
               </aside>
-            )}
+            </>
+          )}
 
             {/* RIGHT MAIN CONTENT VIEWPORT */}
-            <section style={{ minWidth: 0 }}>
+            <section style={{ minWidth: 0, width: '100%' }}>
               {/* Dynamic Header */}
               <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-                <div>
-                  <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                <div style={{ width: '100%' }}>
+                  <h1 style={{ fontSize: 'clamp(1.2rem, 4vw, 1.75rem)', fontWeight: 800, color: 'var(--text-main)', margin: 0, lineHeight: 1.25 }}>
                     {activeAdminTab === 'OVERVIEW' && 'Master Operations & Calling Desks Hub'}
                     {activeAdminTab === 'COUNSELORS' && 'Counselor Team & Sales Desks'}
                     {activeAdminTab === 'LEADS' && 'Shared Parent Inquiry Lead Hub'}
@@ -1766,24 +1768,17 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                 </div>
               </div>
 
-              {/* 4 BALANCED & CLEAN STATUS CARDS */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: '1.25rem',
-                  marginBottom: '2rem',
-                }}
-              >
+              {/* 4 BALANCED & CLEAN STATUS CARDS (2x2 Compact Bento on Mobile) */}
+              <div className="admin-kpi-grid">
                 {/* CARD 1: Urgent Action (Overdue + Today's Callbacks) */}
                 <div
                   onClick={() => {
                     setActiveFilter('TODAY');
                     setActiveAdminTab('LEADS');
                   }}
-                  className="apple-card"
+                  className="apple-card admin-kpi-card"
                   style={{
-                    padding: '1.35rem',
+                    padding: '1.25rem',
                     backgroundColor: '#FFFFFF',
                     border: '1px solid var(--border-hairline)',
                     cursor: 'pointer',
@@ -1793,16 +1788,16 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                     justifyContent: 'space-between',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      Action Required
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                    <span className="kpi-label" style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Action Req.
                     </span>
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#DC2626' }}></span>
                   </div>
-                  <div style={{ fontSize: '2.25rem', fontWeight: 800, color: '#DC2626', lineHeight: 1 }}>
+                  <div className="kpi-value" style={{ fontSize: '2.1rem', fontWeight: 800, color: '#DC2626', lineHeight: 1 }}>
                     {urgentActionCount}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.65rem' }}>
+                  <div className="kpi-subtext" style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.45rem' }}>
                     Overdue &amp; today&apos;s calls
                   </div>
                 </div>
@@ -1813,9 +1808,9 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                     setActiveFilter('NEW_LEAD');
                     setActiveAdminTab('LEADS');
                   }}
-                  className="apple-card"
+                  className="apple-card admin-kpi-card"
                   style={{
-                    padding: '1.35rem',
+                    padding: '1.25rem',
                     backgroundColor: '#FFFFFF',
                     border: '1px solid var(--border-hairline)',
                     cursor: 'pointer',
@@ -1825,17 +1820,17 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                     justifyContent: 'space-between',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                    <span className="kpi-label" style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       Fresh Leads
                     </span>
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#D97706' }}></span>
                   </div>
-                  <div style={{ fontSize: '2.25rem', fontWeight: 800, color: '#D97706', lineHeight: 1 }}>
+                  <div className="kpi-value" style={{ fontSize: '2.1rem', fontWeight: 800, color: '#D97706', lineHeight: 1 }}>
                     {freshUncontactedCount}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.65rem' }}>
-                    Awaiting 1st counselor call
+                  <div className="kpi-subtext" style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.45rem' }}>
+                    Awaiting 1st call
                   </div>
                 </div>
 
@@ -1845,9 +1840,9 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                     setActiveFilter('DEMO_SCHEDULED');
                     setActiveAdminTab('LEADS');
                   }}
-                  className="apple-card"
+                  className="apple-card admin-kpi-card"
                   style={{
-                    padding: '1.35rem',
+                    padding: '1.25rem',
                     backgroundColor: '#FFFFFF',
                     border: '1px solid var(--border-hairline)',
                     cursor: 'pointer',
@@ -1857,17 +1852,17 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                     justifyContent: 'space-between',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                    <span className="kpi-label" style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       Active Demos
                     </span>
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--brand-teal)' }}></span>
                   </div>
-                  <div style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--brand-teal)', lineHeight: 1 }}>
+                  <div className="kpi-value" style={{ fontSize: '2.1rem', fontWeight: 800, color: 'var(--brand-teal)', lineHeight: 1 }}>
                     {activePipelineCount}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.65rem' }}>
-                    Trials &amp; in-discussion leads
+                  <div className="kpi-subtext" style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.45rem' }}>
+                    Trials &amp; discussions
                   </div>
                 </div>
 
@@ -1877,9 +1872,9 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                     setActiveFilter('TUITION_CONFIRMED');
                     setActiveAdminTab('LEADS');
                   }}
-                  className="apple-card"
+                  className="apple-card admin-kpi-card"
                   style={{
-                    padding: '1.35rem',
+                    padding: '1.25rem',
                     backgroundColor: '#FFFFFF',
                     border: '1px solid var(--border-hairline)',
                     cursor: 'pointer',
@@ -1889,17 +1884,17 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                     justifyContent: 'space-between',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                    <span className="kpi-label" style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       Tuitions Won
                     </span>
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--brand-emerald)' }}></span>
                   </div>
-                  <div style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--brand-emerald)', lineHeight: 1 }}>
+                  <div className="kpi-value" style={{ fontSize: '2.1rem', fontWeight: 800, color: 'var(--brand-emerald)', lineHeight: 1 }}>
                     {closedWonCount}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.65rem' }}>
-                    Successfully closed placements
+                  <div className="kpi-subtext" style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.45rem' }}>
+                    Confirmed tuitions
                   </div>
                 </div>
               </div>
@@ -4284,11 +4279,10 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                         key={tut.id}
                         className="apple-card"
                         onClick={() => {
-                          setActiveTutor360(tut);
-                          setActiveTutor360Tab('LEADS');
+                          router.push(`/admin/tutors/${tut.id}`);
                         }}
                         style={{
-                          padding: '1rem',
+                          padding: '0.9rem 1rem',
                           backgroundColor: '#FFFFFF',
                           borderRadius: '14px',
                           border: '1px solid #E2E8F0',
@@ -4296,43 +4290,82 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                           flexDirection: 'column',
                           gap: '0.65rem',
                           cursor: 'pointer',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
                         }}
                       >
-                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                        {/* Top Row: Avatar + Name + Rating */}
+                        <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={tut.avatarUrl}
                             alt={tut.name}
-                            style={{ width: '46px', height: '46px', borderRadius: '10px', objectFit: 'cover' }}
+                            style={{ width: '42px', height: '42px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }}
                           />
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '0.94rem', fontWeight: 800, color: '#0F172A' }}>{tut.name}</span>
-                              <span style={{ fontSize: '0.74rem', color: '#D97706', fontWeight: 800 }}>⭐ {tut.rating}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+                              <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {tut.name}
+                              </span>
+                              <span style={{ fontSize: '0.72rem', color: '#D97706', fontWeight: 800, flexShrink: 0 }}>
+                                ⭐ {tut.rating}
+                              </span>
                             </div>
-                            <div style={{ fontSize: '0.76rem', color: '#64748B' }}>
-                              {tut.highestDegree} • {tut.experienceYears}y exp
+                            <div style={{ fontSize: '0.74rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                              <span>{tut.highestDegree}</span>
+                              <span>•</span>
+                              <span>{tut.experienceYears}y exp</span>
+                              {isVerified && <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#166534', backgroundColor: '#DCFCE7', padding: '1px 5px', borderRadius: '4px' }}>✓ Verified</span>}
                             </div>
                           </div>
                         </div>
 
-                        <div style={{ fontSize: '0.78rem', color: '#334155' }}>
-                          <strong>Subjects:</strong> {tut.subjects.join(', ')}
+                        {/* Subjects Row */}
+                        <div style={{ fontSize: '0.76rem', color: '#334155', lineHeight: 1.4 }}>
+                          <strong style={{ color: '#0F172A' }}>Subjects:</strong> {tut.subjects.join(', ')}
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.45rem', borderTop: '1px solid #F1F5F9' }}>
+                        {/* Rates & Matches Row (Responsive Flex Wrap) */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap', paddingTop: '0.45rem', borderTop: '1px solid #F1F5F9' }}>
                           <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0F766E', backgroundColor: '#DCFCE7', padding: '1px 5px', borderRadius: '4px' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F766E', backgroundColor: '#DCFCE7', padding: '2px 6px', borderRadius: '5px' }}>
                               🏠 ₹{tut.hourlyRateHomeMin || tut.hourlyRateHome || 600}–₹{tut.hourlyRateHomeMax && tut.hourlyRateHomeMax !== tut.hourlyRateHomeMin ? tut.hourlyRateHomeMax : Math.round(((tut.hourlyRateHomeMin || tut.hourlyRateHome || 600) * 1.4) / 50) * 50}
                             </span>
-                            <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0284C7', backgroundColor: '#E0F2FE', padding: '1px 5px', borderRadius: '4px' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0284C7', backgroundColor: '#E0F2FE', padding: '2px 6px', borderRadius: '5px' }}>
                               💻 ₹{tut.hourlyRateOnlineMin || tut.hourlyRateOnline || 500}–₹{tut.hourlyRateOnlineMax && tut.hourlyRateOnlineMax !== tut.hourlyRateOnlineMin ? tut.hourlyRateOnlineMax : Math.round(((tut.hourlyRateOnlineMin || tut.hourlyRateOnline || 500) * 1.4) / 50) * 50}
                             </span>
                           </div>
-                          <span style={{ fontSize: '0.72rem', padding: '2px 7px', borderRadius: '4px', backgroundColor: '#DCFCE7', color: '#166534', fontWeight: 800 }}>
+                          <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: '5px', backgroundColor: matchingLeads.length > 0 ? '#FEF3C7' : '#F1F5F9', color: matchingLeads.length > 0 ? '#92400E' : '#64748B', fontWeight: 800, whiteSpace: 'nowrap' }}>
                             {matchingLeads.length} Matching Leads
                           </span>
                         </div>
+
+                        {/* 1-Tap Audit & Credentials Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/admin/tutors/${tut.id}`);
+                          }}
+                          className="btn btn-secondary btn-sm"
+                          style={{
+                            width: '100%',
+                            justifyContent: 'center',
+                            fontSize: '0.78rem',
+                            fontWeight: 800,
+                            backgroundColor: '#F8FAFC',
+                            borderColor: '#E2E8F0',
+                            color: '#0F172A',
+                            padding: '0.45rem',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            marginTop: '0.2rem',
+                          }}
+                        >
+                          <Eye size={14} color="#0EA5E9" />
+                          <span>View &amp; Audit Full Credentials</span>
+                        </button>
                       </div>
                     );
                   })}
@@ -5100,69 +5133,69 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
 
             return (
               <div>
-                {/* 4 Financial KPI Summary Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                {/* 4 Financial KPI Summary Cards (2x2 Compact Bento on Mobile) */}
+                <div className="admin-kpi-grid">
                   {/* Card 1: Total Collections */}
-                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
+                  <div className="apple-card admin-kpi-card" style={{ padding: '1.15rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>FEE RECEIVED (ADVANCE)</span>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#DCFCE7', color: '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="kpi-label" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>Fee Received</span>
+                      <div className="kpi-icon-box" style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#DCFCE7', color: '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <ArrowDownLeft size={16} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#15803D', marginTop: '0.35rem' }}>
+                    <div className="kpi-value" style={{ fontSize: '1.65rem', fontWeight: 800, color: '#15803D', marginTop: '0.35rem' }}>
                       ₹{totalCollected.toLocaleString('en-IN')}
                     </div>
-                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
-                      Advance received in bank/UPI
+                    <div className="kpi-subtext" style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                      Advance in bank/UPI
                     </div>
                   </div>
 
                   {/* Card 2: Advance Due from Parents */}
-                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #FDE68A' }}>
+                  <div className="apple-card admin-kpi-card" style={{ padding: '1.15rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #FDE68A' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#92400E', textTransform: 'uppercase' }}>ADVANCE FEE DUE</span>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FEF3C7', color: '#B45309', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="kpi-label" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#92400E', textTransform: 'uppercase' }}>Advance Due</span>
+                      <div className="kpi-icon-box" style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FEF3C7', color: '#B45309', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Clock size={16} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#B45309', marginTop: '0.35rem' }}>
+                    <div className="kpi-value" style={{ fontSize: '1.65rem', fontWeight: 800, color: '#B45309', marginTop: '0.35rem' }}>
                       ₹{parentPendingTotal.toLocaleString('en-IN')}
                     </div>
-                    <div style={{ fontSize: '0.74rem', color: '#92400E', marginTop: '2px' }}>
-                      Awaiting parent advance payment
+                    <div className="kpi-subtext" style={{ fontSize: '0.74rem', color: '#92400E', marginTop: '2px' }}>
+                      Awaiting advance
                     </div>
                   </div>
 
                   {/* Card 3: Academy Revenue (Margin) */}
-                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E0F2FE' }}>
+                  <div className="apple-card admin-kpi-card" style={{ padding: '1.15rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E0F2FE' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0369A1', textTransform: 'uppercase' }}>ACADEMY COMMISSION</span>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#E0F2FE', color: '#0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="kpi-label" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0369A1', textTransform: 'uppercase' }}>Commission</span>
+                      <div className="kpi-icon-box" style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#E0F2FE', color: '#0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Wallet size={16} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#0284C7', marginTop: '0.35rem' }}>
+                    <div className="kpi-value" style={{ fontSize: '1.65rem', fontWeight: 800, color: '#0284C7', marginTop: '0.35rem' }}>
                       ₹{netCommissionTotal.toLocaleString('en-IN')}
                     </div>
-                    <div style={{ fontSize: '0.74rem', color: '#0369A1', marginTop: '2px' }}>
-                      Academy retained 25% margin
+                    <div className="kpi-subtext" style={{ fontSize: '0.74rem', color: '#0369A1', marginTop: '2px' }}>
+                      Academy 25% margin
                     </div>
                   </div>
 
                   {/* Card 4: Tutor Payouts Pending */}
-                  <div className="apple-card" style={{ padding: '1.25rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
+                  <div className="apple-card admin-kpi-card" style={{ padding: '1.15rem', backgroundColor: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>TUTOR PAYOUTS DUE</span>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#F1F5F9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="kpi-label" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>Tutor Due</span>
+                      <div className="kpi-icon-box" style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#F1F5F9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <ArrowUpRight size={16} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#0F172A', marginTop: '0.35rem' }}>
+                    <div className="kpi-value" style={{ fontSize: '1.65rem', fontWeight: 800, color: '#0F172A', marginTop: '0.35rem' }}>
                       ₹{tutorPayoutDueTotal.toLocaleString('en-IN')}
                     </div>
-                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
-                      Payable to verified educators
+                    <div className="kpi-subtext" style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                      Payable to tutors
                     </div>
                   </div>
                 </div>
