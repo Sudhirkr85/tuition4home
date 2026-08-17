@@ -318,7 +318,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
             <ShieldCheck size={14} color="#2DD4BF" />
-            <span>Operated &amp; Verified by <strong>SSSAM Academy</strong> • Sector 14, Gurugram</span>
+            <span>Operated &amp; Verified by <strong>SSSAM Academy</strong> • Sector 14, Gurugram &amp; Delhi NCR</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <span style={{ display: 'none', color: '#CBD5E1' }} className="desktop-nav">
@@ -337,21 +337,30 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
 
       {/* Main Glass Navbar */}
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px' }}>
-        {/* Brand Logo */}
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* Brand Logo & Brand Name */}
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', textDecoration: 'none' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/tuitionforhome.webp"
             alt="TuitionForHome Logo"
-            style={{ height: '48px', width: '48px', objectFit: 'cover', borderRadius: '50%' }}
+            style={{ height: '44px', width: '44px', objectFit: 'cover', borderRadius: '50%', flexShrink: 0 }}
           />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '1.22rem', fontWeight: 900, color: '#0F172A', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+              Tuition<span style={{ color: '#EA580C' }}>For</span>Home
+            </span>
+            <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#065F46', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              By SSSAM Academy
+            </span>
+          </div>
         </Link>
 
         {/* Desktop Navigation Links */}
         <nav className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', whiteSpace: 'nowrap' }}>
           <Link href="/" style={{ fontSize: '0.9rem', fontWeight: 700, color: '#065F46', textDecoration: 'none' }}>Home</Link>
           <Link href="/tutors" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Find Tutors</Link>
-          <Link href="/#how-it-works" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>How It Works</Link>
+          <Link href="/home-tutors-in-gurgaon" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Localities</Link>
+          <Link href="/tuition" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Subjects</Link>
           <Link href="/#fee-estimator" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Fee Estimator</Link>
         </nav>
 
@@ -475,12 +484,14 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
           padding: '1.25rem',
           display: 'flex', flexDirection: 'column', gap: '1rem',
         }}>
-          <Link href="/" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 700, color: 'var(--brand-teal)' }}>Home</Link>
+          <Link href="/" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 700, color: '#065F46' }}>Home</Link>
           <Link href="/tutors" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Browse 1,000+ Verified Tutors</Link>
+          <Link href="/home-tutors-in-gurgaon" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Gurgaon &amp; Delhi Localities</Link>
+          <Link href="/tuition" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Tuition Subjects &amp; Boards</Link>
           <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-muted)' }}>How It Works</Link>
           <Link href="/#fee-estimator" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Fee Estimator</Link>
           {!tutorSession && (
-            <Link href="/tutor/register" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 700, color: 'var(--brand-teal)' }}>Apply as Tutor</Link>
+            <Link href="/tutor/register" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 700, color: '#065F46' }}>Apply as Tutor</Link>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-hairline)' }}>
