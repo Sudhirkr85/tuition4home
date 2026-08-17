@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       where: { email: cleanEmail },
     });
 
-    if (!adminUser || (adminUser.role !== 'SUPER_ADMIN' && adminUser.role !== 'ADMIN')) {
+    if (!adminUser || (adminUser.role !== 'SUPER_ADMIN' && adminUser.role !== 'TELECALLER')) {
       return NextResponse.json(
         { success: false, error: 'Invalid admin credentials or unauthorized account' },
         { status: 401 }
