@@ -42,7 +42,18 @@ export default function ParentLoginPage() {
   // If already logged in, redirect to parent dashboard
   useEffect(() => {
     const saved = localStorage.getItem('parent_session');
-    if (saved || (authStatus === 'authenticated' && authSession?.user?.email)) {
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+          localStorage.removeItem('parent_session');
+          return;
+        }
+        router.push('/parent/dashboard');
+        return;
+      } catch {}
+    }
+    if (authStatus === 'authenticated' && authSession?.user?.email) {
       router.push('/parent/dashboard');
     }
   }, [router, authStatus, authSession]);
@@ -104,8 +115,13 @@ export default function ParentLoginPage() {
       });
       const data = await res.json();
       if (data.success && data.parent) {
-        setVerifiedParent(data.parent);
-        localStorage.setItem('parent_session', JSON.stringify(data.parent));
+        const session = {
+          ...data.parent,
+          loginAt: Date.now(),
+          expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days auto-logout
+        };
+        setVerifiedParent(session);
+        localStorage.setItem('parent_session', JSON.stringify(session));
         window.dispatchEvent(new Event('storage'));
 
         // If parent has no phone number, prompt phone step
@@ -148,7 +164,12 @@ export default function ParentLoginPage() {
       });
       const data = await res.json();
       if (data.success && data.parent) {
-        localStorage.setItem('parent_session', JSON.stringify(data.parent));
+        const session = {
+          ...data.parent,
+          loginAt: Date.now(),
+          expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days auto-logout
+        };
+        localStorage.setItem('parent_session', JSON.stringify(session));
         window.dispatchEvent(new Event('storage'));
         router.push('/parent/dashboard');
       } else {

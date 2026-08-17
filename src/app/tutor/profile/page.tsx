@@ -61,6 +61,8 @@ export interface QualificationItem {
   institute: string;
   year: string;
   grade?: string;
+  docUrl?: string;
+  docName?: string;
 }
 
 export interface ExperienceItem {
@@ -113,15 +115,19 @@ export default function TutorProfileDashboard() {
   // LinkedIn-style Qualifications & Experiences
   const [qualifications, setQualifications] = useState<QualificationItem[]>([]);
   const [showAddQual, setShowAddQual] = useState(false);
-  const [draftQual, setDraftQual] = useState<{ degree: string; institute: string; year: string; grade: string }>({
+  const [draftQualErrorField, setDraftQualErrorField] = useState<string | null>(null);
+  const [draftQual, setDraftQual] = useState<{ degree: string; institute: string; year: string; grade: string; docUrl?: string; docName?: string }>({
     degree: '',
     institute: '',
     year: '',
-    grade: ''
+    grade: '',
+    docUrl: '',
+    docName: '',
   });
 
   const [experiences, setExperiences] = useState<ExperienceItem[]>([]);
   const [showAddExp, setShowAddExp] = useState(false);
+  const [draftExpErrorField, setDraftExpErrorField] = useState<string | null>(null);
   const [draftExp, setDraftExp] = useState<{ role: string; organization: string; startYear: string; endYear: string; isCurrent: boolean; description: string }>({
     role: '',
     organization: '',
@@ -363,7 +369,7 @@ export default function TutorProfileDashboard() {
         image: image,
         avatarUrl: image,
         loginAt: Date.now(),
-        expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000,
+        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days auto-logout
       };
 
       try {
@@ -533,8 +539,25 @@ export default function TutorProfileDashboard() {
 
   // Qualifications Add & Delete Handlers
   const handleAddQualification = () => {
-    if (!draftQual.degree.trim() || !draftQual.institute.trim()) {
-      setErrorMsg('Please enter both Degree / Course and Institute name.');
+    if (!draftQual.degree.trim()) {
+      setDraftQualErrorField('degree');
+      setErrorMsg('⚠️ Please enter Degree / Course name.');
+      setTimeout(() => document.getElementById('input-draft-degree')?.focus(), 50);
+      return;
+    }
+    if (!draftQual.institute.trim()) {
+      setDraftQualErrorField('institute');
+      setErrorMsg('⚠️ Please enter College / University name.');
+      setTimeout(() => document.getElementById('input-draft-institute')?.focus(), 50);
+      return;
+    }
+    if (!draftQual.docUrl) {
+      setDraftQualErrorField('doc');
+      setErrorMsg('⚠️ Please upload your Degree / Marksheet document.');
+      setTimeout(() => {
+        const el = document.getElementById('draft-qual-doc-container');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
       return;
     }
     const item: QualificationItem = {
@@ -542,14 +565,18 @@ export default function TutorProfileDashboard() {
       degree: draftQual.degree.trim(),
       institute: draftQual.institute.trim(),
       year: draftQual.year.trim() || `${new Date().getFullYear()}`,
-      grade: draftQual.grade.trim() || undefined
+      grade: draftQual.grade.trim() || undefined,
+      docUrl: draftQual.docUrl,
+      docName: draftQual.docName,
     };
     const updated = [...qualifications, item];
     setQualifications(updated);
     if (!highestDegree) setHighestDegree(item.degree);
-    setDraftQual({ degree: '', institute: '', year: '', grade: '' });
+    setDraftQual({ degree: '', institute: '', year: '', grade: '', docUrl: '', docName: '' });
+    setDraftQualErrorField(null);
     setShowAddQual(false);
-    setSuccessMsg('Education qualification added.');
+    setErrorMsg('');
+    setSuccessMsg('✅ Education qualification and document added successfully.');
   };
 
   const handleDeleteQualification = (id: string) => {
@@ -577,15 +604,29 @@ export default function TutorProfileDashboard() {
 
   // Experiences Add & Delete Handlers
   const handleAddExperience = () => {
-    if (!draftExp.role.trim() || !draftExp.organization.trim()) {
-      setErrorMsg('Please enter both Role Title and School / Organization.');
+    if (!draftExp.role.trim()) {
+      setDraftExpErrorField('role');
+      setErrorMsg('⚠️ Please enter Role Title (e.g. Senior Maths Educator).');
+      setTimeout(() => document.getElementById('input-draft-role')?.focus(), 50);
+      return;
+    }
+    if (!draftExp.organization.trim()) {
+      setDraftExpErrorField('organization');
+      setErrorMsg('⚠️ Please enter School / Academy name.');
+      setTimeout(() => document.getElementById('input-draft-org')?.focus(), 50);
+      return;
+    }
+    if (!draftExp.startYear.trim()) {
+      setDraftExpErrorField('startYear');
+      setErrorMsg('⚠️ Please enter Start Year (e.g. 2020).');
+      setTimeout(() => document.getElementById('input-draft-startyear')?.focus(), 50);
       return;
     }
     const item: ExperienceItem = {
       id: Date.now().toString(),
       role: draftExp.role.trim(),
       organization: draftExp.organization.trim(),
-      startYear: draftExp.startYear.trim() || `${new Date().getFullYear() - 2}`,
+      startYear: draftExp.startYear.trim(),
       endYear: draftExp.isCurrent ? 'Present' : (draftExp.endYear.trim() || `${new Date().getFullYear()}`),
       isCurrent: draftExp.isCurrent,
       description: draftExp.description.trim() || undefined
@@ -594,8 +635,10 @@ export default function TutorProfileDashboard() {
     setExperiences(updated);
     setExperienceYears(calculateTotalExperienceYears(updated));
     setDraftExp({ role: '', organization: '', startYear: '', endYear: '', isCurrent: true, description: '' });
+    setDraftExpErrorField(null);
     setShowAddExp(false);
-    setSuccessMsg('Teaching experience added.');
+    setErrorMsg('');
+    setSuccessMsg('✅ Teaching experience added successfully.');
   };
 
   const handleDeleteExperience = (id: string) => {
@@ -925,7 +968,7 @@ export default function TutorProfileDashboard() {
                   </div>
                 </div>
 
-                {/* Navigation Tabs List (Figma Style) */}
+                {/* Navigation Tabs List (2-Column Bento Grid on Mobile) */}
                 <nav className="profile-sidebar-nav" style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                   <button
                     type="button"
@@ -942,7 +985,7 @@ export default function TutorProfileDashboard() {
                     className={`profile-nav-btn ${activeTab === 'SUBJECTS' ? 'active' : ''}`}
                   >
                     <BookOpen size={18} />
-                    <span>Manage Subject Area</span>
+                    <span>Subjects &amp; Rates</span>
                   </button>
 
                   <button
@@ -978,7 +1021,7 @@ export default function TutorProfileDashboard() {
                     className={`profile-nav-btn ${activeTab === 'REVIEWS' ? 'active' : ''}`}
                   >
                     <Star size={18} />
-                    <span>Parent Reviews &amp; QR</span>
+                    <span>Reviews &amp; QR</span>
                   </button>
                 </nav>
 
@@ -1055,46 +1098,6 @@ export default function TutorProfileDashboard() {
                     </div>
                   );
                 })()}
-
-                {/* Counselor Quick Hotline Card */}
-                <div style={{
-                  marginTop: '1.25rem',
-                  padding: '0.85rem 1rem',
-                  backgroundColor: '#F8FAFC',
-                  border: '1px solid var(--border-hairline)',
-                  borderRadius: '14px',
-                  fontSize: '0.72rem',
-                  color: 'var(--text-muted)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.3rem'
-                }}>
-                  <strong style={{ fontSize: '0.76rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Phone size={13} style={{ color: 'var(--brand-teal)' }} />
-                    <span>Counselor Hotline</span>
-                  </strong>
-                  <span>Need help? Call our Gurgaon desk:</span>
-                  <a href="tel:+919217031899" style={{ color: 'var(--brand-teal)', fontWeight: 800, textDecoration: 'none', fontSize: '0.8rem' }}>
-                    +91 92170 31899
-                  </a>
-                </div>
-              </div>
-
-              {/* Sidebar Bottom SSSAM Seal */}
-              <div style={{
-                backgroundColor: 'var(--brand-teal-light)',
-                border: '1px solid rgba(45, 212, 191, 0.4)',
-                borderRadius: '14px',
-                padding: '0.85rem',
-                fontSize: '0.72rem',
-                color: 'var(--brand-teal)',
-                lineHeight: 1.45
-              }}>
-                <div style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.25rem' }}>
-                  <ShieldCheck size={14} />
-                  <span>SSSAM Verified Portal</span>
-                </div>
-                <span>Central document verification & physical audit center in Sector 14, Gurgaon.</span>
               </div>
             </aside>
 
@@ -1290,67 +1293,6 @@ export default function TutorProfileDashboard() {
                       </p>
                     </div>
                   )}
-
-                  {/* Academic Counselor Screening & Support Widget */}
-                  <div style={{
-                    marginTop: '1.75rem',
-                    padding: '1.5rem',
-                    backgroundColor: '#F8FAFC',
-                    border: '1.5px solid var(--border-hairline)',
-                    borderRadius: '18px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1.25rem',
-                    textAlign: 'left'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '12px',
-                        backgroundColor: 'var(--brand-teal-light)',
-                        color: 'var(--brand-teal)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}>
-                        <Phone size={20} />
-                      </div>
-                      <div>
-                        <strong style={{ fontSize: '0.98rem', color: 'var(--text-main)', display: 'block', fontWeight: 800 }}>
-                          Academic Counselor Support &amp; Verification Help
-                        </strong>
-                        <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                          Our verification team is available Mon–Sat (10:00 AM – 6:00 PM) to assist you
-                        </span>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-                      {/* Box 1: Callback Expectation */}
-                      <div style={{ backgroundColor: '#FFFFFF', padding: '1rem', borderRadius: '14px', border: '1px solid var(--border-hairline)' }}>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>Expected Callback Window</span>
-                        <strong style={{ fontSize: '0.88rem', color: '#D97706', display: 'block', marginTop: '0.2rem' }}>
-                          Within 24 Hours (10 AM – 6 PM)
-                        </strong>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-light)', display: 'block', marginTop: '0.2rem' }}>
-                          For quick 5-minute video screening &amp; parent lead allotment.
-                        </span>
-                      </div>
-
-                      {/* Box 2: Direct Helpline & WhatsApp */}
-                      <div style={{ backgroundColor: '#FFFFFF', padding: '1rem', borderRadius: '14px', border: '1px solid var(--border-hairline)' }}>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>Direct Helpline &amp; WhatsApp</span>
-                        <strong style={{ fontSize: '0.92rem', color: 'var(--brand-teal)', display: 'block', marginTop: '0.2rem' }}>
-                          +91 92170 31899
-                        </strong>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-light)', display: 'block', marginTop: '0.2rem' }}>
-                          SSSAM Academy, Sector 14, Old DLF, Gurgaon
-                        </span>
-                      </div>
-                    </div>
-                  </div>
 
                   {/* 5. Digital Visiting Card Showcase */}
                   <div style={{ marginTop: '2.25rem', textAlign: 'left' }}>
@@ -2382,7 +2324,7 @@ export default function TutorProfileDashboard() {
                     <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.75rem' }}>
                       Helps match you with Gurgaon parents requesting Verified Female Tutors or Home Tutors.
                     </span>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
                       {[
                         { id: 'FEMALE', label: 'Female 👩', desc: 'Female Educator' },
                         { id: 'MALE', label: 'Male 👨', desc: 'Male Educator' },
@@ -2395,7 +2337,7 @@ export default function TutorProfileDashboard() {
                             type="button"
                             onClick={() => setGender(g.id)}
                             style={{
-                              padding: '0.75rem 0.65rem',
+                              padding: '0.75rem 0.35rem',
                               borderRadius: '12px',
                               border: `2px solid ${isSelected ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
                               backgroundColor: isSelected ? 'var(--bg-app)' : '#FFFFFF',
@@ -2403,13 +2345,16 @@ export default function TutorProfileDashboard() {
                               display: 'flex',
                               flexDirection: 'column',
                               alignItems: 'center',
+                              justifyContent: 'center',
+                              textAlign: 'center',
                               gap: '0.2rem',
                               cursor: 'pointer',
                               transition: 'all 0.2s ease',
+                              minWidth: 0,
                             }}
                           >
-                            <div style={{ fontWeight: 800, fontSize: '0.88rem' }}>{g.label}</div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{g.desc}</div>
+                            <div style={{ fontWeight: 800, fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{g.label}</div>
+                            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.1 }}>{g.desc}</div>
                           </button>
                         );
                       })}
@@ -2442,23 +2387,86 @@ export default function TutorProfileDashboard() {
                       </button>
                     </div>
 
+                    {/* Primary Verified Degree Document Banner */}
+                    {degreeDocUrl && (
+                      <div style={{
+                        padding: '0.85rem 1.1rem',
+                        backgroundColor: '#F0FDF4',
+                        borderRadius: '12px',
+                        border: '1.5px solid #BBF7D0',
+                        marginBottom: '1.25rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '0.65rem',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                          <div style={{ width: '34px', height: '34px', borderRadius: '8px', backgroundColor: '#DCFCE7', color: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
+                            📜
+                          </div>
+                          <div>
+                            <strong style={{ fontSize: '0.84rem', color: '#166534', display: 'block' }}>Primary Verified Degree / Marksheet</strong>
+                            <span style={{ fontSize: '0.72rem', color: '#15803D' }}>Audited &amp; attached with your tutor profile</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setDocPreviewModalUrl(degreeDocUrl)}
+                          className="btn btn-sm"
+                          style={{
+                            fontSize: '0.76rem',
+                            fontWeight: 700,
+                            backgroundColor: '#FFFFFF',
+                            border: '1.5px solid #86EFAC',
+                            color: '#166534',
+                            borderRadius: '8px',
+                            padding: '0.4rem 0.85rem',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                          }}
+                        >
+                          <Eye size={13} />
+                          <span>View Degree Document</span>
+                        </button>
+                      </div>
+                    )}
+
                     {showAddQual && (
                       <div style={{ backgroundColor: '#F8FAFC', borderRadius: '12px', padding: '1.1rem', marginBottom: '1.25rem', border: '1px solid var(--border-hairline)' }}>
                         <strong style={{ display: 'block', fontSize: '0.84rem', color: 'var(--text-main)', marginBottom: '0.75rem' }}>Add Degree / Certification</strong>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
                           <input
+                            id="input-draft-degree"
                             type="text"
-                            placeholder="Degree e.g. M.Sc Physics"
+                            placeholder="Degree e.g. M.Sc Physics *"
                             value={draftQual.degree}
-                            onChange={e => setDraftQual({ ...draftQual, degree: e.target.value })}
+                            onChange={e => {
+                              setDraftQual({ ...draftQual, degree: e.target.value });
+                              if (draftQualErrorField === 'degree') setDraftQualErrorField(null);
+                            }}
                             className="form-control form-control-sm"
+                            style={{
+                              borderColor: draftQualErrorField === 'degree' ? '#EF4444' : undefined,
+                              boxShadow: draftQualErrorField === 'degree' ? '0 0 0 3px rgba(239, 68, 68, 0.18)' : undefined,
+                            }}
                           />
                           <input
+                            id="input-draft-institute"
                             type="text"
-                            placeholder="Institute e.g. Delhi University"
+                            placeholder="Institute e.g. Delhi University *"
                             value={draftQual.institute}
-                            onChange={e => setDraftQual({ ...draftQual, institute: e.target.value })}
+                            onChange={e => {
+                              setDraftQual({ ...draftQual, institute: e.target.value });
+                              if (draftQualErrorField === 'institute') setDraftQualErrorField(null);
+                            }}
                             className="form-control form-control-sm"
+                            style={{
+                              borderColor: draftQualErrorField === 'institute' ? '#EF4444' : undefined,
+                              boxShadow: draftQualErrorField === 'institute' ? '0 0 0 3px rgba(239, 68, 68, 0.18)' : undefined,
+                            }}
                           />
                           <input
                             type="text"
@@ -2475,6 +2483,77 @@ export default function TutorProfileDashboard() {
                             className="form-control form-control-sm"
                           />
                         </div>
+
+                        {/* Certificate Document Upload */}
+                        <div
+                          id="draft-qual-doc-container"
+                          style={{
+                            padding: '0.85rem 1rem',
+                            backgroundColor: draftQualErrorField === 'doc' ? '#FEF2F2' : '#FFFFFF',
+                            borderRadius: '10px',
+                            border: draftQualErrorField === 'doc'
+                              ? '1.5px dashed #EF4444'
+                              : draftQual.docUrl
+                              ? '1.5px dashed #10B981'
+                              : '1.5px dashed var(--border-hairline)',
+                            boxShadow: draftQualErrorField === 'doc' ? '0 0 0 3.5px rgba(239, 68, 68, 0.18)' : undefined,
+                            marginBottom: '0.85rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '0.5rem',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <FileText size={16} color={draftQualErrorField === 'doc' ? '#DC2626' : draftQual.docName ? '#047857' : 'var(--text-muted)'} />
+                            <div>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 750, color: draftQualErrorField === 'doc' ? '#DC2626' : draftQual.docName ? '#047857' : 'var(--text-main)', display: 'block' }}>
+                                {draftQual.docName ? `✓ Attached: ${draftQual.docName}` : 'Degree Proof / Marksheet (Photo/PDF)'} <span style={{ color: '#DC2626' }}>*</span>
+                              </span>
+                              <span style={{ fontSize: '0.68rem', color: draftQualErrorField === 'doc' ? '#DC2626' : draftQual.docName ? '#059669' : 'var(--text-muted)' }}>
+                                {draftQualErrorField === 'doc' ? '⚠️ Document attachment required' : draftQual.docName ? 'Ready to save' : 'JPG, PNG or PDF format'}
+                              </span>
+                            </div>
+                          </div>
+                          <div>
+                            <input
+                              type="file"
+                              id="draft-qual-doc"
+                              accept="image/*,application/pdf"
+                              style={{ display: 'none' }}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = () => {
+                                    setDraftQual(prev => ({ ...prev, docUrl: reader.result as string, docName: file.name }));
+                                    setDraftQualErrorField(null);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor="draft-qual-doc"
+                              className="btn btn-secondary btn-sm"
+                              style={{
+                                cursor: 'pointer',
+                                fontSize: '0.74rem',
+                                padding: '0.4rem 0.85rem',
+                                borderRadius: '8px',
+                                fontWeight: 700,
+                                borderColor: draftQualErrorField === 'doc' ? '#EF4444' : draftQual.docUrl ? '#10B981' : 'var(--border-hairline)',
+                                color: draftQualErrorField === 'doc' ? '#DC2626' : draftQual.docUrl ? '#047857' : 'var(--text-main)',
+                              }}
+                            >
+                              <Upload size={13} />
+                              <span>{draftQual.docUrl ? 'Change Document' : 'Upload Document'}</span>
+                            </label>
+                          </div>
+                        </div>
+
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                           <button type="button" onClick={() => setShowAddQual(false)} className="btn btn-sm btn-ghost">Cancel</button>
                           <button type="button" onClick={handleAddQualification} className="btn btn-sm btn-primary" style={{ backgroundColor: 'var(--brand-teal)' }}>Save</button>
@@ -2492,7 +2571,31 @@ export default function TutorProfileDashboard() {
                             <div>
                               <strong style={{ display: 'block', fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 800 }}>{q.degree}</strong>
                               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block' }}>{q.institute} • Pass Year: {q.year}</span>
-                              {q.grade && <span style={{ fontSize: '0.72rem', color: 'var(--brand-teal)', fontWeight: 700, display: 'inline-block', marginTop: '0.15rem' }}>Grade: {q.grade}</span>}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                                {q.grade && <span style={{ fontSize: '0.72rem', color: 'var(--brand-teal)', fontWeight: 700 }}>Grade: {q.grade}</span>}
+                                {q.docUrl && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setDocPreviewModalUrl(q.docUrl!)}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem',
+                                      fontSize: '0.7rem',
+                                      fontWeight: 700,
+                                      color: '#0F766E',
+                                      backgroundColor: '#F0FDFA',
+                                      border: '1px solid #CCFBF1',
+                                      padding: '0.15rem 0.45rem',
+                                      borderRadius: '6px',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    <Eye size={11} />
+                                    <span>View Certificate</span>
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <button type="button" onClick={() => handleDeleteQualification(q.id)} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '0.35rem' }}>
@@ -2516,11 +2619,11 @@ export default function TutorProfileDashboard() {
                     border: '1.5px solid var(--border-hairline)',
                     padding: '1.5rem',
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Briefcase size={20} color="var(--brand-teal)" />
-                        <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                          Teaching Experience History ({experienceYears} Years Total)
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.65rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '180px' }}>
+                        <Briefcase size={20} color="var(--brand-teal)" style={{ flexShrink: 0 }} />
+                        <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0, lineHeight: 1.25 }}>
+                          Teaching Experience ({experienceYears} Yrs Total)
                         </h3>
                       </div>
 
@@ -2528,7 +2631,7 @@ export default function TutorProfileDashboard() {
                         type="button"
                         onClick={() => setShowAddExp(true)}
                         className="btn btn-secondary btn-sm"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', color: 'var(--brand-teal)', borderColor: 'var(--brand-teal)' }}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', color: 'var(--brand-teal)', borderColor: 'var(--brand-teal)', flexShrink: 0 }}
                       >
                         <Plus size={14} />
                         <span>Add Experience</span>
@@ -2540,37 +2643,73 @@ export default function TutorProfileDashboard() {
                         <strong style={{ display: 'block', fontSize: '0.84rem', color: 'var(--text-main)', marginBottom: '0.75rem' }}>Add School / Coaching Engagement</strong>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
                           <input
+                            id="input-draft-role"
                             type="text"
-                            placeholder="Role Title e.g. Senior PGT Maths Educator"
+                            placeholder="Role Title e.g. Senior Maths Educator *"
                             value={draftExp.role}
-                            onChange={e => setDraftExp({ ...draftExp, role: e.target.value })}
+                            onChange={e => {
+                              const val = e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase());
+                              setDraftExp({ ...draftExp, role: val });
+                              if (draftExpErrorField === 'role') setDraftExpErrorField(null);
+                            }}
                             className="form-control form-control-sm"
+                            style={{
+                              borderColor: draftExpErrorField === 'role' ? '#EF4444' : undefined,
+                              boxShadow: draftExpErrorField === 'role' ? '0 0 0 3px rgba(239, 68, 68, 0.18)' : undefined,
+                            }}
                           />
                           <input
+                            id="input-draft-org"
                             type="text"
-                            placeholder="School / Academy e.g. DPS Gurgaon / Home Tutoring"
+                            placeholder="School / Academy e.g. DPS Gurgaon *"
                             value={draftExp.organization}
-                            onChange={e => setDraftExp({ ...draftExp, organization: e.target.value })}
+                            onChange={e => {
+                              const val = e.target.value.replace(/\b[a-z]/g, c => c.toUpperCase());
+                              setDraftExp({ ...draftExp, organization: val });
+                              if (draftExpErrorField === 'organization') setDraftExpErrorField(null);
+                            }}
                             className="form-control form-control-sm"
+                            style={{
+                              borderColor: draftExpErrorField === 'organization' ? '#EF4444' : undefined,
+                              boxShadow: draftExpErrorField === 'organization' ? '0 0 0 3px rgba(239, 68, 68, 0.18)' : undefined,
+                            }}
                           />
                           <input
+                            id="input-draft-startyear"
                             type="text"
-                            placeholder="Start Year e.g. 2019"
+                            maxLength={4}
+                            placeholder="Start Year e.g. 2020 *"
                             value={draftExp.startYear}
-                            onChange={e => setDraftExp({ ...draftExp, startYear: e.target.value })}
+                            onChange={e => {
+                              const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                              setDraftExp({ ...draftExp, startYear: val });
+                              if (draftExpErrorField === 'startYear') setDraftExpErrorField(null);
+                            }}
                             className="form-control form-control-sm"
+                            style={{
+                              borderColor: draftExpErrorField === 'startYear' ? '#EF4444' : undefined,
+                              boxShadow: draftExpErrorField === 'startYear' ? '0 0 0 3px rgba(239, 68, 68, 0.18)' : undefined,
+                            }}
                           />
                           <input
                             type="text"
-                            placeholder="End Year e.g. Present"
-                            value={draftExp.endYear}
+                            maxLength={4}
+                            placeholder={draftExp.isCurrent ? 'Present (Current Role)' : 'End Year e.g. 2024'}
+                            value={draftExp.isCurrent ? 'Present' : draftExp.endYear}
                             disabled={draftExp.isCurrent}
-                            onChange={e => setDraftExp({ ...draftExp, endYear: e.target.value })}
+                            onChange={e => {
+                              const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                              setDraftExp({ ...draftExp, endYear: val });
+                            }}
                             className="form-control form-control-sm"
+                            style={{
+                              backgroundColor: draftExp.isCurrent ? '#F1F5F9' : '#FFFFFF',
+                              color: draftExp.isCurrent ? '#64748B' : 'var(--text-main)',
+                            }}
                           />
                         </div>
                         <div style={{ marginBottom: '0.75rem' }}>
-                          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', color: 'var(--text-main)', cursor: 'pointer' }}>
+                          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.78rem', color: 'var(--text-main)', cursor: 'pointer', fontWeight: 600 }}>
                             <input
                               type="checkbox"
                               checked={draftExp.isCurrent}
@@ -3056,25 +3195,6 @@ export default function TutorProfileDashboard() {
                       </button>
                     </div>
 
-
-
-                    {/* SSSAM Academy Gurgaon Sector 14 help box */}
-                    <div style={{
-                      backgroundColor: 'var(--brand-teal-light)',
-                      borderRadius: '16px',
-                      padding: '1.25rem',
-                      fontSize: '0.78rem',
-                      color: 'var(--brand-teal)',
-                      lineHeight: 1.55,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.45rem'
-                    }}>
-                      <div style={{ fontWeight: 800, fontSize: '0.85rem' }}>📍 Need verification assistance?</div>
-                      <span>Visit our Gurgaon Sector 14 center for physical document auditing, qualification credentials vetting, and active badge updates.</span>
-                      <strong style={{ display: 'block', marginTop: '0.2rem' }}>📞 Walk-in support hotline: +91 92170 31899</strong>
-                    </div>
-
                   </div>
                 </div>
               )}
@@ -3373,10 +3493,16 @@ export default function TutorProfileDashboard() {
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginTop: '0.35rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                    <span style={{ color: '#D97706', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                      ★ {reviews && reviews.length > 0 ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) : rating.toFixed(1)} Rating ({reviews ? reviews.length : 0} Reviews)
-                    </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginTop: '0.35rem', fontSize: '0.82rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+                    {reviews && reviews.length > 0 ? (
+                      <span style={{ color: '#D97706', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                        ★ {(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)} ({reviews.length} {reviews.length === 1 ? 'Review' : 'Reviews'})
+                      </span>
+                    ) : (
+                      <span style={{ color: '#0F766E', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.25rem', backgroundColor: '#F0FDFA', padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #CCFBF1', fontSize: '0.76rem' }}>
+                        ⭐ New Verified Educator
+                      </span>
+                    )}
                     <span>•</span>
                     <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{experienceYears}+ Years Experience</span>
                     <span>•</span>

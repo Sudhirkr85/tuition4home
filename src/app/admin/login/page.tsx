@@ -31,7 +31,7 @@ export default function AdminLoginPage() {
           const session = {
             ...data.user,
             loginAt: Date.now(),
-            expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
+            expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days auto-logout
           };
           localStorage.setItem('tfh_admin_user', JSON.stringify(session));
         }

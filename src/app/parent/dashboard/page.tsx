@@ -133,6 +133,11 @@ export default function ParentDashboardPage() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+          localStorage.removeItem('parent_session');
+          router.push('/parent/login');
+          return;
+        }
         setParentSession(parsed);
         setParentName(parsed.name || '');
         setParentPhone(parsed.phone || '');
@@ -156,6 +161,7 @@ export default function ParentDashboardPage() {
                 name: data.parent.name,
                 image: data.parent.image || parsed.image,
                 phone: data.parent.phone || parsed.phone,
+                expiresAt: parsed.expiresAt || (Date.now() + 30 * 24 * 60 * 60 * 1000),
               };
               localStorage.setItem('parent_session', JSON.stringify(updatedSession));
               setParentSession(updatedSession);
@@ -180,6 +186,8 @@ export default function ParentDashboardPage() {
               email: data.parent.email,
               phone: data.parent.phone || '',
               image: data.parent.image || authSession.user?.image || '',
+              loginAt: Date.now(),
+              expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days auto-logout
             };
             localStorage.setItem('parent_session', JSON.stringify(newSession));
             window.dispatchEvent(new Event('storage'));
@@ -196,6 +204,8 @@ export default function ParentDashboardPage() {
               email: email,
               phone: (authSession.user as any).phone || '',
               image: authSession.user?.image || '',
+              loginAt: Date.now(),
+              expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days auto-logout
             };
             localStorage.setItem('parent_session', JSON.stringify(fallbackSession));
             window.dispatchEvent(new Event('storage'));

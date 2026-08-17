@@ -568,17 +568,40 @@ h3 {
   }
   .profile-sidebar-nav {
     display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)) !important;
-    gap: 0.45rem !important;
-    width: 100%;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
   }
   .profile-nav-btn {
     width: 100% !important;
-    justify-content: center !important;
-    padding: 0.55rem 0.65rem !important;
-    font-size: 0.76rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 0.7rem 0.75rem !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
     border-radius: 12px !important;
-    text-align: center !important;
+    border: 1.5px solid var(--border-hairline) !important;
+    background-color: #FFFFFF !important;
+    color: var(--text-main) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    text-align: left !important;
+  }
+  .profile-nav-btn:active {
+    transform: scale(0.96) !important;
+  }
+  .profile-nav-btn.active {
+    background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%) !important;
+    color: #FFFFFF !important;
+    border-color: #0F766E !important;
+    box-shadow: 0 6px 16px rgba(13, 148, 136, 0.25) !important;
+    transform: translateY(-1px) !important;
+  }
+  .profile-nav-btn.active svg {
+    color: #FFFFFF !important;
+    transform: scale(1.1) !important;
+    transition: transform 0.25s ease !important;
   }
   .profile-content-card {
     padding: 1.25rem 1rem;

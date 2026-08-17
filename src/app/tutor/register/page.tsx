@@ -321,7 +321,7 @@ export default function TutorRegisterLoginPage() {
         image: image,
         avatarUrl: image,
         loginAt: Date.now(),
-        expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000,
+        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days auto-logout
       };
 
       try {
@@ -357,17 +357,23 @@ export default function TutorRegisterLoginPage() {
   useEffect(() => {
     const savedUser = localStorage.getItem('tutor_session');
     if (savedUser) {
-      const parsed = JSON.parse(savedUser);
-      setUserId(parsed.userId);
-      setUserName(parsed.name);
-      setUserEmail(parsed.email);
-      setIsLoggedIn(true);
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+          localStorage.removeItem('tutor_session');
+          setIsLoggedIn(false);
+          return;
+        }
+        setUserId(parsed.userId);
+        setUserName(parsed.name);
+        setUserEmail(parsed.email);
+        setIsLoggedIn(true);
 
-      // Redirect to settings/profile dashboard if onboarding is already completed
-      fetch(`/api/tutors/profile/setup?userId=${parsed.userId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.profile && data.profile.status !== 'DRAFT') {
+        // Redirect to settings/profile dashboard if onboarding is already completed
+        fetch(`/api/tutors/profile/setup?userId=${parsed.userId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.profile && data.profile.status !== 'DRAFT') {
             window.location.href = '/tutor/profile';
           }
         })
@@ -604,7 +610,7 @@ export default function TutorRegisterLoginPage() {
         setRegErrorField('password');
         triggerShake();
       } else {
-        const session = { userId: data.userId, name: data.name, email: data.email, loginAt: Date.now(), expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000 };
+        const session = { userId: data.userId, name: data.name, email: data.email, loginAt: Date.now(), expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 };
         localStorage.setItem('tutor_session', JSON.stringify(session));
         setUserId(data.userId);
         setUserName(data.name);
@@ -641,7 +647,7 @@ export default function TutorRegisterLoginPage() {
         setLoginErrorField('password');
         triggerShake();
       } else {
-        const session = { userId: data.userId, name: data.name, email: data.email, loginAt: Date.now(), expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000 };
+        const session = { userId: data.userId, name: data.name, email: data.email, loginAt: Date.now(), expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 };
         localStorage.setItem('tutor_session', JSON.stringify(session));
         setUserId(data.userId);
         setUserName(data.name);
@@ -708,7 +714,7 @@ export default function TutorRegisterLoginPage() {
         setErrorMessage(data.error || 'OTP verification failed.');
         triggerShake();
       } else {
-        const session = { userId: data.userId, name: data.name, email: data.email, loginAt: Date.now(), expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000 };
+        const session = { userId: data.userId, name: data.name, email: data.email, loginAt: Date.now(), expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 };
         localStorage.setItem('tutor_session', JSON.stringify(session));
         setUserId(data.userId);
         setUserName(data.name);
@@ -2094,10 +2100,12 @@ export default function TutorRegisterLoginPage() {
                             <input
                               id="field-degree"
                               type="text"
+                              autoCapitalize="words"
                               placeholder="e.g. B.Tech, M.Sc, B.Ed, B.Com, MBA"
                               value={degree}
                               onChange={(e) => {
-                                setDegree(e.target.value);
+                                const val = e.target.value.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+                                setDegree(val);
                                 if (wizardErrorField === 'field-degree') setWizardErrorField(null);
                               }}
                               className="form-control"
@@ -2118,10 +2126,12 @@ export default function TutorRegisterLoginPage() {
                           <input
                             id="field-specialization"
                             type="text"
+                            autoCapitalize="words"
                             placeholder="e.g. Mathematics, Physics, CS, Commerce"
                             value={specialization}
                             onChange={(e) => {
-                              setSpecialization(e.target.value);
+                              const val = e.target.value.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+                              setSpecialization(val);
                               if (wizardErrorField === 'field-specialization') setWizardErrorField(null);
                             }}
                             className="form-control"
@@ -2142,10 +2152,12 @@ export default function TutorRegisterLoginPage() {
                           <input
                             id="field-college"
                             type="text"
-                            placeholder="e.g. Delhi University (DU), IIT, Amity"
+                            autoCapitalize="words"
+                            placeholder="e.g. Delhi University (DU), IIT, MDU, Amity"
                             value={college}
                             onChange={(e) => {
-                              setCollege(e.target.value);
+                              const val = e.target.value.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+                              setCollege(val);
                               if (wizardErrorField === 'field-college') setWizardErrorField(null);
                             }}
                             className="form-control"
@@ -2163,10 +2175,14 @@ export default function TutorRegisterLoginPage() {
                           <input
                             id="field-passingYear"
                             type="text"
-                            placeholder="e.g. 2023 or Final Year"
+                            maxLength={25}
+                            placeholder="e.g. 2024 or Final Year"
                             value={passingYear}
                             onChange={(e) => {
-                              setPassingYear(e.target.value);
+                              const val = e.target.value;
+                              // If digits only, restrict strictly to 4 digits (e.g. 2024)
+                              const clean = /^\d+$/.test(val) ? val.slice(0, 4) : val.slice(0, 25);
+                              setPassingYear(clean);
                               if (wizardErrorField === 'field-passingYear') setWizardErrorField(null);
                             }}
                             className="form-control"
@@ -2176,6 +2192,33 @@ export default function TutorRegisterLoginPage() {
                             }}
                             required
                           />
+                          {/* Quick Year Selection Chips */}
+                          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                            {['2025', '2024', '2023', '2022', 'Final Year / Pursuing'].map((yr) => (
+                              <button
+                                key={yr}
+                                type="button"
+                                onClick={() => {
+                                  setPassingYear(yr);
+                                  if (wizardErrorField === 'field-passingYear') setWizardErrorField(null);
+                                }}
+                                style={{
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  padding: '0.15rem 0.45rem',
+                                  borderRadius: '6px',
+                                  backgroundColor: passingYear === yr ? '#0D9488' : '#F1F5F9',
+                                  border: '1px solid',
+                                  borderColor: passingYear === yr ? '#0D9488' : '#E2E8F0',
+                                  color: passingYear === yr ? '#FFFFFF' : '#475569',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease',
+                                }}
+                              >
+                                {yr}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
 
@@ -2189,9 +2232,10 @@ export default function TutorRegisterLoginPage() {
                           min={0}
                           max={40}
                           placeholder="e.g. 2"
-                          value={experienceYears}
+                          value={experienceYears === 0 ? '0' : (experienceYears || '')}
                           onChange={(e) => {
-                            setExperienceYears(Number(e.target.value));
+                            const parsed = e.target.value === '' ? 0 : Math.min(40, Math.max(0, parseInt(e.target.value, 10) || 0));
+                            setExperienceYears(parsed);
                             if (wizardErrorField === 'field-experienceYears') setWizardErrorField(null);
                           }}
                           className="form-control"
@@ -3345,14 +3389,14 @@ export default function TutorRegisterLoginPage() {
 
                       {/* Intro Video */}
                       <div className="form-group">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
-                          <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <span>Introductory Video (60-90 Seconds)</span>
-                            <span style={{ color: '#0F6E56', fontWeight: 800, fontSize: '0.76rem', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.15rem 0.55rem', borderRadius: '999px' }}>
-                              ⚡ Highly Recommended
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.45rem' }}>
+                          <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem' }}>
+                            <span>Introductory Video (60–90s)</span>
+                            <span style={{ color: '#0F6E56', fontWeight: 800, fontSize: '0.72rem', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.12rem 0.45rem', borderRadius: '999px' }}>
+                              ⚡ Recommended
                             </span>
                           </label>
-                          <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600, backgroundColor: '#F1F5F9', padding: '0.2rem 0.55rem', borderRadius: '6px' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600, backgroundColor: '#F1F5F9', padding: '0.15rem 0.45rem', borderRadius: '6px' }}>
                             Optional to skip
                           </span>
                         </div>
@@ -3361,36 +3405,37 @@ export default function TutorRegisterLoginPage() {
                         <div style={{
                           background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%)',
                           border: '1.5px solid #A7F3D0',
-                          borderRadius: '14px',
-                          padding: '0.9rem 1.1rem',
-                          marginBottom: '0.85rem',
-                          boxShadow: '0 2px 8px rgba(15, 110, 86, 0.05)',
+                          borderRadius: '12px',
+                          padding: '0.75rem 0.9rem',
+                          marginBottom: '0.75rem',
+                          boxShadow: '0 2px 6px rgba(15, 110, 86, 0.04)',
                         }}>
-                          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#065F46', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <Sparkles size={15} color="#059669" />
-                            <span>Why add an Intro Video? (Exclusive Benefits):</span>
+                          <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#065F46', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <Sparkles size={14} color="#059669" />
+                            <span>Why add an Intro Video?</span>
                           </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.55rem', fontSize: '0.75rem', color: '#047857' }}>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.4rem', fontSize: '0.73rem', color: '#047857' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.35rem' }}>
                               <span>🚀</span>
-                              <span><strong>3x More Parent Callbacks</strong> — Parents choose tutors they can see & hear.</span>
+                              <span><strong>3x More Callbacks</strong> — Parents prefer seeing tutors.</span>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.35rem' }}>
                               <span>⚡</span>
-                              <span><strong>Fast-Track Profile Approval</strong> — Prioritized audit review within 4 hours.</span>
+                              <span><strong>Fast Approval</strong> — Audit review within 4 hrs.</span>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.35rem' }}>
                               <span>💰</span>
-                              <span><strong>Command Higher Fees</strong> — Easily justify higher rates (₹800–₹1800+/hr).</span>
+                              <span><strong>Higher Fees</strong> — Justify ₹800–₹1800+/hr.</span>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.35rem' }}>
                               <span>⭐</span>
-                              <span><strong>Verified Star Badge</strong> — Ranks on the top of Gurgaon parent searches.</span>
+                              <span><strong>Star Badge</strong> — Top parent search rank.</span>
                             </div>
                           </div>
                         </div>
                         
-                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                        {/* 2-Column Responsive Video Switcher Buttons */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
                           <button
                             type="button"
                             onClick={() => setIntroVideoSource('link')}
@@ -3398,12 +3443,17 @@ export default function TutorRegisterLoginPage() {
                             style={{
                               backgroundColor: introVideoSource === 'link' ? 'var(--brand-teal)' : '#FFFFFF',
                               color: introVideoSource === 'link' ? '#FFFFFF' : 'var(--text-main)',
-                              border: '1.5px solid var(--border-hairline)',
+                              border: `1.5px solid ${introVideoSource === 'link' ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
                               borderRadius: '8px',
                               fontWeight: 700,
+                              fontSize: '0.78rem',
+                              padding: '0.55rem 0.35rem',
+                              justifyContent: 'center',
+                              textAlign: 'center',
+                              width: '100%',
                             }}
                           >
-                            Paste Video Link (YouTube / Drive)
+                            🔗 Paste Video Link
                           </button>
                           <button
                             type="button"
@@ -3412,12 +3462,17 @@ export default function TutorRegisterLoginPage() {
                             style={{
                               backgroundColor: introVideoSource === 'upload' ? 'var(--brand-teal)' : '#FFFFFF',
                               color: introVideoSource === 'upload' ? '#FFFFFF' : 'var(--text-main)',
-                              border: '1.5px solid var(--border-hairline)',
+                              border: `1.5px solid ${introVideoSource === 'upload' ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
                               borderRadius: '8px',
                               fontWeight: 700,
+                              fontSize: '0.78rem',
+                              padding: '0.55rem 0.35rem',
+                              justifyContent: 'center',
+                              textAlign: 'center',
+                              width: '100%',
                             }}
                           >
-                            Upload Video File (MP4/MOV)
+                            📁 Upload Video File
                           </button>
                         </div>
 
@@ -3783,12 +3838,26 @@ export default function TutorRegisterLoginPage() {
                     paddingTop: '1.5rem',
                     borderTop: '1px solid var(--border-hairline)',
                   }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.65rem',
+                      width: '100%',
+                    }}>
                       {currentStep > 1 ? (
                         <button
                           type="button"
                           onClick={() => setCurrentStep(currentStep - 1)}
                           className="btn btn-secondary"
+                          style={{
+                            padding: '0.75rem 1rem',
+                            fontSize: '0.86rem',
+                            fontWeight: 700,
+                            borderRadius: '10px',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                          }}
                         >
                           <ArrowLeft size={16} />
                           <span>Back</span>
@@ -3798,7 +3867,16 @@ export default function TutorRegisterLoginPage() {
                           type="button"
                           onClick={handleLogout}
                           className="btn btn-secondary"
-                          style={{ color: '#B91C1C', borderColor: '#FCA5A5' }}
+                          style={{
+                            color: '#B91C1C',
+                            borderColor: '#FCA5A5',
+                            padding: '0.75rem 1rem',
+                            fontSize: '0.86rem',
+                            fontWeight: 700,
+                            borderRadius: '10px',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                          }}
                         >
                           Logout / Exit
                         </button>
@@ -3808,7 +3886,6 @@ export default function TutorRegisterLoginPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            // Comprehensive step validations with auto-focus & red outline
                             if (currentStep === 1) {
                               if (!degree.trim()) {
                                 triggerWizardError('field-degree', '⚠️ Highest Qualification / Degree is mandatory (e.g. B.Tech, M.Sc, B.Ed).');
@@ -3823,8 +3900,16 @@ export default function TutorRegisterLoginPage() {
                                 return;
                               }
                               if (!passingYear.trim()) {
-                                triggerWizardError('field-passingYear', '⚠️ Passing Year / Status is mandatory (e.g. 2023 or Final Year).');
+                                triggerWizardError('field-passingYear', '⚠️ Passing Year / Status is mandatory (e.g. 2024 or Final Year).');
                                 return;
+                              }
+                              if (/^\d+$/.test(passingYear.trim())) {
+                                const yr = parseInt(passingYear.trim(), 10);
+                                const currentYr = new Date().getFullYear();
+                                if (passingYear.trim().length !== 4 || yr < 1970 || yr > currentYr + 6) {
+                                  triggerWizardError('field-passingYear', `⚠️ Please enter a valid 4-digit passing year between 1970 and ${currentYr + 6} (e.g. 2024).`);
+                                  return;
+                                }
                               }
                               if (experienceYears === undefined || isNaN(experienceYears) || experienceYears < 0) {
                                 triggerWizardError('field-experienceYears', '⚠️ Total Teaching Experience (Years) is mandatory.');
@@ -3862,44 +3947,24 @@ export default function TutorRegisterLoginPage() {
                               }
                             }
                             if (currentStep === 4) {
-                              if (teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') {
-                                if (!hourlyRateHomeMin || Number(hourlyRateHomeMin) < 50) {
-                                  triggerWizardError('field-hourlyRateHomeMin', '⚠️ Home Visit Minimum Hourly Rate is mandatory (min ₹50/hr).');
-                                  return;
-                                }
-                                if (!hourlyRateHomeMax || Number(hourlyRateHomeMax) < Number(hourlyRateHomeMin)) {
-                                  triggerWizardError('field-hourlyRateHomeMax', '⚠️ Home Visit Maximum Rate cannot be less than Minimum rate.');
-                                  return;
-                                }
-                              }
-                              if (teachingMode === 'BOTH' || teachingMode === 'ONLINE_LIVE') {
-                                if (!hourlyRateOnlineMin || Number(hourlyRateOnlineMin) < 50) {
-                                  triggerWizardError('field-hourlyRateOnlineMin', '⚠️ Online Minimum Hourly Rate is mandatory (min ₹50/hr).');
-                                  return;
-                                }
-                                if (!hourlyRateOnlineMax || Number(hourlyRateOnlineMax) < Number(hourlyRateOnlineMin)) {
-                                  triggerWizardError('field-hourlyRateOnlineMax', '⚠️ Online Maximum Rate cannot be less than Minimum rate.');
-                                  return;
-                                }
-                              }
-                            }
-                            if (currentStep === 5) {
                               if (!profilePhotoUrl && !profilePhotoName) {
-                                triggerWizardError('field-profilePhoto', '⚠️ Tutor Profile Photo is mandatory! Please upload a clear face photo before proceeding.');
+                                triggerWizardError('field-profilePhoto', '⚠️ Profile Photo is MANDATORY. Please upload a clear photo.');
                                 return;
                               }
                             }
                             if (currentStep === 6) {
-                              const cleanId = idNumber.replace(/\s+/g, '');
-                              if (!cleanId) {
-                                triggerWizardError('field-idNumber', '⚠️ Government ID Number is mandatory.');
+                              if (!idNumber.trim()) {
+                                triggerWizardError('field-idNumber', `⚠️ ${idType === 'AADHAAR' ? 'Aadhaar Number' : 'PAN Card Number'} is MANDATORY!`);
                                 return;
                               }
-                              if (idType === 'AADHAAR_MASKED' && cleanId.length !== 12) {
-                                triggerWizardError('field-idNumber', '⚠️ Please enter a valid 12-digit Aadhaar Number (12 digits required).');
-                                return;
-                              }
-                              if (idType === 'PAN') {
+                              const cleanId = idNumber.trim().toUpperCase();
+                              if (idType === 'AADHAAR') {
+                                const digitsOnly = cleanId.replace(/\D/g, '');
+                                if (digitsOnly.length !== 12) {
+                                  triggerWizardError('field-idNumber', '⚠️ Please enter a valid 12-digit Aadhaar number.');
+                                  return;
+                                }
+                              } else if (idType === 'PAN') {
                                 const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
                                 if (!panRegex.test(cleanId)) {
                                   triggerWizardError('field-idNumber', '⚠️ Please enter a valid 10-character PAN (format: 5 letters, 4 digits, 1 letter, e.g. ABCDE1234F).');
@@ -3917,6 +3982,14 @@ export default function TutorRegisterLoginPage() {
                             setCurrentStep(currentStep + 1);
                           }}
                           className="btn btn-primary"
+                          style={{
+                            padding: '0.75rem 1.25rem',
+                            fontSize: '0.88rem',
+                            fontWeight: 700,
+                            borderRadius: '10px',
+                            whiteSpace: 'nowrap',
+                            backgroundColor: 'var(--brand-teal)',
+                          }}
                         >
                           <span>Next Step</span>
                           <ArrowRight size={16} />
@@ -3926,19 +3999,24 @@ export default function TutorRegisterLoginPage() {
                           type="button"
                           onClick={handleFinalSubmit}
                           disabled={loading || !agreeTerms}
-                          className="btn btn-primary btn-lg"
+                          className="btn btn-primary"
                           style={{
                             backgroundColor: agreeTerms ? 'var(--brand-teal)' : '#94A3B8',
                             cursor: agreeTerms ? 'pointer' : 'not-allowed',
-                            padding: '0.85rem 1.75rem',
-                            fontSize: '1rem',
+                            padding: '0.75rem 1.1rem',
+                            fontSize: '0.86rem',
                             fontWeight: 800,
-                            borderRadius: '12px',
+                            borderRadius: '10px',
                             boxShadow: agreeTerms ? '0 8px 24px rgba(15, 110, 86, 0.28)' : 'none',
+                            whiteSpace: 'nowrap',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            minWidth: 0,
                           }}
                         >
-                          <Sparkles size={18} />
-                          <span>{loading ? 'Completing Registration...' : 'Complete Registration'}</span>
+                          <Sparkles size={16} />
+                          <span>{loading ? 'Completing...' : 'Complete Registration'}</span>
                         </button>
                       )}
                     </div>
