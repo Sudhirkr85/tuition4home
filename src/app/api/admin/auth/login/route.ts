@@ -15,74 +15,33 @@ export async function POST(req: Request) {
     }
 
     const cleanEmail = email.toLowerCase().trim();
-    const isMasterAdminEmail = (
-      cleanEmail === 'sudhir@gmail.com' ||
-      cleanEmail === 'sudhiraptron@gmail.com' ||
-      cleanEmail.includes('sudhir')
-    );
 
-    // Find admin user in database
-    let adminUser = null;
-    try {
-      adminUser = await prisma.user.findFirst({
-        where: {
-          email: cleanEmail,
-        },
-      });
-    } catch {
-      // DB lookup fallback
-    }
+    // Query database for admin user
+    const adminUser = await prisma.user.findUnique({
+      where: { email: cleanEmail },
+    });
 
-    // Master Admin fallback check
-    if (isMasterAdminEmail && password === '1234567890') {
-      try {
-        const passwordHash = await bcrypt.hash('1234567890', 10);
-        adminUser = await prisma.user.upsert({
-          where: { email: cleanEmail },
-          update: {
-            passwordHash,
-            role: 'SUPER_ADMIN',
-            name: 'Sudhir Admin',
-          },
-          create: {
-            name: 'Sudhir Admin',
-            email: cleanEmail,
-            passwordHash,
-            role: 'SUPER_ADMIN',
-          },
-        });
-      } catch {
-        // Fallback admin creation
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: 'Admin authentication successful',
-        user: {
-          id: adminUser?.id || 'admin-master',
-          name: adminUser?.name || 'Sudhir Admin',
-          email: cleanEmail,
-          role: 'SUPER_ADMIN',
-        },
-      });
-    }
-
-    if (!adminUser) {
+    if (!adminUser || (adminUser.role !== 'SUPER_ADMIN' && adminUser.role !== 'ADMIN')) {
       return NextResponse.json(
         { success: false, error: 'Invalid admin credentials or unauthorized account' },
         { status: 401 }
       );
     }
 
-    // Verify password hash
-    if (adminUser.passwordHash) {
-      const isValid = await bcrypt.compare(password, adminUser.passwordHash);
-      if (!isValid) {
-        return NextResponse.json(
-          { success: false, error: 'Incorrect password' },
-          { status: 401 }
-        );
-      }
+    // Verify bcrypt password hash from database
+    if (!adminUser.passwordHash) {
+      return NextResponse.json(
+        { success: false, error: 'Password not set for this account' },
+        { status: 401 }
+      );
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, adminUser.passwordHash);
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { success: false, error: 'Incorrect password' },
+        { status: 401 }
+      );
     }
 
     return NextResponse.json({

@@ -3,16 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "predev": "prisma db push",
+    "predev": "prisma db push && node prisma/seed.js",
     "dev": "next dev",
-    "build": "prisma generate && prisma db push && next build",
-    "prestart": "prisma db push",
+    "build": "prisma generate && prisma db push && node prisma/seed.js && next build",
+    "prestart": "prisma db push && node prisma/seed.js",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
     "db:reset": "prisma db push --force-reset && node prisma/seed.js"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@prisma/client": "^5.18.0",
