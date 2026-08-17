@@ -71,14 +71,44 @@ export default async function SubjectPage({ params }: PageProps) {
   const item = SUBJECT_SEO_PAGES.find((s) => s.slug === params.subject);
   if (!item) notFound();
 
-  // Fetch live verified tutors from Prisma MySQL
+  // Fetch live verified tutors from Prisma MySQL with dynamic subject/gender filtering
   let dynamicTutors: MockTutor[] = [];
   try {
-    const dbTutors = await prisma.tutorProfile.findMany({
-      where: { status: 'ACTIVE_VERIFIED' },
+    const isFemalePage = params.subject.includes('female');
+    const isMaths = params.subject.includes('maths');
+    const isPhysics = params.subject.includes('physics');
+    const isChemistry = params.subject.includes('chemistry');
+    const isBiology = params.subject.includes('biology');
+    const isCS = params.subject.includes('computer-science') || params.subject.includes('python');
+    const isCommerce = params.subject.includes('accounts') || params.subject.includes('economics');
+    const isPrimary = params.subject.includes('primary');
+
+    let whereClause: any = { status: 'ACTIVE_VERIFIED' };
+    if (isFemalePage) {
+      whereClause.gender = 'FEMALE';
+    }
+
+    let dbTutors = await prisma.tutorProfile.findMany({
+      where: whereClause,
       include: { user: true },
       take: 6,
     });
+
+    // In-memory subject matching if multiple verified tutors exist
+    if (dbTutors.length > 0 && !isFemalePage) {
+      let filtered = dbTutors;
+      if (isMaths) filtered = dbTutors.filter(t => (t.subjects || '').toLowerCase().includes('math'));
+      else if (isPhysics) filtered = dbTutors.filter(t => (t.subjects || '').toLowerCase().includes('physic'));
+      else if (isChemistry) filtered = dbTutors.filter(t => (t.subjects || '').toLowerCase().includes('chem'));
+      else if (isBiology) filtered = dbTutors.filter(t => (t.subjects || '').toLowerCase().includes('bio'));
+      else if (isCS) filtered = dbTutors.filter(t => (t.subjects || '').toLowerCase().includes('python') || (t.subjects || '').toLowerCase().includes('computer'));
+      else if (isCommerce) filtered = dbTutors.filter(t => (t.subjects || '').toLowerCase().includes('account') || (t.subjects || '').toLowerCase().includes('econ') || (t.subjects || '').toLowerCase().includes('commerce'));
+      else if (isPrimary) filtered = dbTutors.filter(t => (t.classes || '').toLowerCase().includes('class 1') || (t.classes || '').toLowerCase().includes('primary'));
+
+      if (filtered.length > 0) {
+        dbTutors = filtered;
+      }
+    }
 
     if (dbTutors && dbTutors.length > 0) {
       dynamicTutors = dbTutors.map((tp: any) => {
@@ -124,7 +154,7 @@ export default async function SubjectPage({ params }: PageProps) {
       });
     }
   } catch {
-    // DB query fallback to baseline
+    // DB query fallback
   }
 
   // Schema.org Structured Data (Course, FAQPage & BreadcrumbList)

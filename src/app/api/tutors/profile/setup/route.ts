@@ -110,6 +110,7 @@ export async function POST(req: Request) {
     const profileUpdateData: any = {};
     if (teachingMode !== undefined) profileUpdateData.teachingMode = teachingMode;
     if (highestDegree !== undefined) profileUpdateData.highestDegree = highestDegree;
+    if (body.gender !== undefined) profileUpdateData.gender = body.gender;
     if (qualifications !== undefined) profileUpdateData.qualifications = typeof qualifications === 'string' ? qualifications : JSON.stringify(qualifications);
     if (experiences !== undefined) profileUpdateData.experiences = typeof experiences === 'string' ? experiences : JSON.stringify(experiences);
     if (experienceYears !== undefined) profileUpdateData.experienceYears = Number(experienceYears);

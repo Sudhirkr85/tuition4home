@@ -143,7 +143,7 @@ export default function Footer() {
               <span>Home Tutors in Gurgaon</span>
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem', fontSize: '0.85rem' }}>
-              {GURGAON_LOCALITIES.slice(0, 10).map((loc) => (
+              {GURGAON_LOCALITIES.slice(0, 14).map((loc) => (
                 <Link
                   key={loc.slug}
                   href={`/home-tutors-in-gurgaon/${loc.slug}`}
@@ -163,11 +163,15 @@ export default function Footer() {
               <span>Subject Tuitions (Gurgaon)</span>
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.85rem' }}>
+              <Link href="/tuition/female-home-tutors-in-gurgaon" style={{ color: '#FDE047', fontWeight: 700 }} className="hover-link">• Verified Female Lady Tutors</Link>
+              <Link href="/tuition/primary-school-home-tutor-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• Primary School (Class 1-5 Foundation)</Link>
               <Link href="/tuition/maths-home-tutor-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• Mathematics Home Tutors</Link>
               <Link href="/tuition/physics-home-tutor-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• Physics & NEET/JEE Tutors</Link>
               <Link href="/tuition/chemistry-home-tutor-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• Chemistry (Organic & Inorganic)</Link>
+              <Link href="/tuition/biology-neet-home-tutor-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• Biology & NEET Medical Tutors</Link>
               <Link href="/tuition/computer-science-python-tutor-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• Python, CS & Coding (SSSAM Academy)</Link>
               <Link href="/tuition/accounts-commerce-home-tutor-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• Accounts & Commerce Tutors</Link>
+              <Link href="/tuition/economics-business-studies-tutor-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• Economics & Business Studies</Link>
               <Link href="/tuition/ib-igcse-tutors-in-gurgaon" style={{ color: '#CBD5E1' }} className="hover-link">• IB & Cambridge IGCSE Elite Mentors</Link>
             </div>
           </div>

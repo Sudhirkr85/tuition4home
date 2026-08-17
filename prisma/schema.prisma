@@ -83,6 +83,7 @@ model TutorProfile {
   bio               String?      @db.Text
   experienceYears   Int          @default(0)
   highestDegree     String?
+  gender            String?      // "FEMALE" | "MALE" | "OTHER"
   qualifications    String?      @db.Text // JSON array: [{ id, degree, institute, year, grade }]
   experiences       String?      @db.Text // JSON array: [{ id, role, organization, startYear, endYear, isCurrent, description }]
   teachingMode      TeachingMode @default(BOTH) // OFFLINE_HOME | ONLINE_LIVE | BOTH

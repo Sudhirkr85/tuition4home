@@ -105,6 +105,7 @@ export default function TutorProfileDashboard() {
   const [reviewLink, setReviewLink] = useState('');
   const [linkCopied, setLinkCopied] = useState(false);
   const [bio, setBio] = useState('');
+  const [gender, setGender] = useState<string>('FEMALE');
   const [highestDegree, setHighestDegree] = useState('');
   const [experienceYears, setExperienceYears] = useState(0);
   const [teachingMode, setTeachingMode] = useState<'BOTH' | 'OFFLINE_HOME' | 'ONLINE_LIVE'>('BOTH');
@@ -404,6 +405,7 @@ export default function TutorProfileDashboard() {
           }
           if (prof.isAvailable !== undefined) setIsAvailable(Boolean(prof.isAvailable));
           setBio(prof.bio || '');
+          setGender(prof.gender || 'FEMALE');
           setHighestDegree(prof.highestDegree || '');
           setExperienceYears(prof.experienceYears || 0);
           setTeachingMode(prof.teachingMode || 'BOTH');
@@ -621,6 +623,7 @@ export default function TutorProfileDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: activeUserId,
+          gender,
           highestDegree,
           qualifications,
           experiences,
@@ -2364,6 +2367,53 @@ export default function TutorProfileDashboard() {
                       <Camera size={14} />
                       <span>{avatarUrl ? 'Change Photo' : 'Upload Photo'}</span>
                     </button>
+                  </div>
+
+                  {/* Gender Selector Tile */}
+                  <div style={{
+                    padding: '1.15rem 1.35rem',
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '16px',
+                    border: '1.5px solid var(--border-hairline)'
+                  }}>
+                    <strong style={{ display: 'block', fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 750, marginBottom: '0.25rem' }}>
+                      Gender / Identity Category
+                    </strong>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.75rem' }}>
+                      Helps match you with Gurgaon parents requesting Verified Lady Tutors or Home Tutors.
+                    </span>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
+                      {[
+                        { id: 'FEMALE', label: 'Female 👩', desc: 'Lady Educator' },
+                        { id: 'MALE', label: 'Male 👨', desc: 'Male Educator' },
+                        { id: 'OTHER', label: 'Other 👤', desc: 'Educator' },
+                      ].map((g) => {
+                        const isSelected = gender === g.id;
+                        return (
+                          <button
+                            key={g.id}
+                            type="button"
+                            onClick={() => setGender(g.id)}
+                            style={{
+                              padding: '0.75rem 0.65rem',
+                              borderRadius: '12px',
+                              border: `2px solid ${isSelected ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
+                              backgroundColor: isSelected ? 'var(--bg-app)' : '#FFFFFF',
+                              color: isSelected ? 'var(--brand-teal)' : 'var(--text-main)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '0.2rem',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            <div style={{ fontWeight: 800, fontSize: '0.88rem' }}>{g.label}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{g.desc}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Education & Qualifications Section */}

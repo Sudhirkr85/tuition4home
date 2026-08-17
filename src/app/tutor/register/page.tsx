@@ -105,6 +105,7 @@ export default function TutorRegisterLoginPage() {
 
   // Profile Wizard Form State
   const [teachingMode, setTeachingMode] = useState<'BOTH' | 'OFFLINE_HOME' | 'ONLINE_LIVE'>('BOTH');
+  const [gender, setGender] = useState<'FEMALE' | 'MALE' | 'OTHER'>('FEMALE');
   const [degree, setDegree] = useState('');
   const [specialization, setSpecialization] = useState('');
   const [college, setCollege] = useState('');
@@ -775,6 +776,7 @@ export default function TutorRegisterLoginPage() {
         body: JSON.stringify({
           userId,
           teachingMode,
+          gender,
           highestDegree: degree.trim(),
           qualifications: degree.trim() ? [{
             id: '1',
@@ -1885,6 +1887,47 @@ export default function TutorRegisterLoginPage() {
                                 <IconComponent size={22} color={isSelected ? 'var(--brand-teal)' : 'var(--text-muted)'} />
                                 <div style={{ fontWeight: 800, fontSize: '0.88rem' }}>{m.title}</div>
                                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{m.desc}</div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <label className="form-label">
+                          Gender <span style={{ color: '#DC2626' }}>*</span>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 400, marginLeft: '0.5rem' }}>
+                            (Helps us match you with families requesting Lady Tutors or Home Tutors)
+                          </span>
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
+                          {[
+                            { id: 'FEMALE', label: 'Female 👩', desc: 'Lady Educator' },
+                            { id: 'MALE', label: 'Male 👨', desc: 'Male Educator' },
+                            { id: 'OTHER', label: 'Other 👤', desc: 'Educator' },
+                          ].map((g) => {
+                            const isSelected = gender === g.id;
+                            return (
+                              <button
+                                key={g.id}
+                                type="button"
+                                onClick={() => setGender(g.id as any)}
+                                style={{
+                                  padding: '0.85rem 0.75rem',
+                                  borderRadius: '12px',
+                                  border: `2px solid ${isSelected ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
+                                  backgroundColor: isSelected ? 'var(--bg-app)' : '#FFFFFF',
+                                  color: isSelected ? 'var(--brand-teal)' : 'var(--text-main)',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  gap: '0.2rem',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                }}
+                              >
+                                <div style={{ fontWeight: 800, fontSize: '0.92rem' }}>{g.label}</div>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{g.desc}</div>
                               </button>
                             );
                           })}
