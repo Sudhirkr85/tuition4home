@@ -32,12 +32,12 @@ export default function Footer() {
                 src="/tuitionforhome.webp"
                 alt="TuitionForHome Logo"
                 style={{
-                  height: '42px',
-                  width: 'auto',
-                  objectFit: 'contain',
+                  height: '48px',
+                  width: '48px',
+                  objectFit: 'cover',
                   backgroundColor: '#FFFFFF',
-                  padding: '4px 8px',
-                  borderRadius: '8px',
+                  padding: '0',
+                  borderRadius: '50%',
                 }}
               />
             </div>

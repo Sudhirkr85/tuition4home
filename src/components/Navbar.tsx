@@ -343,7 +343,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
           <img
             src="/tuitionforhome.webp"
             alt="TuitionForHome Logo"
-            style={{ height: '38px', width: 'auto', objectFit: 'contain', borderRadius: '6px' }}
+            style={{ height: '48px', width: '48px', objectFit: 'cover', borderRadius: '50%' }}
           />
         </Link>
 
