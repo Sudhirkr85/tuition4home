@@ -160,54 +160,11 @@ export default function HomePage() {
     setBookingOpen(true);
   };
 
-  // LocalBusiness Schema JSON-LD Markup
-  const localBusinessSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    name: 'TuitionForHome',
-    alternateName: 'SSSAM Academy Tuition Services',
-    url: 'https://tuitionforhome.com',
-    logo: 'https://tuitionforhome.com/logo.webp',
-    image: 'https://tuitionforhome.com/hero_young_teacher_girl_student_cutout.webp',
-    description: 'Verified home tutors in Gurgaon and online tutors for CBSE, ICSE, IB & Coding by SSSAM Academy.',
-    telephone: '+91 92170 31899',
-    email: 'info@tuitionforhome.com',
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: 'M24 Ground Floor, Old DLF Colony, Sector 14',
-      addressLocality: 'Gurugram',
-      addressRegion: 'Haryana',
-      postalCode: '122001',
-      addressCountry: 'IN',
-    },
-    geo: {
-      '@type': 'GeoCoordinates',
-      latitude: 28.4703,
-      longitude: 77.0418,
-    },
-    openingHoursSpecification: {
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-      opens: '09:00',
-      closes: '21:00',
-    },
-    priceRange: '₹₹',
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.95',
-      reviewCount: '500',
-      bestRating: '5',
-      worstRating: '1',
-    },
-  };
+
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)' }}>
-      {/* Inject LocalBusiness JSON-LD Schema Markup */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
-      />
+
 
       <Navbar onOpenBooking={() => handleOpenBooking()} />
 

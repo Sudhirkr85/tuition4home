@@ -71,6 +71,16 @@ export default async function SubjectPage({ params }: PageProps) {
   const item = SUBJECT_SEO_PAGES.find((s) => s.slug === params.subject);
   if (!item) notFound();
 
+  let totalVerifiedCount = 0;
+  try {
+    totalVerifiedCount = await prisma.tutorProfile.count({
+      where: { status: 'ACTIVE_VERIFIED' },
+    });
+  } catch {
+    totalVerifiedCount = 0;
+  }
+  const displayTutorCount = totalVerifiedCount > 0 ? totalVerifiedCount : 25;
+
   // Fetch live verified tutors from Prisma MySQL with dynamic subject/gender filtering
   let dynamicTutors: MockTutor[] = [];
   try {

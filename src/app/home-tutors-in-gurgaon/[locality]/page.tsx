@@ -61,6 +61,16 @@ export default async function LocalityPage({ params }: PageProps) {
   const loc = GURGAON_LOCALITIES.find((l) => l.slug === params.locality);
   if (!loc) notFound();
 
+  let totalVerifiedCount = 0;
+  try {
+    totalVerifiedCount = await prisma.tutorProfile.count({
+      where: { status: 'ACTIVE_VERIFIED' },
+    });
+  } catch {
+    totalVerifiedCount = 0;
+  }
+  const displayTutorCount = totalVerifiedCount > 0 ? totalVerifiedCount : 25;
+
   // Fetch live verified tutors from Prisma MySQL
   let dynamicTutors: MockTutor[] = [];
   try {
@@ -230,7 +240,7 @@ export default async function LocalityPage({ params }: PageProps) {
                   Best Home Tutors in <span className="text-gradient">{loc.name}, Gurgaon</span>
                 </h1>
                 <p style={{ fontSize: '1.05rem', color: 'var(--color-slate-600)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-                  Serving residential communities around <strong>{loc.landmark}</strong>. Connect with {loc.activeTutorsCount}+ verified tutors for CBSE, ICSE, IB, and Cambridge boards with <strong>100% Replacement Guarantee</strong>.
+                  Serving residential communities around <strong>{loc.landmark}</strong>. Connect with {displayTutorCount}+ verified tutors for CBSE, ICSE, IB, and Cambridge boards with <strong>100% Replacement Guarantee</strong>.
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '2rem', fontSize: '0.9rem', color: 'var(--color-slate-700)' }}>

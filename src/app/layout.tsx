@@ -38,9 +38,7 @@ export const metadata: Metadata = {
     shortcut: '/logo.webp',
     apple: '/logo.png',
   },
-  alternates: {
-    canonical: '/',
-  },
+
   openGraph: {
     title: 'TuitionForHome — Verified Home & Online Tutors in Gurgaon',
     description:
@@ -155,6 +153,13 @@ export default function RootLayout({
               priceRange: '₹₹ - ₹₹₹',
               currenciesAccepted: 'INR',
               paymentAccepted: 'Cash, UPI, Net Banking, Credit Card',
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: '4.95',
+                reviewCount: '500',
+                bestRating: '5',
+                worstRating: '1',
+              },
               sameAs: [
                 'https://www.instagram.com/tuition4home',
                 'https://www.facebook.com/tuition4home',
