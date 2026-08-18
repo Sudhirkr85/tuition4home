@@ -2363,36 +2363,83 @@ export default function TutorRegisterLoginPage() {
             <div className="container" style={{ maxWidth: '780px' }}>
               <div className="apple-card" style={{ padding: 0, overflow: 'hidden' }}>
                 
-                {/* Wizard Title Bar */}
-                <div id="wizard-form-top" tabIndex={-1} style={{ backgroundColor: '#0F172A', color: '#FFFFFF', padding: '1.5rem 2rem', outline: 'none' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                    <span className="badge" style={{ backgroundColor: 'var(--brand-teal-light)', color: 'var(--brand-teal)', border: '1px solid var(--border-teal)' }}>
-                      🛠️ COMPLETE PROFILE SETUP
+                {/* Wizard Title Bar with Clean Modern Light Theme */}
+                <div
+                  id="wizard-form-top"
+                  tabIndex={-1}
+                  style={{
+                    background: 'linear-gradient(135deg, #F8FAFC 0%, #F0FDF4 100%)',
+                    borderBottom: '1px solid #E2E8F0',
+                    padding: '1.4rem 1.75rem',
+                    outline: 'none',
+                    position: 'relative',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.55rem' }}>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      backgroundColor: '#ECFDF5',
+                      color: '#065F46',
+                      border: '1px solid #A7F3D0',
+                      padding: '0.22rem 0.65rem',
+                      borderRadius: '999px',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      letterSpacing: '0.4px',
+                      textTransform: 'uppercase',
+                    }}>
+                      <Sparkles size={12} color="#059669" />
+                      <span>Tutor Onboarding</span>
                     </span>
-                    <span style={{ fontSize: '0.8rem', color: '#94A3B8', fontWeight: 700 }}>
+                    <span style={{
+                      fontSize: '0.76rem',
+                      color: '#334155',
+                      fontWeight: 700,
+                      backgroundColor: '#FFFFFF',
+                      padding: '0.2rem 0.65rem',
+                      borderRadius: '999px',
+                      border: '1px solid #CBD5E1',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                    }}>
                       Step {currentStep} of {totalSteps}
                     </span>
                   </div>
-                  <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#FFFFFF' }}>
-                    Welcome {userName}, let's build your tutor badge!
+
+                  <h2 style={{
+                    fontSize: '1.3rem',
+                    fontWeight: 800,
+                    color: '#0F172A',
+                    letterSpacing: '-0.2px',
+                    marginBottom: '0.35rem',
+                  }}>
+                    Welcome {userName || 'Tutor'}, <span style={{ color: '#0F6E56' }}>let&apos;s set up your profile!</span>
                   </h2>
-                  <div style={{ fontSize: '0.82rem', color: '#93C5FD', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.35rem' }}>
-                    <ShieldCheck size={14} color="#34D399" />
-                    <span>Your information is protected by SSSAM Academy encryption protocol.</span>
+
+                  <div style={{
+                    fontSize: '0.76rem',
+                    color: '#64748B',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                  }}>
+                    <ShieldCheck size={14} color="#059669" style={{ flexShrink: 0 }} />
+                    <span>256-Bit Encrypted &amp; Verified &bull; Tuition For Home</span>
                   </div>
                 </div>
 
-                {/* Progress Slider Indicator */}
-                <div style={{ height: '5px', backgroundColor: 'var(--border-hairline)' }}>
+                {/* Animated Gradient Progress Bar */}
+                <div style={{ height: '4px', backgroundColor: '#E2E8F0', position: 'relative', overflow: 'hidden' }}>
                   <div style={{
                     height: '100%',
                     width: `${(currentStep / totalSteps) * 100}%`,
-                    backgroundColor: 'var(--brand-teal)',
-                    transition: 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                    background: 'linear-gradient(90deg, #0F6E56 0%, #10B981 100%)',
+                    transition: 'width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   }} />
                 </div>
 
-                <div style={{ padding: '2.5rem' }}>
+                <div style={{ padding: '1.75rem 1.5rem' }}>
                   
                   {/* STEP 1: Basic Professional Info */}
                   {currentStep === 1 && (
@@ -3905,249 +3952,217 @@ export default function TutorRegisterLoginPage() {
 
                   {/* STEP 4: Pricing & Rates */}
                   {currentStep === 4 && (
-<div>
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.45rem' }}>
-                        Step 4: Expected Hourly Rates (Price Ranges)
-                      </h3>
-                      <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                        Set your expected hourly price range. Highly specialized and foreign language subjects can be priced higher.
-                      </p>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        
-                        {/* Home Visit Rates */}
-                        {(teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') && (
-                          <div style={{
-                            backgroundColor: '#FFFFFF',
-                            border: '1.5px solid var(--border-hairline)',
-                            borderRadius: '16px',
-                            padding: '1.25rem',
-                            boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--brand-teal)' }}>
-                              <Home size={18} />
-                              <strong style={{ fontSize: '0.95rem' }}>Home Visit Tuition Fee Range</strong>
-                            </div>
-                            
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                              <div className="form-group">
-                                <label className="form-label">
-                                  Minimum Expected (per hour) <span style={{ color: '#DC2626' }}>*</span>
-                                </label>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                  <span style={{ padding: '0.75rem 0.9rem', backgroundColor: '#F1F5F9', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '10px 0 0 10px', fontWeight: 700 }}>₹</span>
-                                  <input
-                                    id="field-hourlyRateHomeMin"
-                                    type="number"
-                                    min={50}
-                                    max={10000}
-                                    value={hourlyRateHomeMin || ''}
-                                    onChange={(e) => {
-                                      setHourlyRateHomeMin(Number(e.target.value));
-                                      if (wizardErrorField === 'field-hourlyRateHomeMin') setWizardErrorField(null);
-                                    }}
-                                    className="form-control"
-                                    style={{
-                                      borderRadius: '0 10px 10px 0',
-                                      borderColor: wizardErrorField === 'field-hourlyRateHomeMin' ? '#EF4444' : undefined,
-                                      boxShadow: wizardErrorField === 'field-hourlyRateHomeMin' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
-                                    }}
-                                    placeholder="e.g. 600"
-                                    required
-                                  />
-                                </div>
-                              </div>
-                              <div className="form-group">
-                                <label className="form-label">
-                                  Maximum Expected (per hour) <span style={{ color: '#DC2626' }}>*</span>
-                                </label>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                  <span style={{ padding: '0.75rem 0.9rem', backgroundColor: '#F1F5F9', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '10px 0 0 10px', fontWeight: 700 }}>₹</span>
-                                  <input
-                                    id="field-hourlyRateHomeMax"
-                                    type="number"
-                                    min={hourlyRateHomeMin || 50}
-                                    max={10000}
-                                    value={hourlyRateHomeMax || ''}
-                                    onChange={(e) => {
-                                      setHourlyRateHomeMax(Number(e.target.value));
-                                      if (wizardErrorField === 'field-hourlyRateHomeMax') setWizardErrorField(null);
-                                    }}
-                                    className="form-control"
-                                    style={{
-                                      borderRadius: '0 10px 10px 0',
-                                      borderColor: wizardErrorField === 'field-hourlyRateHomeMax' ? '#EF4444' : undefined,
-                                      boxShadow: wizardErrorField === 'field-hourlyRateHomeMax' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
-                                    }}
-                                    placeholder="e.g. 1200"
-                                    required
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Online Rates */}
-                        {(teachingMode === 'BOTH' || teachingMode === 'ONLINE_LIVE') && (
-                          <div style={{
-                            backgroundColor: '#FFFFFF',
-                            border: '1.5px solid var(--border-hairline)',
-                            borderRadius: '16px',
-                            padding: '1.25rem',
-                            boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--brand-teal)' }}>
-                              <Video size={18} />
-                              <strong style={{ fontSize: '0.95rem' }}>Online Live 1-on-1 Tuition Fee Range</strong>
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                              <div className="form-group">
-                                <label className="form-label">
-                                  Minimum Expected (per hour) <span style={{ color: '#DC2626' }}>*</span>
-                                </label>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                  <span style={{ padding: '0.75rem 0.9rem', backgroundColor: '#F1F5F9', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '10px 0 0 10px', fontWeight: 700 }}>₹</span>
-                                  <input
-                                    id="field-hourlyRateOnlineMin"
-                                    type="number"
-                                    min={50}
-                                    max={10000}
-                                    value={hourlyRateOnlineMin || ''}
-                                    onChange={(e) => {
-                                      setHourlyRateOnlineMin(Number(e.target.value));
-                                      if (wizardErrorField === 'field-hourlyRateOnlineMin') setWizardErrorField(null);
-                                    }}
-                                    className="form-control"
-                                    style={{
-                                      borderRadius: '0 10px 10px 0',
-                                      borderColor: wizardErrorField === 'field-hourlyRateOnlineMin' ? '#EF4444' : undefined,
-                                      boxShadow: wizardErrorField === 'field-hourlyRateOnlineMin' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
-                                    }}
-                                    placeholder="e.g. 500"
-                                    required
-                                  />
-                                </div>
-                              </div>
-                              <div className="form-group">
-                                <label className="form-label">
-                                  Maximum Expected (per hour) <span style={{ color: '#DC2626' }}>*</span>
-                                </label>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                  <span style={{ padding: '0.75rem 0.9rem', backgroundColor: '#F1F5F9', border: '1.5px solid var(--border-hairline)', borderRight: 'none', borderRadius: '10px 0 0 10px', fontWeight: 700 }}>₹</span>
-                                  <input
-                                    id="field-hourlyRateOnlineMax"
-                                    type="number"
-                                    min={hourlyRateOnlineMin || 50}
-                                    max={10000}
-                                    value={hourlyRateOnlineMax || ''}
-                                    onChange={(e) => {
-                                      setHourlyRateOnlineMax(Number(e.target.value));
-                                      if (wizardErrorField === 'field-hourlyRateOnlineMax') setWizardErrorField(null);
-                                    }}
-                                    className="form-control"
-                                    style={{
-                                      borderRadius: '0 10px 10px 0',
-                                      borderColor: wizardErrorField === 'field-hourlyRateOnlineMax' ? '#EF4444' : undefined,
-                                      boxShadow: wizardErrorField === 'field-hourlyRateOnlineMax' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
-                                    }}
-                                    placeholder="e.g. 1000"
-                                    required
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Animated Projected Monthly Earnings Card (Home Visit & Online Breakdown) */}
-                        {(() => {
-                          const showHome = teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME';
-                          const showOnline = teachingMode === 'BOTH' || teachingMode === 'ONLINE_LIVE';
-                          const homeMinMonthly = (hourlyRateHomeMin || 0) * 12 * 4;
-                          const homeMaxMonthly = (hourlyRateHomeMax || 0) * 16 * 4;
-                          const onlineMinMonthly = (hourlyRateOnlineMin || 0) * 12 * 4;
-                          const onlineMaxMonthly = (hourlyRateOnlineMax || 0) * 16 * 4;
-
-                          return (
-                            <div style={{
-                              background: 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)',
-                              borderRadius: '16px',
-                              padding: '1.2rem 1.4rem',
-                              color: '#FFFFFF',
-                              boxShadow: '0 8px 24px rgba(15, 110, 86, 0.25)',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '0.85rem',
-                              transition: 'all 0.3s ease',
-                            }}>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.18)', paddingBottom: '0.6rem' }}>
-                                <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.5px', opacity: 0.9, fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                  <span>💰 Projected Monthly Earnings (12-16 hrs/week)</span>
-                                </div>
-                                <div style={{
-                                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                                  padding: '0.25rem 0.7rem',
-                                  borderRadius: '999px',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 700,
-                                  backdropFilter: 'blur(4px)',
-                                }}>
-                                  ⚡ Real-time Estimate
-                                </div>
-                              </div>
-
-                              <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: showHome && showOnline ? 'repeat(auto-fit, minmax(200px, 1fr))' : '1fr',
-                                gap: '0.85rem',
-                              }}>
-                                {showHome && (
-                                  <div style={{
-                                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                                    borderRadius: '12px',
-                                    padding: '0.85rem 1rem',
-                                    border: '1px solid rgba(255, 255, 255, 0.18)',
-                                  }}>
-                                    <div style={{ fontSize: '0.74rem', opacity: 0.9, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                      <span>🏡 Home Visit Tuition</span>
-                                    </div>
-                                    <div style={{ fontSize: '1.2rem', fontWeight: 800, marginTop: '4px', letterSpacing: '-0.2px' }}>
-                                      ₹{homeMinMonthly.toLocaleString('en-IN')} – ₹{homeMaxMonthly.toLocaleString('en-IN')}
-                                      <span style={{ fontSize: '0.75rem', fontWeight: 500, opacity: 0.85, marginLeft: '4px' }}>/ month</span>
-                                    </div>
-                                    <div style={{ fontSize: '0.7rem', opacity: 0.8, marginTop: '2px' }}>
-                                      Based on ₹{hourlyRateHomeMin || 0} - ₹{hourlyRateHomeMax || 0}/hr
-                                    </div>
-                                  </div>
-                                )}
-
-                                {showOnline && (
-                                  <div style={{
-                                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                                    borderRadius: '12px',
-                                    padding: '0.85rem 1rem',
-                                    border: '1px solid rgba(255, 255, 255, 0.18)',
-                                  }}>
-                                    <div style={{ fontSize: '0.74rem', opacity: 0.9, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                      <span>💻 Online Live 1-on-1</span>
-                                    </div>
-                                    <div style={{ fontSize: '1.2rem', fontWeight: 800, marginTop: '4px', letterSpacing: '-0.2px' }}>
-                                      ₹{onlineMinMonthly.toLocaleString('en-IN')} – ₹{onlineMaxMonthly.toLocaleString('en-IN')}
-                                      <span style={{ fontSize: '0.75rem', fontWeight: 500, opacity: 0.85, marginLeft: '4px' }}>/ month</span>
-                                    </div>
-                                    <div style={{ fontSize: '0.7rem', opacity: 0.8, marginTop: '2px' }}>
-                                      Based on ₹{hourlyRateOnlineMin || 0} - ₹{hourlyRateOnlineMax || 0}/hr
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })()}
-
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                      <div>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.35rem' }}>
+                          Step 4: Expected Hourly Rates
+                        </h3>
+                        <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+                          Set your expected hourly price range. You can adjust this anytime later.
+                        </p>
                       </div>
+
+                      {/* Home Visit Rates - Compact Inline Range */}
+                      {(teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') && (
+                        <div style={{
+                          backgroundColor: '#FFFFFF',
+                          border: '1.5px solid #E2E8F0',
+                          borderRadius: '14px',
+                          padding: '0.85rem 1rem',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, fontSize: '0.88rem', color: '#0F172A' }}>
+                              <Home size={16} color="var(--brand-teal)" />
+                              <span>Home Visit Hourly Fee <span style={{ color: '#DC2626' }}>*</span></span>
+                            </div>
+                            <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>per student / hr</span>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ flex: 1, position: 'relative' }}>
+                              <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748B', fontSize: '0.85rem' }}>₹</span>
+                              <input
+                                id="field-hourlyRateHomeMin"
+                                type="number"
+                                min={50}
+                                max={10000}
+                                value={hourlyRateHomeMin || ''}
+                                onChange={(e) => {
+                                  setHourlyRateHomeMin(Number(e.target.value));
+                                  if (wizardErrorField === 'field-hourlyRateHomeMin') setWizardErrorField(null);
+                                }}
+                                className="form-control"
+                                style={{
+                                  paddingLeft: '1.8rem',
+                                  borderRadius: '10px',
+                                  fontWeight: 700,
+                                  fontSize: '0.9rem',
+                                  height: '42px',
+                                  borderColor: wizardErrorField === 'field-hourlyRateHomeMin' ? '#EF4444' : undefined,
+                                  boxShadow: wizardErrorField === 'field-hourlyRateHomeMin' ? '0 0 0 3px rgba(239, 68, 68, 0.2)' : undefined,
+                                }}
+                                placeholder="Min (e.g. 600)"
+                                required
+                              />
+                            </div>
+
+                            <span style={{ color: '#94A3B8', fontWeight: 700, fontSize: '0.82rem' }}>to</span>
+
+                            <div style={{ flex: 1, position: 'relative' }}>
+                              <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748B', fontSize: '0.85rem' }}>₹</span>
+                              <input
+                                id="field-hourlyRateHomeMax"
+                                type="number"
+                                min={hourlyRateHomeMin || 50}
+                                max={10000}
+                                value={hourlyRateHomeMax || ''}
+                                onChange={(e) => {
+                                  setHourlyRateHomeMax(Number(e.target.value));
+                                  if (wizardErrorField === 'field-hourlyRateHomeMax') setWizardErrorField(null);
+                                }}
+                                className="form-control"
+                                style={{
+                                  paddingLeft: '1.8rem',
+                                  borderRadius: '10px',
+                                  fontWeight: 700,
+                                  fontSize: '0.9rem',
+                                  height: '42px',
+                                  borderColor: wizardErrorField === 'field-hourlyRateHomeMax' ? '#EF4444' : undefined,
+                                  boxShadow: wizardErrorField === 'field-hourlyRateHomeMax' ? '0 0 0 3px rgba(239, 68, 68, 0.2)' : undefined,
+                                }}
+                                placeholder="Max (e.g. 1200)"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Online Rates - Compact Inline Range */}
+                      {(teachingMode === 'BOTH' || teachingMode === 'ONLINE_LIVE') && (
+                        <div style={{
+                          backgroundColor: '#FFFFFF',
+                          border: '1.5px solid #E2E8F0',
+                          borderRadius: '14px',
+                          padding: '0.85rem 1rem',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, fontSize: '0.88rem', color: '#0F172A' }}>
+                              <Video size={16} color="var(--brand-teal)" />
+                              <span>Online Live 1-on-1 Hourly Fee <span style={{ color: '#DC2626' }}>*</span></span>
+                            </div>
+                            <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>per student / hr</span>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ flex: 1, position: 'relative' }}>
+                              <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748B', fontSize: '0.85rem' }}>₹</span>
+                              <input
+                                id="field-hourlyRateOnlineMin"
+                                type="number"
+                                min={50}
+                                max={10000}
+                                value={hourlyRateOnlineMin || ''}
+                                onChange={(e) => {
+                                  setHourlyRateOnlineMin(Number(e.target.value));
+                                  if (wizardErrorField === 'field-hourlyRateOnlineMin') setWizardErrorField(null);
+                                }}
+                                className="form-control"
+                                style={{
+                                  paddingLeft: '1.8rem',
+                                  borderRadius: '10px',
+                                  fontWeight: 700,
+                                  fontSize: '0.9rem',
+                                  height: '42px',
+                                  borderColor: wizardErrorField === 'field-hourlyRateOnlineMin' ? '#EF4444' : undefined,
+                                  boxShadow: wizardErrorField === 'field-hourlyRateOnlineMin' ? '0 0 0 3px rgba(239, 68, 68, 0.2)' : undefined,
+                                }}
+                                placeholder="Min (e.g. 500)"
+                                required
+                              />
+                            </div>
+
+                            <span style={{ color: '#94A3B8', fontWeight: 700, fontSize: '0.82rem' }}>to</span>
+
+                            <div style={{ flex: 1, position: 'relative' }}>
+                              <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748B', fontSize: '0.85rem' }}>₹</span>
+                              <input
+                                id="field-hourlyRateOnlineMax"
+                                type="number"
+                                min={hourlyRateOnlineMin || 50}
+                                max={10000}
+                                value={hourlyRateOnlineMax || ''}
+                                onChange={(e) => {
+                                  setHourlyRateOnlineMax(Number(e.target.value));
+                                  if (wizardErrorField === 'field-hourlyRateOnlineMax') setWizardErrorField(null);
+                                }}
+                                className="form-control"
+                                style={{
+                                  paddingLeft: '1.8rem',
+                                  borderRadius: '10px',
+                                  fontWeight: 700,
+                                  fontSize: '0.9rem',
+                                  height: '42px',
+                                  borderColor: wizardErrorField === 'field-hourlyRateOnlineMax' ? '#EF4444' : undefined,
+                                  boxShadow: wizardErrorField === 'field-hourlyRateOnlineMax' ? '0 0 0 3px rgba(239, 68, 68, 0.2)' : undefined,
+                                }}
+                                placeholder="Max (e.g. 1000)"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Compact Projected Earnings Strip */}
+                      {(() => {
+                        const showHome = teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME';
+                        const showOnline = teachingMode === 'BOTH' || teachingMode === 'ONLINE_LIVE';
+                        const primaryMin = showHome ? (hourlyRateHomeMin || 0) : (hourlyRateOnlineMin || 0);
+                        const primaryMax = showHome ? (hourlyRateHomeMax || 0) : (hourlyRateOnlineMax || 0);
+                        const minMonthly = primaryMin * 12 * 4;
+                        const maxMonthly = primaryMax * 16 * 4;
+
+                        return (
+                          <div style={{
+                            background: 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)',
+                            borderRadius: '12px',
+                            padding: '0.75rem 1rem',
+                            color: '#FFFFFF',
+                            boxShadow: '0 4px 14px rgba(15, 110, 86, 0.2)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '0.5rem',
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ fontSize: '1.1rem' }}>💰</span>
+                              <div>
+                                <div style={{ fontSize: '0.7rem', opacity: 0.9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                                  Est. Monthly Earnings (12-16 hrs/week)
+                                </div>
+                                <div style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '-0.2px' }}>
+                                  ₹{minMonthly.toLocaleString('en-IN')} – ₹{maxMonthly.toLocaleString('en-IN')}
+                                  <span style={{ fontSize: '0.74rem', fontWeight: 500, opacity: 0.85, marginLeft: '3px' }}>/ month</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{
+                              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                              padding: '0.2rem 0.55rem',
+                              borderRadius: '999px',
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              backdropFilter: 'blur(4px)',
+                            }}>
+                              ⚡ Real-time
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 
@@ -4216,70 +4231,37 @@ export default function TutorRegisterLoginPage() {
                         </div>
                       </div>
 
-                      {/* Intro Video */}
-                      <div className="form-group">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.45rem' }}>
+                      {/* Intro Video (Optional) */}
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.5rem' }}>
                           <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem' }}>
-                            <span>Introductory Video (60–90s)</span>
+                            <span style={{ fontWeight: 700 }}>Introductory Video (60–90s)</span>
                             <span style={{ color: '#0F6E56', fontWeight: 800, fontSize: '0.72rem', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.12rem 0.45rem', borderRadius: '999px' }}>
-                              ⚡ Recommended
+                              ⚡ 3x More Callbacks
                             </span>
                           </label>
-                          <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600, backgroundColor: '#F1F5F9', padding: '0.15rem 0.45rem', borderRadius: '6px' }}>
+                          <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600, backgroundColor: '#F1F5F9', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
                             Optional to skip
                           </span>
                         </div>
 
-                        {/* Top Tutor Benefits Card */}
-                        <div style={{
-                          background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%)',
-                          border: '1.5px solid #A7F3D0',
-                          borderRadius: '12px',
-                          padding: '0.75rem 0.9rem',
-                          marginBottom: '0.75rem',
-                          boxShadow: '0 2px 6px rgba(15, 110, 86, 0.04)',
-                        }}>
-                          <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#065F46', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <Sparkles size={14} color="#059669" />
-                            <span>Why add an Intro Video?</span>
-                          </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.4rem', fontSize: '0.73rem', color: '#047857' }}>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.35rem' }}>
-                              <span>🚀</span>
-                              <span><strong>3x More Callbacks</strong> — Parents prefer seeing tutors.</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.35rem' }}>
-                              <span>⚡</span>
-                              <span><strong>Fast Approval</strong> — Audit review within 4 hrs.</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.35rem' }}>
-                              <span>💰</span>
-                              <span><strong>Higher Fees</strong> — Justify ₹800–₹1800+/hr.</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.35rem' }}>
-                              <span>⭐</span>
-                              <span><strong>Star Badge</strong> — Top parent search rank.</span>
-                            </div>
-                          </div>
-                        </div>
-                        
                         {/* 2-Column Responsive Video Switcher Buttons */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.45rem', marginBottom: '0.65rem' }}>
                           <button
                             type="button"
                             onClick={() => setIntroVideoSource('link')}
-                            className="btn btn-sm"
+                            className="pill-interactive-btn"
                             style={{
                               backgroundColor: introVideoSource === 'link' ? 'var(--brand-teal)' : '#FFFFFF',
-                              color: introVideoSource === 'link' ? '#FFFFFF' : 'var(--text-main)',
-                              border: `1.5px solid ${introVideoSource === 'link' ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
-                              borderRadius: '8px',
+                              color: introVideoSource === 'link' ? '#FFFFFF' : '#334155',
+                              border: `1.5px solid ${introVideoSource === 'link' ? 'var(--brand-teal)' : '#CBD5E1'}`,
+                              borderRadius: '10px',
                               fontWeight: 700,
-                              fontSize: '0.78rem',
-                              padding: '0.55rem 0.35rem',
-                              justifyContent: 'center',
+                              fontSize: '0.8rem',
+                              padding: '0.6rem 0.35rem',
+                              cursor: 'pointer',
                               textAlign: 'center',
-                              width: '100%',
+                              boxShadow: introVideoSource === 'link' ? '0 2px 8px rgba(15, 110, 86, 0.2)' : 'none',
                             }}
                           >
                             🔗 Paste Video Link
@@ -4287,18 +4269,18 @@ export default function TutorRegisterLoginPage() {
                           <button
                             type="button"
                             onClick={() => setIntroVideoSource('upload')}
-                            className="btn btn-sm"
+                            className="pill-interactive-btn"
                             style={{
                               backgroundColor: introVideoSource === 'upload' ? 'var(--brand-teal)' : '#FFFFFF',
-                              color: introVideoSource === 'upload' ? '#FFFFFF' : 'var(--text-main)',
-                              border: `1.5px solid ${introVideoSource === 'upload' ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
-                              borderRadius: '8px',
+                              color: introVideoSource === 'upload' ? '#FFFFFF' : '#334155',
+                              border: `1.5px solid ${introVideoSource === 'upload' ? 'var(--brand-teal)' : '#CBD5E1'}`,
+                              borderRadius: '10px',
                               fontWeight: 700,
-                              fontSize: '0.78rem',
-                              padding: '0.55rem 0.35rem',
-                              justifyContent: 'center',
+                              fontSize: '0.8rem',
+                              padding: '0.6rem 0.35rem',
+                              cursor: 'pointer',
                               textAlign: 'center',
-                              width: '100%',
+                              boxShadow: introVideoSource === 'upload' ? '0 2px 8px rgba(15, 110, 86, 0.2)' : 'none',
                             }}
                           >
                             📁 Upload Video File
@@ -4309,26 +4291,26 @@ export default function TutorRegisterLoginPage() {
                           <div>
                             <input
                               type="url"
-                              placeholder="https://www.youtube.com/watch?v=... (Or Google Drive link)"
+                              placeholder="Paste YouTube or Google Drive link (e.g. https://youtu.be/...)"
                               value={introVideoUrl.startsWith('data:') ? '' : introVideoUrl}
                               onChange={(e) => setIntroVideoUrl(e.target.value)}
                               className="form-control"
-                              style={{ borderRadius: '10px' }}
+                              style={{ borderRadius: '10px', height: '44px', fontWeight: 600 }}
                             />
                           </div>
                         ) : (
                           <div style={{
-                            padding: '1.1rem',
+                            padding: '1rem',
                             borderRadius: '12px',
-                            border: '1.5px dashed var(--border-hairline)',
+                            border: '1.5px dashed #CBD5E1',
                             backgroundColor: '#F8FAFC',
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '0.5rem',
+                            gap: '0.4rem',
                             alignItems: 'center',
                             textAlign: 'center',
                           }}>
-                            <Video size={28} color="var(--brand-teal)" />
+                            <Video size={24} color="var(--brand-teal)" />
                             <div>
                               <input 
                                 type="file" 
@@ -4337,13 +4319,13 @@ export default function TutorRegisterLoginPage() {
                                 onChange={(e) => handleFileChange(e, 'video')} 
                                 style={{ display: 'none' }} 
                               />
-                              <label htmlFor="video-upload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', borderRadius: '8px' }}>
+                              <label htmlFor="video-upload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', borderRadius: '8px', padding: '0.4rem 0.85rem' }}>
                                 <Upload size={14} />
-                                <span>Select Video File</span>
+                                <span>{introVideoFileName ? 'Change Video File' : 'Select Video File'}</span>
                               </label>
                             </div>
                             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                              {introVideoFileName ? `Selected: ${introVideoFileName}` : 'Max duration: 90 seconds. File size max: 100MB.'}
+                              {introVideoFileName ? `Selected: ${introVideoFileName}` : 'Max duration: 90 seconds (Max size: 100MB)'}
                             </span>
                           </div>
                         )}
@@ -4353,7 +4335,7 @@ export default function TutorRegisterLoginPage() {
                           const videoInfo = getVideoSourceInfo(introVideoUrl);
                           if (!videoInfo.isEmbeddable) return null;
                           return (
-                            <div style={{ marginTop: '0.85rem', borderRadius: '12px', overflow: 'hidden', border: '1.5px solid var(--border-teal)', backgroundColor: '#0F172A' }}>
+                            <div style={{ marginTop: '0.75rem', borderRadius: '12px', overflow: 'hidden', border: '1.5px solid var(--border-teal)', backgroundColor: '#0F172A' }}>
                               <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
                                 {videoInfo.type === 'youtube' || videoInfo.type === 'vimeo' || videoInfo.type === 'gdrive' ? (
                                   <iframe
@@ -4372,32 +4354,36 @@ export default function TutorRegisterLoginPage() {
                                   />
                                 )}
                               </div>
-                              <div style={{ padding: '0.5rem 0.75rem', backgroundColor: '#F0FDF4', color: '#15803D', fontSize: '0.74rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              <div style={{ padding: '0.45rem 0.75rem', backgroundColor: '#F0FDF4', color: '#15803D', fontSize: '0.74rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                                 <CheckCircle2 size={14} color="#15803D" />
-                                <span>✓ Live Video Preview Active ({videoInfo.type === 'youtube' ? 'YouTube Link Embed' : 'Direct Video File'})</span>
+                                <span>✓ Video Preview Ready</span>
                               </div>
                             </div>
                           );
                         })()}
 
-                        <div style={{
-                          marginTop: '0.75rem',
-                          padding: '0.85rem',
-                          borderRadius: '12px',
-                          backgroundColor: 'var(--bg-app)',
-                          fontSize: '0.78rem',
-                          color: 'var(--text-muted)',
-                          lineHeight: 1.5,
+                        {/* Collapsible Quick Recording Tips */}
+                        <details style={{
+                          marginTop: '0.65rem',
+                          padding: '0.55rem 0.75rem',
+                          borderRadius: '10px',
+                          backgroundColor: '#F8FAFC',
+                          border: '1px solid #E2E8F0',
+                          fontSize: '0.76rem',
+                          color: '#475569',
+                          cursor: 'pointer',
                         }}>
-                          <strong>💡 Quick Tips to Record a 60s Intro Video:</strong>
-                          <ul style={{ paddingLeft: '1.25rem', marginTop: '0.25rem' }}>
-                            <li>Introduce your name, degree/college, and subjects you teach.</li>
-                            <li>Highlight your teaching methodology (practical tricks, concept building, regular tests).</li>
-                            <li>Keep lighting clear, camera at eye level, and speak confidently for 60–90 seconds.</li>
+                          <summary style={{ fontWeight: 700, color: '#0F6E56', outline: 'none', userSelect: 'none' }}>
+                            💡 Quick Tips for 60s Intro Video (Click to view)
+                          </summary>
+                          <ul style={{ paddingLeft: '1.2rem', marginTop: '0.4rem', marginBottom: 0, lineHeight: 1.5 }}>
+                            <li>Introduce your name, degrees, and subjects you teach.</li>
+                            <li>Highlight your teaching methodology & practical tips for students.</li>
+                            <li>Keep lighting clear, camera steady, and speak confidently for 60–90 seconds.</li>
                           </ul>
-                        </div>
-
+                        </details>
                       </div>
+
                     </div>
                   )}
 
