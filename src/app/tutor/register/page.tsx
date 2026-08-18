@@ -3318,79 +3318,413 @@ export default function TutorRegisterLoginPage() {
 
                   {/* STEP 3: Locations & Travel */}
                   {currentStep === 3 && (
-                    <div>
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.45rem' }}>
-                        Step 3: Location Preferences & Travel Radius
-                      </h3>
-                      <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
-                        Choose how you want to match with nearby Gurgaon students.
-                      </p>
-
-                      {/* Sleek Horizontal Mode Switcher */}
-                      <div style={{
-                        backgroundColor: '#F1F5F9',
-                        padding: '0.3rem',
-                        borderRadius: '12px',
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                        gap: '0.3rem',
-                        marginBottom: '1.25rem',
-                        border: '1px solid #E2E8F0',
-                      }}>
-                        {[
-                          { id: 'BOTH', label: '⚡ Both (Recommended)' },
-                          { id: 'SECTORS', label: '📍 Specific Sectors' },
-                          { id: 'RADIUS', label: '🎯 Travel Radius' },
-                        ].map((tab) => {
-                          const isActive = locationPrefType === tab.id;
-                          return (
-                            <button
-                              key={tab.id}
-                              type="button"
-                              onClick={() => setLocationPrefType(tab.id as any)}
-                              style={{
-                                padding: '0.6rem 0.5rem',
-                                borderRadius: '9px',
-                                border: 'none',
-                                background: isActive ? 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)' : 'transparent',
-                                color: isActive ? '#FFFFFF' : '#475569',
-                                fontWeight: 800,
-                                fontSize: '0.82rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                boxShadow: isActive ? '0 3px 10px rgba(15, 110, 86, 0.25)' : 'none',
-                                textAlign: 'center',
-                              }}
-                            >
-                              {tab.label}
-                            </button>
-                          );
-                        })}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.45rem' }}>
+                          Step 3: Location & Travel Preferences
+                        </h3>
+                        <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+                          Choose how you want to match with nearby Gurgaon students.
+                        </p>
                       </div>
 
-                      {/* 1. SECTORS SECTION (Shown in 'BOTH' or 'SECTORS' mode) */}
-                      {(locationPrefType === 'BOTH' || locationPrefType === 'SECTORS') && (
+                      {/* 2-Mode Top Switcher - Mobile Optimized */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.45rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => setLocationPrefType('BOTH')}
+                          style={{
+                            padding: '0.65rem 0.35rem',
+                            borderRadius: '10px',
+                            border: `1.5px solid ${locationPrefType !== 'SECTORS' ? 'var(--brand-teal)' : '#CBD5E1'}`,
+                            backgroundColor: locationPrefType !== 'SECTORS' ? '#ECFDF5' : '#FFFFFF',
+                            color: locationPrefType !== 'SECTORS' ? '#065F46' : '#334155',
+                            fontWeight: locationPrefType !== 'SECTORS' ? 800 : 600,
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            textAlign: 'center',
+                            boxShadow: locationPrefType !== 'SECTORS' ? '0 1px 4px rgba(15, 110, 86, 0.12)' : 'none',
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {locationPrefType !== 'SECTORS' ? '✓ ' : ''}📍 By Home Radius
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setLocationPrefType('SECTORS')}
+                          style={{
+                            padding: '0.65rem 0.35rem',
+                            borderRadius: '10px',
+                            border: `1.5px solid ${locationPrefType === 'SECTORS' ? 'var(--brand-teal)' : '#CBD5E1'}`,
+                            backgroundColor: locationPrefType === 'SECTORS' ? '#ECFDF5' : '#FFFFFF',
+                            color: locationPrefType === 'SECTORS' ? '#065F46' : '#334155',
+                            fontWeight: locationPrefType === 'SECTORS' ? 800 : 600,
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            textAlign: 'center',
+                            boxShadow: locationPrefType === 'SECTORS' ? '0 1px 4px rgba(15, 110, 86, 0.12)' : 'none',
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {locationPrefType === 'SECTORS' ? '✓ ' : ''}🗺️ Specific Sectors Only
+                        </button>
+                      </div>
+
+                      {/* MODE 1: BY HOME RADIUS */}
+                      {locationPrefType !== 'SECTORS' && (
+                        <>
+                          {/* 1. GPS Home Location Picker */}
+                          <div className="form-group" style={{ marginBottom: 0 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                              <label className="form-label" style={{ margin: 0, fontWeight: 700 }}>
+                                📍 Your Home / Base Location {teachingMode !== 'ONLINE_LIVE' && <span style={{ color: '#DC2626' }}>*</span>}
+                              </label>
+                              {teachingMode === 'ONLINE_LIVE' && (
+                                <span style={{ fontSize: '0.74rem', color: '#64748B' }}>(Optional for Online)</span>
+                              )}
+                            </div>
+                            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                              Set your home address so counselors assign student leads closest to you within your travel radius.
+                            </p>
+
+                            <div
+                              id="field-baseLocation"
+                              tabIndex={0}
+                              onClick={() => {
+                                setShowTutorLocationPicker(true);
+                                if (wizardErrorField === 'field-baseLocation') setWizardErrorField(null);
+                              }}
+                              style={{
+                                border: wizardErrorField === 'field-baseLocation'
+                                  ? '2px solid #EF4444'
+                                  : (tutorLatitude ? '1.5px solid #0F6E56' : '1.5px dashed #CBD5E1'),
+                                borderRadius: '14px',
+                                padding: '0.85rem 1rem',
+                                cursor: 'pointer',
+                                backgroundColor: wizardErrorField === 'field-baseLocation'
+                                  ? '#FEF2F2'
+                                  : (tutorLatitude ? '#F0FDF4' : '#F8FAFC'),
+                                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                boxShadow: wizardErrorField === 'field-baseLocation'
+                                  ? '0 0 0 4px rgba(239, 68, 68, 0.22)'
+                                  : 'none',
+                                outline: 'none',
+                                transition: 'all 0.2s ease',
+                              }}
+                            >
+                              <div style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '12px',
+                                backgroundColor: wizardErrorField === 'field-baseLocation'
+                                  ? '#FEE2E2'
+                                  : (tutorLatitude ? '#DCFCE7' : '#E2E8F0'),
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0
+                              }}>
+                                <MapPin size={18} color={wizardErrorField === 'field-baseLocation' ? '#EF4444' : (tutorLatitude ? '#059669' : '#94A3B8')} />
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                {tutorLatitude ? (
+                                  <>
+                                    <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                      <CheckCircle2 size={14} color="#059669" />
+                                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tutorFormattedAddress || 'Location Set'}</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>Tap to change pin location</div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: wizardErrorField === 'field-baseLocation' ? '#DC2626' : '#64748B' }}>
+                                      {wizardErrorField === 'field-baseLocation' ? '⚠️ Please tap here to set your location' : '📍 Tap to set your home address'}
+                                    </div>
+                                    <div style={{ fontSize: '0.72rem', color: wizardErrorField === 'field-baseLocation' ? '#EF4444' : '#94A3B8', marginTop: '2px' }}>
+                                      Auto-matches student leads within your travel radius
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                              <div style={{
+                                fontSize: '0.74rem',
+                                fontWeight: 700,
+                                color: wizardErrorField === 'field-baseLocation' ? '#FFFFFF' : '#0F6E56',
+                                backgroundColor: wizardErrorField === 'field-baseLocation' ? '#EF4444' : '#ECFDF5',
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: '8px',
+                                flexShrink: 0
+                              }}>
+                                {tutorLatitude ? 'Change' : 'Set Location'}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* 2. Maximum Travel Radius Selector */}
+                          <div className="form-group" style={{ marginBottom: 0 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                              <label className="form-label" style={{ margin: 0, fontWeight: 700 }}>
+                                Maximum Travel Radius: <strong style={{ color: '#0F6E56' }}>{travelRadius} KM</strong> from Home
+                              </label>
+                              <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>
+                                Home visit range
+                              </span>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(65px, 1fr))', gap: '0.4rem' }}>
+                              {[3, 5, 8, 12, 15, 20, 30].map((km) => {
+                                const isSelected = travelRadius === km;
+                                return (
+                                  <button
+                                    key={km}
+                                    type="button"
+                                    onClick={() => setTravelRadius(km)}
+                                    className="pill-interactive-btn"
+                                    style={{
+                                      padding: '0.65rem 0.2rem',
+                                      borderRadius: '10px',
+                                      border: isSelected ? '1.5px solid #0F6E56' : '1px solid #CBD5E1',
+                                      background: isSelected ? 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)' : '#FFFFFF',
+                                      color: isSelected ? '#FFFFFF' : '#334155',
+                                      fontWeight: 800,
+                                      fontSize: '0.82rem',
+                                      cursor: 'pointer',
+                                      boxShadow: isSelected ? '0 3px 10px rgba(15, 110, 86, 0.25)' : 'none',
+                                      textAlign: 'center',
+                                    }}
+                                  >
+                                    {km} KM
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* 3. Specific Preferred Sectors (Optional Add-on) */}
+                          <div
+                            id="field-serviceAreas"
+                            className="form-group"
+                            style={{
+                              marginBottom: 0,
+                              padding: '1rem',
+                              borderRadius: '14px',
+                              border: '1px solid #E2E8F0',
+                              backgroundColor: '#F8FAFC',
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                              <label className="form-label" style={{ margin: 0, fontWeight: 700 }}>
+                                Add Specific Preferred Sectors <span style={{ color: '#64748B', fontWeight: 500 }}>(Optional)</span>
+                              </label>
+                              <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>
+                                Selected: <strong style={{ color: '#0F6E56' }}>{serviceAreas.length}</strong>
+                              </span>
+                            </div>
+                            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
+                              Want student leads from specific high-preference sectors outside your standard radius?
+                            </p>
+
+                            {/* Selected Sector Pills */}
+                            {serviceAreas.length > 0 && (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginBottom: '0.75rem' }}>
+                                {serviceAreas.map(area => (
+                                  <span key={area} className="animate-tag-pop" style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                    background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+                                    color: '#065F46',
+                                    border: '1px solid #A7F3D0',
+                                    padding: '0.35rem 0.8rem',
+                                    borderRadius: '999px',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 700,
+                                    boxShadow: '0 2px 6px rgba(15, 110, 86, 0.08)',
+                                    transition: 'all 0.18s ease',
+                                  }}>
+                                    <span>{area}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setServiceAreas(serviceAreas.filter(a => a !== area));
+                                        if (wizardErrorField === 'field-serviceAreas') setWizardErrorField(null);
+                                      }}
+                                      style={{
+                                        background: 'rgba(6, 95, 70, 0.12)',
+                                        border: 'none',
+                                        borderRadius: '50%',
+                                        width: '18px',
+                                        height: '18px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#065F46',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s ease',
+                                        padding: 0,
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor = '#EF4444';
+                                        e.currentTarget.style.color = '#FFFFFF';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = 'rgba(6, 95, 70, 0.12)';
+                                        e.currentTarget.style.color = '#065F46';
+                                      }}
+                                    >
+                                      <X size={11} />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Smart Searchable Sector Input */}
+                            <div style={{ position: 'relative' }}>
+                              <input
+                                type="text"
+                                placeholder="🔍 Type sector or locality (e.g. DLF Phase 5, Sector 56, Sohna Road)..."
+                                value={areaSearch}
+                                onChange={(e) => setAreaSearch(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    const trimmed = areaSearch.trim();
+                                    if (trimmed && !serviceAreas.includes(trimmed)) {
+                                      setServiceAreas([...serviceAreas, trimmed]);
+                                      setAreaSearch('');
+                                      if (wizardErrorField === 'field-serviceAreas') setWizardErrorField(null);
+                                    }
+                                  }
+                                }}
+                                className="form-control"
+                                style={{
+                                  borderRadius: '12px',
+                                  fontWeight: 600,
+                                  height: '46px',
+                                  backgroundColor: '#FFFFFF',
+                                }}
+                              />
+                            </div>
+
+                            {/* Dropdown results — only show when searching */}
+                            {areaSearch.trim() && (
+                              <div style={{
+                                marginTop: '0.35rem',
+                                maxHeight: '220px',
+                                overflowY: 'auto',
+                                border: '1.5px solid #CBD5E1',
+                                borderRadius: '12px',
+                                padding: '0.5rem',
+                                backgroundColor: '#FFFFFF',
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.35rem',
+                              }}>
+                                {filteredSectors.map(loc => {
+                                  const isSelected = serviceAreas.includes(loc.name);
+                                  return (
+                                    <button
+                                      key={loc.slug}
+                                      type="button"
+                                      onClick={() => {
+                                        if (!isSelected) {
+                                          setServiceAreas([...serviceAreas, loc.name]);
+                                        } else {
+                                          setServiceAreas(serviceAreas.filter(a => a !== loc.name));
+                                        }
+                                        setAreaSearch('');
+                                        if (wizardErrorField === 'field-serviceAreas') setWizardErrorField(null);
+                                      }}
+                                      className="pill-interactive-btn"
+                                      style={{
+                                        padding: '0.55rem 0.85rem',
+                                        borderRadius: '8px',
+                                        border: isSelected ? '1.5px solid #0F6E56' : '1px solid #E2E8F0',
+                                        background: isSelected ? '#ECFDF5' : '#F8FAFC',
+                                        color: isSelected ? '#065F46' : '#1E293B',
+                                        fontSize: '0.84rem',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                      }}
+                                    >
+                                      <span>{loc.name}</span>
+                                      <span style={{ fontSize: '0.74rem', color: isSelected ? '#059669' : '#64748B' }}>
+                                        {isSelected ? '✓ Added' : '+ Add'}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+
+                                {/* Direct Custom Area Add Option */}
+                                {areaSearch.trim() && !filteredSectors.some(l => l.name.toLowerCase() === areaSearch.trim().toLowerCase()) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const trimmed = areaSearch.trim();
+                                      if (trimmed && !serviceAreas.includes(trimmed)) {
+                                        setServiceAreas([...serviceAreas, trimmed]);
+                                        setAreaSearch('');
+                                        if (wizardErrorField === 'field-serviceAreas') setWizardErrorField(null);
+                                      }
+                                    }}
+                                    className="pill-interactive-btn"
+                                    style={{
+                                      padding: '0.55rem 0.85rem',
+                                      borderRadius: '8px',
+                                      border: '1.5px dashed #0F6E56',
+                                      background: '#F0FDF4',
+                                      color: '#0F6E56',
+                                      fontSize: '0.84rem',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      textAlign: 'left',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '0.4rem',
+                                    }}
+                                  >
+                                    <Plus size={15} />
+                                    <span>Add <strong>&ldquo;{areaSearch.trim()}&rdquo;</strong> as custom sector</span>
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+
+                      {/* MODE 2: SPECIFIC SECTORS ONLY */}
+                      {locationPrefType === 'SECTORS' && (
                         <div
                           id="field-serviceAreas"
                           className="form-group"
                           style={{
-                            marginBottom: '1.5rem',
-                            transition: 'all 0.3s ease',
-                            padding: wizardErrorField === 'field-serviceAreas' ? '0.75rem' : '0',
-                            borderRadius: '16px',
-                            border: wizardErrorField === 'field-serviceAreas' ? '2px solid #EF4444' : 'none',
-                            backgroundColor: wizardErrorField === 'field-serviceAreas' ? '#FEF2F2' : 'transparent',
+                            marginBottom: 0,
+                            padding: '1.1rem',
+                            borderRadius: '14px',
+                            border: wizardErrorField === 'field-serviceAreas' ? '2px solid #EF4444' : '1.5px solid #CBD5E1',
+                            backgroundColor: wizardErrorField === 'field-serviceAreas' ? '#FEF2F2' : '#FFFFFF',
                             boxShadow: wizardErrorField === 'field-serviceAreas' ? '0 0 0 4px rgba(239, 68, 68, 0.2)' : 'none',
                           }}
                         >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
                             <label className="form-label" style={{ margin: 0, fontWeight: 700 }}>
                               Preferred Gurgaon Sectors / Areas <span style={{ color: '#DC2626' }}>*</span>
                             </label>
                             <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>
-                              Selected: <strong style={{ color: '#0F6E56' }}>{serviceAreas.length}</strong> sectors
+                              Selected: <strong style={{ color: '#0F6E56' }}>{serviceAreas.length}</strong>
                             </span>
                           </div>
+                          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.65rem' }}>
+                            Select the specific sectors or areas in Gurgaon where you are available for home tuition.
+                          </p>
 
                           {/* Selected Sector Pills */}
                           {serviceAreas.length > 0 && (
@@ -3451,7 +3785,7 @@ export default function TutorRegisterLoginPage() {
                           <div style={{ position: 'relative' }}>
                             <input
                               type="text"
-                              placeholder="🔍 Type sector or area (e.g. DLF Phase 5, Sector 56, Sohna Road)..."
+                              placeholder="🔍 Type sector or locality (e.g. DLF Phase 5, Sector 56, Sohna Road)..."
                               value={areaSearch}
                               onChange={(e) => setAreaSearch(e.target.value)}
                               onKeyDown={(e) => {
@@ -3470,8 +3804,7 @@ export default function TutorRegisterLoginPage() {
                                 borderRadius: '12px',
                                 fontWeight: 600,
                                 height: '46px',
-                                borderColor: wizardErrorField === 'field-serviceAreas' ? '#EF4444' : undefined,
-                                boxShadow: wizardErrorField === 'field-serviceAreas' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                                backgroundColor: '#FFFFFF',
                               }}
                             />
                           </div>
@@ -3562,133 +3895,6 @@ export default function TutorRegisterLoginPage() {
                                   <span>Add <strong>&ldquo;{areaSearch.trim()}&rdquo;</strong> as custom sector</span>
                                 </button>
                               )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* 2. TRAVEL RADIUS & HOME GPS SECTION (Shown in 'BOTH' or 'RADIUS' mode) */}
-                      {(locationPrefType === 'BOTH' || locationPrefType === 'RADIUS') && (
-                        <div style={{ transition: 'all 0.3s ease' }}>
-                          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
-                              <label className="form-label" style={{ margin: 0, fontWeight: 700 }}>
-                                Maximum Travel Radius: <strong style={{ color: '#0F6E56' }}>{travelRadius} KM</strong>
-                              </label>
-                              <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>
-                                From Home GPS
-                              </span>
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(65px, 1fr))', gap: '0.4rem' }}>
-                              {[3, 5, 8, 12, 15, 20, 30].map((km) => {
-                                const isSelected = travelRadius === km;
-                                return (
-                                  <button
-                                    key={km}
-                                    type="button"
-                                    onClick={() => setTravelRadius(km)}
-                                    className="pill-interactive-btn"
-                                    style={{
-                                      padding: '0.65rem 0.2rem',
-                                      borderRadius: '10px',
-                                      border: isSelected ? '1.5px solid #0F6E56' : '1px solid #CBD5E1',
-                                      background: isSelected ? 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)' : '#FFFFFF',
-                                      color: isSelected ? '#FFFFFF' : '#334155',
-                                      fontWeight: 800,
-                                      fontSize: '0.82rem',
-                                      cursor: 'pointer',
-                                      boxShadow: isSelected ? '0 3px 10px rgba(15, 110, 86, 0.25)' : 'none',
-                                      textAlign: 'center',
-                                    }}
-                                  >
-                                    {km} KM
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* GPS Home Location Picker */}
-                          {(teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') && (
-                            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                              <label className="form-label">
-                                📍 Your Home / Base Location (for proximity matching) <span style={{ color: '#DC2626' }}>*</span>
-                              </label>
-                              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                                Set your location so counselors assign student leads closest to you within your {travelRadius} KM radius.
-                              </p>
-
-                              <div
-                                id="field-baseLocation"
-                                tabIndex={0}
-                                onClick={() => {
-                                  setShowTutorLocationPicker(true);
-                                  if (wizardErrorField === 'field-baseLocation') setWizardErrorField(null);
-                                }}
-                                style={{
-                                  border: wizardErrorField === 'field-baseLocation'
-                                    ? '2.5px solid #EF4444'
-                                    : (tutorLatitude ? '2px solid #0F6E56' : '2px dashed #CBD5E1'),
-                                  borderRadius: '14px',
-                                  padding: '0.85rem 1rem',
-                                  cursor: 'pointer',
-                                  backgroundColor: wizardErrorField === 'field-baseLocation'
-                                    ? '#FEF2F2'
-                                    : (tutorLatitude ? '#F0FDF4' : '#F8FAFC'),
-                                  display: 'flex', alignItems: 'center', gap: '0.75rem',
-                                  boxShadow: wizardErrorField === 'field-baseLocation'
-                                    ? '0 0 0 4px rgba(239, 68, 68, 0.22)'
-                                    : 'none',
-                                  outline: 'none',
-                                  transition: 'all 0.2s ease',
-                                }}
-                              >
-                                <div style={{
-                                  width: '40px',
-                                  height: '40px',
-                                  borderRadius: '12px',
-                                  backgroundColor: wizardErrorField === 'field-baseLocation'
-                                    ? '#FEE2E2'
-                                    : (tutorLatitude ? '#DCFCE7' : '#E2E8F0'),
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  flexShrink: 0
-                                }}>
-                                  <MapPin size={18} color={wizardErrorField === 'field-baseLocation' ? '#EF4444' : (tutorLatitude ? '#059669' : '#94A3B8')} />
-                                </div>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  {tutorLatitude ? (
-                                    <>
-                                      <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                        <CheckCircle2 size={14} color="#059669" />
-                                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tutorFormattedAddress || 'Location Set'}</span>
-                                      </div>
-                                      <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>Tap to change</div>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <div style={{ fontSize: '0.88rem', fontWeight: 700, color: wizardErrorField === 'field-baseLocation' ? '#DC2626' : '#64748B' }}>
-                                        {wizardErrorField === 'field-baseLocation' ? '⚠️ Please tap here to set your location' : '📍 Tap to set your home location'}
-                                      </div>
-                                      <div style={{ fontSize: '0.72rem', color: wizardErrorField === 'field-baseLocation' ? '#EF4444' : '#94A3B8', marginTop: '2px' }}>
-                                        Helps match nearest students to you
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-                                <div style={{
-                                  fontSize: '0.72rem',
-                                  fontWeight: 700,
-                                  color: wizardErrorField === 'field-baseLocation' ? '#FFFFFF' : '#0F6E56',
-                                  backgroundColor: wizardErrorField === 'field-baseLocation' ? '#EF4444' : '#ECFDF5',
-                                  padding: '0.3rem 0.6rem',
-                                  borderRadius: '8px',
-                                  flexShrink: 0
-                                }}>
-                                  {tutorLatitude ? 'Change' : 'Set'}
-                                </div>
-                              </div>
                             </div>
                           )}
                         </div>
@@ -4560,21 +4766,9 @@ export default function TutorRegisterLoginPage() {
                               }
                             }
                             if (currentStep === 3) {
-                              if (locationPrefType === 'SECTORS' && serviceAreas.length === 0) {
-                                triggerWizardError('field-serviceAreas', '⚠️ Preferred Gurgaon Sectors are MANDATORY! Please select at least one sector you can visit.');
-                                return;
-                              }
-                              if (locationPrefType === 'RADIUS' && (!tutorLatitude || !tutorFormattedAddress)) {
-                                triggerWizardError('field-baseLocation', '⚠️ Home/Base Location is MANDATORY! Please tap on the map to set your location.');
-                                return;
-                              }
-                              if (locationPrefType === 'BOTH') {
-                                if (serviceAreas.length === 0) {
-                                  triggerWizardError('field-serviceAreas', '⚠️ Preferred Gurgaon Sectors are MANDATORY! Please select at least one sector.');
-                                  return;
-                                }
-                                if ((teachingMode === 'BOTH' || teachingMode === 'OFFLINE_HOME') && (!tutorLatitude || !tutorFormattedAddress)) {
-                                  triggerWizardError('field-baseLocation', '⚠️ Home/Base Location is MANDATORY! Please tap on the map to set your base location.');
+                              if (teachingMode !== 'ONLINE_LIVE') {
+                                if (!tutorLatitude && serviceAreas.length === 0) {
+                                  triggerWizardError('field-baseLocation', '⚠️ Please set your Home Location or add at least one preferred sector to match nearby students.');
                                   return;
                                 }
                               }
