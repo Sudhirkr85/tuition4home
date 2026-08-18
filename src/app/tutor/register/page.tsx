@@ -84,6 +84,17 @@ export default function TutorRegisterLoginPage() {
   const [loginErrorField, setLoginErrorField] = useState<'password' | 'contact' | 'both' | null>(null);
   const [regErrorField, setRegErrorField] = useState<'password' | 'confirm' | null>(null);
 
+  // Forgot / Reset Password States
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotOtpCode, setForgotOtpCode] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [showForgotNewPassword, setShowForgotNewPassword] = useState(false);
+  const [forgotStep, setForgotStep] = useState<'EMAIL' | 'OTP_RESET'>('EMAIL');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccessMsg, setForgotSuccessMsg] = useState('');
+  const [forgotErrorMsg, setForgotErrorMsg] = useState('');
+
   // Dynamic rotation for Gurgaon leads
   const [activeLeadIndex, setActiveLeadIndex] = useState(0);
   const GURGAON_LEAD_EXEMPLARS = [
@@ -106,7 +117,7 @@ export default function TutorRegisterLoginPage() {
 
   // Profile Wizard Form State
   const [teachingMode, setTeachingMode] = useState<'BOTH' | 'OFFLINE_HOME' | 'ONLINE_LIVE'>('BOTH');
-  const [gender, setGender] = useState<'FEMALE' | 'MALE' | 'OTHER'>('FEMALE');
+  const [gender, setGender] = useState<'FEMALE' | 'MALE' | 'OTHER' | ''>('');
   const [degree, setDegree] = useState('');
   const [specialization, setSpecialization] = useState('');
   const [college, setCollege] = useState('');
@@ -129,6 +140,8 @@ export default function TutorRegisterLoginPage() {
   
   // Search query states for filtering list options
   const [subjectSearch, setSubjectSearch] = useState('');
+  const [classSearch, setClassSearch] = useState('');
+  const [boardSearch, setBoardSearch] = useState('');
   const [areaSearch, setAreaSearch] = useState('');
   const [tutorModalSearch, setTutorModalSearch] = useState('');
   const [tutorModalSearchResults, setTutorModalSearchResults] = useState<Array<{ name: string; landmark: string; lat: number; lng: number }>>([]);
@@ -426,6 +439,11 @@ export default function TutorRegisterLoginPage() {
           if (p.teachingMode) setTeachingMode(p.teachingMode);
           if (p.degree) setDegree(p.degree);
           if (p.college) setCollege(p.college);
+          if (p.teachingMode) setTeachingMode(p.teachingMode);
+          if (p.gender) setGender(p.gender);
+          if (p.degree) setDegree(p.degree);
+          if (p.specialization) setSpecialization(p.specialization);
+          if (p.college) setCollege(p.college);
           if (p.passingYear) setPassingYear(p.passingYear);
           if (p.experienceYears !== undefined) setExperienceYears(p.experienceYears);
           if (p.selectedSubjects) setSelectedSubjects(p.selectedSubjects);
@@ -463,6 +481,7 @@ export default function TutorRegisterLoginPage() {
       const draftData = {
         currentStep,
         teachingMode,
+        gender,
         degree,
         college,
         passingYear,
@@ -775,6 +794,95 @@ export default function TutorRegisterLoginPage() {
     }
   };
 
+  // Forgot / Reset Password Handlers
+  const handleRequestPasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotErrorMsg('');
+    setForgotSuccessMsg('');
+
+    if (!forgotEmail || !forgotEmail.includes('@')) {
+      setForgotErrorMsg('Please enter a valid email address.');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const res = await fetch('/api/tutors/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'REQUEST_OTP', email: forgotEmail.toLowerCase().trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setForgotStep('OTP_RESET');
+        setForgotSuccessMsg(data.message || 'Reset code sent to your email.');
+      } else {
+        setForgotErrorMsg(data.error || 'Failed to send reset code.');
+      }
+    } catch {
+      setForgotErrorMsg('Failed to connect to the server.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleConfirmPasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotErrorMsg('');
+    setForgotSuccessMsg('');
+
+    if (!forgotOtpCode || forgotOtpCode.trim().length !== 6) {
+      setForgotErrorMsg('Please enter the 6-digit verification code.');
+      return;
+    }
+    if (!forgotNewPassword || forgotNewPassword.length < 6) {
+      setForgotErrorMsg('Password must be at least 6 characters.');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const res = await fetch('/api/tutors/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'RESET_PASSWORD',
+          email: forgotEmail.toLowerCase().trim(),
+          otpCode: forgotOtpCode.trim(),
+          newPassword: forgotNewPassword,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const session = {
+          userId: data.userId,
+          name: data.name,
+          email: data.email,
+          loginAt: Date.now(),
+          expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+        };
+        localStorage.setItem('tutor_session', JSON.stringify(session));
+        setUserId(data.userId);
+        setUserName(data.name || 'Educator');
+        setUserEmail(data.email);
+        setIsLoggedIn(true);
+
+        if (data.isOnboardingComplete) {
+          window.location.href = '/tutor/profile';
+        } else {
+          setShowForgotPassword(false);
+          setCurrentStep(1);
+        }
+      } else {
+        setForgotErrorMsg(data.error || 'Failed to reset password.');
+      }
+    } catch {
+      setForgotErrorMsg('Failed to connect to the server.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   // Handle Real Google 1-Click Login via NextAuth
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -908,6 +1016,16 @@ export default function TutorRegisterLoginPage() {
   // Filter subject list
   const filteredSubjects = SUBJECT_OPTIONS.filter(sub => 
     sub.toLowerCase().includes(subjectSearch.toLowerCase())
+  );
+
+  // Filter class list
+  const filteredClasses = CLASS_OPTIONS.filter(cl =>
+    cl.toLowerCase().includes(classSearch.toLowerCase())
+  );
+
+  // Filter board list
+  const filteredBoards = BOARD_OPTIONS.filter(bd =>
+    bd.toLowerCase().includes(boardSearch.toLowerCase())
   );
 
   // Filter sector list
@@ -1800,201 +1918,438 @@ export default function TutorRegisterLoginPage() {
                 {/* 2. LOGIN FORM */}
                 {authTab === 'login' && (
                   <div>
-                    <div style={{ marginBottom: '1.25rem' }}>
-                      <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)' }}>Welcome Back</h2>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Access your educator dashboard settings</p>
-                    </div>
-
-                    {/* Login method selectors */}
-                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => { setLoginMethod('password'); setErrorMessage(''); setLoginErrorField(null); }}
-                        className="btn btn-sm"
-                        style={{
-                          flex: 1,
-                          backgroundColor: loginMethod === 'password' ? 'var(--brand-teal)' : '#FFFFFF',
-                          color: loginMethod === 'password' ? '#FFFFFF' : 'var(--text-main)',
-                          border: '1.5px solid var(--border-hairline)',
-                        }}
-                      >
-                        Password
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setLoginMethod('otp'); setErrorMessage(''); setLoginErrorField(null); }}
-                        className="btn btn-sm"
-                        style={{
-                          flex: 1,
-                          backgroundColor: loginMethod === 'otp' ? 'var(--brand-teal)' : '#FFFFFF',
-                          color: loginMethod === 'otp' ? '#FFFFFF' : 'var(--text-main)',
-                          border: '1.5px solid var(--border-hairline)',
-                        }}
-                      >
-                        OTP Code
-                      </button>
-                    </div>
-
-                    {loginMethod === 'password' ? (
-                      <form onSubmit={handlePasswordLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                        <div className="form-group">
-                          <label className="form-label">Email Address</label>
-                          <div style={{ position: 'relative' }}>
-                            <input
-                              type="text"
-                              required
-                              placeholder="amit@example.com"
-                              value={loginContact}
-                              onChange={(e) => {
-                                setLoginContact(e.target.value);
-                                if (loginErrorField) setLoginErrorField(null);
-                              }}
-                              className="form-control"
-                              style={{
-                                paddingLeft: '2.5rem',
-                                borderColor: loginErrorField ? '#EF4444' : undefined,
-                                boxShadow: loginErrorField ? '0 0 0 3px rgba(239, 68, 68, 0.18)' : undefined,
-                              }}
-                            />
-                            <User size={16} color={loginErrorField ? '#EF4444' : "var(--text-light)"} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                    {showForgotPassword ? (
+                      /* =========================================================
+                         FORGOT / RESET PASSWORD SUB-VIEW
+                         ========================================================= */
+                      <div>
+                        <div style={{ marginBottom: '1.25rem' }}>
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            backgroundColor: '#ECFDF5',
+                            color: '#065F46',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '999px',
+                            border: '1px solid #A7F3D0',
+                            marginBottom: '0.5rem',
+                          }}>
+                            <ShieldCheck size={12} />
+                            <span>ACCOUNT RECOVERY</span>
                           </div>
+                          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>Reset Password</h2>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                            {forgotStep === 'EMAIL' ? 'Enter your registered email address to receive a secure 6-digit verification code.' : 'Enter the verification code sent to your email and set your new password.'}
+                          </p>
                         </div>
 
-                        <div className="form-group">
-                          <label className="form-label">Password</label>
-                          <div style={{ position: 'relative' }}>
-                            <input
-                              type={showLoginPassword ? 'text' : 'password'}
-                              required
-                              placeholder="Enter your account password"
-                              value={loginPassword}
-                              onChange={(e) => {
-                                setLoginPassword(e.target.value);
-                                if (loginErrorField) setLoginErrorField(null);
-                              }}
-                              className="form-control"
-                              style={{
-                                paddingLeft: '2.5rem',
-                                paddingRight: '2.5rem',
-                                borderColor: loginErrorField ? '#EF4444' : undefined,
-                                boxShadow: loginErrorField ? '0 0 0 3px rgba(239, 68, 68, 0.2)' : undefined,
-                              }}
-                            />
-                            <Lock size={16} color={loginErrorField ? '#EF4444' : "var(--text-light)"} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
-                            <button
-                              type="button"
-                              onClick={() => setShowLoginPassword(!showLoginPassword)}
-                              style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-light)', padding: 0 }}
-                            >
-                              {showLoginPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                            </button>
-                          </div>
-                          {loginErrorField && (
-                            <div style={{ fontSize: '0.76rem', color: '#EF4444', fontWeight: 700, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span>⚠️ Incorrect email or password. Please verify.</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <button
-                          type="submit"
-                          disabled={loading}
-                          className="btn btn-primary"
-                          style={{ padding: '0.9rem', fontSize: '1rem', marginTop: '0.5rem', width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-teal)' }}
-                        >
-                          {loading ? 'Logging in...' : 'Sign In with Password'}
-                          <UserCheck size={18} />
-                        </button>
-                      </form>
-                    ) : (
-                      <form onSubmit={isOtpSent ? handleVerifyOtp : handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                        <div className="form-group">
-                          <label className="form-label">Email Address</label>
-                          <div style={{ position: 'relative' }}>
-                            <input
-                              type="email"
-                              required
-                              disabled={isOtpSent}
-                              placeholder="amit@example.com"
-                              value={otpContact}
-                              onChange={(e) => setOtpContact(e.target.value)}
-                              className="form-control"
-                              style={{ paddingLeft: '2.5rem' }}
-                            />
-                            <Mail size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
-                          </div>
-                          <span style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '4px', display: 'block' }}>
-                            Verification OTP will be sent directly to your email inbox.
-                          </span>
-                        </div>
-
-                        {isOtpSent && (
-                          <div className="form-group">
-                            <label className="form-label">Enter 6-Digit OTP</label>
-                            <input
-                              type="text"
-                              required
-                              maxLength={6}
-                              placeholder="XXXXXX"
-                              value={otpCode}
-                              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                              className="form-control"
-                              style={{ textAlign: 'center', fontSize: '1.1rem', letterSpacing: '0.3em', fontWeight: 'bold' }}
-                            />
+                        {forgotErrorMsg && (
+                          <div style={{
+                            padding: '0.75rem 1rem',
+                            backgroundColor: '#FEF2F2',
+                            color: '#DC2626',
+                            borderRadius: '12px',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            marginBottom: '1rem',
+                            border: '1px solid #FECACA',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                          }}>
+                            <span>⚠️</span>
+                            <span>{forgotErrorMsg}</span>
                           </div>
                         )}
 
+                        {forgotSuccessMsg && (
+                          <div style={{
+                            padding: '0.75rem 1rem',
+                            backgroundColor: '#ECFDF5',
+                            color: '#059669',
+                            borderRadius: '12px',
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            marginBottom: '1rem',
+                            border: '1px solid #A7F3D0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                          }}>
+                            <span>✓</span>
+                            <span>{forgotSuccessMsg}</span>
+                          </div>
+                        )}
+
+                        {forgotStep === 'EMAIL' ? (
+                          <form onSubmit={handleRequestPasswordReset} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+                            <div className="form-group">
+                              <label className="form-label" style={{ fontWeight: 700, fontSize: '0.86rem' }}>Registered Email Address</label>
+                              <div style={{ position: 'relative' }}>
+                                <input
+                                  type="email"
+                                  required
+                                  placeholder="amit@example.com"
+                                  value={forgotEmail}
+                                  onChange={(e) => setForgotEmail(e.target.value.toLowerCase().trim())}
+                                  className="form-control"
+                                  style={{ paddingLeft: '2.5rem', height: '48px' }}
+                                />
+                                <Mail size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                              </div>
+                            </div>
+
+                            <button
+                              type="submit"
+                              disabled={forgotLoading}
+                              className="btn btn-primary"
+                              style={{ padding: '0.9rem', fontSize: '0.95rem', width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-teal)', borderRadius: '12px' }}
+                            >
+                              <span>{forgotLoading ? 'Sending Reset Code...' : 'Send Password Reset Code'}</span>
+                              <ArrowRight size={16} />
+                            </button>
+                          </form>
+                        ) : (
+                          <form onSubmit={handleConfirmPasswordReset} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+                            <div className="form-group">
+                              <label className="form-label" style={{ fontWeight: 700, fontSize: '0.86rem' }}>6-Digit Verification Code</label>
+                              <input
+                                type="text"
+                                required
+                                maxLength={6}
+                                placeholder="XXXXXX"
+                                value={forgotOtpCode}
+                                onChange={(e) => setForgotOtpCode(e.target.value.replace(/\D/g, ''))}
+                                className="form-control"
+                                style={{ textAlign: 'center', fontSize: '1.2rem', letterSpacing: '0.3em', fontWeight: 'bold', height: '48px' }}
+                              />
+                            </div>
+
+                            <div className="form-group">
+                              <label className="form-label" style={{ fontWeight: 700, fontSize: '0.86rem' }}>New Password (Min 6 Characters)</label>
+                              <div style={{ position: 'relative' }}>
+                                <input
+                                  type={showForgotNewPassword ? 'text' : 'password'}
+                                  required
+                                  minLength={6}
+                                  placeholder="Enter new password"
+                                  value={forgotNewPassword}
+                                  onChange={(e) => setForgotNewPassword(e.target.value)}
+                                  className="form-control"
+                                  style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem', height: '48px' }}
+                                />
+                                <Lock size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowForgotNewPassword(!showForgotNewPassword)}
+                                  style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-light)', padding: 0 }}
+                                >
+                                  {showForgotNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                              </div>
+                            </div>
+
+                            <button
+                              type="submit"
+                              disabled={forgotLoading}
+                              className="btn btn-primary"
+                              style={{ padding: '0.9rem', fontSize: '0.95rem', width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-teal)', borderRadius: '12px' }}
+                            >
+                              <span>{forgotLoading ? 'Updating Password...' : 'Save New Password & Sign In'}</span>
+                              <CheckCircle2 size={16} />
+                            </button>
+                          </form>
+                        )}
+
+                        {/* Navigation options at Bottom */}
+                        <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border-hairline)', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                          {/* Option 1: Quick OTP Login */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowForgotPassword(false);
+                              setLoginMethod('otp');
+                              if (forgotEmail) setOtpContact(forgotEmail);
+                              setForgotStep('EMAIL');
+                              setForgotErrorMsg('');
+                              setForgotSuccessMsg('');
+                            }}
+                            className="btn btn-secondary"
+                            style={{
+                              width: '100%',
+                              justifyContent: 'center',
+                              padding: '0.75rem 1rem',
+                              fontSize: '0.88rem',
+                              fontWeight: 700,
+                              borderRadius: '12px',
+                              color: '#065F46',
+                              backgroundColor: '#ECFDF5',
+                              border: '1.5px solid #A7F3D0',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.45rem',
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            <Mail size={16} color="#059669" />
+                            <span>Login with 1-Time OTP instead</span>
+                          </button>
+
+                          {/* Option 2: Back to Password Login */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowForgotPassword(false);
+                              setLoginMethod('password');
+                              setForgotStep('EMAIL');
+                              setForgotErrorMsg('');
+                              setForgotSuccessMsg('');
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              padding: '0.35rem',
+                              fontSize: '0.82rem',
+                              fontWeight: 700,
+                              color: '#64748B',
+                              cursor: 'pointer',
+                              textAlign: 'center',
+                            }}
+                          >
+                            ← Remember your password? Sign In
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* =========================================================
+                         STANDARD LOGIN VIEW
+                         ========================================================= */
+                      <div>
+                        <div style={{ marginBottom: '1.25rem' }}>
+                          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)' }}>Welcome Back</h2>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Access your educator dashboard settings</p>
+                        </div>
+
+                        {/* Login method selectors */}
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => { setLoginMethod('password'); setErrorMessage(''); setLoginErrorField(null); }}
+                            className="btn btn-sm"
+                            style={{
+                              flex: 1,
+                              backgroundColor: loginMethod === 'password' ? 'var(--brand-teal)' : '#FFFFFF',
+                              color: loginMethod === 'password' ? '#FFFFFF' : 'var(--text-main)',
+                              border: '1.5px solid var(--border-hairline)',
+                            }}
+                          >
+                            Password
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setLoginMethod('otp'); setErrorMessage(''); setLoginErrorField(null); }}
+                            className="btn btn-sm"
+                            style={{
+                              flex: 1,
+                              backgroundColor: loginMethod === 'otp' ? 'var(--brand-teal)' : '#FFFFFF',
+                              color: loginMethod === 'otp' ? '#FFFFFF' : 'var(--text-main)',
+                              border: '1.5px solid var(--border-hairline)',
+                            }}
+                          >
+                            OTP Code
+                          </button>
+                        </div>
+
+                        {loginMethod === 'password' ? (
+                          <form onSubmit={handlePasswordLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                            <div className="form-group">
+                              <label className="form-label">Email Address</label>
+                              <div style={{ position: 'relative' }}>
+                                <input
+                                  type="text"
+                                  required
+                                  placeholder="amit@example.com"
+                                  value={loginContact}
+                                  onChange={(e) => {
+                                    setLoginContact(e.target.value);
+                                    if (loginErrorField) setLoginErrorField(null);
+                                  }}
+                                  className="form-control"
+                                  style={{
+                                    paddingLeft: '2.5rem',
+                                    borderColor: loginErrorField ? '#EF4444' : undefined,
+                                    boxShadow: loginErrorField ? '0 0 0 3px rgba(239, 68, 68, 0.18)' : undefined,
+                                  }}
+                                />
+                                <User size={16} color={loginErrorField ? '#EF4444' : "var(--text-light)"} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                              </div>
+                            </div>
+
+                            <div className="form-group">
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                                <label className="form-label" style={{ margin: 0 }}>Password</label>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setShowForgotPassword(true);
+                                    setForgotEmail(loginContact.includes('@') ? loginContact : '');
+                                    setForgotStep('EMAIL');
+                                    setForgotErrorMsg('');
+                                    setForgotSuccessMsg('');
+                                  }}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    padding: 0,
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    color: '#0F6E56',
+                                    cursor: 'pointer',
+                                    textDecoration: 'underline',
+                                  }}
+                                >
+                                  Forgot Password?
+                                </button>
+                              </div>
+                              <div style={{ position: 'relative' }}>
+                                <input
+                                  type={showLoginPassword ? 'text' : 'password'}
+                                  required
+                                  placeholder="Enter your account password"
+                                  value={loginPassword}
+                                  onChange={(e) => {
+                                    setLoginPassword(e.target.value);
+                                    if (loginErrorField) setLoginErrorField(null);
+                                  }}
+                                  className="form-control"
+                                  style={{
+                                    paddingLeft: '2.5rem',
+                                    paddingRight: '2.5rem',
+                                    borderColor: loginErrorField ? '#EF4444' : undefined,
+                                    boxShadow: loginErrorField ? '0 0 0 3px rgba(239, 68, 68, 0.2)' : undefined,
+                                  }}
+                                />
+                                <Lock size={16} color={loginErrorField ? '#EF4444' : "var(--text-light)"} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                                  style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-light)', padding: 0 }}
+                                >
+                                  {showLoginPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                              </div>
+                              {loginErrorField && (
+                                <div style={{ fontSize: '0.76rem', color: '#EF4444', fontWeight: 700, marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <span>⚠️ Incorrect email or password. Please verify.</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <button
+                              type="submit"
+                              disabled={loading}
+                              className="btn btn-primary"
+                              style={{ padding: '0.9rem', fontSize: '1rem', marginTop: '0.5rem', width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-teal)' }}
+                            >
+                              {loading ? 'Logging in...' : 'Sign In with Password'}
+                              <UserCheck size={18} />
+                            </button>
+                          </form>
+                        ) : (
+                          <form onSubmit={isOtpSent ? handleVerifyOtp : handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                            <div className="form-group">
+                              <label className="form-label">Email Address</label>
+                              <div style={{ position: 'relative' }}>
+                                <input
+                                  type="email"
+                                  required
+                                  disabled={isOtpSent}
+                                  placeholder="amit@example.com"
+                                  value={otpContact}
+                                  onChange={(e) => setOtpContact(e.target.value)}
+                                  className="form-control"
+                                  style={{ paddingLeft: '2.5rem' }}
+                                />
+                                <Mail size={16} color="var(--text-light)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                              </div>
+                              <span style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '4px', display: 'block' }}>
+                                Verification OTP will be sent directly to your email inbox.
+                              </span>
+                            </div>
+
+                            {isOtpSent && (
+                              <div className="form-group">
+                                <label className="form-label">Enter 6-Digit OTP</label>
+                                <input
+                                  type="text"
+                                  required
+                                  maxLength={6}
+                                  placeholder="XXXXXX"
+                                  value={otpCode}
+                                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                                  className="form-control"
+                                  style={{ textAlign: 'center', fontSize: '1.1rem', letterSpacing: '0.3em', fontWeight: 'bold' }}
+                                />
+                              </div>
+                            )}
+
+                            <button
+                              type="submit"
+                              disabled={loading}
+                              className="btn btn-primary"
+                              style={{ padding: '0.9rem', fontSize: '1rem', marginTop: '0.5rem', width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-teal)' }}
+                            >
+                              {loading ? 'Processing...' : isOtpSent ? 'Verify & Sign In' : 'Send Verification OTP'}
+                              {isOtpSent ? <UserCheck size={18} /> : <Mail size={18} />}
+                            </button>
+                          </form>
+                        )}
+
+                        {/* Divider */}
+                        <div style={{ position: 'relative', textAlign: 'center', margin: '1.25rem 0 0.75rem 0' }}>
+                          <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', backgroundColor: 'var(--border-hairline)', zIndex: 0 }} />
+                          <span style={{ position: 'relative', backgroundColor: '#FFFFFF', padding: '0 0.85rem', color: 'var(--text-light)', fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.04em' }}>
+                            OR SIGN IN WITH GOOGLE
+                          </span>
+                        </div>
+
+                        {/* Google Login at the Bottom */}
                         <button
-                          type="submit"
+                          type="button"
+                          onClick={handleGoogleLogin}
                           disabled={loading}
-                          className="btn btn-primary"
-                          style={{ padding: '0.9rem', fontSize: '1rem', marginTop: '0.5rem', width: '100%', justifyContent: 'center', backgroundColor: 'var(--brand-teal)' }}
+                          className="btn btn-secondary"
+                          style={{
+                            width: '100%',
+                            justifyContent: 'center',
+                            fontWeight: 700,
+                            padding: '0.8rem 1rem',
+                            fontSize: '0.88rem',
+                            backgroundColor: '#F8FAFC',
+                            border: '1.5px solid #E2E8F0',
+                            borderRadius: '12px',
+                            color: '#334155',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
                         >
-                          {loading ? 'Processing...' : isOtpSent ? 'Verify & Sign In' : 'Send Verification OTP'}
-                          {isOtpSent ? <UserCheck size={18} /> : <Mail size={18} />}
+                          <svg width="18" height="18" viewBox="0 0 24 24">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.77c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                          </svg>
+                          <span>Continue with Google</span>
                         </button>
-                      </form>
+                      </div>
                     )}
-
-                    {/* Divider */}
-                    <div style={{ position: 'relative', textAlign: 'center', margin: '1.25rem 0 0.75rem 0' }}>
-                      <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', backgroundColor: 'var(--border-hairline)', zIndex: 0 }} />
-                      <span style={{ position: 'relative', backgroundColor: '#FFFFFF', padding: '0 0.85rem', color: 'var(--text-light)', fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.04em' }}>
-                        OR SIGN IN WITH GOOGLE
-                      </span>
-                    </div>
-
-                    {/* Google Login at the Bottom */}
-                    <button
-                      type="button"
-                      onClick={handleGoogleLogin}
-                      disabled={loading}
-                      className="btn btn-secondary"
-                      style={{
-                        width: '100%',
-                        justifyContent: 'center',
-                        fontWeight: 700,
-                        padding: '0.8rem 1rem',
-                        fontSize: '0.88rem',
-                        backgroundColor: '#F8FAFC',
-                        border: '1.5px solid #E2E8F0',
-                        borderRadius: '12px',
-                        color: '#334155',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24">
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.77c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
-                      </svg>
-                      <span>Continue with Google</span>
-                    </button>
                   </div>
                 )}
 
@@ -2095,15 +2450,16 @@ export default function TutorRegisterLoginPage() {
                         Select how you prefer to match with Gurgaon students.
                       </p>
 
-                      <div style={{ marginBottom: '1.5rem' }}>
-                        <label className="form-label">Preferred Teaching Mode</label>
+                      <div style={{ marginBottom: '1.25rem' }}>
+                        <label className="form-label" style={{ fontWeight: 700, fontSize: '0.88rem' }}>
+                          Preferred Teaching Mode
+                        </label>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
                           {[
-                            { id: 'BOTH', title: 'Both Modes', desc: 'Home & Online', icon: Sparkles },
-                            { id: 'OFFLINE_HOME', title: 'Home Tuition', desc: 'Visit Student Home', icon: Home },
-                            { id: 'ONLINE_LIVE', title: 'Online 1-on-1', desc: 'Live Virtual Lessons', icon: Video },
+                            { id: 'BOTH', label: 'Both (Home & Online)' },
+                            { id: 'OFFLINE_HOME', label: 'Home Tuition' },
+                            { id: 'ONLINE_LIVE', label: 'Online 1-on-1' },
                           ].map((m) => {
-                            const IconComponent = m.icon;
                             const isSelected = teachingMode === m.id;
                             return (
                               <button
@@ -2111,69 +2467,69 @@ export default function TutorRegisterLoginPage() {
                                 type="button"
                                 onClick={() => setTeachingMode(m.id as any)}
                                 style={{
-                                  padding: '0.85rem 0.35rem',
-                                  borderRadius: '12px',
-                                  border: `2px solid ${isSelected ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
-                                  backgroundColor: isSelected ? 'var(--bg-app)' : '#FFFFFF',
-                                  color: isSelected ? 'var(--brand-teal)' : 'var(--text-main)',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  textAlign: 'center',
-                                  gap: '0.25rem',
+                                  padding: '0.65rem 0.5rem',
+                                  borderRadius: '10px',
+                                  border: `1.5px solid ${isSelected ? 'var(--brand-teal)' : '#CBD5E1'}`,
+                                  backgroundColor: isSelected ? '#ECFDF5' : '#FFFFFF',
+                                  color: isSelected ? '#065F46' : '#334155',
+                                  fontWeight: isSelected ? 800 : 600,
+                                  fontSize: '0.82rem',
                                   cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                  minWidth: 0,
+                                  transition: 'all 0.15s ease',
+                                  textAlign: 'center',
+                                  boxShadow: isSelected ? '0 1px 4px rgba(15, 110, 86, 0.12)' : 'none',
                                 }}
                               >
-                                <IconComponent size={20} color={isSelected ? 'var(--brand-teal)' : 'var(--text-muted)'} />
-                                <div style={{ fontWeight: 800, fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{m.title}</div>
-                                <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', lineHeight: 1.1 }}>{m.desc}</div>
+                                {isSelected ? '✓ ' : ''}{m.label}
                               </button>
                             );
                           })}
                         </div>
                       </div>
 
-                      <div style={{ marginBottom: '1.5rem' }}>
-                        <label className="form-label">
+                      <div id="field-gender" style={{
+                        marginBottom: '1.25rem',
+                        padding: wizardErrorField === 'field-gender' ? '0.75rem' : '0',
+                        borderRadius: '12px',
+                        border: wizardErrorField === 'field-gender' ? '2px solid #EF4444' : 'none',
+                        backgroundColor: wizardErrorField === 'field-gender' ? '#FEF2F2' : 'transparent',
+                      }}>
+                        <label className="form-label" style={{ fontWeight: 700, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                           Gender <span style={{ color: '#DC2626' }}>*</span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400, marginLeft: '0.4rem', display: 'block' }}>
-                            (Helps us match you with families requesting Female Home Tutors)
+                          <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 500 }}>
+                            (Required for student matching)
                           </span>
                         </label>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
                           {[
-                            { id: 'FEMALE', label: 'Female 👩', desc: 'Female Educator' },
-                            { id: 'MALE', label: 'Male 👨', desc: 'Male Educator' },
-                            { id: 'OTHER', label: 'Other 👤', desc: 'Educator' },
+                            { id: 'FEMALE', label: 'Female' },
+                            { id: 'MALE', label: 'Male' },
+                            { id: 'OTHER', label: 'Other' },
                           ].map((g) => {
                             const isSelected = gender === g.id;
                             return (
                               <button
                                 key={g.id}
                                 type="button"
-                                onClick={() => setGender(g.id as any)}
+                                onClick={() => {
+                                  setGender(g.id as any);
+                                  if (wizardErrorField === 'field-gender') setWizardErrorField(null);
+                                }}
                                 style={{
-                                  padding: '0.85rem 0.35rem',
-                                  borderRadius: '12px',
-                                  border: `2px solid ${isSelected ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
-                                  backgroundColor: isSelected ? 'var(--bg-app)' : '#FFFFFF',
-                                  color: isSelected ? 'var(--brand-teal)' : 'var(--text-main)',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  textAlign: 'center',
-                                  gap: '0.2rem',
+                                  padding: '0.65rem 0.5rem',
+                                  borderRadius: '10px',
+                                  border: `1.5px solid ${isSelected ? 'var(--brand-teal)' : '#CBD5E1'}`,
+                                  backgroundColor: isSelected ? '#ECFDF5' : '#FFFFFF',
+                                  color: isSelected ? '#065F46' : '#334155',
+                                  fontWeight: isSelected ? 800 : 600,
+                                  fontSize: '0.85rem',
                                   cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                  minWidth: 0,
+                                  transition: 'all 0.15s ease',
+                                  textAlign: 'center',
+                                  boxShadow: isSelected ? '0 1px 4px rgba(15, 110, 86, 0.12)' : 'none',
                                 }}
                               >
-                                <div style={{ fontWeight: 800, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{g.label}</div>
-                                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.1 }}>{g.desc}</div>
+                                {isSelected ? '✓ ' : ''}{g.label}
                               </button>
                             );
                           })}
@@ -2210,7 +2566,7 @@ export default function TutorRegisterLoginPage() {
 
                         <div className="form-group">
                           <label className="form-label">
-                            Specialization / Major Stream <span style={{ color: '#DC2626' }}>*</span>
+                            Specialization / Major Stream <span style={{ color: '#64748B', fontWeight: 500 }}>(Optional)</span>
                           </label>
                           <input
                             id="field-specialization"
@@ -2224,11 +2580,6 @@ export default function TutorRegisterLoginPage() {
                               if (wizardErrorField === 'field-specialization') setWizardErrorField(null);
                             }}
                             className="form-control"
-                            style={{
-                              borderColor: wizardErrorField === 'field-specialization' ? '#EF4444' : undefined,
-                              boxShadow: wizardErrorField === 'field-specialization' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
-                            }}
-                            required
                           />
                         </div>
                       </div>
@@ -2236,7 +2587,7 @@ export default function TutorRegisterLoginPage() {
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
                         <div className="form-group">
                           <label className="form-label">
-                            College / University Name <span style={{ color: '#DC2626' }}>*</span>
+                            College / University Name <span style={{ color: '#64748B', fontWeight: 500 }}>(Optional)</span>
                           </label>
                           <input
                             id="field-college"
@@ -2250,11 +2601,6 @@ export default function TutorRegisterLoginPage() {
                               if (wizardErrorField === 'field-college') setWizardErrorField(null);
                             }}
                             className="form-control"
-                            style={{
-                              borderColor: wizardErrorField === 'field-college' ? '#EF4444' : undefined,
-                              boxShadow: wizardErrorField === 'field-college' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
-                            }}
-                            required
                           />
                         </div>
                         <div className="form-group">
@@ -2431,18 +2777,18 @@ export default function TutorRegisterLoginPage() {
 
                       {/* Subjects Section */}
                       <div className="form-group">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                          <label className="form-label" style={{ margin: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                          <label className="form-label" style={{ margin: 0, fontWeight: 700 }}>
                             Subjects Taught <span style={{ color: '#DC2626' }}>*</span>
                           </label>
-                          <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                          <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>
                             Selected: <strong style={{ color: '#0F6E56' }}>{selectedSubjects.length}</strong>
                           </span>
                         </div>
 
                         {/* Selected Subject Pills */}
                         {selectedSubjects.length > 0 && (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginBottom: '0.75rem' }}>
                             {selectedSubjects.map(sub => (
                               <span key={sub} className="animate-tag-pop" style={{
                                 display: 'inline-flex',
@@ -2455,7 +2801,7 @@ export default function TutorRegisterLoginPage() {
                                 borderRadius: '999px',
                                 fontSize: '0.8rem',
                                 fontWeight: 700,
-                                boxShadow: '0 2px 8px rgba(15, 110, 86, 0.08)',
+                                boxShadow: '0 2px 6px rgba(15, 110, 86, 0.08)',
                                 transition: 'all 0.18s ease',
                               }}>
                                 <span>{sub}</span>
@@ -2474,6 +2820,7 @@ export default function TutorRegisterLoginPage() {
                                     color: '#065F46',
                                     cursor: 'pointer',
                                     transition: 'all 0.15s ease',
+                                    padding: 0,
                                   }}
                                   onMouseEnter={(e) => {
                                     e.currentTarget.style.backgroundColor = '#EF4444';
@@ -2491,145 +2838,141 @@ export default function TutorRegisterLoginPage() {
                           </div>
                         )}
 
-                        {/* Searchable Subject Input */}
+                        {/* Smart Searchable Subject Input with onKeyDown Enter */}
                         <div style={{ position: 'relative' }}>
                           <input
                             id="field-subjects"
                             type="text"
-                            placeholder="🔍 Search subjects (e.g. Mathematics, Physics, JEE)..."
+                            placeholder="🔍 Type subject name (e.g. Mathematics, Physics, French)..."
                             value={subjectSearch}
                             onChange={(e) => setSubjectSearch(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const trimmed = subjectSearch.trim();
+                                if (trimmed && !selectedSubjects.includes(trimmed)) {
+                                  setSelectedSubjects([...selectedSubjects, trimmed]);
+                                  setSubjectSearch('');
+                                  if (wizardErrorField === 'field-subjects') setWizardErrorField(null);
+                                }
+                              }
+                            }}
                             className="form-control"
                             style={{
                               borderRadius: '12px',
                               fontWeight: 600,
+                              height: '46px',
                               borderColor: wizardErrorField === 'field-subjects' ? '#EF4444' : undefined,
                               boxShadow: wizardErrorField === 'field-subjects' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
                             }}
                           />
                         </div>
 
-                        {/* Dropdown results — only show when searching */}
+                        {/* Floating Dynamic Dropdown — Appears Only While Typing */}
                         {subjectSearch.trim() && (
                           <div style={{
                             marginTop: '0.35rem',
-                            maxHeight: '200px',
+                            maxHeight: '220px',
                             overflowY: 'auto',
-                            border: '1.5px solid var(--border-hairline)',
+                            border: '1.5px solid #CBD5E1',
                             borderRadius: '12px',
                             padding: '0.5rem',
                             backgroundColor: '#FFFFFF',
-                            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
                             display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '0.4rem',
+                            flexDirection: 'column',
+                            gap: '0.35rem',
                           }}>
-                            {filteredSubjects.length > 0 ? filteredSubjects.map(sub => {
+                            {/* Matching items from catalog */}
+                            {filteredSubjects.map(sub => {
                               const isSelected = selectedSubjects.includes(sub);
                               return (
                                 <button
                                   key={sub}
                                   type="button"
                                   onClick={() => {
-                                    toggleSelection(sub, selectedSubjects, setSelectedSubjects);
+                                    if (!isSelected) {
+                                      setSelectedSubjects([...selectedSubjects, sub]);
+                                    } else {
+                                      setSelectedSubjects(selectedSubjects.filter(s => s !== sub));
+                                    }
+                                    setSubjectSearch('');
                                     if (wizardErrorField === 'field-subjects') setWizardErrorField(null);
                                   }}
                                   className="pill-interactive-btn"
                                   style={{
-                                    padding: '0.35rem 0.75rem',
+                                    padding: '0.55rem 0.85rem',
                                     borderRadius: '8px',
-                                    border: isSelected ? '1.5px solid #0F6E56' : '1px solid #CBD5E1',
-                                    background: isSelected ? 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)' : '#FFFFFF',
-                                    color: isSelected ? '#FFFFFF' : '#1E293B',
-                                    fontSize: '0.78rem',
+                                    border: isSelected ? '1.5px solid #0F6E56' : '1px solid #E2E8F0',
+                                    background: isSelected ? '#ECFDF5' : '#F8FAFC',
+                                    color: isSelected ? '#065F46' : '#1E293B',
+                                    fontSize: '0.84rem',
                                     fontWeight: 700,
                                     cursor: 'pointer',
-                                    boxShadow: isSelected ? '0 4px 12px rgba(15, 110, 86, 0.25)' : '0 1px 3px rgba(0,0,0,0.04)',
+                                    textAlign: 'left',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
                                   }}
                                 >
-                                  {isSelected ? '✓ ' : '+ '} {sub}
+                                  <span>{sub}</span>
+                                  <span style={{ fontSize: '0.74rem', color: isSelected ? '#059669' : '#64748B' }}>
+                                    {isSelected ? '✓ Added' : '+ Add'}
+                                  </span>
                                 </button>
                               );
-                            }) : (
-                              <div style={{ padding: '0.5rem', fontSize: '0.82rem', color: '#64748B', width: '100%', textAlign: 'center' }}>
-                                No match found. Add it as custom below.
-                              </div>
+                            })}
+
+                            {/* Direct Custom Add Option */}
+                            {subjectSearch.trim() && !filteredSubjects.some(s => s.toLowerCase() === subjectSearch.trim().toLowerCase()) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const trimmed = subjectSearch.trim();
+                                  if (trimmed && !selectedSubjects.includes(trimmed)) {
+                                    setSelectedSubjects([...selectedSubjects, trimmed]);
+                                    setSubjectSearch('');
+                                    if (wizardErrorField === 'field-subjects') setWizardErrorField(null);
+                                  }
+                                }}
+                                className="pill-interactive-btn"
+                                style={{
+                                  padding: '0.55rem 0.85rem',
+                                  borderRadius: '8px',
+                                  border: '1.5px dashed #0F6E56',
+                                  background: '#F0FDF4',
+                                  color: '#0F6E56',
+                                  fontSize: '0.84rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  textAlign: 'left',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem',
+                                }}
+                              >
+                                <Plus size={15} />
+                                <span>Add <strong>&ldquo;{subjectSearch.trim()}&rdquo;</strong> as custom subject</span>
+                              </button>
                             )}
                           </div>
                         )}
-
-                        {/* Quick popular subjects — compact row */}
-                        {!subjectSearch.trim() && selectedSubjects.length === 0 && (
-                          <div style={{ marginTop: '0.6rem', padding: '0.65rem 0.75rem', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '10px' }}>
-                            <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#166534', marginBottom: '0.45rem' }}>🔥 Quick Add Popular Subjects:</div>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                              {['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English Language & Literature', 'Science (Class 1 - 10 Combined)', 'All Primary Subjects (Class 1 - 5)', 'Computer Science & Python'].map(sub => (
-                                <button
-                                  key={sub}
-                                  type="button"
-                                  onClick={() => {
-                                    toggleSelection(sub, selectedSubjects, setSelectedSubjects);
-                                    if (wizardErrorField === 'field-subjects') setWizardErrorField(null);
-                                  }}
-                                  className="pill-interactive-btn"
-                                  style={{
-                                    padding: '0.28rem 0.6rem',
-                                    borderRadius: '7px',
-                                    border: '1px solid #86EFAC',
-                                    background: '#FFFFFF',
-                                    color: '#14532D',
-                                    fontSize: '0.73rem',
-                                    fontWeight: 700,
-                                    cursor: 'pointer',
-                                  }}
-                                >
-                                  + {sub}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Custom Subject Input */}
-                        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
-                          <input
-                            type="text"
-                            placeholder="Add custom subject..."
-                            value={customSubject}
-                            onChange={(e) => setCustomSubject(e.target.value)}
-                            className="form-control"
-                            style={{ borderRadius: '10px', flex: 1 }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (customSubject.trim() && !selectedSubjects.includes(customSubject.trim())) {
-                                setSelectedSubjects([...selectedSubjects, customSubject.trim()]);
-                                setCustomSubject('');
-                                if (wizardErrorField === 'field-subjects') setWizardErrorField(null);
-                              }
-                            }}
-                            className="btn btn-secondary pill-interactive-btn"
-                            style={{ padding: '0 0.9rem', borderRadius: '10px' }}
-                          >
-                            <Plus size={16} />
-                          </button>
-                        </div>
                       </div>
 
-                      {/* Classes Grid */}
+                      {/* Classes / Grades Section */}
                       <div className="form-group">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                          <label className="form-label" style={{ margin: 0 }}>
-                            Grade / Classes Taught <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 500 }}>(Optional for Languages / Skills)</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                          <label className="form-label" style={{ margin: 0, fontWeight: 700 }}>
+                            Grade / Classes Taught <span style={{ fontSize: '0.76rem', color: '#64748B', fontWeight: 500 }}>(Optional)</span>
                           </label>
-                          <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                          <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>
                             Selected: <strong style={{ color: '#0284C7' }}>{selectedClasses.length}</strong>
                           </span>
                         </div>
 
+                        {/* Selected Class Pills */}
                         {selectedClasses.length > 0 && (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginBottom: '0.75rem' }}>
                             {selectedClasses.map(cl => (
                               <span key={cl} className="animate-tag-pop" style={{
                                 display: 'inline-flex',
@@ -2642,7 +2985,8 @@ export default function TutorRegisterLoginPage() {
                                 borderRadius: '999px',
                                 fontSize: '0.8rem',
                                 fontWeight: 700,
-                                boxShadow: '0 2px 8px rgba(2, 132, 199, 0.1)',
+                                boxShadow: '0 2px 6px rgba(2, 132, 199, 0.08)',
+                                transition: 'all 0.18s ease',
                               }}>
                                 <span>{cl}</span>
                                 <button
@@ -2660,6 +3004,7 @@ export default function TutorRegisterLoginPage() {
                                     color: '#0369A1',
                                     cursor: 'pointer',
                                     transition: 'all 0.15s ease',
+                                    padding: 0,
                                   }}
                                   onMouseEnter={(e) => {
                                     e.currentTarget.style.backgroundColor = '#EF4444';
@@ -2677,72 +3022,134 @@ export default function TutorRegisterLoginPage() {
                           </div>
                         )}
 
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          {CLASS_OPTIONS.map(c => {
-                            const isSelected = selectedClasses.includes(c);
-                            return (
-                              <button
-                                key={c}
-                                type="button"
-                                onClick={() => toggleSelection(c, selectedClasses, setSelectedClasses)}
-                                className="pill-interactive-btn"
-                                style={{
-                                  padding: '0.5rem 0.9rem',
-                                  borderRadius: '10px',
-                                  border: isSelected ? '1.5px solid #0284C7' : '1px solid #CBD5E1',
-                                  background: isSelected ? 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)' : '#FFFFFF',
-                                  color: isSelected ? '#FFFFFF' : '#1E293B',
-                                  fontSize: '0.82rem',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  boxShadow: isSelected ? '0 4px 12px rgba(2, 132, 199, 0.25)' : '0 1px 3px rgba(0,0,0,0.04)',
-                                }}
-                              >
-                                {isSelected ? '✓ ' : ''}{c}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* Custom write-in Class */}
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', maxWidth: '340px' }}>
+                        {/* Searchable Class Input */}
+                        <div style={{ position: 'relative' }}>
                           <input
                             type="text"
-                            placeholder="Type custom class (e.g. Nursery, Olympiad)..."
-                            value={customClass}
-                            onChange={(e) => setCustomClass(e.target.value)}
-                            className="form-control"
-                            style={{ borderRadius: '10px' }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (customClass.trim() && !selectedClasses.includes(customClass.trim())) {
-                                setSelectedClasses([...selectedClasses, customClass.trim()]);
-                                setCustomClass('');
+                            placeholder="🔍 Type class or grade (e.g. Class 10, Class 12, Nursery, JEE)..."
+                            value={classSearch}
+                            onChange={(e) => setClassSearch(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const trimmed = classSearch.trim();
+                                if (trimmed && !selectedClasses.includes(trimmed)) {
+                                  setSelectedClasses([...selectedClasses, trimmed]);
+                                  setClassSearch('');
+                                }
                               }
                             }}
-                            className="btn btn-secondary pill-interactive-btn"
-                            style={{ padding: '0 0.9rem', borderRadius: '10px' }}
-                          >
-                            <Plus size={16} />
-                          </button>
+                            className="form-control"
+                            style={{
+                              borderRadius: '12px',
+                              fontWeight: 600,
+                              height: '46px',
+                            }}
+                          />
                         </div>
+
+                        {/* Floating Dynamic Dropdown for Classes */}
+                        {classSearch.trim() && (
+                          <div style={{
+                            marginTop: '0.35rem',
+                            maxHeight: '220px',
+                            overflowY: 'auto',
+                            border: '1.5px solid #CBD5E1',
+                            borderRadius: '12px',
+                            padding: '0.5rem',
+                            backgroundColor: '#FFFFFF',
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.35rem',
+                          }}>
+                            {filteredClasses.map(cl => {
+                              const isSelected = selectedClasses.includes(cl);
+                              return (
+                                <button
+                                  key={cl}
+                                  type="button"
+                                  onClick={() => {
+                                    if (!isSelected) {
+                                      setSelectedClasses([...selectedClasses, cl]);
+                                    } else {
+                                      setSelectedClasses(selectedClasses.filter(c => c !== cl));
+                                    }
+                                    setClassSearch('');
+                                  }}
+                                  className="pill-interactive-btn"
+                                  style={{
+                                    padding: '0.55rem 0.85rem',
+                                    borderRadius: '8px',
+                                    border: isSelected ? '1.5px solid #0284C7' : '1px solid #E2E8F0',
+                                    background: isSelected ? '#E0F2FE' : '#F8FAFC',
+                                    color: isSelected ? '#0369A1' : '#1E293B',
+                                    fontSize: '0.84rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                  }}
+                                >
+                                  <span>{cl}</span>
+                                  <span style={{ fontSize: '0.74rem', color: isSelected ? '#0284C7' : '#64748B' }}>
+                                    {isSelected ? '✓ Added' : '+ Add'}
+                                  </span>
+                                </button>
+                              );
+                            })}
+
+                            {/* Direct Custom Class Option */}
+                            {classSearch.trim() && !filteredClasses.some(c => c.toLowerCase() === classSearch.trim().toLowerCase()) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const trimmed = classSearch.trim();
+                                  if (trimmed && !selectedClasses.includes(trimmed)) {
+                                    setSelectedClasses([...selectedClasses, trimmed]);
+                                    setClassSearch('');
+                                  }
+                                }}
+                                className="pill-interactive-btn"
+                                style={{
+                                  padding: '0.55rem 0.85rem',
+                                  borderRadius: '8px',
+                                  border: '1.5px dashed #0284C7',
+                                  background: '#F0F9FF',
+                                  color: '#0284C7',
+                                  fontSize: '0.84rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  textAlign: 'left',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem',
+                                }}
+                              >
+                                <Plus size={15} />
+                                <span>Add <strong>&ldquo;{classSearch.trim()}&rdquo;</strong> as custom grade/class</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
 
-                      {/* Educational Boards */}
+                      {/* Educational Boards Section */}
                       <div className="form-group">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                          <label className="form-label" style={{ margin: 0 }}>
-                            Affiliated Boards Taught <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 500 }}>(Optional for Languages / Skills)</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                          <label className="form-label" style={{ margin: 0, fontWeight: 700 }}>
+                            Affiliated Boards Taught <span style={{ fontSize: '0.76rem', color: '#64748B', fontWeight: 500 }}>(Optional)</span>
                           </label>
-                          <span style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                          <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>
                             Selected: <strong style={{ color: '#7C3AED' }}>{selectedBoards.length}</strong>
                           </span>
                         </div>
 
+                        {/* Selected Board Pills */}
                         {selectedBoards.length > 0 && (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginBottom: '0.75rem' }}>
                             {selectedBoards.map(bd => (
                               <span key={bd} className="animate-tag-pop" style={{
                                 display: 'inline-flex',
@@ -2755,7 +3162,8 @@ export default function TutorRegisterLoginPage() {
                                 borderRadius: '999px',
                                 fontSize: '0.8rem',
                                 fontWeight: 700,
-                                boxShadow: '0 2px 8px rgba(124, 58, 237, 0.1)',
+                                boxShadow: '0 2px 6px rgba(124, 58, 237, 0.08)',
+                                transition: 'all 0.18s ease',
                               }}>
                                 <span>{bd}</span>
                                 <button
@@ -2773,6 +3181,7 @@ export default function TutorRegisterLoginPage() {
                                     color: '#6B21A8',
                                     cursor: 'pointer',
                                     transition: 'all 0.15s ease',
+                                    padding: 0,
                                   }}
                                   onMouseEnter={(e) => {
                                     e.currentTarget.style.backgroundColor = '#EF4444';
@@ -2790,57 +3199,118 @@ export default function TutorRegisterLoginPage() {
                           </div>
                         )}
 
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          {BOARD_OPTIONS.map(b => {
-                            const isSelected = selectedBoards.includes(b);
-                            return (
-                              <button
-                                key={b}
-                                type="button"
-                                onClick={() => toggleSelection(b, selectedBoards, setSelectedBoards)}
-                                className="pill-interactive-btn"
-                                style={{
-                                  padding: '0.5rem 0.9rem',
-                                  borderRadius: '10px',
-                                  border: isSelected ? '1.5px solid #7C3AED' : '1px solid #CBD5E1',
-                                  background: isSelected ? 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)' : '#FFFFFF',
-                                  color: isSelected ? '#FFFFFF' : '#1E293B',
-                                  fontSize: '0.82rem',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  boxShadow: isSelected ? '0 4px 12px rgba(124, 58, 237, 0.25)' : '0 1px 3px rgba(0,0,0,0.04)',
-                                }}
-                              >
-                                {isSelected ? '✓ ' : ''}{b}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* Custom write-in Board */}
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', maxWidth: '340px' }}>
+                        {/* Searchable Board Input */}
+                        <div style={{ position: 'relative' }}>
                           <input
                             type="text"
-                            placeholder="Type custom board (e.g. State Board, NIOS)..."
-                            value={customBoard}
-                            onChange={(e) => setCustomBoard(e.target.value)}
-                            className="form-control"
-                            style={{ borderRadius: '10px' }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (customBoard.trim() && !selectedBoards.includes(customBoard.trim())) {
-                                setSelectedBoards([...selectedBoards, customBoard.trim()]);
-                                setCustomBoard('');
+                            placeholder="🔍 Type board (e.g. CBSE, ICSE, IB, Cambridge, State Board)..."
+                            value={boardSearch}
+                            onChange={(e) => setBoardSearch(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const trimmed = boardSearch.trim();
+                                if (trimmed && !selectedBoards.includes(trimmed)) {
+                                  setSelectedBoards([...selectedBoards, trimmed]);
+                                  setBoardSearch('');
+                                }
                               }
                             }}
-                            className="btn btn-secondary pill-interactive-btn"
-                            style={{ padding: '0 0.9rem', borderRadius: '10px' }}
-                          >
-                            <Plus size={16} />
-                          </button>
+                            className="form-control"
+                            style={{
+                              borderRadius: '12px',
+                              fontWeight: 600,
+                              height: '46px',
+                            }}
+                          />
                         </div>
+
+                        {/* Floating Dynamic Dropdown for Boards */}
+                        {boardSearch.trim() && (
+                          <div style={{
+                            marginTop: '0.35rem',
+                            maxHeight: '220px',
+                            overflowY: 'auto',
+                            border: '1.5px solid #CBD5E1',
+                            borderRadius: '12px',
+                            padding: '0.5rem',
+                            backgroundColor: '#FFFFFF',
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.35rem',
+                          }}>
+                            {filteredBoards.map(bd => {
+                              const isSelected = selectedBoards.includes(bd);
+                              return (
+                                <button
+                                  key={bd}
+                                  type="button"
+                                  onClick={() => {
+                                    if (!isSelected) {
+                                      setSelectedBoards([...selectedBoards, bd]);
+                                    } else {
+                                      setSelectedBoards(selectedBoards.filter(b => b !== bd));
+                                    }
+                                    setBoardSearch('');
+                                  }}
+                                  className="pill-interactive-btn"
+                                  style={{
+                                    padding: '0.55rem 0.85rem',
+                                    borderRadius: '8px',
+                                    border: isSelected ? '1.5px solid #7C3AED' : '1px solid #E2E8F0',
+                                    background: isSelected ? '#F3E8FF' : '#F8FAFC',
+                                    color: isSelected ? '#6B21A8' : '#1E293B',
+                                    fontSize: '0.84rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                  }}
+                                >
+                                  <span>{bd}</span>
+                                  <span style={{ fontSize: '0.74rem', color: isSelected ? '#7C3AED' : '#64748B' }}>
+                                    {isSelected ? '✓ Added' : '+ Add'}
+                                  </span>
+                                </button>
+                              );
+                            })}
+
+                            {/* Direct Custom Board Option */}
+                            {boardSearch.trim() && !filteredBoards.some(b => b.toLowerCase() === boardSearch.trim().toLowerCase()) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const trimmed = boardSearch.trim();
+                                  if (trimmed && !selectedBoards.includes(trimmed)) {
+                                    setSelectedBoards([...selectedBoards, trimmed]);
+                                    setBoardSearch('');
+                                  }
+                                }}
+                                className="pill-interactive-btn"
+                                style={{
+                                  padding: '0.55rem 0.85rem',
+                                  borderRadius: '8px',
+                                  border: '1.5px dashed #7C3AED',
+                                  background: '#FAF5FF',
+                                  color: '#7C3AED',
+                                  fontSize: '0.84rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  textAlign: 'left',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem',
+                                }}
+                              >
+                                <Plus size={15} />
+                                <span>Add <strong>&ldquo;{boardSearch.trim()}&rdquo;</strong> as custom board</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                     </div>
@@ -4004,16 +4474,12 @@ export default function TutorRegisterLoginPage() {
                                 triggerWizardError('field-wizardPhone', '⚠️ Please enter a valid 10-digit mobile number.');
                                 return;
                               }
+                              if (!gender) {
+                                triggerWizardError('field-gender', '⚠️ Please select your gender.');
+                                return;
+                              }
                               if (!degree.trim()) {
                                 triggerWizardError('field-degree', '⚠️ Highest Qualification / Degree is mandatory (e.g. B.Tech, M.Sc, B.Ed).');
-                                return;
-                              }
-                              if (!specialization.trim()) {
-                                triggerWizardError('field-specialization', '⚠️ Specialization / Major Stream is mandatory (e.g. Mathematics, Physics, CS).');
-                                return;
-                              }
-                              if (!college.trim()) {
-                                triggerWizardError('field-college', '⚠️ College / University Name is mandatory (e.g. Delhi University, IIT).');
                                 return;
                               }
                               if (!passingYear.trim()) {
