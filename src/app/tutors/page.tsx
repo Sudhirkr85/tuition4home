@@ -415,6 +415,14 @@ export default function TutorsDirectoryPage() {
                   flex: 1 !important;
                 }
               }
+              @keyframes radarWave {
+                0% { transform: scale(0.95); opacity: 0.8; }
+                100% { transform: scale(1.6); opacity: 0; }
+              }
+              @keyframes searchFloat {
+                0%, 100% { transform: translateY(0px) rotate(0deg); }
+                50% { transform: translateY(-6px) rotate(-10deg); }
+              }
             `}</style>
 
             {/* Filter Hub Toolbar */}
@@ -790,17 +798,6 @@ export default function TutorsDirectoryPage() {
                 position: 'relative',
                 overflow: 'hidden',
               }}>
-                <style jsx>{`
-                  @keyframes radarWave {
-                    0% { transform: scale(0.95); opacity: 0.8; }
-                    100% { transform: scale(1.6); opacity: 0; }
-                  }
-                  @keyframes searchFloat {
-                    0%, 100% { transform: translateY(0px) rotate(0deg); }
-                    50% { transform: translateY(-6px) rotate(-10deg); }
-                  }
-                `}</style>
-
                 {/* Animated Radar Search Icon */}
                 <div style={{ position: 'relative', width: '80px', height: '80px', margin: '0 auto 1.25rem auto' }}>
                   <div style={{
