@@ -401,7 +401,7 @@ export default function BookingModal({
           <div style={{ marginBottom: '1.25rem', paddingRight: onClose && !isInline ? '2.5rem' : '0' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.72rem', fontWeight: 800, color: '#0F6E56', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
               <ShieldCheck size={14} color="#0F6E56" />
-              <span>SSSAM ACADEMY OFFICIAL MATCHING</span>
+              <span>TUITIONFORHOME OFFICIAL MATCHING</span>
             </div>
             <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: 0, lineHeight: 1.25 }}>
               {tutorDisplayName ? `Book Trial Class with ${tutorDisplayName}` : 'Request a Verified Home & Online Tutor'}
@@ -667,56 +667,123 @@ export default function BookingModal({
           </form>
         </div>
       ) : (
-        <div style={{ padding: '2rem 1.5rem', textAlign: 'center' }}>
-          <div style={{
-            width: '56px', height: '56px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #0F6E56, #2DD4BF)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 1rem auto',
-          }}>
-            <CheckCircle2 size={28} color="white" />
+        <div style={{ padding: '2.5rem 1.75rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+          <style>{`
+            @keyframes bookSuccessPop {
+              0% { transform: scale(0.5); opacity: 0; }
+              70% { transform: scale(1.12); opacity: 1; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+            @keyframes bookRippleGlow {
+              0% { transform: scale(0.95); opacity: 0.8; }
+              100% { transform: scale(1.6); opacity: 0; }
+            }
+            @keyframes floatStarA {
+              0%, 100% { transform: translateY(0px) rotate(0deg); }
+              50% { transform: translateY(-8px) rotate(12deg); }
+            }
+            @keyframes floatStarB {
+              0%, 100% { transform: translateY(0px) rotate(0deg); }
+              50% { transform: translateY(-10px) rotate(-14deg); }
+            }
+          `}</style>
+
+          {/* Animated Pop-in Success Badge */}
+          <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto 1.25rem auto' }}>
+            <div style={{
+              position: 'absolute',
+              inset: '6px',
+              borderRadius: '50%',
+              border: '2px solid rgba(16, 185, 129, 0.5)',
+              animation: 'bookRippleGlow 2.4s infinite cubic-bezier(0.16, 1, 0.3, 1)',
+            }} />
+            <div style={{
+              width: '72px',
+              height: '72px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'absolute',
+              top: '14px',
+              left: '14px',
+              boxShadow: '0 10px 24px rgba(5, 150, 105, 0.3)',
+              animation: 'bookSuccessPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+            }}>
+              <CheckCircle2 size={38} color="#FFFFFF" strokeWidth={2.5} />
+            </div>
+            <span style={{ position: 'absolute', top: '0px', left: '-4px', fontSize: '1.2rem', animation: 'floatStarA 2.5s ease-in-out infinite' }}>🎉</span>
+            <span style={{ position: 'absolute', top: '4px', right: '-2px', fontSize: '1.1rem', animation: 'floatStarB 2.7s ease-in-out infinite 0.3s' }}>✨</span>
+            <span style={{ position: 'absolute', bottom: '2px', left: '0px', fontSize: '1.1rem', animation: 'floatStarB 2.4s ease-in-out infinite 0.6s' }}>⭐</span>
+            <span style={{ position: 'absolute', bottom: '0px', right: '2px', fontSize: '1.15rem', animation: 'floatStarA 2.6s ease-in-out infinite 0.2s' }}>🎊</span>
           </div>
-          <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#1D1D1F', marginBottom: '0.35rem' }}>
-            Request Received! 🎉
+
+          <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.4rem', letterSpacing: '-0.3px' }}>
+            Demo Request Received! 🎉
           </h3>
-          <p style={{ color: '#515154', fontSize: '0.84rem', lineHeight: 1.55, marginBottom: '1.25rem' }}>
-            Our counselor will call <strong>+91 {phone}</strong> within <strong>30 minutes</strong> to match verified tutors for <strong>{grade} · {subject}</strong> in <strong>{locality}</strong>.
+          <p style={{ color: '#475569', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: '1.25rem', maxWidth: '440px', margin: '0 auto 1.25rem auto' }}>
+            Our academic counselor will call <strong style={{ color: '#0F172A' }}>+91 {phone}</strong> within <strong style={{ color: '#0F6E56' }}>30 minutes</strong> to align top-rated verified tutors for <strong style={{ color: '#0F172A' }}>{grade || 'Your Class'}{subject ? ` · ${subject}` : ''}</strong> in <strong style={{ color: '#0F172A' }}>{locality || 'Gurugram'}</strong>.
           </p>
 
           <div style={{
-            backgroundColor: '#F8FAFC', border: '1px solid #E8E8ED',
-            borderRadius: '10px', padding: '0.65rem 0.9rem',
-            textAlign: 'center', marginBottom: '1rem', fontSize: '0.8rem', color: '#475569',
+            backgroundColor: '#F0FDF4',
+            border: '1px solid #BBF7D0',
+            borderRadius: '12px',
+            padding: '0.75rem 1rem',
+            textAlign: 'center',
+            marginBottom: '1.25rem',
+            fontSize: '0.82rem',
+            color: '#166534',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.45rem',
           }}>
-            📞 Direct SSSAM Support: <strong style={{ color: '#0F6E56' }}>{SSSAM_OFFICE_DETAILS.phones[0]}</strong>
+            <Phone size={15} color="#15803D" />
+            <span>Direct Support: <strong style={{ color: '#14532D' }}>+91 92170 31899</strong> (Mon–Sun 9 AM–9 PM)</span>
           </div>
 
-            {onClose ? (
-              <button
-                onClick={onClose}
-                style={{
-                  width: '100%', padding: '0.85rem',
-                  borderRadius: '999px', border: '1.5px solid #E8E8ED',
-                  backgroundColor: '#FFFFFF', color: '#1D1D1F',
-                  fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer',
-                }}
-              >
-                Back to Website
-              </button>
-            ) : (
-              <a
-                href="/"
-                style={{
-                  display: 'block', width: '100%', padding: '0.85rem',
-                  borderRadius: '999px', border: '1.5px solid #E8E8ED',
-                  backgroundColor: '#FFFFFF', color: '#1D1D1F',
-                  fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none',
-                }}
-              >
-                Back to Home
-              </a>
-            )}
-          </div>
+          {onClose ? (
+            <button
+              onClick={onClose}
+              style={{
+                width: '100%',
+                padding: '0.85rem',
+                borderRadius: '12px',
+                border: 'none',
+                backgroundColor: 'var(--brand-teal)',
+                color: '#FFFFFF',
+                fontWeight: 800,
+                fontSize: '0.92rem',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(15, 110, 86, 0.25)',
+              }}
+            >
+              Done &amp; Continue
+            </button>
+          ) : (
+            <a
+              href="/"
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '0.85rem',
+                borderRadius: '12px',
+                border: 'none',
+                backgroundColor: 'var(--brand-teal)',
+                color: '#FFFFFF',
+                fontWeight: 800,
+                fontSize: '0.92rem',
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(15, 110, 86, 0.25)',
+              }}
+            >
+              Back to Home
+            </a>
+          )}
+        </div>
         )}
       </div>
     );

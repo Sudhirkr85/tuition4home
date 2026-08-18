@@ -783,28 +783,58 @@ export default function TutorsDirectoryPage() {
                 backgroundColor: '#FFFFFF',
                 borderRadius: '24px',
                 border: '1.5px dashed #CBD5E1',
-                padding: '4rem 2rem',
+                padding: '3.5rem 2rem',
                 textAlign: 'center',
                 color: '#64748B',
                 boxShadow: 'var(--shadow-subtle)',
+                position: 'relative',
+                overflow: 'hidden',
               }}>
-                <div style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  backgroundColor: '#ECFDF5',
-                  color: '#0F6E56',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 1.25rem auto',
-                }}>
-                  <Search size={26} />
+                <style jsx>{`
+                  @keyframes radarWave {
+                    0% { transform: scale(0.95); opacity: 0.8; }
+                    100% { transform: scale(1.6); opacity: 0; }
+                  }
+                  @keyframes searchFloat {
+                    0%, 100% { transform: translateY(0px) rotate(0deg); }
+                    50% { transform: translateY(-6px) rotate(-10deg); }
+                  }
+                `}</style>
+
+                {/* Animated Radar Search Icon */}
+                <div style={{ position: 'relative', width: '80px', height: '80px', margin: '0 auto 1.25rem auto' }}>
+                  <div style={{
+                    position: 'absolute',
+                    inset: '4px',
+                    borderRadius: '50%',
+                    border: '2px solid rgba(15, 110, 86, 0.4)',
+                    animation: 'radarWave 2.2s infinite cubic-bezier(0.16, 1, 0.3, 1)',
+                  }} />
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    backgroundColor: '#ECFDF5',
+                    color: '#0F6E56',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'absolute',
+                    top: '8px',
+                    left: '8px',
+                    boxShadow: '0 6px 18px rgba(15, 110, 86, 0.18)',
+                    animation: 'searchFloat 2.8s ease-in-out infinite',
+                  }}>
+                    <Search size={28} />
+                  </div>
+                  <span style={{ position: 'absolute', top: '-2px', right: '-2px', fontSize: '1rem' }}>✨</span>
+                  <span style={{ position: 'absolute', bottom: '0px', left: '-2px', fontSize: '0.9rem' }}>📍</span>
                 </div>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.5rem' }}>
+
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.45rem' }}>
                   No educators match your exact search criteria
                 </h3>
-                <p style={{ fontSize: '0.92rem', maxWidth: '480px', margin: '0 auto 1.75rem auto', lineHeight: 1.6 }}>
+                <p style={{ fontSize: '0.92rem', maxWidth: '480px', margin: '0 auto 1.5rem auto', lineHeight: 1.6 }}>
                   Our academic counselors can handpick and assign a verified subject specialist for your child within 2 hours.
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
