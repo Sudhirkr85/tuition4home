@@ -130,13 +130,13 @@ The platform integrates a dynamic, interactive map experience (`RapidoStyleMap.t
 
 ### B. Tutor Portal & Lifecycle
 1. **7-Step Registration Flow (`/tutor/register`):**
-   - **Step 1:** Personal details, profile photo, and teaching mode (Home, Online, or Both).
-   - **Step 2:** 60-Second Video Introduction (YouTube unlisted embed or direct MP4 upload).
-   - **Step 3:** Academic qualifications & university degrees.
-   - **Step 4:** Teaching specifications (Classes 1–12, CBSE, ICSE, IB, IGCSE, State Boards).
-   - **Step 5:** Dual-Location Preferences (Pinpoint GPS coordinate + Travel Radius in KM or specific Gurgaon sector selection).
-   - **Step 6:** Hourly & monthly fee expectations.
-   - **Step 7:** KYC government document upload (Aadhaar, Driving License, PAN, or Degree).
+   - **Step 1:** Personal details, degrees, experience, and Google user phone verification.
+   - **Step 2:** Teaching specifications & searchable subjects with quick-add chips.
+   - **Step 3:** Dual Location Preferences (`📍 By Home Radius (3–30 KM)` vs `🗺️ Specific Sectors Only`).
+   - **Step 4:** Compact Expected Hourly Rates & real-time monthly earnings calculator.
+   - **Step 5:** Profile Photo & 60-second video introduction (Link / File upload) with live preview.
+   - **Step 6:** 3-Button Identity Verification (Aadhaar, PAN, License) with 64px image thumbnail preview & AES-256 encryption.
+   - **Step 7:** Privacy & Service Agreement with 1-click full legal viewer modal.
 2. **Tutor Dashboard & Profile Hub (`/tutor/profile`):**
    - **Digital Verified Educator ID Card:** Downloadable ID card with verified seal and QR verification pass.
    - **Lead Pipeline:** View assigned student inquiries, demo dates, and student locations.
@@ -566,6 +566,21 @@ All discussions, new features, and technical enhancements are actively logged an
 - [x] **Update 9.12 (Parent & Student Master Directory & 360° Drawer):** Replaced the redundant "Converted Leads" tab with a high-capacity **`👨‍👩‍👧 Parent Directory`** tab. Features multi-tier filter toolbar (Live Search, Grade Level dropdown, Status pills), scalable table view, pagination (5, 10, 25, 50), and a comprehensive **Parent 360° Slide-Over Right Drawer** with Student requirements, Assigned Educator inspector with 1-click re-assignment, Monthly Fee ledger, and Counselor Call CRM notes.
 - [x] **Update 9.13 (Dedicated Counselor Calling & Operations Portal - Zero Fee Clutter):** Upgraded `/counselor` portal into a focused 4-desk operations suite: (1) **Calling Lead Desk** with 8 status filters, mandatory call notes dialog, and direct WhatsApp/Call triggers; (2) **Tutor Allocator** with 1,000+ tutor table, radius matcher, and 1-click Direct Assignment; (3) **Parent Directory** with grade filters and 360° drawer; and (4) **Coordination Desk** with 3-way WhatsApp intros and session milestone management. Completely excludes all financial revenue counters, fee ledgers, and staff settings from counselor view for security and operational focus.
 - [x] **Update 9.14 (100% Dynamic Prisma MySQL Database Architecture & Static Data Removal):** Migrated the entire application from hardcoded mock datasets to a live, persistent Prisma MySQL database. Added `GET /api/tutors/list` and `GET /api/config/global` endpoints. Connected Homepage, Rapido Interactive Map, Locality pages, Subject pages, Admin Dashboard, and Counselor Portal to fetch live verified educators, parent inquiries, and platform configs directly from the database. Added 1-command `npm run db:reset` and `npm run db:seed` workflows.
+
+### 🎨 Phase 10 Delivered: Tutor Onboarding Modernization & Celebratory Micro-Animations
+- [x] **Update 10.1 (Modernized 7-Step Tutor Registration Wizard):**
+  - **Step 1:** Instant phone verification for Google OAuth sign-in users with live validation.
+  - **Step 2:** Tag-based searchable subjects selector with quick-add chips for high-demand subjects.
+  - **Step 3 (Dual Location Mode):** Switcher between `📍 By Home Radius (3–30 KM)` and `🗺️ Specific Sectors Only` with interactive map & multi-sector smart tagging.
+  - **Step 4 (Compact Pricing):** Single-row inline min-to-max rate inputs and real-time calculated monthly earnings banner (height reduced by ~65%).
+  - **Step 5 (Clean Media):** Streamlined photo upload, 2-tab video switcher (Link embed or MP4 upload), live video player, and collapsible recording tips.
+  - **Step 6 (Interactive KYC):** Replaced native select with 3-button pill grid (`[🆔 Aadhaar] [💳 PAN] [🚗 License]`), added live 64px image thumbnail preview, and 256-bit AES encryption trust badge.
+  - **Step 7:** Clean Terms of Service & DPDP Act compliance agreement with 1-click modal viewer.
+- [x] **Update 10.2 (Sleek Light Mint Wizard Header):** Replaced dark header box with a clean light gradient (`#F8FAFC` $\to$ `#F0FDF4`), glowing onboarding badge, and smooth animated gradient progress bar.
+- [x] **Update 10.3 (Celebratory Pop-in Animations & Floating Confetti):**
+  - **Tutor Registration Success Screen:** Added animated bouncy checkmark, dual expanding ripple glow rings, and floating confetti sparkles (`🎉`, `✨`, `⭐`, `🎊`).
+  - **Parent Demo Request Modal (`BookingModal.tsx`):** Added celebratory success animation with 30-minute counselor response promise and 1-tap support.
+  - **Tutors Directory Empty State (`/tutors`):** Added dynamic radar pulse wave and floating search magnifier graphic for zero-result feedback.
 
 ---
 
