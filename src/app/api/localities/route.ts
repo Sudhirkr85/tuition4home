@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { GURGAON_LOCALITIES } from '@/lib/data';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     // 1. Fetch all SEO localities from database
