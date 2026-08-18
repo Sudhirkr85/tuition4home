@@ -4399,25 +4399,52 @@ export default function TutorRegisterLoginPage() {
                         </p>
                       </div>
 
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontWeight: 700 }}>
+                      {/* 3-Button Modern ID Selector */}
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label" style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: '0.45rem' }}>
                           Select ID Type <span style={{ color: '#DC2626' }}>*</span>
                         </label>
-                        <select
-                          value={idType}
-                          onChange={(e) => { setIdType(e.target.value); setIdNumber(''); }}
-                          className="form-control"
-                          style={{ fontWeight: 600 }}
-                        >
-                          <option value="AADHAAR_MASKED">Aadhaar Card (UIDAI)</option>
-                          <option value="PAN">PAN Card (Income Tax Dept)</option>
-                          <option value="DRIVING_LICENSE">Driving License (RTO)</option>
-                        </select>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem' }}>
+                          {[
+                            { id: 'AADHAAR_MASKED', label: 'Aadhaar', icon: '🆔' },
+                            { id: 'PAN', label: 'PAN Card', icon: '💳' },
+                            { id: 'DRIVING_LICENSE', label: 'License', icon: '🚗' },
+                          ].map((tab) => {
+                            const isSelected = idType === tab.id;
+                            return (
+                              <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => {
+                                  setIdType(tab.id);
+                                  setIdNumber('');
+                                  if (wizardErrorField === 'field-idNumber' || wizardErrorField === 'field-idDoc') setWizardErrorField(null);
+                                }}
+                                className="pill-interactive-btn"
+                                style={{
+                                  padding: '0.65rem 0.35rem',
+                                  borderRadius: '10px',
+                                  border: `1.5px solid ${isSelected ? 'var(--brand-teal)' : '#CBD5E1'}`,
+                                  backgroundColor: isSelected ? '#ECFDF5' : '#FFFFFF',
+                                  color: isSelected ? '#065F46' : '#334155',
+                                  fontWeight: isSelected ? 800 : 600,
+                                  fontSize: '0.8rem',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease',
+                                  textAlign: 'center',
+                                  boxShadow: isSelected ? '0 1px 4px rgba(15, 110, 86, 0.12)' : 'none',
+                                }}
+                              >
+                                {isSelected ? '✓ ' : ''}{tab.icon} {tab.label}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
 
-                      <div className="form-group">
+                      <div className="form-group" style={{ marginBottom: 0 }}>
                         <label className="form-label" style={{ fontWeight: 700 }}>
-                          {idType === 'AADHAAR_MASKED' ? '12-Digit Aadhaar Number' : idType === 'PAN' ? '10-Character PAN Number' : 'Document ID Number'} <span style={{ color: '#DC2626' }}>*</span>
+                          {idType === 'AADHAAR_MASKED' ? '12-Digit Aadhaar Number' : idType === 'PAN' ? '10-Character PAN Number' : 'Driving License Number'} <span style={{ color: '#DC2626' }}>*</span>
                         </label>
                         <input
                           id="field-idNumber"
@@ -4446,6 +4473,7 @@ export default function TutorRegisterLoginPage() {
                             letterSpacing: '0.12rem',
                             textTransform: 'uppercase',
                             fontWeight: 700,
+                            height: '46px',
                             borderRadius: '10px',
                             borderColor: wizardErrorField === 'field-idNumber' ? '#EF4444' : undefined,
                             boxShadow: wizardErrorField === 'field-idNumber' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
@@ -4457,34 +4485,34 @@ export default function TutorRegisterLoginPage() {
                       </div>
 
                       {/* Mandatory Document Photo Upload */}
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span>
-                            Upload Government ID Document Photo <span style={{ color: '#DC2626' }}>*</span>
-                          </span>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                          <label className="form-label" style={{ margin: 0, fontWeight: 700 }}>
+                            Upload {idType === 'AADHAAR_MASKED' ? 'Aadhaar' : idType === 'PAN' ? 'PAN' : 'License'} Document Photo / PDF <span style={{ color: '#DC2626' }}>*</span>
+                          </label>
                           {idDocFileName ? (
                             <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                               <CheckCircle2 size={14} color="#059669" /> Document Attached
                             </span>
                           ) : (
-                            <span style={{ fontSize: '0.72rem', color: '#DC2626', fontWeight: 700 }}>
-                              Required to proceed
+                            <span style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                              Front side clear copy
                             </span>
                           )}
-                        </label>
+                        </div>
 
                         <div
                           id="field-idDoc"
                           tabIndex={0}
                           style={{
-                            padding: '1.4rem',
+                            padding: '1.2rem',
                             borderRadius: '14px',
                             border: idDocFileName
                               ? '2px solid #059669'
-                              : (wizardErrorField === 'field-idDoc' ? '2.5px solid #EF4444' : '2px dashed #DC2626'),
+                              : (wizardErrorField === 'field-idDoc' ? '2px solid #EF4444' : '1.5px dashed #CBD5E1'),
                             backgroundColor: idDocFileName
                               ? '#F0FDF4'
-                              : (wizardErrorField === 'field-idDoc' ? '#FEF2F2' : '#FEF2F2'),
+                              : (wizardErrorField === 'field-idDoc' ? '#FEF2F2' : '#F8FAFC'),
                             boxShadow: wizardErrorField === 'field-idDoc'
                               ? '0 0 0 4px rgba(239, 68, 68, 0.22)'
                               : 'none',
@@ -4492,45 +4520,62 @@ export default function TutorRegisterLoginPage() {
                             flexDirection: 'column',
                             alignItems: 'center',
                             textAlign: 'center',
-                            gap: '0.6rem',
+                            gap: '0.5rem',
                             outline: 'none',
                             transition: 'all 0.2s ease',
                           }}
                         >
                           {idDocFileName ? (
                             <>
-                              <div style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <CheckCircle2 size={24} color="#059669" />
-                              </div>
+                              {idDocUrl && !idDocFileName?.toLowerCase().endsWith('.pdf') ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={idDocUrl}
+                                  alt="Document Preview"
+                                  style={{
+                                    width: '64px',
+                                    height: '64px',
+                                    borderRadius: '10px',
+                                    objectFit: 'cover',
+                                    border: '2px solid #059669',
+                                    boxShadow: '0 3px 10px rgba(5, 150, 105, 0.25)',
+                                  }}
+                                />
+                              ) : (
+                                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <FileText size={24} color="#059669" />
+                                </div>
+                              )}
                               <div>
-                                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>
-                                  {idDocFileName}
+                                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+                                  <CheckCircle2 size={16} color="#059669" />
+                                  <span>{idDocFileName}</span>
                                 </div>
                                 <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 600, marginTop: '2px' }}>
-                                  ✓ Document ready for verification
+                                  ✓ Document attached &amp; ready for audit
                                 </div>
                               </div>
-                              <label htmlFor="kyc-upload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', marginTop: '0.25rem' }}>
+                              <label htmlFor="kyc-upload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', borderRadius: '8px', padding: '0.35rem 0.8rem' }}>
                                 <Upload size={13} />
-                                <span>Change / Re-upload Document</span>
+                                <span>Change Document</span>
                               </label>
                             </>
                           ) : (
                             <>
-                              <div style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <ShieldCheck size={24} color="#DC2626" />
+                              <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: wizardErrorField === 'field-idDoc' ? '#FEE2E2' : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <ShieldCheck size={22} color={wizardErrorField === 'field-idDoc' ? '#EF4444' : '#0F6E56'} />
                               </div>
                               <div>
-                                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#991B1B' }}>
+                                <div style={{ fontSize: '0.86rem', fontWeight: 700, color: wizardErrorField === 'field-idDoc' ? '#DC2626' : '#1E293B' }}>
                                   Upload Front Side of {idType === 'AADHAAR_MASKED' ? 'Aadhaar' : idType === 'PAN' ? 'PAN' : 'License'}
                                 </div>
-                                <div style={{ fontSize: '0.74rem', color: '#B91C1C', marginTop: '2px' }}>
+                                <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>
                                   Clear JPG, PNG, or PDF file (Max 5MB)
                                 </div>
                               </div>
-                              <label htmlFor="kyc-upload" className="btn btn-primary btn-sm" style={{ backgroundColor: '#DC2626', borderColor: '#DC2626', cursor: 'pointer', marginTop: '0.25rem' }}>
+                              <label htmlFor="kyc-upload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', borderRadius: '8px', padding: '0.4rem 0.9rem', fontWeight: 700 }}>
                                 <Upload size={14} />
-                                <span>Select Document File *</span>
+                                <span>Select Document File</span>
                               </label>
                             </>
                           )}
@@ -4538,22 +4583,31 @@ export default function TutorRegisterLoginPage() {
                             type="file" 
                             accept="image/jpeg,image/png,image/webp,application/pdf" 
                             id="kyc-upload" 
-                            onChange={(e) => handleFileChange(e, 'kyc')} 
+                            onChange={(e) => {
+                              handleFileChange(e, 'kyc');
+                              if (wizardErrorField === 'field-idDoc') setWizardErrorField(null);
+                            }} 
                             style={{ display: 'none' }} 
                           />
                         </div>
                       </div>
 
                       <div style={{
-                        backgroundColor: 'var(--bg-app)',
-                        border: '1.5px solid var(--border-teal)',
+                        backgroundColor: '#F0FDF4',
+                        border: '1px solid #BBF7D0',
                         borderRadius: '12px',
-                        padding: '1rem',
-                        fontSize: '0.82rem',
-                        color: 'var(--brand-teal)',
-                        lineHeight: 1.55,
+                        padding: '0.85rem 1rem',
+                        fontSize: '0.78rem',
+                        color: '#166534',
+                        lineHeight: 1.5,
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '0.5rem',
                       }}>
-                        🔒 <strong>Secure Encryption Protocol Active:</strong> Your complete ID Number and document images are encrypted using AES-256 algorithm and stored on private database drives. Your details are only decrypted when requested by verified SSSAM Academy administrative auditors for onboarding checks. It will never be exposed in public searches or shared with parents.
+                        <ShieldCheck size={18} color="#15803D" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div>
+                          <strong style={{ color: '#14532D' }}>256-Bit Encrypted &amp; 100% Confidential:</strong> Your government ID records are securely encrypted using AES-256 encryption protocol and accessed only by the Tuition For Home verification desk for onboarding audit. They will never be shared with parents or displayed publicly.
+                        </div>
                       </div>
                     </div>
                   )}
@@ -4766,12 +4820,20 @@ export default function TutorRegisterLoginPage() {
                               }
                             }
                             if (currentStep === 6) {
+                              const docLabel = (idType === 'AADHAAR_MASKED' || idType === 'AADHAAR')
+                                ? 'Aadhaar Card'
+                                : idType === 'PAN'
+                                ? 'PAN Card'
+                                : idType === 'DRIVING_LICENSE'
+                                ? 'Driving License'
+                                : 'Identity Document';
+
                               if (!idNumber.trim()) {
-                                triggerWizardError('field-idNumber', `⚠️ ${idType === 'AADHAAR' ? 'Aadhaar Number' : 'PAN Card Number'} is MANDATORY!`);
+                                triggerWizardError('field-idNumber', `⚠️ ${docLabel} Number is MANDATORY!`);
                                 return;
                               }
                               const cleanId = idNumber.trim().toUpperCase();
-                              if (idType === 'AADHAAR') {
+                              if (idType === 'AADHAAR_MASKED' || idType === 'AADHAAR') {
                                 const digitsOnly = cleanId.replace(/\D/g, '');
                                 if (digitsOnly.length !== 12) {
                                   triggerWizardError('field-idNumber', '⚠️ Please enter a valid 12-digit Aadhaar number.');
@@ -4783,9 +4845,14 @@ export default function TutorRegisterLoginPage() {
                                   triggerWizardError('field-idNumber', '⚠️ Please enter a valid 10-character PAN (format: 5 letters, 4 digits, 1 letter, e.g. ABCDE1234F).');
                                   return;
                                 }
+                              } else if (idType === 'DRIVING_LICENSE') {
+                                if (cleanId.length < 8) {
+                                  triggerWizardError('field-idNumber', '⚠️ Please enter a valid Driving License number.');
+                                  return;
+                                }
                               }
                               if (!idDocUrl && !idDocFileName) {
-                                triggerWizardError('field-idDoc', '⚠️ ID Document Proof is MANDATORY! Please upload your ID document photo/PDF before proceeding.');
+                                triggerWizardError('field-idDoc', `⚠️ ${docLabel} Photo/Proof is MANDATORY! Please upload your document photo or PDF before proceeding.`);
                                 return;
                               }
                             }
@@ -4858,84 +4925,168 @@ export default function TutorRegisterLoginPage() {
                ONBOARDING COMPLETION SUCCESS SCREEN
                ========================================================================= */
             <div className="container" style={{ maxWidth: '780px' }}>
-              <div className="apple-card" style={{ padding: '3.5rem 2.5rem', textAlign: 'center', backgroundColor: '#FFFFFF' }}>
+              <style>{`
+                @keyframes successPop {
+                  0% { transform: scale(0.5); opacity: 0; }
+                  70% { transform: scale(1.12); opacity: 1; }
+                  100% { transform: scale(1); opacity: 1; }
+                }
+                @keyframes rippleGlow {
+                  0% { transform: scale(0.95); opacity: 0.8; }
+                  100% { transform: scale(1.6); opacity: 0; }
+                }
+                @keyframes floatEmojiA {
+                  0%, 100% { transform: translateY(0px) rotate(0deg); }
+                  50% { transform: translateY(-10px) rotate(12deg); }
+                }
+                @keyframes floatEmojiB {
+                  0%, 100% { transform: translateY(0px) rotate(0deg); }
+                  50% { transform: translateY(-12px) rotate(-14deg); }
+                }
+              `}</style>
+              <div className="apple-card" style={{ padding: '3rem 2rem', textAlign: 'center', backgroundColor: '#FFFFFF', position: 'relative', overflow: 'hidden' }}>
+                
+                {/* Background Ambient Glow */}
                 <div style={{
-                  width: '72px',
-                  height: '72px',
+                  position: 'absolute',
+                  top: '-40px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: '260px',
+                  height: '260px',
                   borderRadius: '50%',
-                  backgroundColor: '#ECFDF5',
-                  color: '#0F6E56',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 1.5rem auto',
-                  boxShadow: '0 8px 24px rgba(15, 110, 86, 0.15)',
-                }}>
-                  <CheckCircle2 size={42} />
+                  background: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
+                  pointerEvents: 'none',
+                }} />
+
+                {/* Animated Celebratory Icon with Pulse Rings & Floating Confetti */}
+                <div style={{ position: 'relative', width: '120px', height: '120px', margin: '0 auto 1.5rem auto' }}>
+                  {/* Expanding Ripple Ring 1 */}
+                  <div style={{
+                    position: 'absolute',
+                    inset: '10px',
+                    borderRadius: '50%',
+                    border: '2px solid rgba(16, 185, 129, 0.5)',
+                    animation: 'rippleGlow 2.4s infinite cubic-bezier(0.16, 1, 0.3, 1)',
+                  }} />
+                  {/* Expanding Ripple Ring 2 */}
+                  <div style={{
+                    position: 'absolute',
+                    inset: '10px',
+                    borderRadius: '50%',
+                    border: '2px solid rgba(16, 185, 129, 0.35)',
+                    animation: 'rippleGlow 2.4s infinite cubic-bezier(0.16, 1, 0.3, 1) 0.8s',
+                  }} />
+
+                  {/* Main Pop-in Green Circle */}
+                  <div style={{
+                    width: '84px',
+                    height: '84px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+                    color: '#FFFFFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'absolute',
+                    top: '18px',
+                    left: '18px',
+                    boxShadow: '0 10px 28px rgba(5, 150, 105, 0.35)',
+                    animation: 'successPop 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+                  }}>
+                    <CheckCircle2 size={46} color="#FFFFFF" strokeWidth={2.5} />
+                  </div>
+
+                  {/* Floating Confetti Sparkles */}
+                  <span style={{ position: 'absolute', top: '2px', left: '-6px', fontSize: '1.4rem', animation: 'floatEmojiA 2.6s ease-in-out infinite' }}>🎉</span>
+                  <span style={{ position: 'absolute', top: '6px', right: '-4px', fontSize: '1.25rem', animation: 'floatEmojiB 2.8s ease-in-out infinite 0.4s' }}>✨</span>
+                  <span style={{ position: 'absolute', bottom: '6px', left: '-2px', fontSize: '1.2rem', animation: 'floatEmojiB 2.4s ease-in-out infinite 0.7s' }}>⭐</span>
+                  <span style={{ position: 'absolute', bottom: '4px', right: '0px', fontSize: '1.3rem', animation: 'floatEmojiA 2.5s ease-in-out infinite 0.2s' }}>🎊</span>
                 </div>
 
-                <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.5rem', letterSpacing: '-0.5px' }}>
+                <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.45rem', letterSpacing: '-0.4px' }}>
                   Application Submitted Successfully! 🎉
                 </h2>
 
-                <p style={{ color: '#64748B', fontSize: '1rem', lineHeight: 1.6, maxWidth: '580px', margin: '0 auto 1.75rem auto' }}>
-                  Welcome aboard, <strong>{userName}</strong>! Your tutor profile has been registered on <strong>TuitionForHome</strong>. Your application status is currently: <span style={{ color: '#0F6E56', fontWeight: 700, backgroundColor: '#ECFDF5', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>Pending Interview Verification</span>.
+                <p style={{ color: '#64748B', fontSize: '0.96rem', lineHeight: 1.6, maxWidth: '580px', margin: '0 auto 1.5rem auto' }}>
+                  Welcome aboard, <strong style={{ color: '#0F172A' }}>{userName}</strong>! Your tutor profile has been registered on <strong>TuitionForHome</strong>.<br />
+                  Current Status: <span style={{ color: '#065F46', fontWeight: 700, backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.2rem 0.65rem', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.35rem' }}>
+                    ⏳ Pending Verification
+                  </span>
                 </p>
 
+                {/* What Happens Next Card */}
                 <div style={{
                   backgroundColor: '#F8FAFC',
                   border: '1.5px solid #E2E8F0',
                   borderRadius: '16px',
-                  padding: '1.5rem',
+                  padding: '1.35rem',
                   maxWidth: '560px',
-                  margin: '0 auto 1.75rem auto',
+                  margin: '0 auto 1.5rem auto',
                   textAlign: 'left',
                 }}>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
                     <ShieldCheck size={18} color="#0F6E56" />
-                    <span>WHAT HAPPENS NEXT?</span>
+                    <span>What Happens Next?</span>
                   </div>
-                  <ul style={{ paddingLeft: '1.25rem', fontSize: '0.84rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '0.55rem', lineHeight: 1.5 }}>
-                    <li>Our administrative auditors at <strong>SSSAM Academy (Sector 14, Gurugram)</strong> will review your qualifications and intro video.</li>
-                    <li>You will receive a call within 24 hours to schedule your online video interview or physical walk-in evaluation.</li>
-                    <li>Once approved, your tutor profile will be set to <strong>Active &amp; Verified</strong>, and you will start receiving matched parent leads!</li>
+                  <ul style={{ paddingLeft: '1.2rem', fontSize: '0.84rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '0.55rem', lineHeight: 1.5 }}>
+                    <li>Our onboarding desk at <strong>TuitionForHome (Sector 14, Gurugram)</strong> will review your qualifications and intro video.</li>
+                    <li>You will receive a call within 24 hours to schedule your quick 10-minute online video interview or walk-in evaluation.</li>
+                    <li>Once approved, your tutor profile will be set to <strong>Active &amp; Verified</strong>, and you will start receiving matched student leads!</li>
                   </ul>
                 </div>
 
-                {/* SSSAM Academy Helpline Card */}
-                <div style={{
-                  backgroundColor: '#F0FDF4',
-                  border: '1px solid #BBF7D0',
-                  borderRadius: '12px',
-                  padding: '1rem',
-                  maxWidth: '560px',
-                  margin: '0 auto 2rem auto',
-                  fontSize: '0.84rem',
-                  color: '#166534',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '0.5rem',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Phone size={16} color="#166534" />
-                    <span><strong>Helpline Support:</strong> +91 92170 31899</span>
-                  </div>
-                  <span style={{ fontSize: '0.76rem', color: '#15803D', fontWeight: 600 }}>Mon–Sun: 9 AM – 9 PM</span>
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <a href="/tutor/profile" className="btn btn-primary" style={{ backgroundColor: 'var(--brand-teal)' }}>
+                {/* Clean Action Buttons */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxWidth: '400px', margin: '0 auto' }}>
+                  <a
+                    href="/tutor/profile"
+                    className="btn btn-primary"
+                    style={{
+                      backgroundColor: 'var(--brand-teal)',
+                      padding: '0.85rem 1.5rem',
+                      borderRadius: '12px',
+                      fontSize: '0.95rem',
+                      fontWeight: 800,
+                      justifyContent: 'center',
+                      width: '100%',
+                      boxShadow: '0 8px 24px rgba(15, 110, 86, 0.25)',
+                    }}
+                  >
                     <span>Go to Profile Dashboard</span>
-                    <ArrowRight size={14} />
+                    <ArrowRight size={16} />
                   </a>
-                  <a href="/" className="btn btn-secondary">
-                    <span>Back to Home</span>
-                  </a>
-                  <button type="button" onClick={handleLogout} className="btn btn-secondary" style={{ color: '#B91C1C', borderColor: '#FCA5A5' }}>
-                    <span>Log Out</span>
-                  </button>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <a
+                      href="/"
+                      className="btn btn-secondary"
+                      style={{
+                        padding: '0.65rem',
+                        borderRadius: '10px',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <span>Back to Home</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="btn btn-secondary"
+                      style={{
+                        color: '#B91C1C',
+                        borderColor: '#FCA5A5',
+                        padding: '0.65rem',
+                        borderRadius: '10px',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <span>Log Out</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
