@@ -140,6 +140,16 @@ a {
   }
 }
 
+/* Responsive Wizard Form Padding */
+.wizard-card-body {
+  padding: 1.75rem 1.5rem;
+}
+@media (max-width: 480px) {
+  .wizard-card-body {
+    padding: 1.25rem 0.95rem !important;
+  }
+}
+
 /* Typography Hierarchy */
 h1 {
   font-size: clamp(2.1rem, 4.8vw, 3.4rem);

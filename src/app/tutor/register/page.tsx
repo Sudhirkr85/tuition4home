@@ -2439,7 +2439,7 @@ export default function TutorRegisterLoginPage() {
                   }} />
                 </div>
 
-                <div style={{ padding: '1.75rem 1.5rem' }}>
+                <div className="wizard-card-body">
                   
                   {/* STEP 1: Basic Professional Info */}
                   {currentStep === 1 && (
