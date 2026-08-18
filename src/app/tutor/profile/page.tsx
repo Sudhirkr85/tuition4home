@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import {
@@ -92,8 +92,17 @@ export default function TutorProfileDashboard() {
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
 
-  const handleLogout = () => {
-    localStorage.removeItem('tutor_session');
+  const handleLogout = async () => {
+    try {
+      localStorage.removeItem('tutor_session');
+      localStorage.removeItem('tutor_session_raw');
+      localStorage.removeItem('parent_session');
+      localStorage.removeItem('parent_session_raw');
+      window.dispatchEvent(new Event('storage'));
+    } catch {}
+    try {
+      await signOut({ redirect: false });
+    } catch {}
     window.location.href = '/tutor/register';
   };
 

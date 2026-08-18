@@ -1000,7 +1000,13 @@ export default function TutorRegisterLoginPage() {
   };
 
   const handleLogout = async () => {
-    localStorage.removeItem('tutor_session');
+    try {
+      localStorage.removeItem('tutor_session');
+      localStorage.removeItem('tutor_session_raw');
+      localStorage.removeItem('parent_session');
+      localStorage.removeItem('parent_session_raw');
+      window.dispatchEvent(new Event('storage'));
+    } catch {}
     setIsLoggedIn(false);
     setUserId('');
     setUserName('');

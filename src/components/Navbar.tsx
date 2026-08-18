@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
-import { Phone, Menu, X, ShieldCheck, UserCheck, ChevronRight, LogOut, User, Settings, GraduationCap } from 'lucide-react';
+import { Phone, Menu, X, ShieldCheck, ChevronRight, LogOut, User, Settings, GraduationCap } from 'lucide-react';
 import { SSSAM_OFFICE_DETAILS } from '@/lib/data';
 
 interface NavbarProps {
@@ -11,6 +12,10 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onOpenBooking }: NavbarProps) {
+  const pathname = usePathname() || '';
+  const isTutorRoute = pathname.startsWith('/tutor');
+  const isParentRoute = pathname.startsWith('/parent');
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [parentSession, setParentSession] = useState<{ userId: string; name: string; email: string; image?: string } | null>(null);
   const [tutorSession, setTutorSession] = useState<{ userId?: string; name?: string; email?: string; image?: string; avatarUrl?: string } | null>(null);
@@ -25,27 +30,34 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
     setMounted(true);
   }, []);
 
-  // Read sessions from localStorage & NextAuth on mount & storage events
+  // Read sessions from NextAuth & route context
   useEffect(() => {
     if (authSession?.user?.email) {
       const email = authSession.user.email;
-      const name = authSession.user.name || 'Google Educator';
+      const name = authSession.user.name || 'User';
       const image = authSession.user.image || '';
       const userId = (authSession.user as any).id || `GGL-${email.split('@')[0]}`;
       const role = (authSession.user as any).role;
+      const hasTutorProfile = (authSession.user as any).hasTutorProfile;
 
-      if (role === 'PARENT') {
-        const pObj = { userId, name, email, image };
-        setParentSession(pObj);
-        try { localStorage.setItem('parent_session', JSON.stringify(pObj)); } catch {}
-      } else {
+      // If on tutor route or recognized as a tutor, save as tutor session
+      if (isTutorRoute || role === 'TUTOR' || hasTutorProfile) {
         const tObj = { userId, name, email, image, avatarUrl: image };
         setTutorSession(tObj);
-        try { localStorage.setItem('tutor_session', JSON.stringify(tObj)); } catch {}
+        try {
+          localStorage.setItem('tutor_session', JSON.stringify(tObj));
+        } catch {}
+      } else {
+        const pObj = { userId, name, email, image };
+        setParentSession(pObj);
+        try {
+          localStorage.setItem('parent_session', JSON.stringify(pObj));
+        } catch {}
       }
     }
-  }, [authSession]);
+  }, [authSession, isTutorRoute]);
 
+  // Load from localStorage on mount & when storage events trigger
   useEffect(() => {
     const checkSessions = () => {
       const tutorRaw = localStorage.getItem('tutor_session');
@@ -74,7 +86,9 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
 
       const parentRaw = localStorage.getItem('parent_session');
       if (parentRaw) {
-        try { setParentSession(JSON.parse(parentRaw)); } catch {}
+        try {
+          setParentSession(JSON.parse(parentRaw));
+        } catch {}
       } else if (!authSession?.user?.email) {
         setParentSession(null);
       }
@@ -101,20 +115,81 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
     };
   }, [authSession]);
 
-  const handleTutorLogout = async () => {
-    localStorage.removeItem('tutor_session');
-    setTutorSession(null);
-    setDropdownOpen(false);
-    try { await signOut({ redirect: false }); } catch {}
-    window.location.href = '/tutor/register';
-  };
+  // Context-aware role determination
+  let activeRole: 'tutor' | 'parent' | null = null;
+  let activeSession: { userId?: string; name?: string; email?: string; image?: string; avatarUrl?: string } | null = null;
 
-  const handleParentLogout = async () => {
-    localStorage.removeItem('parent_session');
-    setParentSession(null);
+  if (isTutorRoute) {
+    if (tutorSession) {
+      activeRole = 'tutor';
+      activeSession = tutorSession;
+    } else if (parentSession) {
+      activeRole = 'parent';
+      activeSession = parentSession;
+    }
+  } else if (isParentRoute) {
+    if (parentSession) {
+      activeRole = 'parent';
+      activeSession = parentSession;
+    } else if (tutorSession) {
+      activeRole = 'tutor';
+      activeSession = tutorSession;
+    }
+  } else {
+    // General website pages
+    if (tutorSession && !parentSession) {
+      activeRole = 'tutor';
+      activeSession = tutorSession;
+    } else if (parentSession && !tutorSession) {
+      activeRole = 'parent';
+      activeSession = parentSession;
+    } else if (tutorSession && parentSession) {
+      activeRole = 'tutor';
+      activeSession = tutorSession;
+    }
+  }
+
+  // Unified clean sign out
+  const handleUniversalLogout = async (roleToLogout?: 'tutor' | 'parent') => {
+    try {
+      if (roleToLogout === 'tutor') {
+        localStorage.removeItem('tutor_session');
+        localStorage.removeItem('tutor_session_raw');
+      } else if (roleToLogout === 'parent') {
+        localStorage.removeItem('parent_session');
+        localStorage.removeItem('parent_session_raw');
+      } else {
+        localStorage.removeItem('tutor_session');
+        localStorage.removeItem('parent_session');
+        localStorage.removeItem('tutor_session_raw');
+        localStorage.removeItem('parent_session_raw');
+      }
+      window.dispatchEvent(new Event('storage'));
+    } catch {}
+
+    if (roleToLogout === 'tutor') {
+      setTutorSession(null);
+    } else if (roleToLogout === 'parent') {
+      setParentSession(null);
+    } else {
+      setTutorSession(null);
+      setParentSession(null);
+    }
+
     setDropdownOpen(false);
-    try { await signOut({ redirect: false }); } catch {}
-    window.location.href = '/parent/login';
+    setMobileMenuOpen(false);
+
+    try {
+      await signOut({ redirect: false });
+    } catch {}
+
+    if (roleToLogout === 'parent' || isParentRoute) {
+      window.location.href = '/parent/login';
+    } else if (roleToLogout === 'tutor' || isTutorRoute) {
+      window.location.href = '/tutor/register';
+    } else {
+      window.location.href = '/';
+    }
   };
 
   // ── Avatar Component ──────────────────────────────────────────
@@ -161,9 +236,9 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
   };
 
   const DropdownMenu = () => {
-    const isParent = !!parentSession;
-    const currentName = isParent ? parentSession?.name : tutorSession?.name;
-    const currentEmail = isParent ? parentSession?.email : tutorSession?.email;
+    const isParentView = activeRole === 'parent';
+    const currentName = activeSession?.name || (isParentView ? 'Parent' : 'Educator');
+    const currentEmail = activeSession?.email || '';
 
     return (
       <div
@@ -191,22 +266,24 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
             <span style={{
               fontSize: '0.65rem',
               fontWeight: 800,
-              backgroundColor: isParent ? '#EFF6FF' : '#ECFDF5',
-              color: isParent ? '#2563EB' : '#059669',
+              backgroundColor: isParentView ? '#EFF6FF' : '#ECFDF5',
+              color: isParentView ? '#2563EB' : '#059669',
               padding: '0.12rem 0.5rem',
               borderRadius: '6px'
             }}>
-              {isParent ? 'PARENT PORTAL' : 'EDUCATOR PORTAL'}
+              {isParentView ? 'PARENT PORTAL' : 'EDUCATOR PORTAL'}
             </span>
           </div>
           <strong style={{ display: 'block', fontSize: '0.92rem', color: '#0F172A', fontWeight: 800 }}>
             {currentName}
           </strong>
-          <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{currentEmail}</span>
+          {currentEmail && (
+            <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{currentEmail}</span>
+          )}
         </div>
 
         {/* Menu Items */}
-        {isParent ? (
+        {isParentView ? (
           <>
             <Link
               href="/parent/dashboard"
@@ -285,7 +362,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
         <div style={{ borderTop: '1px solid #E2E8F0', marginTop: '0.35rem', paddingTop: '0.35rem' }}>
           <button
             type="button"
-            onClick={isParent ? handleParentLogout : handleTutorLogout}
+            onClick={() => handleUniversalLogout(activeRole || undefined)}
             style={{
               display: 'flex', alignItems: 'center', gap: '0.65rem',
               width: '100%', padding: '0.65rem 1rem', borderRadius: '10px',
@@ -360,7 +437,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
           </div>
         </Link>
 
-        {/* Desktop Navigation Links - Clean, high-value links */}
+        {/* Desktop Navigation Links */}
         <nav className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', whiteSpace: 'nowrap' }}>
           <Link href="/tutors" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Find Tutors</Link>
           <Link href="/home-tutors-in-gurgaon" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Gurgaon Localities</Link>
@@ -370,7 +447,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
 
         {/* Desktop Actions */}
         <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', whiteSpace: 'nowrap' }}>
-          {mounted && (parentSession || tutorSession) ? (
+          {mounted && activeSession ? (
             /* ── Logged-in: Avatar + Dropdown ── */
             <div ref={desktopDropdownRef} style={{ position: 'relative' }}>
               <button
@@ -386,9 +463,9 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
                 }}
               >
                 <UserAvatar
-                  name={parentSession ? parentSession.name : tutorSession?.name}
-                  image={parentSession?.image || tutorSession?.image || tutorSession?.avatarUrl}
-                  role={parentSession ? 'parent' : 'tutor'}
+                  name={activeSession.name}
+                  image={activeSession.image || activeSession.avatarUrl}
+                  role={activeRole || 'tutor'}
                   size={38}
                 />
               </button>
@@ -461,7 +538,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
 
         {/* Mobile Actions */}
         <div className="mobile-only-flex" style={{ alignItems: 'center', gap: '0.5rem' }}>
-          {mounted && (parentSession || tutorSession) ? (
+          {mounted && activeSession ? (
             <div ref={mobileDropdownRef} style={{ position: 'relative' }}>
               <button
                 type="button"
@@ -469,9 +546,9 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
               >
                 <UserAvatar
-                  name={parentSession ? parentSession.name : tutorSession?.name}
-                  image={parentSession?.image || tutorSession?.image || tutorSession?.avatarUrl}
-                  role={parentSession ? 'parent' : 'tutor'}
+                  name={activeSession.name}
+                  image={activeSession.image || activeSession.avatarUrl}
+                  role={activeRole || 'tutor'}
                   size={36}
                 />
               </button>
@@ -562,7 +639,16 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               >
                 Find Tutors
               </Link>
-              {(!mounted || !parentSession) && (
+              {mounted && parentSession ? (
+                <Link
+                  href="/parent/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="btn btn-secondary"
+                  style={{ flex: 1, justifyContent: 'center', fontSize: '0.78rem', padding: '0.45rem', color: '#1D4ED8', fontWeight: 700 }}
+                >
+                  Parent Dashboard
+                </Link>
+              ) : (
                 <Link
                   href="/parent/login"
                   onClick={() => setMobileMenuOpen(false)}
@@ -589,7 +675,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               👨‍🏫 For Educators &amp; Tutors
             </div>
             <Link
-              href="/tutor/register"
+              href={mounted && tutorSession ? '/tutor/profile' : '/tutor/register'}
               onClick={() => setMobileMenuOpen(false)}
               className="btn btn-secondary"
               style={{
@@ -627,20 +713,16 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
           </div>
 
           {/* Active Session Sign-Out Button if logged in */}
-          {mounted && (parentSession || tutorSession) && (
+          {mounted && activeSession && (
             <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--border-hairline)' }}>
               <button
                 type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  if (parentSession) handleParentLogout();
-                  else handleTutorLogout();
-                }}
+                onClick={() => handleUniversalLogout(activeRole || undefined)}
                 className="btn"
                 style={{ width: '100%', justifyContent: 'center', backgroundColor: '#FEF2F2', color: '#DC2626', border: '1.5px solid #FECACA' }}
               >
                 <LogOut size={16} />
-                <span>Sign Out ({parentSession ? parentSession.name : tutorSession?.name})</span>
+                <span>Sign Out ({activeSession.name})</span>
               </button>
             </div>
           )}

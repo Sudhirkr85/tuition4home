@@ -58,7 +58,7 @@ const authOptions: NextAuthOptions = {
           });
           if (dbUser) {
             token.id = dbUser.id;
-            token.role = dbUser.role;
+            token.role = dbUser.tutorProfile ? 'TUTOR' : dbUser.role;
             token.phone = dbUser.phone || '';
             token.hasTutorProfile = Boolean(dbUser.tutorProfile);
             if (dbUser.image) token.picture = dbUser.image;
@@ -82,13 +82,13 @@ const authOptions: NextAuthOptions = {
           });
           if (dbUser) {
             (session.user as any).id = dbUser.id;
-            (session.user as any).role = dbUser.role;
+            (session.user as any).role = dbUser.tutorProfile ? 'TUTOR' : dbUser.role;
             (session.user as any).phone = dbUser.phone || '';
             (session.user as any).hasTutorProfile = Boolean(dbUser.tutorProfile);
             if (dbUser.image) session.user.image = dbUser.image;
           } else if (token?.id) {
             (session.user as any).id = token.id;
-            (session.user as any).role = token.role || 'PARENT';
+            (session.user as any).role = token.hasTutorProfile ? 'TUTOR' : (token.role || 'PARENT');
             (session.user as any).phone = token.phone || '';
             (session.user as any).hasTutorProfile = Boolean(token.hasTutorProfile);
           }
@@ -96,7 +96,7 @@ const authOptions: NextAuthOptions = {
           console.error('[NEXTAUTH_SESSION_ERROR]:', err);
           if (token?.id) {
             (session.user as any).id = token.id;
-            (session.user as any).role = token.role || 'PARENT';
+            (session.user as any).role = token.hasTutorProfile ? 'TUTOR' : (token.role || 'PARENT');
             (session.user as any).phone = token.phone || '';
             (session.user as any).hasTutorProfile = Boolean(token.hasTutorProfile);
           }

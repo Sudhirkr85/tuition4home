@@ -225,8 +225,13 @@ export default function ParentDashboardPage() {
   }, [authStatus, authSession, router]);
 
   const handleLogout = async () => {
-    localStorage.removeItem('parent_session');
-    window.dispatchEvent(new Event('storage'));
+    try {
+      localStorage.removeItem('parent_session');
+      localStorage.removeItem('parent_session_raw');
+      localStorage.removeItem('tutor_session');
+      localStorage.removeItem('tutor_session_raw');
+      window.dispatchEvent(new Event('storage'));
+    } catch {}
     try {
       await signOut({ redirect: false });
     } catch {}
@@ -289,6 +294,7 @@ export default function ParentDashboardPage() {
       // Update local storage
       const updatedSession = { ...parentSession, image: newImageUrl };
       localStorage.setItem('parent_session', JSON.stringify(updatedSession));
+      window.dispatchEvent(new Event('storage'));
       setParentSession(updatedSession);
 
       setSaveMsg('✓ Profile photo updated successfully!');
@@ -319,6 +325,7 @@ export default function ParentDashboardPage() {
 
       const updatedSession = { ...parentSession, image: undefined };
       localStorage.setItem('parent_session', JSON.stringify(updatedSession));
+      window.dispatchEvent(new Event('storage'));
       setParentSession(updatedSession);
 
       setSaveMsg('✓ Profile photo removed successfully.');
