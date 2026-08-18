@@ -63,6 +63,7 @@ export default function TutorRegisterLoginPage() {
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
+  const [wizardPhone, setWizardPhone] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   
@@ -110,7 +111,7 @@ export default function TutorRegisterLoginPage() {
   const [specialization, setSpecialization] = useState('');
   const [college, setCollege] = useState('');
   const [passingYear, setPassingYear] = useState('');
-  const [experienceYears, setExperienceYears] = useState(2);
+  const [experienceYears, setExperienceYears] = useState<number | string>(2);
   const [degreeDocUrl, setDegreeDocUrl] = useState('');
   const [degreeDocFileName, setDegreeDocFileName] = useState('');
   
@@ -144,6 +145,39 @@ export default function TutorRegisterLoginPage() {
       }
     }, 60);
   };
+
+  // Scroll to top of wizard on step transitions with mobile keyboard dismissal and focus reset
+  const scrollToWizardTop = () => {
+    if (typeof document !== 'undefined' && document.activeElement && (document.activeElement as HTMLElement).blur) {
+      (document.activeElement as HTMLElement).blur();
+    }
+    setTimeout(() => {
+      const el = document.getElementById('wizard-form-top');
+      if (el) {
+        el.focus?.({ preventScroll: true });
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 40);
+    // Backup check for mobile Safari/Chrome delayed repaint
+    setTimeout(() => {
+      const el = document.getElementById('wizard-form-top');
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < -30 || rect.top > 150) {
+          window.scrollTo({ top: Math.max(0, window.scrollY + rect.top - 15), behavior: 'smooth' });
+        }
+      }
+    }, 150);
+  };
+
+  // Automatically scroll & reset focus whenever currentStep changes
+  useEffect(() => {
+    if (isLoggedIn) {
+      scrollToWizardTop();
+    }
+  }, [currentStep, isLoggedIn]);
   
   // Step 3: Locations & Travel
   const [locationPrefType, setLocationPrefType] = useState<'BOTH' | 'SECTORS' | 'RADIUS'>('BOTH');
@@ -300,6 +334,7 @@ export default function TutorRegisterLoginPage() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   
   const { data: authSession } = useSession();
+  const isGoogleUser = Boolean(authSession?.user?.email) && !regPhone;
 
   // Submission Lifecycle
   const [loading, setLoading] = useState(false);
@@ -331,6 +366,9 @@ export default function TutorRegisterLoginPage() {
       setUserId(id);
       setUserName(name);
       setUserEmail(email);
+      if ((authSession.user as any)?.phone && !wizardPhone) {
+        setWizardPhone((authSession.user as any).phone);
+      }
       if (image && !profilePhotoUrl) {
         setProfilePhotoUrl(image);
       }
@@ -410,6 +448,7 @@ export default function TutorRegisterLoginPage() {
           if (p.idDocUrl) setIdDocUrl(p.idDocUrl);
           if (p.degreeDocUrl) setDegreeDocUrl(p.degreeDocUrl);
           if (p.degreeDocFileName) setDegreeDocFileName(p.degreeDocFileName);
+          if (p.wizardPhone) setWizardPhone(p.wizardPhone);
         } catch (e) {
           console.error('Failed to parse draft details', e);
         }
@@ -427,7 +466,7 @@ export default function TutorRegisterLoginPage() {
         degree,
         college,
         passingYear,
-        experienceYears,
+        experienceYears: Number(experienceYears) || 0,
         selectedSubjects,
         selectedClasses,
         selectedBoards,
@@ -448,6 +487,7 @@ export default function TutorRegisterLoginPage() {
         idDocUrl,
         degreeDocUrl,
         degreeDocFileName,
+        wizardPhone,
       };
       localStorage.setItem(`tutor_draft_${userId}`, JSON.stringify(draftData));
     }
@@ -457,7 +497,7 @@ export default function TutorRegisterLoginPage() {
     locationPrefType, serviceAreas, travelRadius, tutorLatitude, tutorLongitude,
     tutorFormattedAddress, hourlyRateHomeMin, hourlyRateHomeMax,
     hourlyRateOnlineMin, hourlyRateOnlineMax, profilePhotoUrl, introVideoUrl,
-    idType, idNumber, idDocUrl, degreeDocUrl, degreeDocFileName
+    idType, idNumber, idDocUrl, degreeDocUrl, degreeDocFileName, wizardPhone
   ]);
 
   // Registration Email OTP Verification States
@@ -801,6 +841,8 @@ export default function TutorRegisterLoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
+          email: userEmail,
+          phone: wizardPhone || regPhone || '',
           teachingMode,
           gender,
           highestDegree: degree.trim(),
@@ -811,7 +853,7 @@ export default function TutorRegisterLoginPage() {
             year: passingYear.trim(),
             grade: ''
           }] : [],
-          experienceYears,
+          experienceYears: Number(experienceYears) || 0,
           subjects: selectedSubjects,
           classes: selectedClasses,
           boards: selectedBoards,
@@ -1967,7 +2009,7 @@ export default function TutorRegisterLoginPage() {
               <div className="apple-card" style={{ padding: 0, overflow: 'hidden' }}>
                 
                 {/* Wizard Title Bar */}
-                <div style={{ backgroundColor: '#0F172A', color: '#FFFFFF', padding: '1.5rem 2rem' }}>
+                <div id="wizard-form-top" tabIndex={-1} style={{ backgroundColor: '#0F172A', color: '#FFFFFF', padding: '1.5rem 2rem', outline: 'none' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                     <span className="badge" style={{ backgroundColor: 'var(--brand-teal-light)', color: 'var(--brand-teal)', border: '1px solid var(--border-teal)' }}>
                       🛠️ COMPLETE PROFILE SETUP
@@ -2000,6 +2042,52 @@ export default function TutorRegisterLoginPage() {
                   {/* STEP 1: Basic Professional Info */}
                   {currentStep === 1 && (
                     <div>
+                      {/* Mobile Number for Google Sign-in Users */}
+                      {isGoogleUser && (
+                        <div style={{
+                          marginBottom: '1.5rem',
+                          padding: '1.1rem',
+                          borderRadius: '14px',
+                          border: wizardErrorField === 'field-wizardPhone' ? '2px solid #EF4444' : '1.5px solid #A7F3D0',
+                          backgroundColor: wizardErrorField === 'field-wizardPhone' ? '#FEF2F2' : '#F0FDF4',
+                          boxShadow: wizardErrorField === 'field-wizardPhone' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : 'none',
+                        }}>
+                          <label className="form-label" style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Phone size={16} color="var(--brand-teal)" />
+                            Mobile Number <span style={{ color: '#DC2626' }}>*</span>
+                            <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 600, backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.1rem 0.4rem', borderRadius: '6px' }}>
+                              Required for Google Sign-in
+                            </span>
+                          </label>
+                          <div style={{ position: 'relative' }}>
+                            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748B', fontSize: '0.9rem' }}>+91</span>
+                            <input
+                              id="field-wizardPhone"
+                              type="tel"
+                              maxLength={10}
+                              placeholder="Enter 10-digit mobile number"
+                              value={wizardPhone}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setWizardPhone(val);
+                                if (wizardErrorField === 'field-wizardPhone') setWizardErrorField(null);
+                              }}
+                              className="form-control"
+                              style={{
+                                paddingLeft: '3.2rem',
+                                fontWeight: 700,
+                                letterSpacing: '0.5px',
+                                borderColor: wizardErrorField === 'field-wizardPhone' ? '#EF4444' : undefined,
+                                boxShadow: wizardErrorField === 'field-wizardPhone' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                              }}
+                              required
+                            />
+                          </div>
+                          <p style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '0.35rem', margin: 0 }}>
+                            We'll use this to contact you for student matching.
+                          </p>
+                        </div>
+                      )}
                       <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.45rem' }}>
                         Step 1: Teaching Mode & Basic Profile Info
                       </h3>
@@ -2233,10 +2321,15 @@ export default function TutorRegisterLoginPage() {
                           min={0}
                           max={40}
                           placeholder="e.g. 2"
-                          value={experienceYears === 0 ? '0' : (experienceYears || '')}
+                          value={experienceYears}
                           onChange={(e) => {
-                            const parsed = e.target.value === '' ? 0 : Math.min(40, Math.max(0, parseInt(e.target.value, 10) || 0));
-                            setExperienceYears(parsed);
+                            const val = e.target.value;
+                            if (val === '') {
+                              setExperienceYears('');
+                            } else {
+                              const parsed = Math.min(40, Math.max(0, parseInt(val, 10) || 0));
+                              setExperienceYears(parsed);
+                            }
                             if (wizardErrorField === 'field-experienceYears') setWizardErrorField(null);
                           }}
                           className="form-control"
@@ -2347,60 +2440,7 @@ export default function TutorRegisterLoginPage() {
                           </span>
                         </div>
 
-                        {/* 🔥 Most Popular / High-Demand Quick Selection */}
-                        <div style={{ marginBottom: '0.85rem', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '12px', padding: '0.75rem 0.85rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.55rem' }}>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#166534', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              🔥 Most Searched Subjects in Gurgaon:
-                            </span>
-                            <span style={{ fontSize: '0.72rem', color: '#15803D' }}>(Tap to quickly add)</span>
-                          </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                            {[
-                              'Mathematics',
-                              'Physics',
-                              'Chemistry',
-                              'Biology',
-                              'English Language & Literature',
-                              'All Primary Subjects (Class 1 - 5)',
-                              'Science (Class 1 - 10 Combined)',
-                              'Computer Science & Python',
-                              'Social Science (History, Geo, Civics, Eco)',
-                              'Accountancy & Bookkeeping',
-                              'Economics & Microeconomics',
-                              'French / German / Spanish Language',
-                              'JEE Main & Advanced Maths',
-                              'NEET Biology Prep',
-                              'Coding & AI for Kids',
-                              'Abacus & Vedic Mathematics',
-                            ].map(popularSub => {
-                              const isSelected = selectedSubjects.includes(popularSub);
-                              return (
-                                <button
-                                  key={popularSub}
-                                  type="button"
-                                  onClick={() => toggleSelection(popularSub, selectedSubjects, setSelectedSubjects)}
-                                  className="pill-interactive-btn"
-                                  style={{
-                                    padding: '0.32rem 0.7rem',
-                                    borderRadius: '8px',
-                                    border: isSelected ? '1.5px solid #0F6E56' : '1px solid #86EFAC',
-                                    background: isSelected ? 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)' : '#FFFFFF',
-                                    color: isSelected ? '#FFFFFF' : '#14532D',
-                                    fontSize: '0.76rem',
-                                    fontWeight: 700,
-                                    cursor: 'pointer',
-                                    boxShadow: isSelected ? '0 3px 8px rgba(15, 110, 86, 0.22)' : '0 1px 2px rgba(0,0,0,0.03)',
-                                  }}
-                                >
-                                  {isSelected ? '✓ ' : '+ '}{popularSub}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Active Subjects Pills */}
+                        {/* Selected Subject Pills */}
                         {selectedSubjects.length > 0 && (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
                             {selectedSubjects.map(sub => (
@@ -2451,78 +2491,129 @@ export default function TutorRegisterLoginPage() {
                           </div>
                         )}
 
-                        {/* Search & Custom Input row */}
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        {/* Searchable Subject Input */}
+                        <div style={{ position: 'relative' }}>
                           <input
+                            id="field-subjects"
                             type="text"
-                            placeholder="Search more subjects (e.g. Psychology, Sanskrit)..."
+                            placeholder="🔍 Search subjects (e.g. Mathematics, Physics, JEE)..."
                             value={subjectSearch}
                             onChange={(e) => setSubjectSearch(e.target.value)}
                             className="form-control"
-                            style={{ borderRadius: '10px' }}
+                            style={{
+                              borderRadius: '12px',
+                              fontWeight: 600,
+                              borderColor: wizardErrorField === 'field-subjects' ? '#EF4444' : undefined,
+                              boxShadow: wizardErrorField === 'field-subjects' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                            }}
                           />
-                          <div style={{ display: 'flex', gap: '0.3rem' }}>
-                            <input
-                              type="text"
-                              placeholder="Type Custom Subject..."
-                              value={customSubject}
-                              onChange={(e) => setCustomSubject(e.target.value)}
-                              className="form-control"
-                              style={{ minWidth: '180px', borderRadius: '10px' }}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (customSubject.trim() && !selectedSubjects.includes(customSubject.trim())) {
-                                  setSelectedSubjects([...selectedSubjects, customSubject.trim()]);
-                                  setCustomSubject('');
-                                }
-                              }}
-                              className="btn btn-secondary pill-interactive-btn"
-                              style={{ padding: '0 0.9rem', borderRadius: '10px' }}
-                            >
-                              <Plus size={16} />
-                            </button>
-                          </div>
                         </div>
 
-                        {/* Filtered Subject Options list */}
-                        <div style={{ 
-                          marginTop: '0.6rem', 
-                          maxHeight: '140px', 
-                          overflowY: 'auto', 
-                          border: '1.5px solid var(--border-hairline)', 
-                          borderRadius: '12px', 
-                          padding: '0.6rem',
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '0.45rem',
-                          backgroundColor: '#F8FAFC'
-                        }}>
-                          {filteredSubjects.map(sub => {
-                            const isSelected = selectedSubjects.includes(sub);
-                            return (
-                              <button
-                                key={sub}
-                                type="button"
-                                onClick={() => toggleSelection(sub, selectedSubjects, setSelectedSubjects)}
-                                className="pill-interactive-btn"
-                                style={{
-                                  padding: '0.35rem 0.75rem',
-                                  borderRadius: '8px',
-                                  border: isSelected ? '1.5px solid #0F6E56' : '1px solid #CBD5E1',
-                                  background: isSelected ? 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)' : '#FFFFFF',
-                                  color: isSelected ? '#FFFFFF' : '#1E293B',
-                                  fontSize: '0.78rem',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  boxShadow: isSelected ? '0 4px 12px rgba(15, 110, 86, 0.25)' : '0 1px 3px rgba(0,0,0,0.04)',
-                                }}
-                              >
-                                {isSelected ? '✓ ' : '+ '} {sub}
-                              </button>
-                            );
-                          })}
+                        {/* Dropdown results — only show when searching */}
+                        {subjectSearch.trim() && (
+                          <div style={{
+                            marginTop: '0.35rem',
+                            maxHeight: '200px',
+                            overflowY: 'auto',
+                            border: '1.5px solid var(--border-hairline)',
+                            borderRadius: '12px',
+                            padding: '0.5rem',
+                            backgroundColor: '#FFFFFF',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '0.4rem',
+                          }}>
+                            {filteredSubjects.length > 0 ? filteredSubjects.map(sub => {
+                              const isSelected = selectedSubjects.includes(sub);
+                              return (
+                                <button
+                                  key={sub}
+                                  type="button"
+                                  onClick={() => {
+                                    toggleSelection(sub, selectedSubjects, setSelectedSubjects);
+                                    if (wizardErrorField === 'field-subjects') setWizardErrorField(null);
+                                  }}
+                                  className="pill-interactive-btn"
+                                  style={{
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '8px',
+                                    border: isSelected ? '1.5px solid #0F6E56' : '1px solid #CBD5E1',
+                                    background: isSelected ? 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)' : '#FFFFFF',
+                                    color: isSelected ? '#FFFFFF' : '#1E293B',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    boxShadow: isSelected ? '0 4px 12px rgba(15, 110, 86, 0.25)' : '0 1px 3px rgba(0,0,0,0.04)',
+                                  }}
+                                >
+                                  {isSelected ? '✓ ' : '+ '} {sub}
+                                </button>
+                              );
+                            }) : (
+                              <div style={{ padding: '0.5rem', fontSize: '0.82rem', color: '#64748B', width: '100%', textAlign: 'center' }}>
+                                No match found. Add it as custom below.
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Quick popular subjects — compact row */}
+                        {!subjectSearch.trim() && selectedSubjects.length === 0 && (
+                          <div style={{ marginTop: '0.6rem', padding: '0.65rem 0.75rem', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '10px' }}>
+                            <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#166534', marginBottom: '0.45rem' }}>🔥 Quick Add Popular Subjects:</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                              {['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English Language & Literature', 'Science (Class 1 - 10 Combined)', 'All Primary Subjects (Class 1 - 5)', 'Computer Science & Python'].map(sub => (
+                                <button
+                                  key={sub}
+                                  type="button"
+                                  onClick={() => {
+                                    toggleSelection(sub, selectedSubjects, setSelectedSubjects);
+                                    if (wizardErrorField === 'field-subjects') setWizardErrorField(null);
+                                  }}
+                                  className="pill-interactive-btn"
+                                  style={{
+                                    padding: '0.28rem 0.6rem',
+                                    borderRadius: '7px',
+                                    border: '1px solid #86EFAC',
+                                    background: '#FFFFFF',
+                                    color: '#14532D',
+                                    fontSize: '0.73rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  + {sub}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Custom Subject Input */}
+                        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
+                          <input
+                            type="text"
+                            placeholder="Add custom subject..."
+                            value={customSubject}
+                            onChange={(e) => setCustomSubject(e.target.value)}
+                            className="form-control"
+                            style={{ borderRadius: '10px', flex: 1 }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (customSubject.trim() && !selectedSubjects.includes(customSubject.trim())) {
+                                setSelectedSubjects([...selectedSubjects, customSubject.trim()]);
+                                setCustomSubject('');
+                                if (wizardErrorField === 'field-subjects') setWizardErrorField(null);
+                              }
+                            }}
+                            className="btn btn-secondary pill-interactive-btn"
+                            style={{ padding: '0 0.9rem', borderRadius: '10px' }}
+                          >
+                            <Plus size={16} />
+                          </button>
                         </div>
                       </div>
 
@@ -2837,12 +2928,12 @@ export default function TutorRegisterLoginPage() {
                               Selected: <strong style={{ color: '#0F6E56' }}>{serviceAreas.length}</strong> sectors
                             </span>
                           </div>
-                          
-                          {/* Active Sector Pills */}
+
+                          {/* Selected Sector Pills */}
                           {serviceAreas.length > 0 && (
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
                               {serviceAreas.map(area => (
-                                <span key={area} style={{
+                                <span key={area} className="animate-tag-pop" style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
                                   gap: '0.3rem',
@@ -2869,80 +2960,91 @@ export default function TutorRegisterLoginPage() {
                             </div>
                           )}
 
-                          {/* Search & Custom sector row */}
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          {/* Searchable Sector Input */}
+                          <div style={{ position: 'relative' }}>
                             <input
                               type="text"
-                              placeholder="Search Gurgaon sectors (e.g. Sector 56, DLF Phase 5)..."
+                              placeholder="🔍 Search sectors (e.g. DLF Phase 5, Sector 56, Sohna Road)..."
                               value={areaSearch}
                               onChange={(e) => setAreaSearch(e.target.value)}
                               className="form-control"
+                              style={{ borderRadius: '12px', fontWeight: 600 }}
                             />
-                            <div style={{ display: 'flex', gap: '0.3rem' }}>
-                              <input
-                                type="text"
-                                placeholder="Type Custom Sector..."
-                                value={customArea}
-                                onChange={(e) => setCustomArea(e.target.value)}
-                                className="form-control"
-                                style={{ minWidth: '160px' }}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (customArea.trim() && !serviceAreas.includes(customArea.trim())) {
-                                    setServiceAreas([...serviceAreas, customArea.trim()]);
-                                    setCustomArea('');
-                                    if (wizardErrorField === 'field-serviceAreas') setWizardErrorField(null);
-                                  }
-                                }}
-                                className="btn btn-secondary"
-                                style={{ padding: '0 0.85rem' }}
-                              >
-                                <Plus size={16} />
-                              </button>
-                            </div>
                           </div>
 
-                          {/* Filtered Sectors List */}
-                          <div style={{ 
-                            marginTop: '0.5rem', 
-                            maxHeight: '140px', 
-                            overflowY: 'auto', 
-                            border: '1px solid var(--border-hairline)', 
-                            borderRadius: '12px', 
-                            padding: '0.75rem',
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                            gap: '0.4rem',
-                            backgroundColor: '#F8FAFC'
-                          }}>
-                            {filteredSectors.map(loc => {
-                              const isSelected = serviceAreas.includes(loc.name);
-                              return (
-                                <button
-                                  key={loc.slug}
-                                  type="button"
-                                  onClick={() => {
-                                    toggleSelection(loc.name, serviceAreas, setServiceAreas);
-                                    if (wizardErrorField === 'field-serviceAreas') setWizardErrorField(null);
-                                  }}
-                                  style={{
-                                    padding: '0.45rem',
-                                    borderRadius: '8px',
-                                    border: `1px solid ${isSelected ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
-                                    backgroundColor: isSelected ? 'var(--brand-teal-light)' : '#FFFFFF',
-                                    color: isSelected ? 'var(--brand-teal)' : 'var(--text-main)',
-                                    fontSize: '0.8rem',
-                                    fontWeight: 600,
-                                    textAlign: 'left',
-                                    cursor: 'pointer',
-                                  }}
-                                >
-                                  {isSelected ? '✓ ' : '+ '} {loc.name}
-                                </button>
-                              );
-                            })}
+                          {/* Dropdown results — only show when searching */}
+                          {areaSearch.trim() && (
+                            <div style={{
+                              marginTop: '0.35rem',
+                              maxHeight: '220px',
+                              overflowY: 'auto',
+                              border: '1.5px solid var(--border-hairline)',
+                              borderRadius: '12px',
+                              padding: '0.5rem',
+                              backgroundColor: '#FFFFFF',
+                              boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                              gap: '0.4rem',
+                            }}>
+                              {filteredSectors.length > 0 ? filteredSectors.map(loc => {
+                                const isSelected = serviceAreas.includes(loc.name);
+                                return (
+                                  <button
+                                    key={loc.slug}
+                                    type="button"
+                                    onClick={() => {
+                                      toggleSelection(loc.name, serviceAreas, setServiceAreas);
+                                      if (wizardErrorField === 'field-serviceAreas') setWizardErrorField(null);
+                                    }}
+                                    className="pill-interactive-btn"
+                                    style={{
+                                      padding: '0.45rem 0.6rem',
+                                      borderRadius: '8px',
+                                      border: `1px solid ${isSelected ? 'var(--brand-teal)' : 'var(--border-hairline)'}`,
+                                      backgroundColor: isSelected ? 'var(--brand-teal-light)' : '#FFFFFF',
+                                      color: isSelected ? 'var(--brand-teal)' : 'var(--text-main)',
+                                      fontSize: '0.8rem',
+                                      fontWeight: 600,
+                                      textAlign: 'left',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    {isSelected ? '✓ ' : '+ '} {loc.name}
+                                  </button>
+                                );
+                              }) : (
+                                <div style={{ padding: '0.5rem', fontSize: '0.82rem', color: '#64748B', gridColumn: '1 / -1', textAlign: 'center' }}>
+                                  No sectors found. Add custom below.
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Custom Sector Input */}
+                          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
+                            <input
+                              type="text"
+                              placeholder="Add custom sector/area..."
+                              value={customArea}
+                              onChange={(e) => setCustomArea(e.target.value)}
+                              className="form-control"
+                              style={{ borderRadius: '10px', flex: 1 }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (customArea.trim() && !serviceAreas.includes(customArea.trim())) {
+                                  setServiceAreas([...serviceAreas, customArea.trim()]);
+                                  setCustomArea('');
+                                  if (wizardErrorField === 'field-serviceAreas') setWizardErrorField(null);
+                                }
+                              }}
+                              className="btn btn-secondary pill-interactive-btn"
+                              style={{ padding: '0 0.85rem', borderRadius: '10px' }}
+                            >
+                              <Plus size={16} />
+                            </button>
                           </div>
                         </div>
                       )}
@@ -3849,7 +3951,17 @@ export default function TutorRegisterLoginPage() {
                       {currentStep > 1 ? (
                         <button
                           type="button"
-                          onClick={() => setCurrentStep(currentStep - 1)}
+                          onClick={() => {
+                            setCurrentStep(currentStep - 1);
+                            setTimeout(() => {
+                              const el = document.getElementById('wizard-form-top');
+                              if (el) {
+                                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              } else {
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }
+                            }, 60);
+                          }}
                           className="btn btn-secondary"
                           style={{
                             padding: '0.75rem 1rem',
@@ -3888,6 +4000,10 @@ export default function TutorRegisterLoginPage() {
                           type="button"
                           onClick={() => {
                             if (currentStep === 1) {
+                              if (isGoogleUser && (!wizardPhone || wizardPhone.replace(/\D/g, '').length !== 10)) {
+                                triggerWizardError('field-wizardPhone', '⚠️ Please enter a valid 10-digit mobile number.');
+                                return;
+                              }
                               if (!degree.trim()) {
                                 triggerWizardError('field-degree', '⚠️ Highest Qualification / Degree is mandatory (e.g. B.Tech, M.Sc, B.Ed).');
                                 return;
@@ -3912,7 +4028,7 @@ export default function TutorRegisterLoginPage() {
                                   return;
                                 }
                               }
-                              if (experienceYears === undefined || isNaN(experienceYears) || experienceYears < 0) {
+                              if (experienceYears === '' || experienceYears === undefined || (typeof experienceYears === 'number' && (isNaN(experienceYears) || experienceYears < 0))) {
                                 triggerWizardError('field-experienceYears', '⚠️ Total Teaching Experience (Years) is mandatory.');
                                 return;
                               }
@@ -3947,7 +4063,7 @@ export default function TutorRegisterLoginPage() {
                                 }
                               }
                             }
-                            if (currentStep === 4) {
+                            if (currentStep === 5) {
                               if (!profilePhotoUrl && !profilePhotoName) {
                                 triggerWizardError('field-profilePhoto', '⚠️ Profile Photo is MANDATORY. Please upload a clear photo.');
                                 return;
@@ -3981,6 +4097,14 @@ export default function TutorRegisterLoginPage() {
                             setErrorMessage('');
                             setWizardErrorField(null);
                             setCurrentStep(currentStep + 1);
+                            setTimeout(() => {
+                              const el = document.getElementById('wizard-form-top');
+                              if (el) {
+                                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              } else {
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }
+                            }, 60);
                           }}
                           className="btn btn-primary"
                           style={{

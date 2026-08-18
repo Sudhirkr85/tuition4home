@@ -31,7 +31,7 @@ const authOptions: NextAuthOptions = {
                 image: user.image || null,
                 role: 'PARENT', // Default to PARENT for general sign in; upgraded to TUTOR if registering as tutor
                 emailVerified: new Date(),
-                phone: '',
+                phone: null,
               },
             });
           } else if (user.image && !dbUser.image) {

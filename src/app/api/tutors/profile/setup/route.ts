@@ -148,9 +148,23 @@ export async function POST(req: Request) {
     await prisma.$transaction(async (tx) => {
       // Update Tutor Profile
       await tx.tutorProfile.update({
-        where: { userId },
+        where: { userId: profile.userId },
         data: profileUpdateData
       });
+
+      // Update user phone if provided and currently empty (e.g. Google signup users)
+      if (body.phone) {
+        const cleanPhone = body.phone.replace(/\D/g, '').slice(0, 10);
+        if (cleanPhone.length === 10) {
+          const existingUser = await tx.user.findUnique({ where: { id: profile.userId } });
+          if (existingUser && (!existingUser.phone || existingUser.phone.trim() === '')) {
+            await tx.user.update({
+              where: { id: profile.userId },
+              data: { phone: cleanPhone },
+            });
+          }
+        }
+      }
 
       // Handle KYC creation/update if not verified or updating before verification
       if (idType && idNumber && !profile.isVerified) {

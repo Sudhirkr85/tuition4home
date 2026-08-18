@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
-import { Phone, Menu, X, ShieldCheck, UserCheck, ChevronRight, LogOut, User, Settings } from 'lucide-react';
+import { Phone, Menu, X, ShieldCheck, UserCheck, ChevronRight, LogOut, User, Settings, GraduationCap } from 'lucide-react';
 import { SSSAM_OFFICE_DETAILS } from '@/lib/data';
 
 interface NavbarProps {
@@ -355,17 +355,16 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
           </div>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', whiteSpace: 'nowrap' }}>
-          <Link href="/" style={{ fontSize: '0.9rem', fontWeight: 700, color: '#065F46', textDecoration: 'none' }}>Home</Link>
+        {/* Desktop Navigation Links - Clean, high-value links */}
+        <nav className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', whiteSpace: 'nowrap' }}>
           <Link href="/tutors" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Find Tutors</Link>
-          <Link href="/home-tutors-in-gurgaon" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Localities</Link>
-          <Link href="/tuition" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Subjects</Link>
+          <Link href="/home-tutors-in-gurgaon" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Gurgaon Localities</Link>
+          <Link href="/tuition" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Subjects &amp; Boards</Link>
           <Link href="/#fee-estimator" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Fee Estimator</Link>
         </nav>
 
         {/* Desktop Actions */}
-        <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', whiteSpace: 'nowrap' }}>
+        <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', whiteSpace: 'nowrap' }}>
           {parentSession || tutorSession ? (
             /* ── Logged-in: Avatar + Dropdown ── */
             <div ref={desktopDropdownRef} style={{ position: 'relative' }}>
@@ -391,15 +390,44 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               {dropdownOpen && <DropdownMenu />}
             </div>
           ) : (
-            /* ── Logged-out: Login + Book buttons ── */
+            /* ── Logged-out: Clear Parent vs Tutor actions ── */
             <>
-              <Link href="/parent/login" style={{ fontSize: '0.84rem', fontWeight: 700, color: '#1D4ED8', textDecoration: 'none', padding: '0.35rem 0.55rem' }}>
+              {/* For Teachers / Tutors */}
+              <Link
+                href="/tutor/register"
+                className="btn btn-secondary btn-sm"
+                style={{
+                  textDecoration: 'none',
+                  padding: '0.5rem 0.95rem',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  borderRadius: '10px',
+                  border: '1.5px solid #CBD5E1',
+                  color: '#0F172A',
+                }}
+              >
+                <GraduationCap size={15} color="#0F6E56" />
+                <span>Join as Tutor</span>
+              </Link>
+
+              {/* For Parents Login */}
+              <Link
+                href="/parent/login"
+                style={{
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                  color: '#1D4ED8',
+                  textDecoration: 'none',
+                  padding: '0.45rem 0.65rem',
+                }}
+              >
                 Parent Login
               </Link>
-              <Link href="/tutor/register" className="btn btn-secondary btn-sm" style={{ textDecoration: 'none', padding: '0.45rem 0.75rem', fontSize: '0.82rem' }}>
-                <UserCheck size={14} />
-                <span>Tutor Portal</span>
-              </Link>
+
+              {/* For Parents - Book Home Tutor CTA */}
               <Link
                 href="/request-tutor"
                 onClick={(e) => {
@@ -409,9 +437,17 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
                   }
                 }}
                 className="btn btn-primary btn-sm"
-                style={{ textDecoration: 'none', padding: '0.45rem 0.9rem', fontSize: '0.84rem', backgroundColor: '#065F46' }}
+                style={{
+                  textDecoration: 'none',
+                  padding: '0.55rem 1.1rem',
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  backgroundColor: '#065F46',
+                  borderRadius: '10px',
+                  boxShadow: '0 4px 14px rgba(6, 95, 70, 0.25)',
+                }}
               >
-                <span>Request Tutor</span>
+                <span>Book a Tutor</span>
                 <div className="btn-arrow"><ChevronRight size={14} /></div>
               </Link>
             </>
@@ -419,7 +455,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
         </div>
 
         {/* Mobile Actions */}
-        <div className="mobile-only-flex" style={{ alignItems: 'center', gap: '0.75rem' }}>
+        <div className="mobile-only-flex" style={{ alignItems: 'center', gap: '0.5rem' }}>
           {parentSession || tutorSession ? (
             <div ref={mobileDropdownRef} style={{ position: 'relative' }}>
               <button
@@ -441,11 +477,11 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               href="/tutor/register"
               className="btn btn-secondary btn-sm"
               style={{
-                fontSize: '0.78rem',
-                padding: '0.4rem 0.75rem',
+                fontSize: '0.76rem',
+                padding: '0.38rem 0.65rem',
                 fontWeight: 700,
                 alignItems: 'center',
-                gap: '0.35rem',
+                gap: '0.25rem',
                 borderRadius: '9999px',
                 whiteSpace: 'nowrap',
                 border: '1.5px solid #A7F3D0',
@@ -453,8 +489,8 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
                 backgroundColor: '#ECFDF5',
               }}
             >
-              <UserCheck size={13} color="#047857" />
-              <span>Tutor Login</span>
+              <GraduationCap size={13} color="#047857" />
+              <span>Join as Tutor</span>
             </Link>
           )}
 
@@ -476,95 +512,133 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer with Clear Role Sections */}
       {mobileMenuOpen && (
         <div style={{
           backgroundColor: '#FFFFFF',
           borderBottom: '1px solid var(--border-hairline)',
           padding: '1.25rem',
-          display: 'flex', flexDirection: 'column', gap: '1rem',
+          display: 'flex', flexDirection: 'column', gap: '1.25rem',
         }}>
-          <Link href="/" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 700, color: '#065F46' }}>Home</Link>
-          <Link href="/tutors" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Browse 1,000+ Verified Tutors</Link>
-          <Link href="/home-tutors-in-gurgaon" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Gurgaon &amp; Delhi Localities</Link>
-          <Link href="/tuition" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Tuition Subjects &amp; Boards</Link>
-          <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-muted)' }}>How It Works</Link>
-          <Link href="/#fee-estimator" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 600, color: 'var(--text-muted)' }}>Fee Estimator</Link>
-          {!tutorSession && (
-            <Link href="/tutor/register" onClick={() => setMobileMenuOpen(false)} style={{ fontWeight: 700, color: '#065F46' }}>Apply as Tutor</Link>
-          )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-hairline)' }}>
-            {parentSession ? (
-              <>
+          {/* Section 1: For Parents */}
+          <div style={{
+            backgroundColor: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            borderRadius: '14px',
+            padding: '0.9rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.65rem',
+          }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#2563EB', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              👨‍👩‍👧 For Parents &amp; Students
+            </div>
+            <Link
+              href="/request-tutor"
+              onClick={(e) => {
+                setMobileMenuOpen(false);
+                if (onOpenBooking) {
+                  e.preventDefault();
+                  onOpenBooking();
+                }
+              }}
+              className="btn btn-primary"
+              style={{ justifyContent: 'center', backgroundColor: '#065F46', padding: '0.65rem 1rem', fontSize: '0.88rem', fontWeight: 800 }}
+            >
+              <span>Book a Home Tutor</span>
+              <ChevronRight size={16} />
+            </Link>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <Link
+                href="/tutors"
+                onClick={() => setMobileMenuOpen(false)}
+                className="btn btn-secondary"
+                style={{ flex: 1, justifyContent: 'center', fontSize: '0.78rem', padding: '0.45rem' }}
+              >
+                Find Tutors
+              </Link>
+              {!parentSession && (
                 <Link
-                  href="/parent/dashboard"
+                  href="/parent/login"
                   onClick={() => setMobileMenuOpen(false)}
                   className="btn btn-secondary"
-                  style={{ justifyContent: 'center' }}
+                  style={{ flex: 1, justifyContent: 'center', fontSize: '0.78rem', padding: '0.45rem', color: '#1D4ED8' }}
                 >
-                  <User size={16} color="#2563EB" />
-                  <span>Parent Dashboard</span>
+                  Parent Login
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => { setMobileMenuOpen(false); handleParentLogout(); }}
-                  className="btn"
-                  style={{ justifyContent: 'center', backgroundColor: '#FEF2F2', color: '#DC2626', border: '1.5px solid #FECACA' }}
-                >
-                  <LogOut size={16} />
-                  <span>Sign Out</span>
-                </button>
-              </>
-            ) : tutorSession ? (
-              <>
-                <Link
-                  href="/tutor/profile"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="btn btn-secondary"
-                  style={{ justifyContent: 'center' }}
-                >
-                  <User size={16} />
-                  <span>My Profile</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => { setMobileMenuOpen(false); handleTutorLogout(); }}
-                  className="btn"
-                  style={{ justifyContent: 'center', backgroundColor: '#FEF2F2', color: '#DC2626', border: '1.5px solid #FECACA' }}
-                >
-                  <LogOut size={16} />
-                  <span>Sign Out</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/parent/login" onClick={() => setMobileMenuOpen(false)} className="btn btn-secondary" style={{ justifyContent: 'center' }}>
-                  <User size={16} color="#2563EB" />
-                  <span>Parent Login</span>
-                </Link>
-                <Link href="/tutor/register" onClick={() => setMobileMenuOpen(false)} className="btn btn-secondary" style={{ justifyContent: 'center' }}>
-                  <UserCheck size={16} />
-                  <span>Tutor Login</span>
-                </Link>
-                <Link
-                  href="/request-tutor"
-                  onClick={(e) => {
-                    setMobileMenuOpen(false);
-                    if (onOpenBooking) {
-                      e.preventDefault();
-                      onOpenBooking();
-                    }
-                  }}
-                  className="btn btn-primary"
-                  style={{ justifyContent: 'center' }}
-                >
-                  <span>Request Home Tutor</span>
-                  <div className="btn-arrow"><ChevronRight size={14} /></div>
-                </Link>
-              </>
-            )}
+              )}
+            </div>
           </div>
+
+          {/* Section 2: For Teachers / Tutors */}
+          <div style={{
+            backgroundColor: '#F0FDF4',
+            border: '1px solid #BBF7D0',
+            borderRadius: '14px',
+            padding: '0.9rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.6rem',
+          }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#15803D', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              👨‍🏫 For Educators &amp; Tutors
+            </div>
+            <Link
+              href="/tutor/register"
+              onClick={() => setMobileMenuOpen(false)}
+              className="btn btn-secondary"
+              style={{
+                justifyContent: 'center',
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid #0F6E56',
+                color: '#0F6E56',
+                fontWeight: 800,
+                fontSize: '0.85rem',
+                padding: '0.6rem',
+              }}
+            >
+              <GraduationCap size={16} color="#0F6E56" />
+              <span>{tutorSession ? 'My Tutor Dashboard' : 'Apply / Join as Tutor'}</span>
+            </Link>
+          </div>
+
+          {/* Section 3: Explore & Information Links */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', paddingTop: '0.35rem' }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>
+              📍 Explore &amp; Tuition Rates
+            </div>
+            <Link href="/home-tutors-in-gurgaon" onClick={() => setMobileMenuOpen(false)} style={{ fontSize: '0.88rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>
+              Gurgaon &amp; Delhi NCR Localities
+            </Link>
+            <Link href="/tuition" onClick={() => setMobileMenuOpen(false)} style={{ fontSize: '0.88rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>
+              Tuition Subjects &amp; Educational Boards
+            </Link>
+            <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} style={{ fontSize: '0.88rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>
+              How Matching Works
+            </Link>
+            <Link href="/#fee-estimator" onClick={() => setMobileMenuOpen(false)} style={{ fontSize: '0.88rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>
+              Hourly Fee Estimator
+            </Link>
+          </div>
+
+          {/* Active Session Sign-Out Button if logged in */}
+          {(parentSession || tutorSession) && (
+            <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--border-hairline)' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (parentSession) handleParentLogout();
+                  else handleTutorLogout();
+                }}
+                className="btn"
+                style={{ width: '100%', justifyContent: 'center', backgroundColor: '#FEF2F2', color: '#DC2626', border: '1.5px solid #FECACA' }}
+              >
+                <LogOut size={16} />
+                <span>Sign Out ({parentSession ? parentSession.name : tutorSession?.name})</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </header>
