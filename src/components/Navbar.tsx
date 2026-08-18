@@ -15,10 +15,15 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
   const [parentSession, setParentSession] = useState<{ userId: string; name: string; email: string; image?: string } | null>(null);
   const [tutorSession, setTutorSession] = useState<{ userId?: string; name?: string; email?: string; image?: string; avatarUrl?: string } | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const desktopDropdownRef = useRef<HTMLDivElement>(null);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: authSession } = useSession();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Read sessions from localStorage & NextAuth on mount & storage events
   useEffect(() => {
@@ -365,7 +370,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
 
         {/* Desktop Actions */}
         <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', whiteSpace: 'nowrap' }}>
-          {parentSession || tutorSession ? (
+          {mounted && (parentSession || tutorSession) ? (
             /* ── Logged-in: Avatar + Dropdown ── */
             <div ref={desktopDropdownRef} style={{ position: 'relative' }}>
               <button
@@ -456,7 +461,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
 
         {/* Mobile Actions */}
         <div className="mobile-only-flex" style={{ alignItems: 'center', gap: '0.5rem' }}>
-          {parentSession || tutorSession ? (
+          {mounted && (parentSession || tutorSession) ? (
             <div ref={mobileDropdownRef} style={{ position: 'relative' }}>
               <button
                 type="button"
@@ -557,7 +562,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               >
                 Find Tutors
               </Link>
-              {!parentSession && (
+              {(!mounted || !parentSession) && (
                 <Link
                   href="/parent/login"
                   onClick={() => setMobileMenuOpen(false)}
@@ -598,7 +603,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               }}
             >
               <GraduationCap size={16} color="#0F6E56" />
-              <span>{tutorSession ? 'My Tutor Dashboard' : 'Apply / Join as Tutor'}</span>
+              <span>{mounted && tutorSession ? 'My Tutor Dashboard' : 'Apply / Join as Tutor'}</span>
             </Link>
           </div>
 
@@ -622,7 +627,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
           </div>
 
           {/* Active Session Sign-Out Button if logged in */}
-          {(parentSession || tutorSession) && (
+          {mounted && (parentSession || tutorSession) && (
             <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--border-hairline)' }}>
               <button
                 type="button"

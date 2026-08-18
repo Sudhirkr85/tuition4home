@@ -90,7 +90,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/logo.webp" type="image/webp" />
         <link rel="preconnect" href="https://a.basemaps.cartocdn.com" />
@@ -221,7 +221,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={outfit.className}>
+      <body className={outfit.className} suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>
