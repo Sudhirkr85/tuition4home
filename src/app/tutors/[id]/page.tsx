@@ -175,6 +175,13 @@ export default async function TutorProfilePage({ params }: PageProps) {
         createdAt: r.createdAt,
       }));
 
+      const hasRealReviews = reviews.length > 0;
+      const calculatedRating = hasRealReviews
+        ? reviews.reduce((acc: number, r: any) => acc + (r.rating || 5), 0) / reviews.length
+        : dbProfile.rating && dbProfile.totalReviews > 0
+        ? dbProfile.rating
+        : null;
+
       tutorData = {
         id: dbProfile.id,
         name: dbProfile.user.name,
@@ -200,8 +207,8 @@ export default async function TutorProfilePage({ params }: PageProps) {
         monthlyRateMin: dbProfile.monthlyRateMin || 5000,
         isVerified: dbProfile.isVerified,
         hasPoliceCheck: dbProfile.hasPoliceCheck,
-        rating: dbProfile.rating || 5.0,
-        totalReviews: dbProfile.totalReviews || reviews.length,
+        rating: calculatedRating || 5.0,
+        totalReviews: reviews.length || dbProfile.totalReviews || 0,
         bio: dbProfile.bio || '',
         badge: dbProfile.highestDegree ? `Specialist (${dbProfile.highestDegree})` : 'Verified Educator',
         qualifications,
@@ -284,6 +291,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
   const hasRealExperiences = tutorData.experiences && tutorData.experiences.length > 0;
   const hasRealQualifications = tutorData.qualifications && tutorData.qualifications.length > 0;
   const hasReviews = tutorData.reviews && tutorData.reviews.length > 0;
+  const isNewTutor = tutorData.totalReviews === 0;
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F8FAFC' }}>
@@ -401,31 +409,52 @@ export default async function TutorProfilePage({ params }: PageProps) {
                       {tutorData.name}
                     </h1>
 
-                    {/* Star Rating & Review Count Strip */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            size={16}
-                            fill={star <= Math.round(tutorData.rating || 5) ? '#F59E0B' : '#E2E8F0'}
-                            color={star <= Math.round(tutorData.rating || 5) ? '#F59E0B' : '#CBD5E1'}
-                          />
-                        ))}
+                    {/* Star Rating & Review Count Strip (Honest Airbnb Standard) */}
+                    {!isNewTutor ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              size={16}
+                              fill={star <= Math.round(tutorData.rating || 5) ? '#F59E0B' : '#E2E8F0'}
+                              color={star <= Math.round(tutorData.rating || 5) ? '#F59E0B' : '#CBD5E1'}
+                            />
+                          ))}
+                        </div>
+                        <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.92rem' }}>
+                          {(tutorData.rating || 5.0).toFixed(1)}
+                        </span>
+                        <span style={{ color: '#64748B', fontSize: '0.85rem' }}>•</span>
+                        <a
+                          href="#parent-reviews"
+                          style={{ color: '#0F6E56', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none' }}
+                        >
+                          {tutorData.totalReviews} Verified Parent Reviews
+                        </a>
                       </div>
-                      <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.92rem' }}>
-                        {(tutorData.rating || 5.0).toFixed(1)}
-                      </span>
-                      <span style={{ color: '#64748B', fontSize: '0.85rem' }}>
-                        •
-                      </span>
-                      <a
-                        href="#parent-reviews"
-                        style={{ color: '#0F6E56', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none' }}
-                      >
-                        {tutorData.totalReviews > 0 ? `${tutorData.totalReviews} Verified Parent Reviews` : 'Verified Profile'}
-                      </a>
-                    </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                        <span style={{
+                          fontSize: '0.74rem',
+                          fontWeight: 800,
+                          color: '#065F46',
+                          backgroundColor: '#ECFDF5',
+                          border: '1px solid #A7F3D0',
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '999px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                        }}>
+                          <Sparkles size={12} color="#059669" />
+                          <span>✨ New Verified Educator</span>
+                        </span>
+                        <span style={{ color: '#64748B', fontSize: '0.8rem', fontWeight: 600 }}>
+                          • First session reviews pending
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -438,7 +467,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>RATING</div>
                       <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#92400E', whiteSpace: 'nowrap' }}>
-                        {(tutorData.rating || 5.0).toFixed(1)} / 5.0
+                        {!isNewTutor ? `${(tutorData.rating || 5.0).toFixed(1)} / 5.0` : 'New Educator'}
                       </div>
                     </div>
                   </div>
@@ -450,7 +479,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>EXPERIENCE</div>
                       <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#065F46', whiteSpace: 'nowrap' }}>
-                        {tutorData.experienceYears}+ Years
+                        {tutorData.experienceYears > 0 ? `${tutorData.experienceYears}+ Years` : 'Educator'}
                       </div>
                     </div>
                   </div>
@@ -504,7 +533,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                     <CheckCircle2 size={16} color="#059669" />
-                    <span>Interview Verified • Sector 14</span>
+                    <span>Interview Verified • {tutorData.serviceAreas.length > 0 ? tutorData.serviceAreas[0] : 'Gurgaon'}</span>
                   </div>
                 </div>
               </div>
@@ -562,10 +591,10 @@ export default async function TutorProfilePage({ params }: PageProps) {
                       ))}
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', gap: '1.25rem' }}>
+                    <div style={{ display: 'flex', gap: '1.15rem', alignItems: 'center', padding: '1.25rem', backgroundColor: '#F8FAFC', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
                       <div style={{
-                        width: '44px',
-                        height: '44px',
+                        width: '42px',
+                        height: '42px',
                         borderRadius: '12px',
                         backgroundColor: '#ECFDF5',
                         border: '1.5px solid #A7F3D0',
@@ -575,35 +604,15 @@ export default async function TutorProfilePage({ params }: PageProps) {
                         color: '#047857',
                         flexShrink: 0,
                       }}>
-                        <Briefcase size={22} />
+                        <Briefcase size={20} />
                       </div>
 
                       <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#0F172A', margin: '0 0 2px 0' }}>
-                          Senior Home &amp; 1-on-1 Online Educator
+                        <h3 style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A', margin: '0 0 3px 0' }}>
+                          {tutorData.experienceYears > 0 ? `${tutorData.experienceYears}+ Years Teaching & Mentorship Experience` : 'Verified Home & Online Educator'}
                         </h3>
-                        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0F6E56', marginBottom: '2px' }}>
-                          TuitionForHome • SSSAM Academy Verified Partner
-                        </div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '0.75rem' }}>
-                          {new Date().getFullYear() - tutorData.experienceYears} – Present • {tutorData.experienceYears}+ Years • Gurgaon &amp; Delhi NCR
-                        </div>
-
-                        <div style={{
-                          backgroundColor: '#F8FAFC',
-                          borderRadius: '12px',
-                          padding: '0.85rem 1rem',
-                          border: '1px solid #E2E8F0',
-                          fontSize: '0.86rem',
-                          color: '#475569',
-                          lineHeight: 1.6,
-                        }}>
-                          <div style={{ fontWeight: 700, color: '#0F172A', marginBottom: '0.35rem' }}>Key Mentorship Highlights:</div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                            <div>• Proven track record of guiding students through regular chapter mock tests and doubt-clearing sessions.</div>
-                            <div>• Tailored conceptual pacing for CBSE, ICSE, IB DP/MYP, and Cambridge IGCSE standards.</div>
-                            <div>• Active home tuition visits across {tutorData.serviceAreas.slice(0, 3).join(', ')} and surrounding Gurgaon sectors.</div>
-                          </div>
+                        <div style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5 }}>
+                          Providing 1-on-1 personalized home tuition visits and interactive online sessions across Gurgaon &amp; Delhi NCR.
                         </div>
                       </div>
                     </div>
@@ -649,10 +658,10 @@ export default async function TutorProfilePage({ params }: PageProps) {
                       ))}
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', gap: '1.25rem' }}>
+                    <div style={{ display: 'flex', gap: '1.15rem', alignItems: 'center', padding: '1.25rem', backgroundColor: '#F8FAFC', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
                       <div style={{
-                        width: '44px',
-                        height: '44px',
+                        width: '42px',
+                        height: '42px',
                         borderRadius: '12px',
                         backgroundColor: '#EFF6FF',
                         border: '1.5px solid #BFDBFE',
@@ -662,26 +671,15 @@ export default async function TutorProfilePage({ params }: PageProps) {
                         color: '#2563EB',
                         flexShrink: 0,
                       }}>
-                        <GraduationCap size={24} />
+                        <GraduationCap size={22} />
                       </div>
 
                       <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#0F172A', margin: '0 0 2px 0' }}>
-                          {tutorData.highestDegree}
+                        <h3 style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A', margin: '0 0 3px 0' }}>
+                          {tutorData.highestDegree || 'Bachelor Degree'}
                         </h3>
-                        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#2563EB', marginBottom: '2px' }}>
-                          Recognized University Degree Transcript
-                        </div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '0.6rem' }}>
-                          Verified Degree Transcripts Audited by SSSAM Academy Academic Panel
-                        </div>
-
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                          {tutorData.subjects.map((sub) => (
-                            <span key={sub} style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', backgroundColor: '#EFF6FF', color: '#1E40AF', borderRadius: '6px', fontWeight: 600 }}>
-                              Specialization: {sub}
-                            </span>
-                          ))}
+                        <div style={{ fontSize: '0.82rem', color: '#64748B' }}>
+                          Degree transcripts and identity credentials audited &amp; verified by SSSAM Academy.
                         </div>
                       </div>
                     </div>
@@ -773,7 +771,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                   Teaching Philosophy &amp; Methodology
                 </h2>
                 <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.7, marginBottom: '1.5rem' }}>
-                  {tutorData.bio || `${tutorData.name} is an experienced educator specializing in interactive, concept-driven learning. Lessons are customized to match the student's pace, focusing on fundamentals, homework assistance, regular mock assessments, and exam confidence.`}
+                  {tutorData.bio || `${tutorData.name} is a verified educator with ${tutorData.experienceYears > 0 ? `${tutorData.experienceYears}+ years of teaching experience` : 'specialized academic expertise'}${tutorData.highestDegree ? `, holding a ${tutorData.highestDegree} degree` : ''}. Focuses on personalized 1-on-1 learning, concept clarity, regular practice assessments, and homework assistance for ${tutorData.subjects.length > 0 ? tutorData.subjects.join(', ') : 'academic subjects'} across Gurgaon.`}
                 </p>
 
                 <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.75rem' }}>
@@ -804,7 +802,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                       CLASSES &amp; LEVELS
                     </div>
                     <div style={{ fontSize: '0.9rem', color: '#1E293B', fontWeight: 600 }}>
-                      {tutorData.classes.length > 0 ? tutorData.classes.join(' • ') : 'Classes 6 to 12'}
+                      {tutorData.classes.length > 0 ? tutorData.classes.join(' • ') : 'Classes specified on consultation'}
                     </div>
                   </div>
 
@@ -813,7 +811,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                       BOARDS SUPPORTED
                     </div>
                     <div style={{ fontSize: '0.9rem', color: '#1E293B', fontWeight: 600 }}>
-                      {tutorData.boards.length > 0 ? tutorData.boards.join(' • ') : 'CBSE • ICSE • IB • Cambridge (IGCSE)'}
+                      {tutorData.boards.length > 0 ? tutorData.boards.join(' • ') : 'CBSE • ICSE • State & International Boards'}
                     </div>
                   </div>
                 </div>
@@ -954,27 +952,25 @@ export default async function TutorProfilePage({ params }: PageProps) {
                   </div>
                 ) : (
                   <div style={{
-                    padding: '2rem 1.5rem',
+                    padding: '2.5rem 1.5rem',
                     textAlign: 'center',
                     backgroundColor: '#F8FAFC',
-                    borderRadius: '16px',
+                    borderRadius: '18px',
                     border: '1px dashed #CBD5E1',
                   }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#EFF6FF', color: '#2563EB', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                      <Star size={24} fill="#2563EB" />
+                    <div style={{ fontSize: '2.2rem', marginBottom: '0.65rem' }}>✨</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.35rem' }}>
+                      Newly Verified Home Tutor
                     </div>
-                    <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.35rem' }}>
-                      SSSAM Academy Verified Educator
-                    </div>
-                    <p style={{ fontSize: '0.85rem', color: '#64748B', maxWidth: '420px', margin: '0 auto 1.25rem auto' }}>
-                      {tutorData.name}&apos;s background check, KYC credentials, and subject proficiency interview have been verified. Be the first parent to share review feedback after your trial class!
+                    <p style={{ fontSize: '0.86rem', color: '#64748B', maxWidth: '440px', margin: '0 auto 1.25rem auto', lineHeight: 1.6 }}>
+                      {tutorData.name}&apos;s background check, KYC credentials, and academic degrees are verified by SSSAM Academy. Book a trial session and be the first parent to share review feedback!
                     </p>
                     <Link
                       href={`/tutor/review/${params.id}`}
                       className="btn btn-secondary"
-                      style={{ padding: '0.6rem 1.25rem', fontSize: '0.86rem' }}
+                      style={{ padding: '0.6rem 1.35rem', fontSize: '0.86rem', fontWeight: 700 }}
                     >
-                      Write First Review
+                      Write First Review ✍️
                     </Link>
                   </div>
                 )}
@@ -1029,9 +1025,15 @@ export default async function TutorProfilePage({ params }: PageProps) {
                     ESTIMATED TUITION FEE
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.82rem', fontWeight: 800, color: '#D97706' }}>
-                    <Star size={13} fill="#F59E0B" color="#F59E0B" />
-                    <span>{(tutorData.rating || 5.0).toFixed(1)}</span>
-                    <span style={{ color: '#94A3B8', fontWeight: 500 }}>({tutorData.totalReviews})</span>
+                    {!isNewTutor ? (
+                      <>
+                        <Star size={13} fill="#F59E0B" color="#F59E0B" />
+                        <span>{(tutorData.rating || 5.0).toFixed(1)}</span>
+                        <span style={{ color: '#94A3B8', fontWeight: 500 }}>({tutorData.totalReviews})</span>
+                      </>
+                    ) : (
+                      <span style={{ color: '#059669', fontSize: '0.76rem', fontWeight: 700 }}>✨ Verified</span>
+                    )}
                   </div>
                 </div>
 
