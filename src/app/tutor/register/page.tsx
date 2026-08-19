@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ImageCropperModal from '@/components/ImageCropperModal';
 import {
   GURGAON_LOCALITIES,
   SUBJECT_OPTIONS,
@@ -327,6 +328,9 @@ export default function TutorRegisterLoginPage() {
   // Step 5: Media Uploads
   const [profilePhotoUrl, setProfilePhotoUrl] = useState('');
   const [profilePhotoName, setProfilePhotoName] = useState('');
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [rawPhotoToCrop, setRawPhotoToCrop] = useState('');
+  const [tempPhotoFileName, setTempPhotoFileName] = useState('');
   
   const [introVideoSource, setIntroVideoSource] = useState<'link' | 'upload'>('link');
   const [introVideoUrl, setIntroVideoUrl] = useState('');
@@ -914,8 +918,9 @@ export default function TutorRegisterLoginPage() {
     reader.onloadend = () => {
       const base64String = reader.result as string;
       if (type === 'photo') {
-        setProfilePhotoUrl(base64String);
-        setProfilePhotoName(file.name);
+        setRawPhotoToCrop(base64String);
+        setTempPhotoFileName(file.name);
+        setCropperOpen(true);
       } else if (type === 'video') {
         setIntroVideoUrl(base64String);
         setIntroVideoFileName(file.name);
@@ -5540,6 +5545,23 @@ export default function TutorRegisterLoginPage() {
           </div>
         </div>
       )}
+
+      {/* Profile Photo Cropper Modal */}
+      <ImageCropperModal
+        isOpen={cropperOpen}
+        imageSrc={rawPhotoToCrop}
+        onCropComplete={(croppedBase64) => {
+          setProfilePhotoUrl(croppedBase64);
+          setProfilePhotoName(tempPhotoFileName || 'profile_photo.jpg');
+          setCropperOpen(false);
+          setRawPhotoToCrop('');
+        }}
+        onCancel={() => {
+          setCropperOpen(false);
+          setRawPhotoToCrop('');
+        }}
+        title="Crop & Center Tutor Profile Photo"
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ImageCropperModal from '@/components/ImageCropperModal';
 import {
   GURGAON_LOCALITIES,
   SUBJECT_OPTIONS,
@@ -112,6 +113,8 @@ export default function TutorProfileDashboard() {
   const [hasPoliceCheck, setHasPoliceCheck] = useState(false);
   const [rating, setRating] = useState(5.0);
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [rawPhotoToCrop, setRawPhotoToCrop] = useState('');
   const [reviews, setReviews] = useState<{ id: string; parentName: string; rating: number; comment: string; createdAt: string }[]>([]);
   const [reviewLink, setReviewLink] = useState('');
   const [linkCopied, setLinkCopied] = useState(false);
@@ -502,48 +505,56 @@ export default function TutorProfileDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 4 * 1024 * 1024) {
-      setErrorMsg('Profile photo size must be less than 4MB.');
+    if (file.size > 8 * 1024 * 1024) {
+      setErrorMsg('Profile photo size must be less than 8MB.');
       return;
     }
 
     const reader = new FileReader();
-    reader.onloadend = async () => {
+    reader.onloadend = () => {
       const base64Data = reader.result as string;
-      setAvatarUrl(base64Data);
-      setAvatarUploading(true);
-      setErrorMsg('');
-      setSuccessMsg('');
-
-      try {
-        const res = await fetch('/api/tutors/profile/setup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId,
-            avatarUrl: base64Data,
-          }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          setSuccessMsg('✨ Profile picture updated successfully!');
-          try {
-            const session = JSON.parse(localStorage.getItem('tutor_session') || '{}');
-            session.avatarUrl = base64Data;
-            session.image = base64Data;
-            localStorage.setItem('tutor_session', JSON.stringify(session));
-            window.dispatchEvent(new Event('storage'));
-          } catch {}
-        } else {
-          setErrorMsg(data.error || 'Failed to save profile picture.');
-        }
-      } catch {
-        setErrorMsg('Network error updating profile picture.');
-      } finally {
-        setAvatarUploading(false);
-      }
+      setRawPhotoToCrop(base64Data);
+      setCropperOpen(true);
+      e.target.value = '';
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleCroppedAvatarSave = async (croppedBase64: string) => {
+    setCropperOpen(false);
+    setRawPhotoToCrop('');
+    setAvatarUrl(croppedBase64);
+    setAvatarUploading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const res = await fetch('/api/tutors/profile/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          avatarUrl: croppedBase64,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMsg('✨ Profile picture cropped and updated successfully!');
+        try {
+          const session = JSON.parse(localStorage.getItem('tutor_session') || '{}');
+          session.avatarUrl = croppedBase64;
+          session.image = croppedBase64;
+          localStorage.setItem('tutor_session', JSON.stringify(session));
+          window.dispatchEvent(new Event('storage'));
+        } catch {}
+      } else {
+        setErrorMsg(data.error || 'Failed to save profile picture.');
+      }
+    } catch {
+      setErrorMsg('Network error updating profile picture.');
+    } finally {
+      setAvatarUploading(false);
+    }
   };
 
   // Qualifications Add & Delete Handlers
@@ -3993,6 +4004,18 @@ export default function TutorProfileDashboard() {
           </div>
         </div>
       )}
+
+      {/* Profile Photo Cropper Modal */}
+      <ImageCropperModal
+        isOpen={cropperOpen}
+        imageSrc={rawPhotoToCrop}
+        onCropComplete={handleCroppedAvatarSave}
+        onCancel={() => {
+          setCropperOpen(false);
+          setRawPhotoToCrop('');
+        }}
+        title="Crop & Center Profile Photo"
+      />
 
       <Footer />
     </div>
