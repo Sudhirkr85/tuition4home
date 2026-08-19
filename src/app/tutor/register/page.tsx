@@ -6,6 +6,7 @@ import { signIn, signOut, useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ImageCropperModal from '@/components/ImageCropperModal';
+import { compressDocumentFile } from '@/lib/imageUtils';
 import {
   GURGAON_LOCALITIES,
   SUBJECT_OPTIONS,
@@ -909,11 +910,93 @@ export default function TutorRegisterLoginPage() {
     }
   };
 
-  // Profile Upload Helpers (reads file as base64 string mock upload)
+  // Profile Upload Helpers with strict size, format & auto-compression
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'video' | 'kyc' | 'degree') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // 1. Photo validation (Max 10MB, must be image)
+    if (type === 'photo') {
+      if (!file.type.startsWith('image/')) {
+        setErrorMessage('⚠️ Invalid file format. Please upload an image file (JPG, PNG, WEBP).');
+        setWizardErrorField('field-profilePhoto');
+        e.target.value = '';
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+        setErrorMessage(`⚠️ Photo size (${sizeMb}MB) is too large. Maximum allowed size is 10MB.`);
+        setWizardErrorField('field-profilePhoto');
+        e.target.value = '';
+        return;
+      }
+    }
+
+    // 2. Video validation (Max 100MB, must be video)
+    if (type === 'video') {
+      if (!file.type.startsWith('video/')) {
+        setErrorMessage('⚠️ Invalid video format. Please upload an MP4, MOV, or WEBM video.');
+        e.target.value = '';
+        return;
+      }
+      if (file.size > 100 * 1024 * 1024) {
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+        setErrorMessage(`⚠️ Video (${sizeMb}MB) exceeds 100MB limit. Please compress or paste a YouTube/Drive link.`);
+        e.target.value = '';
+        return;
+      }
+    }
+
+    // 3. KYC Document validation (Max 10MB)
+    if (type === 'kyc') {
+      if (file.size > 10 * 1024 * 1024) {
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+        setErrorMessage(`⚠️ ID Proof document (${sizeMb}MB) exceeds 10MB limit. Please upload a smaller file.`);
+        e.target.value = '';
+        return;
+      }
+    }
+
+    // 4. Degree Document validation (Max 10MB)
+    if (type === 'degree') {
+      if (file.size > 10 * 1024 * 1024) {
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+        setErrorMessage(`⚠️ Degree document (${sizeMb}MB) exceeds 10MB limit. Please upload a smaller file.`);
+        e.target.value = '';
+        return;
+      }
+    }
+
+    setErrorMessage('');
+
+    // Handle KYC & Degree with automatic document compression
+    if (type === 'kyc') {
+      compressDocumentFile(file)
+        .then((compressedBase64) => {
+          setIdDocUrl(compressedBase64);
+          setIdDocFileName(file.name);
+          e.target.value = '';
+        })
+        .catch(() => {
+          setErrorMessage('⚠️ Failed to process ID document. Please try another file.');
+        });
+      return;
+    }
+
+    if (type === 'degree') {
+      compressDocumentFile(file)
+        .then((compressedBase64) => {
+          setDegreeDocUrl(compressedBase64);
+          setDegreeDocFileName(file.name);
+          e.target.value = '';
+        })
+        .catch(() => {
+          setErrorMessage('⚠️ Failed to process degree document. Please try another file.');
+        });
+      return;
+    }
+
+    // Handle Photo (Cropper) & Video
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64String = reader.result as string;
@@ -921,15 +1004,10 @@ export default function TutorRegisterLoginPage() {
         setRawPhotoToCrop(base64String);
         setTempPhotoFileName(file.name);
         setCropperOpen(true);
+        e.target.value = '';
       } else if (type === 'video') {
         setIntroVideoUrl(base64String);
         setIntroVideoFileName(file.name);
-      } else if (type === 'kyc') {
-        setIdDocUrl(base64String);
-        setIdDocFileName(file.name);
-      } else if (type === 'degree') {
-        setDegreeDocUrl(base64String);
-        setDegreeDocFileName(file.name);
       }
     };
     reader.readAsDataURL(file);

@@ -6,6 +6,7 @@ import { signOut, useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ImageCropperModal from '@/components/ImageCropperModal';
+import { compressDocumentFile } from '@/lib/imageUtils';
 import {
   GURGAON_LOCALITIES,
   SUBJECT_OPTIONS,
@@ -505,11 +506,20 @@ export default function TutorProfileDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 8 * 1024 * 1024) {
-      setErrorMsg('Profile photo size must be less than 8MB.');
+    if (!file.type.startsWith('image/')) {
+      setErrorMsg('⚠️ Invalid file format. Please upload an image file (JPG, PNG, WEBP).');
+      e.target.value = '';
       return;
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      setErrorMsg(`⚠️ Profile photo (${sizeMb}MB) is too large. Maximum allowed size is 10MB.`);
+      e.target.value = '';
+      return;
+    }
+
+    setErrorMsg('');
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64Data = reader.result as string;
@@ -2595,12 +2605,20 @@ export default function TutorProfileDashboard() {
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  const reader = new FileReader();
-                                  reader.onload = () => {
-                                    setDraftQual(prev => ({ ...prev, docUrl: reader.result as string, docName: file.name }));
-                                    setDraftQualErrorField(null);
-                                  };
-                                  reader.readAsDataURL(file);
+                                  if (file.size > 10 * 1024 * 1024) {
+                                    setErrorMsg('⚠️ Document size is too large (max 10MB).');
+                                    e.target.value = '';
+                                    return;
+                                  }
+                                  compressDocumentFile(file)
+                                    .then((docUrl) => {
+                                      setDraftQual(prev => ({ ...prev, docUrl, docName: file.name }));
+                                      setDraftQualErrorField(null);
+                                      e.target.value = '';
+                                    })
+                                    .catch(() => {
+                                      setErrorMsg('⚠️ Failed to process document.');
+                                    });
                                 }
                               }}
                             />
