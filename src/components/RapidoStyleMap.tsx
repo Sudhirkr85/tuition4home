@@ -70,14 +70,14 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
           setDynamicTutors(data.tutors);
           setSelectedTutor(data.tutors[0]);
         } else {
-          setDynamicTutors([]);
-          setSelectedTutor(null);
+          setDynamicTutors(VERIFIED_TUTORS);
+          setSelectedTutor(VERIFIED_TUTORS[0]);
         }
       })
       .catch((err) => {
         console.error('Failed to fetch live tutors for map:', err);
-        setDynamicTutors([]);
-        setSelectedTutor(null);
+        setDynamicTutors(VERIFIED_TUTORS);
+        setSelectedTutor(VERIFIED_TUTORS[0]);
       });
   }, []);
 
