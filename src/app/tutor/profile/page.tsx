@@ -53,6 +53,7 @@ import {
   Search,
   Star,
   Copy,
+  Crop,
 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { reverseGeocodeUnified } from '@/lib/maps';
@@ -2338,20 +2339,53 @@ export default function TutorProfileDashboard() {
                     border: '1.5px solid var(--border-hairline)'
                   }}>
                     {avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={avatarUrl}
-                        alt={userName}
-                        style={{
-                          width: '56px',
-                          height: '56px',
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                          border: '2px solid #FFFFFF',
-                          boxShadow: '0 4px 12px rgba(13, 148, 136, 0.15)',
-                          flexShrink: 0
+                      <div
+                        onClick={() => {
+                          setRawPhotoToCrop(rawPhotoToCrop || avatarUrl);
+                          setCropperOpen(true);
                         }}
-                      />
+                        title="Click to re-crop or adjust photo"
+                        style={{
+                          position: 'relative',
+                          width: '58px',
+                          height: '58px',
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={avatarUrl}
+                          alt={userName}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            border: '2px solid #FFFFFF',
+                            boxShadow: '0 4px 12px rgba(13, 148, 136, 0.15)',
+                          }}
+                        />
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            borderRadius: '50%',
+                            backgroundColor: 'rgba(13, 148, 136, 0.55)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#FFFFFF',
+                            opacity: 0,
+                            transition: 'opacity 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
+                        >
+                          <Crop size={18} />
+                        </div>
+                      </div>
                     ) : (
                       <div style={{
                         width: '56px',
@@ -2379,15 +2413,44 @@ export default function TutorProfileDashboard() {
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="btn btn-secondary btn-sm"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap', fontSize: '0.78rem' }}
-                    >
-                      <Camera size={14} />
-                      <span>{avatarUrl ? 'Change Photo' : 'Upload Photo'}</span>
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                      {avatarUrl && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRawPhotoToCrop(rawPhotoToCrop || avatarUrl);
+                            setCropperOpen(true);
+                          }}
+                          className="btn btn-sm"
+                          style={{
+                            backgroundColor: '#ECFDF5',
+                            color: '#047857',
+                            border: '1px solid #A7F3D0',
+                            borderRadius: '8px',
+                            padding: '0.4rem 0.75rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            fontSize: '0.78rem',
+                          }}
+                        >
+                          <Crop size={13} />
+                          <span>Re-crop</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="btn btn-secondary btn-sm"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap', fontSize: '0.78rem' }}
+                      >
+                        <Camera size={14} />
+                        <span>{avatarUrl ? 'Change Photo' : 'Upload Photo'}</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Gender Selector Tile */}
@@ -4026,11 +4089,10 @@ export default function TutorProfileDashboard() {
       {/* Profile Photo Cropper Modal */}
       <ImageCropperModal
         isOpen={cropperOpen}
-        imageSrc={rawPhotoToCrop}
+        imageSrc={rawPhotoToCrop || avatarUrl}
         onCropComplete={handleCroppedAvatarSave}
         onCancel={() => {
           setCropperOpen(false);
-          setRawPhotoToCrop('');
         }}
         title="Crop & Center Profile Photo"
       />

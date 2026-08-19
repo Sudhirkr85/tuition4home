@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, ZoomIn, ZoomOut, RotateCw, Check, Move } from 'lucide-react';
@@ -94,12 +94,22 @@ export default function ImageCropperModal({
     isDraggingRef.current = false;
   };
 
-  // Handle Mouse Wheel Zoom
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY * -0.002;
-    setZoom((prev) => Math.min(Math.max(prev + delta, 0.8), 3.5));
-  };
+  // Attach non-passive native wheel listener to allow smooth zoom while preventing page scroll
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!isOpen || !container) return;
+
+    const onWheelNative = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY * -0.002;
+      setZoom((prev) => Math.min(Math.max(prev + delta, 0.8), 3.5));
+    };
+
+    container.addEventListener('wheel', onWheelNative, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', onWheelNative);
+    };
+  }, [isOpen]);
 
   // Rotate by 90 degrees
   const handleRotate = () => {
@@ -244,7 +254,6 @@ export default function ImageCropperModal({
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            onWheel={handleWheel}
             style={{
               width: '280px',
               height: '280px',

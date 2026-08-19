@@ -45,6 +45,7 @@ import {
   Info,
   HelpCircle,
   Check,
+  Crop,
 } from 'lucide-react';
 
 export default function TutorRegisterLoginPage() {
@@ -4325,18 +4326,52 @@ export default function TutorRegisterLoginPage() {
                           }}
                         >
                           {profilePhotoUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img 
-                              src={profilePhotoUrl} 
-                              alt="Preview" 
-                              style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '2.5px solid var(--brand-teal)', boxShadow: '0 4px 12px rgba(15, 110, 86, 0.25)' }} 
-                            />
+                            <div 
+                              onClick={() => {
+                                setRawPhotoToCrop(rawPhotoToCrop || profilePhotoUrl);
+                                setCropperOpen(true);
+                              }}
+                              title="Click to re-crop or adjust photo"
+                              style={{ 
+                                position: 'relative', 
+                                width: '68px', 
+                                height: '68px', 
+                                borderRadius: '50%', 
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img 
+                                src={profilePhotoUrl} 
+                                alt="Preview" 
+                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2.5px solid var(--brand-teal)', boxShadow: '0 4px 12px rgba(15, 110, 86, 0.25)' }} 
+                              />
+                              <div 
+                                style={{
+                                  position: 'absolute',
+                                  inset: 0,
+                                  borderRadius: '50%',
+                                  backgroundColor: 'rgba(15, 110, 86, 0.55)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#FFFFFF',
+                                  opacity: 0,
+                                  transition: 'opacity 0.2s ease',
+                                }}
+                                onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                                onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
+                              >
+                                <Crop size={20} />
+                              </div>
+                            </div>
                           ) : (
-                            <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: wizardErrorField === 'field-profilePhoto' ? '#FEE2E2' : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ width: '68px', height: '68px', borderRadius: '50%', backgroundColor: wizardErrorField === 'field-profilePhoto' ? '#FEE2E2' : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                               <User size={28} color={wizardErrorField === 'field-profilePhoto' ? '#EF4444' : 'var(--text-light)'} />
                             </div>
                           )}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', minWidth: 0, flex: 1 }}>
                             <input 
                               type="file" 
                               accept="image/*" 
@@ -4347,12 +4382,42 @@ export default function TutorRegisterLoginPage() {
                               }} 
                               style={{ display: 'none' }} 
                             />
-                            <label htmlFor="photo-upload" className="btn btn-secondary btn-sm" style={{ alignSelf: 'flex-start', cursor: 'pointer', borderRadius: '8px' }}>
-                              <Upload size={14} />
-                              <span>{profilePhotoUrl ? 'Change Photo' : 'Select Photo'}</span>
-                            </label>
+                            
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', alignItems: 'center' }}>
+                              <label htmlFor="photo-upload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', borderRadius: '8px', padding: '0.45rem 0.85rem' }}>
+                                <Upload size={13} />
+                                <span>{profilePhotoUrl ? 'Change Photo' : 'Select Photo'}</span>
+                              </label>
+
+                              {profilePhotoUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setRawPhotoToCrop(rawPhotoToCrop || profilePhotoUrl);
+                                    setCropperOpen(true);
+                                  }}
+                                  className="btn btn-sm"
+                                  style={{
+                                    backgroundColor: '#ECFDF5',
+                                    color: '#047857',
+                                    border: '1px solid #A7F3D0',
+                                    borderRadius: '8px',
+                                    padding: '0.45rem 0.85rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                  }}
+                                >
+                                  <Crop size={13} />
+                                  <span>Re-crop / Adjust</span>
+                                </button>
+                              )}
+                            </div>
+
                             <span style={{ fontSize: '0.74rem', color: wizardErrorField === 'field-profilePhoto' ? '#DC2626' : 'var(--text-muted)', fontWeight: wizardErrorField === 'field-profilePhoto' ? 700 : 400 }}>
-                              {profilePhotoName ? `Selected: ${profilePhotoName}` : wizardErrorField === 'field-profilePhoto' ? '⚠️ Required: Upload a clear face photo.' : 'Format: JPG, PNG. Clear face photo.'}
+                              {profilePhotoUrl ? '💡 Tip: Click avatar or "Re-crop" to adjust zoom & angle anytime.' : wizardErrorField === 'field-profilePhoto' ? '⚠️ Required: Upload a clear face photo.' : 'Format: JPG, PNG. Clear face photo.'}
                             </span>
                           </div>
                         </div>
@@ -5657,16 +5722,14 @@ export default function TutorRegisterLoginPage() {
       {/* Profile Photo Cropper Modal */}
       <ImageCropperModal
         isOpen={cropperOpen}
-        imageSrc={rawPhotoToCrop}
+        imageSrc={rawPhotoToCrop || profilePhotoUrl}
         onCropComplete={(croppedBase64) => {
           setProfilePhotoUrl(croppedBase64);
           setProfilePhotoName(tempPhotoFileName || 'profile_photo.jpg');
           setCropperOpen(false);
-          setRawPhotoToCrop('');
         }}
         onCancel={() => {
           setCropperOpen(false);
-          setRawPhotoToCrop('');
         }}
         title="Crop & Center Tutor Profile Photo"
       />
