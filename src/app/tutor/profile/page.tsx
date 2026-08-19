@@ -872,7 +872,7 @@ export default function TutorProfileDashboard() {
                           borderRadius: '50%',
                           objectFit: 'cover',
                           border: '3px solid #FFFFFF',
-                          boxShadow: '0 8px 20px rgba(13, 148, 136, 0.22)',
+                          boxShadow: '0 0 0 3px rgba(13, 148, 136, 0.28), 0 8px 20px rgba(13, 148, 136, 0.22)',
                           cursor: 'pointer'
                         }}
                       />
@@ -890,7 +890,7 @@ export default function TutorProfileDashboard() {
                           justifyContent: 'center',
                           fontSize: '1.85rem',
                           fontWeight: 900,
-                          boxShadow: '0 8px 20px rgba(13, 148, 136, 0.22)',
+                          boxShadow: '0 0 0 3px rgba(13, 148, 136, 0.28), 0 8px 20px rgba(13, 148, 136, 0.22)',
                           border: '3px solid #FFFFFF',
                           cursor: 'pointer'
                         }}
@@ -940,9 +940,9 @@ export default function TutorProfileDashboard() {
                   </div>
 
                   {/* User Identity & Status Info */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', minWidth: 0, gap: '0.15rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', minWidth: 0, gap: '0.2rem', width: '100%' }}>
                     <strong style={{ display: 'block', fontSize: '1.05rem', color: 'var(--text-main)', fontWeight: 800 }}>{userName}</strong>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
                       {userEmail}
                     </span>
                     
@@ -997,6 +997,40 @@ export default function TutorProfileDashboard() {
                         </span>
                       )}
                     </div>
+
+                    {/* Verification ETA Subtitle */}
+                    {profileStatus !== 'ACTIVE_VERIFIED' && (
+                      <span style={{ fontSize: '0.66rem', color: '#92400E', fontWeight: 600, marginTop: '0.1rem', backgroundColor: '#FEF9C3', padding: '0.1rem 0.45rem', borderRadius: '4px' }}>
+                        ⏱️ Audit usually within 24 hours
+                      </span>
+                    )}
+
+                    {/* View Public Profile Action */}
+                    {userId && (
+                      <Link
+                        href={`/tutors/${userId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          marginTop: '0.45rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          fontSize: '0.72rem',
+                          fontWeight: 750,
+                          color: 'var(--brand-teal)',
+                          backgroundColor: 'var(--brand-teal-light)',
+                          border: '1px solid rgba(13, 148, 136, 0.25)',
+                          padding: '0.25rem 0.65rem',
+                          borderRadius: '8px',
+                          textDecoration: 'none',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <span>View Public Profile</span>
+                        <ExternalLink size={11} />
+                      </Link>
+                    )}
                   </div>
                 </div>
 

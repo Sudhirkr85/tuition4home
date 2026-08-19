@@ -730,6 +730,13 @@ h3 {
     margin: 0 !important;
     flex-shrink: 0;
   }
+  .profile-sidebar-avatar-row > div:nth-child(2) {
+    align-items: flex-start !important;
+    text-align: left !important;
+  }
+  .profile-sidebar-avatar-row > div:nth-child(2) > div {
+    justify-content: flex-start !important;
+  }
   .profile-sidebar-nav {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
