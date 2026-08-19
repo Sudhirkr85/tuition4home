@@ -9,6 +9,32 @@ export interface LocalityInfo {
   schools?: string[];
 }
 
+export interface TutorQualification {
+  id?: string;
+  degree: string;
+  institute: string;
+  year?: string | number;
+  grade?: string;
+}
+
+export interface TutorExperience {
+  id?: string;
+  role: string;
+  organization: string;
+  startYear?: string | number;
+  endYear?: string | number;
+  isCurrent?: boolean;
+  description?: string;
+}
+
+export interface TutorReviewItem {
+  id: string;
+  parentName: string;
+  rating: number;
+  comment: string;
+  createdAt: Date | string;
+}
+
 export interface MockTutor {
   id: string;
   name: string;
@@ -41,6 +67,9 @@ export interface MockTutor {
   totalReviews: number;
   bio: string;
   badge: string;
+  qualifications?: TutorQualification[];
+  experiences?: TutorExperience[];
+  reviews?: TutorReviewItem[];
 }
 
 export const GURGAON_LOCALITIES: LocalityInfo[] = [

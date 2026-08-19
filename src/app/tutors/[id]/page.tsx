@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import TutorProfileActions from '@/components/TutorProfileActions';
 import prisma from '@/lib/prisma';
 import { VERIFIED_TUTORS, SSSAM_OFFICE_DETAILS, MockTutor } from '@/lib/data';
 import {
@@ -23,6 +24,9 @@ import {
   MessageSquare,
   Award,
   Briefcase,
+  ExternalLink,
+  ThumbsUp,
+  User,
 } from 'lucide-react';
 import Link from 'next/link';
 import { getVideoSourceInfo } from '@/lib/video';
@@ -91,11 +95,23 @@ export default async function TutorProfilePage({ params }: PageProps) {
       let classes: string[] = [];
       let boards: string[] = [];
       let serviceAreas: string[] = [];
+      let qualifications = [];
+      let experiences = [];
 
       try { subjects = dbProfile.subjects ? JSON.parse(dbProfile.subjects) : []; } catch { subjects = dbProfile.subjects ? dbProfile.subjects.split(',') : []; }
       try { classes = dbProfile.classes ? JSON.parse(dbProfile.classes) : []; } catch { classes = []; }
       try { boards = dbProfile.boards ? JSON.parse(dbProfile.boards) : []; } catch { boards = []; }
       try { serviceAreas = dbProfile.serviceAreas ? JSON.parse(dbProfile.serviceAreas) : []; } catch { serviceAreas = []; }
+      try { qualifications = dbProfile.qualifications ? JSON.parse(dbProfile.qualifications) : []; } catch { qualifications = []; }
+      try { experiences = dbProfile.experiences ? JSON.parse(dbProfile.experiences) : []; } catch { experiences = []; }
+
+      const reviews = (dbProfile.reviews || []).map((r) => ({
+        id: r.id,
+        parentName: r.parentName,
+        rating: r.rating,
+        comment: r.comment,
+        createdAt: r.createdAt,
+      }));
 
       tutorData = {
         id: dbProfile.id,
@@ -122,10 +138,13 @@ export default async function TutorProfilePage({ params }: PageProps) {
         monthlyRateMin: dbProfile.monthlyRateMin || 5000,
         isVerified: dbProfile.isVerified,
         hasPoliceCheck: dbProfile.hasPoliceCheck,
-        rating: dbProfile.rating,
-        totalReviews: dbProfile.totalReviews,
+        rating: dbProfile.rating || 5.0,
+        totalReviews: dbProfile.totalReviews || reviews.length,
         bio: dbProfile.bio || '',
         badge: dbProfile.highestDegree ? `Specialist (${dbProfile.highestDegree})` : 'Verified Educator',
+        qualifications,
+        experiences,
+        reviews,
       };
     }
   } catch {
@@ -166,6 +185,13 @@ export default async function TutorProfilePage({ params }: PageProps) {
       credentialCategory: 'degree',
       name: tutorData.highestDegree,
     },
+    aggregateRating: tutorData.totalReviews > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: tutorData.rating.toString(),
+      reviewCount: tutorData.totalReviews.toString(),
+      bestRating: '5',
+      worstRating: '1',
+    } : undefined,
   };
 
   const breadcrumbSchema = {
@@ -193,6 +219,10 @@ export default async function TutorProfilePage({ params }: PageProps) {
     ],
   };
 
+  const hasRealExperiences = tutorData.experiences && tutorData.experiences.length > 0;
+  const hasRealQualifications = tutorData.qualifications && tutorData.qualifications.length > 0;
+  const hasReviews = tutorData.reviews && tutorData.reviews.length > 0;
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#F8FAFC' }}>
       <script
@@ -205,15 +235,37 @@ export default async function TutorProfilePage({ params }: PageProps) {
       />
       <Navbar />
 
-      <main style={{ flex: 1, padding: '2.5rem 0 5rem 0' }}>
+      <main style={{ flex: 1, padding: '2rem 0 5rem 0' }}>
         <div className="container">
           {/* Breadcrumb Navigation */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', color: '#64748B', marginBottom: '1.5rem' }}>
-            <Link href="/" style={{ color: '#0F6E56', fontWeight: 600, textDecoration: 'none' }}>Home</Link>
-            <span>/</span>
-            <Link href="/tutors" style={{ color: '#0F6E56', fontWeight: 600, textDecoration: 'none' }}>Gurgaon Tutors</Link>
-            <span>/</span>
-            <span style={{ color: '#0F172A', fontWeight: 700 }}>{tutorData.name}</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', color: '#64748B' }}>
+              <Link href="/" style={{ color: '#0F6E56', fontWeight: 600, textDecoration: 'none' }}>Home</Link>
+              <span>/</span>
+              <Link href="/tutors" style={{ color: '#0F6E56', fontWeight: 600, textDecoration: 'none' }}>Gurgaon Tutors</Link>
+              <span>/</span>
+              <span style={{ color: '#0F172A', fontWeight: 700 }}>{tutorData.name}</span>
+            </div>
+
+            <Link
+              href={`/tutor/review/${params.id}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                color: '#0F6E56',
+                textDecoration: 'none',
+                padding: '0.35rem 0.75rem',
+                borderRadius: '8px',
+                backgroundColor: '#ECFDF5',
+                border: '1px solid #A7F3D0',
+              }}
+            >
+              <Star size={13} fill="#059669" color="#059669" />
+              <span>Write a Review</span>
+            </Link>
           </div>
 
           <div style={{
@@ -225,8 +277,8 @@ export default async function TutorProfilePage({ params }: PageProps) {
             {/* LEFT COLUMN: Main Profile Content */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               {/* Profile Card Header */}
-              <div className="apple-card" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
-                <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div className="apple-card-static" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.25rem' }}>
                   <div style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0 }}>
                     {tutorData.avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -287,89 +339,116 @@ export default async function TutorProfilePage({ params }: PageProps) {
                       {tutorData.name}
                     </h1>
 
-                    {/* 2-Pillar Equal Academic & Experience Credentials Grid */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                      gap: '0.75rem',
-                      marginTop: '1rem',
-                      marginBottom: '1rem',
-                    }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.6rem',
-                        padding: '0.65rem 0.85rem',
-                        backgroundColor: '#EFF6FF',
-                        borderRadius: '12px',
-                        border: '1px solid #DBEAFE',
-                        minWidth: 0,
-                      }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', flexShrink: 0 }}>
-                          <GraduationCap size={17} />
-                        </div>
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>QUALIFICATION</div>
-                          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1E3A8A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tutorData.highestDegree}>
-                            {tutorData.highestDegree}
-                          </div>
-                        </div>
+                    {/* Star Rating & Review Count Strip */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={16}
+                            fill={star <= Math.round(tutorData.rating || 5) ? '#F59E0B' : '#E2E8F0'}
+                            color={star <= Math.round(tutorData.rating || 5) ? '#F59E0B' : '#CBD5E1'}
+                          />
+                        ))}
                       </div>
+                      <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.92rem' }}>
+                        {(tutorData.rating || 5.0).toFixed(1)}
+                      </span>
+                      <span style={{ color: '#64748B', fontSize: '0.85rem' }}>
+                        •
+                      </span>
+                      <a
+                        href="#parent-reviews"
+                        style={{ color: '#0F6E56', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none' }}
+                      >
+                        {tutorData.totalReviews > 0 ? `${tutorData.totalReviews} Verified Parent Reviews` : 'Verified Profile'}
+                      </a>
+                    </div>
+                  </div>
+                </div>
 
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.6rem',
-                        padding: '0.65rem 0.85rem',
-                        backgroundColor: '#ECFDF5',
-                        borderRadius: '12px',
-                        border: '1px solid #D1FAE5',
-                        minWidth: 0,
-                      }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', flexShrink: 0 }}>
-                          <Briefcase size={17} />
-                        </div>
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>EXPERIENCE</div>
-                          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#065F46', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {tutorData.experienceYears}+ Years Teaching
-                          </div>
-                        </div>
+                {/* 4-Pillar Quick Stats Strip */}
+                <div className="tutor-stats-strip">
+                  <div className="tutor-stat-item">
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D97706', flexShrink: 0 }}>
+                      <Star size={16} fill="#D97706" />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>RATING</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#92400E', whiteSpace: 'nowrap' }}>
+                        {(tutorData.rating || 5.0).toFixed(1)} / 5.0
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="tutor-stat-item">
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', flexShrink: 0 }}>
+                      <Briefcase size={16} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>EXPERIENCE</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#065F46', whiteSpace: 'nowrap' }}>
+                        {tutorData.experienceYears}+ Years
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="tutor-stat-item">
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', flexShrink: 0 }}>
+                      <GraduationCap size={16} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>DEGREE</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1E3A8A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tutorData.highestDegree}>
+                        {tutorData.highestDegree || 'Graduate'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="tutor-stat-item">
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C3AED', flexShrink: 0 }}>
+                      <MapPin size={16} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>COVERAGE</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#5B21B6', whiteSpace: 'nowrap' }}>
+                        {tutorData.travelRadiusKm || 5} KM Radius
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* SSSAM Academy Trust Strip (No Police Mentions) */}
+                {/* SSSAM Academy Trust Strip */}
                 <div style={{
-                  padding: '1rem 1.25rem',
+                  padding: '0.9rem 1.15rem',
                   borderRadius: '14px',
                   backgroundColor: '#F0FDF4',
                   border: '1px solid #DCFCE7',
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '0.75rem',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                  gap: '0.65rem',
                   fontSize: '0.82rem',
                   color: '#166534',
                   fontWeight: 600,
+                  marginTop: '0.85rem',
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                     <CheckCircle2 size={16} color="#059669" />
                     <span>Degree Transcripts Audited</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                     <CheckCircle2 size={16} color="#059669" />
                     <span>Government ID &amp; KYC Verified</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                     <CheckCircle2 size={16} color="#059669" />
-                    <span>In-Person Interviewed at Sector 14</span>
+                    <span>Interview Verified • Sector 14</span>
                   </div>
                 </div>
               </div>
 
               {/* LinkedIn-Style Professional Experience & Education Timeline */}
-              <div className="apple-card" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
+              <div className="apple-card-static" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.85rem' }}>
                   <Briefcase size={20} color="#0F6E56" />
                   <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
@@ -377,89 +456,174 @@ export default async function TutorProfilePage({ params }: PageProps) {
                   </h2>
                 </div>
 
-                {/* 1. Experience Timeline Item */}
-                <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '2rem', position: 'relative' }}>
-                  <div style={{
-                    width: '46px',
-                    height: '46px',
-                    borderRadius: '12px',
-                    backgroundColor: '#ECFDF5',
-                    border: '1.5px solid #A7F3D0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#047857',
-                    flexShrink: 0,
-                  }}>
-                    <Briefcase size={22} />
+                {/* 1. Experience Timeline Section */}
+                <div style={{ marginBottom: '2rem' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '0.04em' }}>
+                    TEACHING &amp; MENTORSHIP EXPERIENCE
                   </div>
 
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#0F172A', margin: '0 0 2px 0' }}>
-                      Senior Home &amp; 1-on-1 Online Educator
-                    </h3>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0F6E56', marginBottom: '2px' }}>
-                      TuitionForHome • SSSAM Academy Verified Partner
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '0.75rem' }}>
-                      {new Date().getFullYear() - tutorData.experienceYears} – Present • {tutorData.experienceYears}+ Years • Gurgaon &amp; Delhi NCR
-                    </div>
-
-                    <div style={{
-                      backgroundColor: '#F8FAFC',
-                      borderRadius: '12px',
-                      padding: '0.85rem 1rem',
-                      border: '1px solid #E2E8F0',
-                      fontSize: '0.86rem',
-                      color: '#475569',
-                      lineHeight: 1.6,
-                    }}>
-                      <div style={{ fontWeight: 700, color: '#0F172A', marginBottom: '0.35rem' }}>Key Mentorship Highlights:</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                        <div>• Proven track record of guiding students through regular chapter mock tests and doubt-clearing sessions.</div>
-                        <div>• Tailored conceptual pacing for CBSE, ICSE, IB DP/MYP, and Cambridge IGCSE standards.</div>
-                        <div>• Active home tuition visits across {tutorData.serviceAreas.slice(0, 3).join(', ')} and surrounding Gurgaon sectors.</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Education Item (LinkedIn Style) */}
-                <div style={{ display: 'flex', gap: '1.25rem' }}>
-                  <div style={{
-                    width: '46px',
-                    height: '46px',
-                    borderRadius: '12px',
-                    backgroundColor: '#EFF6FF',
-                    border: '1.5px solid #BFDBFE',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#2563EB',
-                    flexShrink: 0,
-                  }}>
-                    <GraduationCap size={24} />
-                  </div>
-
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#0F172A', margin: '0 0 2px 0' }}>
-                      {tutorData.highestDegree}
-                    </h3>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#2563EB', marginBottom: '2px' }}>
-                      Recognized University / Academic Board
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '0.6rem' }}>
-                      Verified Degree Transcripts Audited by SSSAM Academy Audit Panel
-                    </div>
-
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                      {tutorData.subjects.map((sub) => (
-                        <span key={sub} style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', backgroundColor: '#EFF6FF', color: '#1E40AF', borderRadius: '6px', fontWeight: 600 }}>
-                          Specialization: {sub}
-                        </span>
+                  {hasRealExperiences ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      {tutorData.experiences!.map((exp, idx) => (
+                        <div key={exp.id || idx} style={{ display: 'flex', gap: '1.15rem' }}>
+                          <div style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '12px',
+                            backgroundColor: '#ECFDF5',
+                            border: '1.5px solid #A7F3D0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#047857',
+                            flexShrink: 0,
+                          }}>
+                            <Briefcase size={20} />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: '0 0 2px 0' }}>
+                              {exp.role}
+                            </h3>
+                            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0F6E56', marginBottom: '2px' }}>
+                              {exp.organization}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: exp.description ? '0.5rem' : 0 }}>
+                              {exp.startYear} {exp.endYear ? `– ${exp.endYear}` : exp.isCurrent ? '– Present' : ''}
+                            </div>
+                            {exp.description && (
+                              <div style={{ fontSize: '0.86rem', color: '#475569', lineHeight: 1.6, backgroundColor: '#F8FAFC', padding: '0.75rem 0.95rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                                {exp.description}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       ))}
                     </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '1.25rem' }}>
+                      <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '12px',
+                        backgroundColor: '#ECFDF5',
+                        border: '1.5px solid #A7F3D0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#047857',
+                        flexShrink: 0,
+                      }}>
+                        <Briefcase size={22} />
+                      </div>
+
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#0F172A', margin: '0 0 2px 0' }}>
+                          Senior Home &amp; 1-on-1 Online Educator
+                        </h3>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0F6E56', marginBottom: '2px' }}>
+                          TuitionForHome • SSSAM Academy Verified Partner
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '0.75rem' }}>
+                          {new Date().getFullYear() - tutorData.experienceYears} – Present • {tutorData.experienceYears}+ Years • Gurgaon &amp; Delhi NCR
+                        </div>
+
+                        <div style={{
+                          backgroundColor: '#F8FAFC',
+                          borderRadius: '12px',
+                          padding: '0.85rem 1rem',
+                          border: '1px solid #E2E8F0',
+                          fontSize: '0.86rem',
+                          color: '#475569',
+                          lineHeight: 1.6,
+                        }}>
+                          <div style={{ fontWeight: 700, color: '#0F172A', marginBottom: '0.35rem' }}>Key Mentorship Highlights:</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                            <div>• Proven track record of guiding students through regular chapter mock tests and doubt-clearing sessions.</div>
+                            <div>• Tailored conceptual pacing for CBSE, ICSE, IB DP/MYP, and Cambridge IGCSE standards.</div>
+                            <div>• Active home tuition visits across {tutorData.serviceAreas.slice(0, 3).join(', ')} and surrounding Gurgaon sectors.</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Education & Qualifications Section */}
+                <div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '0.04em' }}>
+                    ACADEMIC DEGREES &amp; QUALIFICATIONS
                   </div>
+
+                  {hasRealQualifications ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      {tutorData.qualifications!.map((qual, idx) => (
+                        <div key={qual.id || idx} style={{ display: 'flex', gap: '1.15rem' }}>
+                          <div style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '12px',
+                            backgroundColor: '#EFF6FF',
+                            border: '1.5px solid #BFDBFE',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#2563EB',
+                            flexShrink: 0,
+                          }}>
+                            <GraduationCap size={22} />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: '0 0 2px 0' }}>
+                              {qual.degree}
+                            </h3>
+                            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#2563EB', marginBottom: '2px' }}>
+                              {qual.institute}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#64748B' }}>
+                              {qual.year ? `Graduation Year: ${qual.year}` : 'Verified Academic Transcript'} {qual.grade ? `• Grade: ${qual.grade}` : ''}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '1.25rem' }}>
+                      <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '12px',
+                        backgroundColor: '#EFF6FF',
+                        border: '1.5px solid #BFDBFE',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#2563EB',
+                        flexShrink: 0,
+                      }}>
+                        <GraduationCap size={24} />
+                      </div>
+
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#0F172A', margin: '0 0 2px 0' }}>
+                          {tutorData.highestDegree}
+                        </h3>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#2563EB', marginBottom: '2px' }}>
+                          Recognized University Degree Transcript
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '0.6rem' }}>
+                          Verified Degree Transcripts Audited by SSSAM Academy Academic Panel
+                        </div>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                          {tutorData.subjects.map((sub) => (
+                            <span key={sub} style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', backgroundColor: '#EFF6FF', color: '#1E40AF', borderRadius: '6px', fontWeight: 600 }}>
+                              Specialization: {sub}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -468,13 +632,13 @@ export default async function TutorProfilePage({ params }: PageProps) {
                 const videoInfo = getVideoSourceInfo(tutorData.introVideoUrl);
                 if (!videoInfo.isEmbeddable) {
                   return (
-                    <div className="apple-card" style={{ padding: '1.25rem 1.5rem', backgroundColor: '#F8FAFC', borderRadius: '20px', border: '1px dashed #CBD5E1', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <div className="apple-card-static" style={{ padding: '1.25rem 1.5rem', backgroundColor: '#F8FAFC', borderRadius: '20px', border: '1px dashed #CBD5E1', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                       <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', flexShrink: 0 }}>
                         <Award size={20} />
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1E293B', marginBottom: '2px' }}>
-                          🎥 Video Introduction Not Available
+                          🎥 Video Introduction In-Progress
                         </div>
                         <div style={{ fontSize: '0.78rem', color: '#64748B' }}>
                           {tutorData.name}&apos;s academic degrees and KYC verification are 100% verified. You can book a 1-on-1 trial class directly.
@@ -485,7 +649,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                 }
 
                 return (
-                  <div className="apple-card" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
+                  <div className="apple-card-static" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Award size={18} color="#0F6E56" />
@@ -542,12 +706,12 @@ export default async function TutorProfilePage({ params }: PageProps) {
               })()}
 
               {/* About & Teaching Methodology */}
-              <div className="apple-card" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
+              <div className="apple-card-static" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', marginBottom: '1rem' }}>
                   Teaching Philosophy &amp; Methodology
                 </h2>
                 <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.7, marginBottom: '1.5rem' }}>
-                  {tutorData.bio}
+                  {tutorData.bio || `${tutorData.name} is an experienced educator specializing in interactive, concept-driven learning. Lessons are customized to match the student's pace, focusing on fundamentals, homework assistance, regular mock assessments, and exam confidence.`}
                 </p>
 
                 <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.75rem' }}>
@@ -578,7 +742,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                       CLASSES &amp; LEVELS
                     </div>
                     <div style={{ fontSize: '0.9rem', color: '#1E293B', fontWeight: 600 }}>
-                      {tutorData.classes.join(' • ')}
+                      {tutorData.classes.length > 0 ? tutorData.classes.join(' • ') : 'Classes 6 to 12'}
                     </div>
                   </div>
 
@@ -587,14 +751,175 @@ export default async function TutorProfilePage({ params }: PageProps) {
                       BOARDS SUPPORTED
                     </div>
                     <div style={{ fontSize: '0.9rem', color: '#1E293B', fontWeight: 600 }}>
-                      {tutorData.boards.join(' • ')}
+                      {tutorData.boards.length > 0 ? tutorData.boards.join(' • ') : 'CBSE • ICSE • IB • Cambridge (IGCSE)'}
                     </div>
                   </div>
                 </div>
               </div>
 
+              {/* Verified Parent Reviews Section */}
+              <div id="parent-reviews" className="apple-card-static" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.85rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <MessageSquare size={20} color="#0F6E56" />
+                    <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                      Verified Parent Reviews
+                    </h2>
+                  </div>
+
+                  <Link
+                    href={`/tutor/review/${params.id}`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      fontSize: '0.84rem',
+                      fontWeight: 700,
+                      color: '#0F6E56',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <span>Leave a Review</span>
+                    <ExternalLink size={14} />
+                  </Link>
+                </div>
+
+                {hasReviews ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {/* Overall Summary Bar */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1.5rem',
+                      padding: '1.25rem',
+                      backgroundColor: '#F8FAFC',
+                      borderRadius: '16px',
+                      border: '1px solid #E2E8F0',
+                      flexWrap: 'wrap',
+                    }}>
+                      <div style={{ textAlign: 'center', minWidth: '100px' }}>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#0F172A', lineHeight: 1 }}>
+                          {(tutorData.rating || 5.0).toFixed(1)}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '2px', margin: '0.35rem 0' }}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star key={star} size={14} fill="#F59E0B" color="#F59E0B" />
+                          ))}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
+                          {tutorData.totalReviews} Total Reviews
+                        </div>
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: '200px', borderLeft: '1px solid #CBD5E1', paddingLeft: '1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#047857', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.35rem' }}>
+                          <ThumbsUp size={16} />
+                          <span>100% Recommended by Parents in Gurgaon</span>
+                        </div>
+                        <div style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5 }}>
+                          All reviews are submitted by parents who completed verified tuition sessions through TuitionForHome / SSSAM Academy.
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Individual Review Cards */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {tutorData.reviews!.map((review) => (
+                        <div
+                          key={review.id}
+                          style={{
+                            padding: '1.25rem',
+                            borderRadius: '16px',
+                            backgroundColor: '#FFFFFF',
+                            border: '1px solid #E2E8F0',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.65rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                              <div style={{
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '50%',
+                                backgroundColor: '#E0F2FE',
+                                color: '#0284C7',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 800,
+                                fontSize: '0.88rem',
+                              }}>
+                                {review.parentName ? review.parentName.charAt(0).toUpperCase() : 'P'}
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
+                                  {review.parentName}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.74rem', color: '#059669', fontWeight: 600 }}>
+                                  <CheckCircle2 size={12} />
+                                  <span>Verified Parent</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ display: 'flex', gap: '2px', marginBottom: '2px' }}>
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    size={13}
+                                    fill={star <= review.rating ? '#F59E0B' : '#E2E8F0'}
+                                    color={star <= review.rating ? '#F59E0B' : '#CBD5E1'}
+                                  />
+                                ))}
+                              </div>
+                              <div style={{ fontSize: '0.72rem', color: '#94A3B8' }}>
+                                {new Date(review.createdAt).toLocaleDateString('en-IN', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })}
+                              </div>
+                            </div>
+                          </div>
+
+                          <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.6, margin: 0 }}>
+                            &ldquo;{review.comment}&rdquo;
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: '2rem 1.5rem',
+                    textAlign: 'center',
+                    backgroundColor: '#F8FAFC',
+                    borderRadius: '16px',
+                    border: '1px dashed #CBD5E1',
+                  }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#EFF6FF', color: '#2563EB', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}>
+                      <Star size={24} fill="#2563EB" />
+                    </div>
+                    <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.35rem' }}>
+                      SSSAM Academy Verified Educator
+                    </div>
+                    <p style={{ fontSize: '0.85rem', color: '#64748B', maxWidth: '420px', margin: '0 auto 1.25rem auto' }}>
+                      {tutorData.name}&apos;s background check, KYC credentials, and subject proficiency interview have been verified. Be the first parent to share review feedback after your trial class!
+                    </p>
+                    <Link
+                      href={`/tutor/review/${params.id}`}
+                      className="btn btn-secondary"
+                      style={{ padding: '0.6rem 1.25rem', fontSize: '0.86rem' }}
+                    >
+                      Write First Review
+                    </Link>
+                  </div>
+                )}
+              </div>
+
               {/* Service Sectors & Travel Range */}
-              <div className="apple-card" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
+              <div className="apple-card-static" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                   <MapPin size={18} color="#047857" />
                   <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
@@ -628,10 +953,24 @@ export default async function TutorProfilePage({ params }: PageProps) {
             {/* RIGHT COLUMN: Full-Height Balanced Information Suite */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
               {/* Card 1: Tuition Fee & 1-Click Request */}
-              {/* Card 1: Tuition Fee & 1-Click Request */}
-              <div className="apple-card" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1.5px solid #CBD5E1', boxShadow: '0 12px 30px -8px rgba(0,0,0,0.08)' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-                  ESTIMATED TUITION FEE RANGE
+              <div className="apple-card-static" style={{
+                padding: '2rem',
+                backgroundColor: '#FFFFFF',
+                borderRadius: '24px',
+                border: '1.5px solid #CBD5E1',
+                boxShadow: '0 12px 30px -8px rgba(0,0,0,0.08)',
+                position: 'sticky',
+                top: '90px',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>
+                    ESTIMATED TUITION FEE
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.82rem', fontWeight: 800, color: '#D97706' }}>
+                    <Star size={13} fill="#F59E0B" color="#F59E0B" />
+                    <span>{(tutorData.rating || 5.0).toFixed(1)}</span>
+                    <span style={{ color: '#94A3B8', fontWeight: 500 }}>({tutorData.totalReviews})</span>
+                  </div>
                 </div>
 
                 {tutorData.teachingMode === 'ONLINE_LIVE' ? (
@@ -661,7 +1000,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.75rem', fontSize: '0.88rem', color: '#475569' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.5rem', fontSize: '0.88rem', color: '#475569' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <CheckCircle2 size={16} color="#059669" />
                     <span>100% Tutor Replacement Guarantee</span>
@@ -676,22 +1015,31 @@ export default async function TutorProfilePage({ params }: PageProps) {
                   </div>
                 </div>
 
+                {/* Primary Booking CTA */}
                 <Link
                   href={`/request-tutor?tutor=${encodeURIComponent(tutorData.name)}`}
                   className="btn btn-primary btn-lg"
-                  style={{ width: '100%', justifyContent: 'center', padding: '0.9rem', fontSize: '0.95rem', marginBottom: '0.75rem' }}
+                  style={{ width: '100%', justifyContent: 'center', padding: '0.9rem', fontSize: '0.95rem', marginBottom: '0.85rem' }}
                 >
                   <Sparkles size={18} />
                   <span>Request Classes with {tutorData.name.split(' ')[0]}</span>
                 </Link>
 
-                <div style={{ textAlign: 'center', fontSize: '0.78rem', color: '#94A3B8', marginTop: '0.5rem' }}>
-                  🔒 Secure Placement • Coordinated by SSSAM Academy Cell
+                {/* Client Interactive Actions (WhatsApp & Share) */}
+                <TutorProfileActions
+                  tutorName={tutorData.name}
+                  tutorId={params.id}
+                  subjects={tutorData.subjects}
+                  highestDegree={tutorData.highestDegree}
+                />
+
+                <div style={{ textAlign: 'center', fontSize: '0.78rem', color: '#94A3B8', marginTop: '0.75rem' }}>
+                  🔒 Secure Placement • Coordinated by SSSAM Academy
                 </div>
               </div>
 
               {/* Card 2: How It Works in 3 Simple Steps */}
-              <div className="apple-card" style={{ padding: '1.75rem', backgroundColor: '#FFFFFF', borderRadius: '22px', border: '1px solid #E2E8F0' }}>
+              <div className="apple-card-static" style={{ padding: '1.75rem', backgroundColor: '#FFFFFF', borderRadius: '22px', border: '1px solid #E2E8F0' }}>
                 <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0F6E56', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
                   PLACEMENT PROCESS
                 </div>
@@ -733,7 +1081,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
               </div>
 
               {/* Card 3: SSSAM Academy 4-Pillar Guarantee Shield */}
-              <div className="apple-card" style={{ padding: '1.75rem', backgroundColor: '#F0FDF4', borderRadius: '22px', border: '1.5px solid #BBF7D0' }}>
+              <div className="apple-card-static" style={{ padding: '1.75rem', backgroundColor: '#F0FDF4', borderRadius: '22px', border: '1.5px solid #BBF7D0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                   <ShieldCheck size={20} color="#047857" />
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#065F46', margin: 0 }}>
@@ -758,7 +1106,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
               </div>
 
               {/* Card 4: Verified Physical Academy Center Card */}
-              <div className="apple-card" style={{ padding: '1.5rem', backgroundColor: '#FFFFFF', borderRadius: '20px', border: '1px solid #E2E8F0' }}>
+              <div className="apple-card-static" style={{ padding: '1.5rem', backgroundColor: '#FFFFFF', borderRadius: '20px', border: '1px solid #E2E8F0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                   <Building2 size={16} color="#0F6E56" />
                   <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0F172A' }}>OFFICIAL VERIFIED CENTER</span>
