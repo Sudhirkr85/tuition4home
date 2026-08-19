@@ -557,6 +557,7 @@ export default function TutorProfileDashboard() {
           session.image = croppedBase64;
           localStorage.setItem('tutor_session', JSON.stringify(session));
           window.dispatchEvent(new Event('storage'));
+          window.dispatchEvent(new CustomEvent('tutor-session-updated'));
         } catch {}
       } else {
         setErrorMsg(data.error || 'Failed to save profile picture.');

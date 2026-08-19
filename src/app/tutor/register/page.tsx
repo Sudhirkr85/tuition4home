@@ -503,7 +503,19 @@ export default function TutorRegisterLoginPage() {
           if (p.hourlyRateHomeMax) setHourlyRateHomeMax(p.hourlyRateHomeMax);
           if (p.hourlyRateOnlineMin) setHourlyRateOnlineMin(p.hourlyRateOnlineMin);
           if (p.hourlyRateOnlineMax) setHourlyRateOnlineMax(p.hourlyRateOnlineMax);
-          if (p.profilePhotoUrl) setProfilePhotoUrl(p.profilePhotoUrl);
+          if (p.profilePhotoUrl) {
+            setProfilePhotoUrl(p.profilePhotoUrl);
+            try {
+              const rawSession = localStorage.getItem('tutor_session');
+              if (rawSession) {
+                const session = JSON.parse(rawSession);
+                session.image = p.profilePhotoUrl;
+                session.avatarUrl = p.profilePhotoUrl;
+                localStorage.setItem('tutor_session', JSON.stringify(session));
+                window.dispatchEvent(new CustomEvent('tutor-session-updated'));
+              }
+            } catch {}
+          }
           if (p.introVideoUrl) setIntroVideoUrl(p.introVideoUrl);
           if (p.idType) setIdType(p.idType);
           if (p.idNumber) setIdNumber(p.idNumber);
@@ -5727,6 +5739,18 @@ export default function TutorRegisterLoginPage() {
           setProfilePhotoUrl(croppedBase64);
           setProfilePhotoName(tempPhotoFileName || 'profile_photo.jpg');
           setCropperOpen(false);
+
+          // Instantly sync session with new avatar for navbar
+          try {
+            const rawSession = localStorage.getItem('tutor_session');
+            if (rawSession) {
+              const session = JSON.parse(rawSession);
+              session.image = croppedBase64;
+              session.avatarUrl = croppedBase64;
+              localStorage.setItem('tutor_session', JSON.stringify(session));
+              window.dispatchEvent(new CustomEvent('tutor-session-updated'));
+            }
+          } catch {}
         }}
         onCancel={() => {
           setCropperOpen(false);

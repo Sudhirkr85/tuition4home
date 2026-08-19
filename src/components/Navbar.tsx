@@ -57,16 +57,31 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
     }
   }, [authSession, isTutorRoute]);
 
-  // Load from localStorage on mount & when storage events trigger
+  // Load from localStorage on mount & when storage/custom events trigger
   useEffect(() => {
     const checkSessions = () => {
       const tutorRaw = localStorage.getItem('tutor_session');
       if (tutorRaw) {
         try {
           const parsed = JSON.parse(tutorRaw);
+
+          // Check draft if avatar not yet in session object
+          if (!parsed.image && !parsed.avatarUrl && parsed.userId) {
+            try {
+              const draft = localStorage.getItem(`tutor_draft_${parsed.userId}`);
+              if (draft) {
+                const draftObj = JSON.parse(draft);
+                if (draftObj.profilePhotoUrl) {
+                  parsed.image = draftObj.profilePhotoUrl;
+                  parsed.avatarUrl = draftObj.profilePhotoUrl;
+                }
+              }
+            } catch {}
+          }
+
           setTutorSession(parsed);
 
-          // Fetch profile image if missing from local session state
+          // Fetch profile image from DB if missing from local session state
           if (parsed.userId && !parsed.image && !parsed.avatarUrl) {
             fetch(`/api/tutors/profile/setup?userId=${parsed.userId}`)
               .then(r => r.json())
@@ -96,8 +111,18 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
 
     checkSessions();
     window.addEventListener('storage', checkSessions);
+    window.addEventListener('tutor-session-updated', checkSessions);
+    window.addEventListener('profile-updated', checkSessions);
 
-    // Close dropdown on outside click
+    return () => {
+      window.removeEventListener('storage', checkSessions);
+      window.removeEventListener('tutor-session-updated', checkSessions);
+      window.removeEventListener('profile-updated', checkSessions);
+    };
+  }, [authSession]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as Node;
       const isInsideDesktop = desktopDropdownRef.current && desktopDropdownRef.current.contains(target);
@@ -111,9 +136,8 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
     document.addEventListener('mousedown', handleClick);
     return () => {
       document.removeEventListener('mousedown', handleClick);
-      window.removeEventListener('storage', checkSessions);
     };
-  }, [authSession]);
+  }, []);
 
   // Context-aware role determination
   let activeRole: 'tutor' | 'parent' | null = null;
