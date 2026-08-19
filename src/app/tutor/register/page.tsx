@@ -14,6 +14,7 @@ import {
   BOARD_OPTIONS,
   SSSAM_OFFICE_DETAILS,
 } from '@/lib/data';
+import { reverseGeocodeUnified } from '@/lib/maps';
 import { getVideoSourceInfo } from '@/lib/video';
 import {
   GraduationCap,
@@ -204,121 +205,158 @@ export default function TutorRegisterLoginPage() {
   const [isDetectingTutorGPS, setIsDetectingTutorGPS] = useState(false);
   const [isTutorReverseGeocoding, setIsTutorReverseGeocoding] = useState(false);
   const tutorPickerMapRef = React.useRef<HTMLDivElement>(null);
-  const [tutorPickerMap, setTutorPickerMap] = useState<any>(null);
+  const tutorPickerMapInstanceRef = React.useRef<any>(null);
   const tutorPickerMarkerRef = React.useRef<any>(null);
   const [leafletLib, setLeafletLib] = useState<any>(null);
 
   // Load Leaflet dynamically
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      import('leaflet').then((mod) => setLeafletLib(mod.default));
+      import('leaflet').then((mod) => setLeafletLib(mod.default)).catch(() => {});
     }
   }, []);
 
   // Reverse geocode using unified maps utility (Google Maps Geocoder -> OSM Nominatim)
   const tutorReverseGeocode = async (lat: number, lng: number): Promise<string> => {
-    const { reverseGeocodeUnified } = await import('@/lib/maps');
-    return await reverseGeocodeUnified(lat, lng);
+    try {
+      return await reverseGeocodeUnified(lat, lng);
+    } catch {
+      return 'Gurugram, Haryana';
+    }
+  };
+
+  // Safe helper to update map position without throwing Leaflet DOM errors
+  const safeSetMapPosition = (lat: number, lng: number) => {
+    const map = tutorPickerMapInstanceRef.current;
+    const marker = tutorPickerMarkerRef.current;
+    if (map && map._container && (map as any)._mapPane) {
+      try {
+        map.setView([lat, lng], 17);
+        if (marker) marker.setLatLng([lat, lng]);
+        map.invalidateSize();
+      } catch (err) {}
+    }
   };
 
   // Init tutor location picker map
   useEffect(() => {
     if (!leafletLib || !showTutorLocationPicker || !tutorPickerMapRef.current) return;
     
-    if (tutorPickerMap) {
-      try { tutorPickerMap.remove(); } catch (e) {}
-      setTutorPickerMap(null);
+    // Clean up previous map instance safely
+    if (tutorPickerMapInstanceRef.current) {
+      try { tutorPickerMapInstanceRef.current.remove(); } catch (e) {}
+      tutorPickerMapInstanceRef.current = null;
     }
     if ((tutorPickerMapRef.current as any)._leaflet_id) {
       delete (tutorPickerMapRef.current as any)._leaflet_id;
     }
 
+    let isSubscribed = true;
     const timer = setTimeout(() => {
-      if (!tutorPickerMapRef.current) return;
+      if (!isSubscribed || !tutorPickerMapRef.current) return;
       if ((tutorPickerMapRef.current as any)._leaflet_id) {
         delete (tutorPickerMapRef.current as any)._leaflet_id;
       }
       const center = tutorLatitude && tutorLongitude ? [tutorLatitude, tutorLongitude] : [28.4595, 77.0266];
-      const pMap = leafletLib.map(tutorPickerMapRef.current, {
-        center,
-        zoom: 17,
-        zoomControl: true,
-        attributionControl: false,
-      });
-      leafletLib.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        subdomains: 'abcd',
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        keepBuffer: 8,
-      }).addTo(pMap);
-      const markerIcon = leafletLib.divIcon({
-        className: 'tutor-loc-pin',
-        html: '<div style="display:flex;flex-direction:column;align-items:center;"><div style="width:36px;height:36px;border-radius:50%;background:#0F6E56;border:3px solid #FFF;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(15,110,86,0.5);cursor:grab;"><div style="width:12px;height:12px;border-radius:50%;background:#FFF;"></div></div><div style="width:3px;height:12px;background:#0F6E56;margin-top:-2px;"></div></div>',
-        iconSize: [36, 50], iconAnchor: [18, 50],
-      });
-      const marker = leafletLib.marker(center, { icon: markerIcon, draggable: true }).addTo(pMap);
-      tutorPickerMarkerRef.current = marker;
-      marker.on('dragend', async () => {
-        const pos = marker.getLatLng();
-        setTutorLatitude(pos.lat); setTutorLongitude(pos.lng);
-        setIsTutorReverseGeocoding(true);
-        const addr = await tutorReverseGeocode(pos.lat, pos.lng);
-        setTutorFormattedAddress(addr);
-        setIsTutorReverseGeocoding(false);
-      });
-      pMap.on('click', async (e: any) => {
-        marker.setLatLng([e.latlng.lat, e.latlng.lng]);
-        setTutorLatitude(e.latlng.lat); setTutorLongitude(e.latlng.lng);
-        setIsTutorReverseGeocoding(true);
-        const addr = await tutorReverseGeocode(e.latlng.lat, e.latlng.lng);
-        setTutorFormattedAddress(addr);
-        setIsTutorReverseGeocoding(false);
-      });
-      setTutorPickerMap(pMap);
-      setTimeout(() => { if (pMap) pMap.invalidateSize(); }, 50);
-      setTimeout(() => { if (pMap) pMap.invalidateSize(); }, 200);
-      setTimeout(() => { if (pMap) pMap.invalidateSize(); }, 500);
+      
+      try {
+        const pMap = leafletLib.map(tutorPickerMapRef.current, {
+          center,
+          zoom: 17,
+          zoomControl: true,
+          attributionControl: false,
+        });
+        tutorPickerMapInstanceRef.current = pMap;
 
-      // Auto-fetch Live GPS if location is not yet set
-      if (!tutorLatitude && typeof navigator !== 'undefined' && 'geolocation' in navigator) {
-        setIsDetectingTutorGPS(true);
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            setTutorLatitude(lat);
-            setTutorLongitude(lng);
-            if (pMap && marker) {
-              pMap.setView([lat, lng], 17);
-              marker.setLatLng([lat, lng]);
-              setTimeout(() => { if (pMap) pMap.invalidateSize(); }, 100);
-            }
-            setIsTutorReverseGeocoding(true);
-            const addr = await tutorReverseGeocode(lat, lng);
+        leafletLib.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19,
+          subdomains: 'abcd',
+          attribution: '&copy; OpenStreetMap &copy; CARTO',
+          keepBuffer: 8,
+        }).addTo(pMap);
+
+        const markerIcon = leafletLib.divIcon({
+          className: 'tutor-loc-pin',
+          html: '<div style="display:flex;flex-direction:column;align-items:center;"><div style="width:36px;height:36px;border-radius:50%;background:#0F6E56;border:3px solid #FFF;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(15,110,86,0.5);cursor:grab;"><div style="width:12px;height:12px;border-radius:50%;background:#FFF;"></div></div><div style="width:3px;height:12px;background:#0F6E56;margin-top:-2px;"></div></div>',
+          iconSize: [36, 50], iconAnchor: [18, 50],
+        });
+        const marker = leafletLib.marker(center, { icon: markerIcon, draggable: true }).addTo(pMap);
+        tutorPickerMarkerRef.current = marker;
+
+        marker.on('dragend', async () => {
+          if (!isSubscribed) return;
+          const pos = marker.getLatLng();
+          setTutorLatitude(pos.lat); setTutorLongitude(pos.lng);
+          setIsTutorReverseGeocoding(true);
+          const addr = await tutorReverseGeocode(pos.lat, pos.lng);
+          if (isSubscribed) {
             setTutorFormattedAddress(addr);
             setIsTutorReverseGeocoding(false);
-            setIsDetectingTutorGPS(false);
-          },
-          () => {
-            setIsDetectingTutorGPS(false);
-          },
-          { enableHighAccuracy: true, timeout: 8000 }
-        );
-      }
-    }, 150);
-    return () => clearTimeout(timer);
-  }, [leafletLib, showTutorLocationPicker]);
+          }
+        });
 
-  useEffect(() => {
-    if (!showTutorLocationPicker && tutorPickerMap) {
-      try { tutorPickerMap.remove(); } catch (e) {}
-      setTutorPickerMap(null);
+        pMap.on('click', async (e: any) => {
+          if (!isSubscribed) return;
+          marker.setLatLng([e.latlng.lat, e.latlng.lng]);
+          setTutorLatitude(e.latlng.lat); setTutorLongitude(e.latlng.lng);
+          setIsTutorReverseGeocoding(true);
+          const addr = await tutorReverseGeocode(e.latlng.lat, e.latlng.lng);
+          if (isSubscribed) {
+            setTutorFormattedAddress(addr);
+            setIsTutorReverseGeocoding(false);
+          }
+        });
+
+        setTimeout(() => { if (isSubscribed && pMap._container && (pMap as any)._mapPane) { try { pMap.invalidateSize(); } catch {} } }, 100);
+        setTimeout(() => { if (isSubscribed && pMap._container && (pMap as any)._mapPane) { try { pMap.invalidateSize(); } catch {} } }, 300);
+
+        // Auto-fetch Live GPS if location is not yet set
+        if (!tutorLatitude && typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+          setIsDetectingTutorGPS(true);
+          navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+              if (!isSubscribed) return;
+              const lat = pos.coords.latitude;
+              const lng = pos.coords.longitude;
+              setTutorLatitude(lat);
+              setTutorLongitude(lng);
+              if (pMap && pMap._container && (pMap as any)._mapPane && marker) {
+                try {
+                  pMap.setView([lat, lng], 17);
+                  marker.setLatLng([lat, lng]);
+                  pMap.invalidateSize();
+                } catch {}
+              }
+              setIsTutorReverseGeocoding(true);
+              const addr = await tutorReverseGeocode(lat, lng);
+              if (isSubscribed) {
+                setTutorFormattedAddress(addr);
+                setIsTutorReverseGeocoding(false);
+                setIsDetectingTutorGPS(false);
+              }
+            },
+            () => {
+              if (isSubscribed) setIsDetectingTutorGPS(false);
+            },
+            { enableHighAccuracy: true, timeout: 8000 }
+          );
+        }
+      } catch (err) {}
+    }, 150);
+
+    return () => {
+      isSubscribed = false;
+      clearTimeout(timer);
+      if (tutorPickerMapInstanceRef.current) {
+        try { tutorPickerMapInstanceRef.current.remove(); } catch (e) {}
+        tutorPickerMapInstanceRef.current = null;
+      }
       tutorPickerMarkerRef.current = null;
       if (tutorPickerMapRef.current && (tutorPickerMapRef.current as any)._leaflet_id) {
         delete (tutorPickerMapRef.current as any)._leaflet_id;
       }
-    }
-  }, [showTutorLocationPicker]);
+    };
+  }, [leafletLib, showTutorLocationPicker]);
   
   // Step 4: Pricing Rates (Ranges)
   const [hourlyRateHomeMin, setHourlyRateHomeMin] = useState(600);
@@ -5467,11 +5505,7 @@ export default function TutorRegisterLoginPage() {
                       onClick={async () => {
                         setTutorLatitude(res.lat);
                         setTutorLongitude(res.lng);
-                        if (tutorPickerMap && tutorPickerMarkerRef.current) {
-                          tutorPickerMap.setView([res.lat, res.lng], 17);
-                          tutorPickerMarkerRef.current.setLatLng([res.lat, res.lng]);
-                          setTimeout(() => { if (tutorPickerMap) tutorPickerMap.invalidateSize(); }, 60);
-                        }
+                        safeSetMapPosition(res.lat, res.lng);
                         setIsTutorReverseGeocoding(true);
                         setTutorModalSearch('');
                         setTutorModalSearchResults([]);
@@ -5532,11 +5566,7 @@ export default function TutorRegisterLoginPage() {
                     async (pos) => {
                       const lat = pos.coords.latitude; const lng = pos.coords.longitude;
                       setTutorLatitude(lat); setTutorLongitude(lng);
-                      if (tutorPickerMap && tutorPickerMarkerRef.current) {
-                        tutorPickerMap.setView([lat, lng], 17);
-                        tutorPickerMarkerRef.current.setLatLng([lat, lng]);
-                        setTimeout(() => { if (tutorPickerMap) tutorPickerMap.invalidateSize(); }, 60);
-                      }
+                      safeSetMapPosition(lat, lng);
                       setIsTutorReverseGeocoding(true);
                       const addr = await tutorReverseGeocode(lat, lng);
                       setTutorFormattedAddress(addr);

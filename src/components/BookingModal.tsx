@@ -268,7 +268,9 @@ export default function BookingModal({
       });
 
       setTimeout(() => {
-        if (pMap) pMap.invalidateSize();
+        if (pMap && pMap._container && (pMap as any)._mapPane) {
+          try { pMap.invalidateSize(); } catch {}
+        }
       }, 150);
     }, 150);
 
@@ -279,8 +281,12 @@ export default function BookingModal({
   useEffect(() => {
     if (!showLocationPicker) {
       if (leafletMapInstanceRef.current) {
-        leafletMapInstanceRef.current.remove();
+        try { leafletMapInstanceRef.current.remove(); } catch {}
         leafletMapInstanceRef.current = null;
+      }
+      leafletMarkerRef.current = null;
+      if (pickerMapRef.current && (pickerMapRef.current as any)._leaflet_id) {
+        delete (pickerMapRef.current as any)._leaflet_id;
       }
     }
   }, [showLocationPicker]);
@@ -294,9 +300,14 @@ export default function BookingModal({
         const lng = position.coords.longitude;
         setLocationCoords({ lat, lng });
 
-        if (leafletMapInstanceRef.current && leafletMarkerRef.current) {
-          leafletMapInstanceRef.current.setView([lat, lng], 16);
-          leafletMarkerRef.current.setLatLng([lat, lng]);
+        const mapInst = leafletMapInstanceRef.current;
+        const markerInst = leafletMarkerRef.current;
+        if (mapInst && mapInst._container && (mapInst as any)._mapPane) {
+          try {
+            mapInst.setView([lat, lng], 16);
+            if (markerInst) markerInst.setLatLng([lat, lng]);
+            mapInst.invalidateSize();
+          } catch {}
         }
 
         setIsReverseGeocoding(true);
