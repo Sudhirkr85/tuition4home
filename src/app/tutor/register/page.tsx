@@ -4346,8 +4346,8 @@ export default function TutorRegisterLoginPage() {
                               title="Click to re-crop or adjust photo"
                               style={{ 
                                 position: 'relative', 
-                                width: '68px', 
-                                height: '68px', 
+                                width: '80px', 
+                                height: '80px', 
                                 borderRadius: '50%', 
                                 cursor: 'pointer',
                                 flexShrink: 0,
@@ -4357,7 +4357,7 @@ export default function TutorRegisterLoginPage() {
                               <img 
                                 src={profilePhotoUrl} 
                                 alt="Preview" 
-                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2.5px solid var(--brand-teal)', boxShadow: '0 4px 12px rgba(15, 110, 86, 0.25)' }} 
+                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--brand-teal)', boxShadow: '0 4px 16px rgba(15, 110, 86, 0.28)' }} 
                               />
                               <div 
                                 style={{
@@ -4375,12 +4375,12 @@ export default function TutorRegisterLoginPage() {
                                 onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
                                 onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
                               >
-                                <Crop size={20} />
+                                <Crop size={22} />
                               </div>
                             </div>
                           ) : (
-                            <div style={{ width: '68px', height: '68px', borderRadius: '50%', backgroundColor: wizardErrorField === 'field-profilePhoto' ? '#FEE2E2' : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              <User size={28} color={wizardErrorField === 'field-profilePhoto' ? '#EF4444' : 'var(--text-light)'} />
+                            <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: wizardErrorField === 'field-profilePhoto' ? '#FEE2E2' : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <User size={34} color={wizardErrorField === 'field-profilePhoto' ? '#EF4444' : 'var(--text-light)'} />
                             </div>
                           )}
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', minWidth: 0, flex: 1 }}>

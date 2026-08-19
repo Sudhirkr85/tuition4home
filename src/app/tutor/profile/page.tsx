@@ -859,7 +859,7 @@ export default function TutorProfileDashboard() {
                   />
 
                   {/* Avatar Circle Container with Camera Badge */}
-                  <div style={{ position: 'relative', width: '70px', height: '70px', margin: '0 auto 0.75rem auto' }}>
+                  <div style={{ position: 'relative', width: '92px', height: '92px', margin: '0 auto 0.85rem auto', flexShrink: 0 }}>
                     {avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -867,12 +867,12 @@ export default function TutorProfileDashboard() {
                         alt={userName}
                         onClick={() => fileInputRef.current?.click()}
                         style={{
-                          width: '70px',
-                          height: '70px',
+                          width: '92px',
+                          height: '92px',
                           borderRadius: '50%',
                           objectFit: 'cover',
-                          border: '3px solid #FFFFFF',
-                          boxShadow: '0 0 0 3px rgba(13, 148, 136, 0.28), 0 8px 20px rgba(13, 148, 136, 0.22)',
+                          border: '3.5px solid #FFFFFF',
+                          boxShadow: '0 0 0 3.5px rgba(13, 148, 136, 0.3), 0 10px 25px rgba(13, 148, 136, 0.25)',
                           cursor: 'pointer'
                         }}
                       />
@@ -880,18 +880,18 @@ export default function TutorProfileDashboard() {
                       <div
                         onClick={() => fileInputRef.current?.click()}
                         style={{
-                          width: '70px',
-                          height: '70px',
+                          width: '92px',
+                          height: '92px',
                           borderRadius: '50%',
                           backgroundColor: 'var(--brand-teal)',
                           color: '#FFFFFF',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '1.85rem',
+                          fontSize: '2.4rem',
                           fontWeight: 900,
-                          boxShadow: '0 0 0 3px rgba(13, 148, 136, 0.28), 0 8px 20px rgba(13, 148, 136, 0.22)',
-                          border: '3px solid #FFFFFF',
+                          boxShadow: '0 0 0 3.5px rgba(13, 148, 136, 0.3), 0 10px 25px rgba(13, 148, 136, 0.25)',
+                          border: '3.5px solid #FFFFFF',
                           cursor: 'pointer'
                         }}
                       >
@@ -907,19 +907,19 @@ export default function TutorProfileDashboard() {
                       disabled={avatarUploading}
                       style={{
                         position: 'absolute',
-                        bottom: '-2px',
-                        right: '-2px',
-                        width: '26px',
-                        height: '26px',
+                        bottom: '0px',
+                        right: '0px',
+                        width: '30px',
+                        height: '30px',
                         borderRadius: '50%',
                         backgroundColor: 'var(--brand-teal)',
                         color: '#FFFFFF',
-                        border: '2px solid #FFFFFF',
+                        border: '2.5px solid #FFFFFF',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.22)',
                         transition: 'all 0.2s ease',
                       }}
                       onMouseEnter={e => {
@@ -932,9 +932,9 @@ export default function TutorProfileDashboard() {
                       }}
                     >
                       {avatarUploading ? (
-                        <div style={{ width: '10px', height: '10px', border: '2px solid #FFFFFF', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+                        <div style={{ width: '12px', height: '12px', border: '2px solid #FFFFFF', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
                       ) : (
-                        <Camera size={13} />
+                        <Camera size={15} />
                       )}
                     </button>
                   </div>
