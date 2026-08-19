@@ -37,11 +37,38 @@ interface PageProps {
   };
 }
 
-// Generate dynamic SEO Metadata
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const tutor = VERIFIED_TUTORS.find((t) => t.id === params.id);
-  const tutorName = tutor ? tutor.name : 'Verified Home Tutor';
-  const subjects = tutor ? tutor.subjects.join(', ') : 'All Subjects';
+  let tutor = VERIFIED_TUTORS.find((t) => t.id === params.id);
+  let tutorName = tutor ? tutor.name : 'Verified Home Tutor';
+  let subjects = tutor ? tutor.subjects.join(', ') : 'All Subjects';
+  let avatarUrl = tutor?.avatarUrl || 'https://sssamacademy.com/assets/home_page.webp';
+
+  try {
+    const dbProfile: any = await prisma.tutorProfile.findFirst({
+      where: {
+        OR: [
+          { id: params.id },
+          { userId: params.id },
+        ],
+      },
+      include: {
+        user: { select: { name: true } },
+      },
+    });
+
+    if (dbProfile) {
+      tutorName = dbProfile.user?.name || tutorName;
+      if (dbProfile.avatarUrl) avatarUrl = dbProfile.avatarUrl;
+      if (dbProfile.subjects) {
+        try {
+          const parsed = JSON.parse(dbProfile.subjects);
+          if (Array.isArray(parsed) && parsed.length > 0) subjects = parsed.join(', ');
+        } catch {
+          subjects = dbProfile.subjects;
+        }
+      }
+    }
+  } catch {}
 
   return {
     title: `${tutorName} - Verified Home & Online Tutor in Gurgaon | SSSAM Academy`,
@@ -56,7 +83,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       siteName: 'TuitionForHome',
       images: [
         {
-          url: tutor?.avatarUrl || 'https://sssamacademy.com/assets/home_page.webp',
+          url: avatarUrl,
           width: 800,
           height: 800,
           alt: `${tutorName} Tutor Profile`,
@@ -76,8 +103,13 @@ export default async function TutorProfilePage({ params }: PageProps) {
   let tutorData: MockTutor | null = null;
 
   try {
-    const dbProfile = await prisma.tutorProfile.findUnique({
-      where: { id: params.id },
+    let dbProfile: any = await prisma.tutorProfile.findFirst({
+      where: {
+        OR: [
+          { id: params.id },
+          { userId: params.id },
+        ],
+      },
       include: {
         user: {
           select: { name: true }, // STRICT: DO NOT select phone, email, or password
@@ -89,6 +121,36 @@ export default async function TutorProfilePage({ params }: PageProps) {
         },
       },
     });
+
+    // Fallback: If not found directly on TutorProfile, check if params.id is User.id or User.email
+    if (!dbProfile) {
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { id: params.id },
+            { email: params.id },
+          ],
+        },
+        include: {
+          tutorProfile: {
+            include: {
+              reviews: {
+                where: { isApproved: true },
+                orderBy: { createdAt: 'desc' },
+                take: 6,
+              },
+            },
+          },
+        },
+      });
+
+      if (user?.tutorProfile) {
+        dbProfile = {
+          ...user.tutorProfile,
+          user: { name: user.name },
+        };
+      }
+    }
 
     if (dbProfile) {
       let subjects: string[] = [];
@@ -105,7 +167,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
       try { qualifications = dbProfile.qualifications ? JSON.parse(dbProfile.qualifications) : []; } catch { qualifications = []; }
       try { experiences = dbProfile.experiences ? JSON.parse(dbProfile.experiences) : []; } catch { experiences = []; }
 
-      const reviews = (dbProfile.reviews || []).map((r) => ({
+      const reviews = (dbProfile.reviews || []).map((r: any) => ({
         id: r.id,
         parentName: r.parentName,
         rating: r.rating,

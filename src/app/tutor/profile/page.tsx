@@ -111,6 +111,7 @@ export default function TutorProfileDashboard() {
 
   // Profile data states
   const [profileStatus, setProfileStatus] = useState('DRAFT');
+  const [tutorProfileId, setTutorProfileId] = useState('');
   const [isVerified, setIsVerified] = useState(false);
   const [hasPoliceCheck, setHasPoliceCheck] = useState(false);
   const [rating, setRating] = useState(5.0);
@@ -409,6 +410,7 @@ export default function TutorProfileDashboard() {
       .then(data => {
         if (data.success && data.profile) {
           const prof = data.profile;
+          if (prof.id) setTutorProfileId(prof.id);
           setProfileStatus(prof.status);
           setIsVerified(prof.isVerified);
           setHasPoliceCheck(prof.hasPoliceCheck || false);
@@ -1006,9 +1008,9 @@ export default function TutorProfileDashboard() {
                     )}
 
                     {/* View Public Profile Action */}
-                    {userId && (
+                    {(tutorProfileId || userId) && (
                       <Link
-                        href={`/tutors/${userId}`}
+                        href={`/tutors/${tutorProfileId || userId}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{
