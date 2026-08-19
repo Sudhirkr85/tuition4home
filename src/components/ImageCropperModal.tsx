@@ -116,52 +116,83 @@ export default function ImageCropperModal({
     setRotation((prev) => (prev + 90) % 360);
   };
 
-  // Generate Cropped Image on Canvas
+  // Compute image base dimensions inside the viewport for 1:1 crop alignment
+  const getImageDisplaySize = () => {
+    if (!imgElement) return { width: 280, height: 280 };
+    const naturalWidth = imgElement.naturalWidth || imgElement.width || 280;
+    const naturalHeight = imgElement.naturalHeight || imgElement.height || 280;
+    const aspect = naturalWidth / naturalHeight;
+    const VIEWPORT_SIZE = 280;
+
+    let width = VIEWPORT_SIZE;
+    let height = VIEWPORT_SIZE;
+
+    // Cover mode: fill viewport completely by default (like Instagram/WhatsApp avatar crop)
+    if (aspect >= 1) {
+      height = VIEWPORT_SIZE;
+      width = VIEWPORT_SIZE * aspect;
+    } else {
+      width = VIEWPORT_SIZE;
+      height = VIEWPORT_SIZE / aspect;
+    }
+
+    return { width, height };
+  };
+
+  // Generate Cropped Image on Canvas (100% 1:1 Match with Viewport)
   const handleSaveCrop = useCallback(() => {
     if (!imgElement || !containerRef.current) return;
 
     const CROP_SIZE = 500; // High-res 500x500 avatar export
+    const VIEWPORT_SIZE = containerRef.current.clientWidth || 280;
+    const scaleFactor = CROP_SIZE / VIEWPORT_SIZE;
+
     const canvas = document.createElement('canvas');
     canvas.width = CROP_SIZE;
     canvas.height = CROP_SIZE;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const cropBox = containerRef.current.getBoundingClientRect();
-    const viewportSize = Math.min(cropBox.width, cropBox.height);
+    const naturalWidth = imgElement.naturalWidth || imgElement.width || 280;
+    const naturalHeight = imgElement.naturalHeight || imgElement.height || 280;
+    const aspect = naturalWidth / naturalHeight;
+
+    let baseW = VIEWPORT_SIZE;
+    let baseH = VIEWPORT_SIZE;
+    if (aspect >= 1) {
+      baseH = VIEWPORT_SIZE;
+      baseW = VIEWPORT_SIZE * aspect;
+    } else {
+      baseW = VIEWPORT_SIZE;
+      baseH = VIEWPORT_SIZE / aspect;
+    }
+
+    const canvasDrawW = baseW * scaleFactor;
+    const canvasDrawH = baseH * scaleFactor;
+
+    // Clean white background
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, CROP_SIZE, CROP_SIZE);
 
     ctx.save();
     // Center canvas coordinate system
     ctx.translate(CROP_SIZE / 2, CROP_SIZE / 2);
 
-    // Scaling ratio from UI viewport size to export canvas size
-    const scaleFactor = CROP_SIZE / viewportSize;
-
-    // Apply User Offsets & Zoom
+    // Apply User Offsets (scaled) & Rotation & Zoom
     ctx.translate(offset.x * scaleFactor, offset.y * scaleFactor);
     ctx.rotate((rotation * Math.PI) / 180);
-    ctx.scale(zoom * scaleFactor, zoom * scaleFactor);
+    ctx.scale(zoom, zoom);
 
-    // Compute base draw size keeping natural image aspect ratio
-    const imgAspect = imgElement.width / imgElement.height;
-    let baseW = viewportSize;
-    let baseH = viewportSize;
-    if (imgAspect > 1) {
-      baseW = viewportSize * imgAspect;
-      baseH = viewportSize;
-    } else {
-      baseW = viewportSize;
-      baseH = viewportSize / imgAspect;
-    }
-
-    ctx.drawImage(imgElement, -baseW / 2, -baseH / 2, baseW, baseH);
+    ctx.drawImage(imgElement, -canvasDrawW / 2, -canvasDrawH / 2, canvasDrawW, canvasDrawH);
     ctx.restore();
 
-    const croppedBase64 = canvas.toDataURL('image/jpeg', 0.9);
+    const croppedBase64 = canvas.toDataURL('image/jpeg', 0.92);
     onCropComplete(croppedBase64);
   }, [imgElement, offset, rotation, zoom, onCropComplete]);
 
   if (!isOpen || !imageSrc) return null;
+
+  const { width: displayBaseW, height: displayBaseH } = getImageDisplaySize();
 
   return (
     <div
@@ -265,7 +296,7 @@ export default function ImageCropperModal({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#000000',
+              backgroundColor: '#1E293B',
             }}
           >
             {imgElement && (
@@ -275,9 +306,13 @@ export default function ImageCropperModal({
                 draggable={false}
                 style={{
                   position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  width: `${displayBaseW}px`,
+                  height: `${displayBaseH}px`,
                   maxWidth: 'none',
                   maxHeight: 'none',
-                  transform: `translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg) scale(${zoom})`,
+                  transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg) scale(${zoom})`,
                   transformOrigin: 'center center',
                   pointerEvents: 'none',
                   transition: isDraggingRef.current ? 'none' : 'transform 0.05s ease-out',
