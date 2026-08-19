@@ -92,14 +92,28 @@ export default function BookingModal({
     }
   }, []);
 
-  // Lock body scroll when modal is active in popup mode
+  // Lock body scroll when modal is active in popup mode & load detected location
   useEffect(() => {
-    if (isOpen && !isInline && typeof document !== 'undefined') {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
+    if (isOpen) {
+      try {
+        const saved = localStorage.getItem('user_detected_location');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.address && parsed.lat && parsed.lng) {
+            setLocationCoords({ lat: parsed.lat, lng: parsed.lng });
+            setFormattedAddress(parsed.address);
+            setLocality(parsed.address.split(',')[0].trim());
+          }
+        }
+      } catch {}
+
+      if (!isInline && typeof document !== 'undefined') {
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+          document.body.style.overflow = originalOverflow;
+        };
+      }
     }
   }, [isOpen, isInline]);
 

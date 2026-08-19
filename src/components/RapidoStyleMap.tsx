@@ -114,6 +114,92 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
     }
   }, []);
 
+  // Helper to find nearest known sector from POPULAR_GURGAON_SECTORS
+  const getNearestKnownSector = useCallback((lat: number, lng: number) => {
+    let nearest = POPULAR_GURGAON_SECTORS[0];
+    let minDistance = Infinity;
+    for (const sector of POPULAR_GURGAON_SECTORS) {
+      const d = Math.hypot(sector.lat - lat, sector.lng - lng);
+      if (d < minDistance) {
+        minDistance = d;
+        nearest = sector;
+      }
+    }
+    if (minDistance < 0.15) {
+      return nearest;
+    }
+    return null;
+  }, []);
+
+  // Auto-detect user's current GPS location on mount
+  useEffect(() => {
+    // 1. Check local storage first
+    try {
+      const saved = localStorage.getItem('user_detected_location');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.address && parsed.lat && parsed.lng) {
+          setDetectedAddress(parsed.address);
+          setCurrentCoords({ lat: parsed.lat, lng: parsed.lng });
+          setPopupCoords({ lat: parsed.lat, lng: parsed.lng });
+          setPopupAddress(parsed.address);
+          onLocationSelected({
+            address: parsed.address,
+            lat: parsed.lat,
+            lng: parsed.lng,
+            nearestTutorsCount: 12,
+          });
+        }
+      }
+    } catch {}
+
+    // 2. Request live GPS in background
+    if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          setCurrentCoords({ lat, lng });
+          setPopupCoords({ lat, lng });
+
+          const nearestSector = getNearestKnownSector(lat, lng);
+          let resolvedAddress = nearestSector
+            ? `${nearestSector.name}, ${nearestSector.landmark ? nearestSector.landmark.split(',')[0] + ', ' : ''}Gurugram`
+            : '';
+
+          if (!resolvedAddress) {
+            resolvedAddress = await handleReverseGeocode(lat, lng);
+          }
+
+          if (resolvedAddress) {
+            setDetectedAddress(resolvedAddress);
+            setPopupAddress(resolvedAddress);
+            try {
+              localStorage.setItem(
+                'user_detected_location',
+                JSON.stringify({ address: resolvedAddress, lat, lng })
+              );
+            } catch {}
+            onLocationSelected({
+              address: resolvedAddress,
+              lat,
+              lng,
+              nearestTutorsCount: 12,
+            });
+          }
+
+          if (leafletMapInstanceRef.current) {
+            leafletMapInstanceRef.current.setView([lat, lng], 14);
+          }
+        },
+        (err) => {
+          console.debug('Geolocation not granted or timeout:', err.message);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    }
+  }, [getNearestKnownSector, handleReverseGeocode, onLocationSelected]);
+
   // Search handler for Gurgaon sectors & landmarks
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
@@ -427,18 +513,42 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
         async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
+          setCurrentCoords({ lat, lng });
           setPopupCoords({ lat, lng });
-          setShowLocationPopup(true);
+
+          const nearestSector = getNearestKnownSector(lat, lng);
+          let resolvedAddress = nearestSector
+            ? `${nearestSector.name}, ${nearestSector.landmark ? nearestSector.landmark.split(',')[0] + ', ' : ''}Gurugram`
+            : '';
+
+          if (!resolvedAddress) {
+            resolvedAddress = await handleReverseGeocode(lat, lng);
+          }
+
+          if (resolvedAddress) {
+            setDetectedAddress(resolvedAddress);
+            setPopupAddress(resolvedAddress);
+            try {
+              localStorage.setItem(
+                'user_detected_location',
+                JSON.stringify({ address: resolvedAddress, lat, lng })
+              );
+            } catch {}
+            onLocationSelected({
+              address: resolvedAddress,
+              lat,
+              lng,
+              nearestTutorsCount: 12,
+            });
+          }
+
+          if (leafletMapInstanceRef.current) {
+            leafletMapInstanceRef.current.setView([lat, lng], 14);
+          }
           setIsDetecting(false);
-          setIsReverseGeocoding(true);
-          const addr = await handleReverseGeocode(lat, lng);
-          setPopupAddress(addr);
-          setIsReverseGeocoding(false);
         },
         () => {
           setIsDetecting(false);
-          setPopupCoords({ lat: 28.4728, lng: 77.0345 });
-          setPopupAddress('Sector 14, Gurugram, Haryana');
           setShowLocationPopup(true);
         },
         { enableHighAccuracy: true, timeout: 8000 }
@@ -453,6 +563,13 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
     setCurrentCoords(popupCoords);
     setDetectedAddress(popupAddress);
     setShowLocationPopup(false);
+
+    try {
+      localStorage.setItem(
+        'user_detected_location',
+        JSON.stringify({ address: popupAddress, lat: popupCoords.lat, lng: popupCoords.lng })
+      );
+    } catch {}
 
     if (leafletMapInstanceRef.current) {
       leafletMapInstanceRef.current.setView([popupCoords.lat, popupCoords.lng], 14);
