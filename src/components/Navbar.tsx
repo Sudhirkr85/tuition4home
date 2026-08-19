@@ -398,9 +398,9 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
         padding: '0.45rem 0',
       }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <ShieldCheck size={14} color="#2DD4BF" />
-            <span>Operated &amp; Verified by <strong>SSSAM Academy</strong> • Sector 14, Gurugram &amp; Delhi NCR</span>
+            <span>Operated &amp; Verified by <strong>SSSAM Academy</strong> • Sector 14, Gurugram<span className="desktop-only-inline"> &amp; Delhi NCR</span></span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <span style={{ display: 'none', color: '#CBD5E1' }} className="desktop-nav">

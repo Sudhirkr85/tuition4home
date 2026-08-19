@@ -180,8 +180,8 @@ export default function HomePage() {
             1. APPLE-STYLE MINIMALIST HERO SECTION (SEO & TRUST OPTIMIZED)
             ========================================================================= */}
         <section aria-label="Hero Search and Overview" style={{
-          paddingTop: '1.5rem',
-          paddingBottom: '3.5rem',
+          paddingTop: '1rem',
+          paddingBottom: '2.5rem',
           backgroundColor: '#FFFFFF',
           borderBottom: '1px solid #E8E8ED',
           position: 'relative',
@@ -190,48 +190,52 @@ export default function HomePage() {
           <div className="container">
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '3.5rem',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+              gap: '2.5rem',
               alignItems: 'center',
             }}>
               {/* Left Column: Headline & Action Controls */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-                {/* 1. Merged Top Badge */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', minWidth: 0 }}>
+                {/* 1. Dynamic Sector Badge (no longer duplicating SSSAM branding) */}
                 <div>
                   <div style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.55rem',
-                    padding: '0.45rem 1rem',
+                    padding: '0.4rem 0.9rem',
                     borderRadius: '999px',
                     backgroundColor: '#E8F5E9',
                     border: '1px solid #C8E6C9',
                     color: '#0F6E56',
-                    fontSize: '0.85rem',
+                    fontSize: '0.82rem',
                     fontWeight: 700,
+                    maxWidth: '100%',
                   }}>
-                    <ShieldCheck size={16} color="#0F6E56" />
-                    <span>Operated by SSSAM Academy · Active in <strong>{sectorList[currentSectorIndex]}</strong></span>
+                    <MapPin size={14} color="#0F6E56" style={{ flexShrink: 0 }} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      Active in <strong>{sectorList[currentSectorIndex]}</strong>
+                    </span>
                   </div>
                 </div>
 
                 {/* 7. Single Primary Keyword H1 Headline */}
                 <h1 style={{
-                  fontSize: 'clamp(2.2rem, 4vw, 3.2rem)',
+                  fontSize: 'clamp(1.9rem, 4vw, 3.2rem)',
                   fontWeight: 800,
                   color: '#1D1D1F',
                   lineHeight: 1.15,
                   letterSpacing: '-0.02em',
                   margin: 0,
+                  wordBreak: 'break-word',
                 }}>
                   Verified <span style={{ color: '#0F6E56' }}>Home & Online Tutors</span> in Gurgaon
                 </h1>
 
                 {/* 9. LSI Keywords Subtext */}
                 <p style={{
-                  fontSize: 'clamp(1.05rem, 2vw, 1.2rem)',
+                  fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
                   color: '#515154',
-                  lineHeight: 1.6,
+                  lineHeight: 1.55,
                   margin: 0,
                 }}>
                   Connect with background-checked <strong>home tutors in Gurgaon</strong> and <strong>online tutors in Gurgaon</strong> for CBSE, ICSE, IB & Coding. Matched within 3.5 km of your sector with a <strong>100% Free Replacement Guarantee</strong>.
@@ -245,6 +249,8 @@ export default function HomePage() {
                     padding: '0.35rem',
                     borderRadius: '999px',
                     border: '1px solid #E8E8ED',
+                    maxWidth: '100%',
+                    boxSizing: 'border-box',
                   }}>
                     <button
                       type="button"
@@ -253,18 +259,18 @@ export default function HomePage() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.4rem',
-                        padding: '0.6rem 1.35rem',
+                        padding: '0.55rem 1.1rem',
                         borderRadius: '999px',
                         border: 'none',
                         backgroundColor: searchMode === 'OFFLINE_HOME' ? '#0F6E56' : 'transparent',
-                        color: searchMode === 'OFFLINE_HOME' ? '#FFFFFF' : '#6E6E73',
+                        color: searchMode === 'OFFLINE_HOME' ? '#FFFFFF' : '#1D1D1F',
                         fontWeight: 700,
-                        fontSize: '0.88rem',
+                        fontSize: 'clamp(0.78rem, 2vw, 0.88rem)',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                       }}
                     >
-                      <Home size={15} />
+                      <Home size={15} style={{ flexShrink: 0 }} />
                       <span>Home Visit (Offline)</span>
                     </button>
 
@@ -275,43 +281,46 @@ export default function HomePage() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.4rem',
-                        padding: '0.6rem 1.35rem',
+                        padding: '0.55rem 1.1rem',
                         borderRadius: '999px',
                         border: 'none',
                         backgroundColor: searchMode === 'ONLINE_LIVE' ? '#0F6E56' : 'transparent',
-                        color: searchMode === 'ONLINE_LIVE' ? '#FFFFFF' : '#6E6E73',
+                        color: searchMode === 'ONLINE_LIVE' ? '#FFFFFF' : '#1D1D1F',
                         fontWeight: 700,
-                        fontSize: '0.88rem',
+                        fontSize: 'clamp(0.78rem, 2vw, 0.88rem)',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                       }}
                     >
-                      <Video size={15} />
+                      <Video size={15} style={{ flexShrink: 0 }} />
                       <span>Online 1-on-1</span>
                     </button>
                   </div>
                 </div>
 
                 {/* 6. Bolder CTA Button Row */}
-                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', width: '100%' }}>
                   <button
                     type="button"
                     onClick={() => handleOpenBooking()}
                     className="btn btn-primary btn-lg"
                     style={{
                       backgroundColor: '#0F6E56',
-                      padding: '0.9rem 2.2rem',
-                      fontSize: '1.05rem',
+                      padding: '0.85rem 1.4rem',
+                      fontSize: 'clamp(0.88rem, 2.4vw, 1.05rem)',
                       fontWeight: 800,
                       borderRadius: '999px',
                       boxShadow: '0 4px 14px rgba(15, 110, 86, 0.28)',
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.65rem',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      maxWidth: '100%',
+                      boxSizing: 'border-box',
                     }}
                   >
-                    <span>Book a Tutor — Free Callback</span>
-                    <ChevronRight size={18} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>Book a Tutor — Free Callback</span>
+                    <ChevronRight size={18} style={{ flexShrink: 0 }} />
                   </button>
 
                   <a
@@ -329,32 +338,6 @@ export default function HomePage() {
                     <span>View Tutor Catalog</span>
                     <ChevronRight size={16} color="#0F6E56" />
                   </a>
-                </div>
-
-                {/* 12. Visible Trust Metrics Bar */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1.5rem',
-                  paddingTop: '1.5rem',
-                  borderTop: '1px solid #E8E8ED',
-                  fontSize: '0.82rem',
-                  color: '#6E6E73',
-                }}>
-                  <div>
-                    <strong style={{ fontSize: '1.2rem', color: '#0F6E56', display: 'block', fontWeight: 800 }}>500+</strong>
-                    <span>Verified Tutors</span>
-                  </div>
-                  <div style={{ width: '1px', height: '28px', backgroundColor: '#E8E8ED' }} />
-                  <div>
-                    <strong style={{ fontSize: '1.2rem', color: '#0F6E56', display: 'block', fontWeight: 800 }}>14+</strong>
-                    <span>Gurgaon Sectors</span>
-                  </div>
-                  <div style={{ width: '1px', height: '28px', backgroundColor: '#E8E8ED' }} />
-                  <div>
-                    <strong style={{ fontSize: '1.2rem', color: '#047857', display: 'block', fontWeight: 800 }}>4.95 ★</strong>
-                    <span>Parent Rating</span>
-                  </div>
                 </div>
               </div>
 

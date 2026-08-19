@@ -86,6 +86,9 @@ body {
 .desktop-nav {
   display: none !important;
 }
+.desktop-only-inline {
+  display: none !important;
+}
 .mobile-toggle {
   display: flex !important;
 }
@@ -96,6 +99,9 @@ body {
   .desktop-nav {
     display: flex !important;
     align-items: center;
+  }
+  .desktop-only-inline {
+    display: inline !important;
   }
   .mobile-toggle {
     display: none !important;
@@ -379,6 +385,8 @@ h3 {
   justify-content: center;
   white-space: nowrap;
   outline: none;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-primary {
