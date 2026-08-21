@@ -12,9 +12,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'publicId is required' }, { status: 400 });
     }
 
-    // Security Verification: Ensure request is from Admin
+    // Security Verification: Ensure request is from authorized Admin
     const expectedSecret = process.env.NEXTAUTH_SECRET || 'tuitionforhome_super_secret_jwt_key_2026';
-    if (adminSecret && adminSecret !== expectedSecret && !adminSecret.includes('admin')) {
+    if (!adminSecret || adminSecret !== expectedSecret) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Only Super Admin can delete assets' }, { status: 403 });
     }
 

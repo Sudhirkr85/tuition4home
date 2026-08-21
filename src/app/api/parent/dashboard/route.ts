@@ -52,10 +52,19 @@ export async function GET(req: Request) {
     const leads = await prisma.lead.findMany({
       where: { parentId: user.id },
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        status: true,
+        preferredMode: true,
+        locality: true,
+        gradeClass: true,
+        subjectsNeeded: true,
+        createdAt: true,
         assignedTutor: {
-          include: {
-            user: { select: { name: true, image: true } }
+          select: {
+            highestDegree: true,
+            rating: true,
+            user: { select: { name: true } }
           }
         }
       }
@@ -65,10 +74,19 @@ export async function GET(req: Request) {
     const reviews = await prisma.review.findMany({
       where: { reviewerId: user.id },
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        tutorId: true,
+        rating: true,
+        comment: true,
+        isApproved: true,
+        createdAt: true,
         tutor: {
-          include: {
-            user: { select: { id: true, name: true, image: true } }
+          select: {
+            userId: true,
+            avatarUrl: true,
+            highestDegree: true,
+            user: { select: { id: true, name: true } }
           }
         }
       }
@@ -97,7 +115,7 @@ export async function GET(req: Request) {
         tutorUserId: r.tutor.userId,
         tutorName: r.tutor.user.name,
         tutorDegree: r.tutor.highestDegree || 'Verified Educator',
-        tutorAvatar: r.tutor.avatarUrl || r.tutor.user.image,
+        tutorAvatar: r.tutor.avatarUrl || '',
         rating: r.rating,
         comment: r.comment,
         isApproved: r.isApproved,

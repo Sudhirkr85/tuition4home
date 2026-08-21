@@ -23,12 +23,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Mobile number must be exactly 10 digits.' }, { status: 400 });
     }
 
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanPhone = phone.trim();
+
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [
-          { email },
-          { phone }
+          { email: cleanEmail },
+          { phone: cleanPhone }
         ]
       }
     });
@@ -47,9 +50,9 @@ export async function POST(req: Request) {
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
-          name,
-          email,
-          phone,
+          name: name.trim(),
+          email: cleanEmail,
+          phone: cleanPhone,
           passwordHash,
           role: 'TUTOR',
         }

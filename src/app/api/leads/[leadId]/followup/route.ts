@@ -52,24 +52,16 @@ export async function POST(
         );
       }
 
-      // 2. Direct MySQL Update on Lead to guarantee instant status & notes update
+      // 2. Typed Prisma Update on Lead
       const formattedDemoDate = nextFollowupDate ? new Date(nextFollowupDate) : null;
-      if (status) {
-        await prisma.$executeRawUnsafe(
-          'UPDATE `Lead` SET status = ?, notes = ?, demoDate = ?, updatedAt = NOW() WHERE id = ?',
-          status,
-          cleanNoteText,
-          formattedDemoDate,
-          leadId
-        );
-      } else {
-        await prisma.$executeRawUnsafe(
-          'UPDATE `Lead` SET notes = ?, demoDate = ?, updatedAt = NOW() WHERE id = ?',
-          cleanNoteText,
-          formattedDemoDate,
-          leadId
-        );
-      }
+      await prisma.lead.update({
+        where: { id: leadId },
+        data: {
+          ...(status ? { status } : {}),
+          notes: cleanNoteText,
+          demoDate: formattedDemoDate,
+        },
+      });
 
       // 3. Fetch updated lead
       const updatedLead = await prisma.lead.findUnique({

@@ -11,12 +11,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Email/Mobile and Password are required.' }, { status: 400 });
     }
 
+    const cleanContact = contact.trim();
+    const cleanEmail = cleanContact.toLowerCase();
+
     // Find the user by email or mobile number
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { email: contact },
-          { phone: contact }
+          { email: cleanEmail },
+          { phone: cleanContact }
         ]
       },
       include: {

@@ -5,10 +5,11 @@ export const dynamic = 'force-dynamic';
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { leadId: string } }
+  { params }: { params: any }
 ) {
   try {
-    const leadId = params.leadId;
+    const resolvedParams = await params;
+    const leadId = resolvedParams?.leadId || params?.leadId;
 
     if (!leadId) {
       return NextResponse.json(

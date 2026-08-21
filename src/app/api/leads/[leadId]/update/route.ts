@@ -50,41 +50,31 @@ export async function PATCH(
     const newCommission = commissionAmount !== undefined ? Number(commissionAmount) : currentLead.commissionAmount;
     const newStatus = status !== undefined ? status : currentLead.status;
 
-    // Direct MySQL Update to avoid schema lock issues
-    await prisma.$executeRawUnsafe(
-      'UPDATE `Lead` SET gradeClass = ?, subjectsNeeded = ?, budgetMonthly = ?, commissionAmount = ?, status = ?, updatedAt = NOW() WHERE id = ?',
-      newGrade,
-      newSubjects,
-      newBudget,
-      newCommission,
-      newStatus,
-      leadId
-    );
+    // Update lead cleanly with Prisma
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        gradeClass: newGrade,
+        subjectsNeeded: newSubjects,
+        budgetMonthly: newBudget,
+        commissionAmount: newCommission,
+        status: newStatus,
+      },
+    });
 
     // Log Activity
-    const activityId = `act-${Date.now()}`;
     const activityDesc = budgetMonthly !== undefined
       ? `Updated Tuition Fee to ₹${newBudget} (Commission: ₹${newCommission || 0})`
       : `Updated Class & Subjects to: ${newGrade} | ${newSubjects}`;
-    try {
-      await prisma.leadActivity.create({
-        data: {
-          leadId,
-          actionType: budgetMonthly !== undefined ? 'STATUS_CHANGED' : 'NOTE_ADDED',
-          description: activityDesc,
-          performedBy,
-        },
-      });
-    } catch {
-      await prisma.$executeRawUnsafe(
-        'INSERT INTO `LeadActivity` (id, leadId, actionType, description, performedBy, createdAt) VALUES (?, ?, ?, ?, ?, NOW())',
-        activityId,
+    
+    await prisma.leadActivity.create({
+      data: {
         leadId,
-        'NOTE_ADDED',
-        activityDesc,
-        performedBy
-      );
-    }
+        actionType: budgetMonthly !== undefined ? 'STATUS_CHANGED' : 'NOTE_ADDED',
+        description: activityDesc,
+        performedBy,
+      },
+    });
 
     const updatedLead = await prisma.lead.findUnique({
       where: { id: leadId },
