@@ -651,7 +651,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               className="btn btn-primary"
               style={{ justifyContent: 'center', backgroundColor: '#065F46', padding: '0.65rem 1rem', fontSize: '0.88rem', fontWeight: 800 }}
             >
-              <span>Book a Home Tutor</span>
+              <span>Get a Home Teacher</span>
               <ChevronRight size={16} />
             </Link>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -661,7 +661,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
                 className="btn btn-secondary"
                 style={{ flex: 1, justifyContent: 'center', fontSize: '0.78rem', padding: '0.45rem' }}
               >
-                Find Tutors
+                Find Teachers
               </Link>
               {mounted && parentSession ? (
                 <Link
@@ -696,7 +696,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
             gap: '0.6rem',
           }}>
             <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#15803D', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              👨‍🏫 For Educators &amp; Tutors
+              👨‍🏫 For Teachers
             </div>
             <Link
               href={mounted && tutorSession ? '/tutor/profile' : '/tutor/register'}
@@ -713,7 +713,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               }}
             >
               <GraduationCap size={16} color="#0F6E56" />
-              <span>{mounted && tutorSession ? 'My Tutor Dashboard' : 'Apply / Join as Tutor'}</span>
+              <span>{mounted && tutorSession ? 'My Teacher Dashboard' : 'I\u0027m a Teacher'}</span>
             </Link>
           </div>
 
