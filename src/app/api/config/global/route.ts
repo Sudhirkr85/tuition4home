@@ -5,35 +5,44 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    let config = await prisma.platformConfig.findUnique({
+    const config = await prisma.platformConfig.upsert({
       where: { id: 'global_config' },
+      update: {},
+      create: {
+        id: 'global_config',
+        baseVerificationFee: 999,
+        isOfferActive: true,
+        offerDiscountPercent: 100,
+        offerTitle: 'Academic Session 2026-27 Special Drive',
+        offerSubtext: '100% Verification Fee Waiver for Gurgaon & NCR Educators',
+        officeAddress: 'M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001',
+        helplinePhones: '+91 92170 31899',
+        supportEmail: 'info@sssamacademy.com',
+        mapProvider: 'GOOGLE_MAPS',
+        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || null,
+        googleMapsUsageCount: 0,
+        googleMapsLimit: 25000,
+      },
     });
-
-    if (!config) {
-      config = await prisma.platformConfig.create({
-        data: {
-          id: 'global_config',
-          baseVerificationFee: 999,
-          isOfferActive: true,
-          offerDiscountPercent: 100,
-          offerTitle: 'Academic Session 2026-27 Special Drive',
-          offerSubtext: '100% Verification Fee Waiver for Gurgaon & NCR Educators',
-          officeAddress: 'M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001',
-          helplinePhones: '+91 92170 31899',
-          supportEmail: 'info@sssamacademy.com',
-          mapProvider: 'GOOGLE_MAPS',
-          googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || null,
-          googleMapsUsageCount: 0,
-          googleMapsLimit: 25000,
-        },
-      });
-    }
 
     return NextResponse.json({
       success: true,
       config,
     });
   } catch (error: any) {
+    // If concurrent insert occurred, attempt a safe read fallback
+    try {
+      const fallback = await prisma.platformConfig.findUnique({
+        where: { id: 'global_config' },
+      });
+      if (fallback) {
+        return NextResponse.json({
+          success: true,
+          config: fallback,
+        });
+      }
+    } catch {}
+
     console.error('Error fetching platform config:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch platform config' }, { status: 500 });
   }
