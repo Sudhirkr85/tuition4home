@@ -380,79 +380,121 @@ export default function RapidoStyleMap({
       }).addTo(map);
     }
 
-    sortedTutorsWithDistance.slice(0, 15).forEach((tutor) => {
-      const isSelected = currentSelected && currentSelected.id === tutor.id;
-      const tutorIcon = L.divIcon({
-        className: 'custom-tutor-pin',
-        html: `
-          <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: ${isSelected ? 'scale(1.18)' : 'scale(1)'}; transition: transform 0.2s ease;">
-            <div style="position: relative; width: 36px; height: 36px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.22); border: 2.5px solid ${isSelected ? '#0F766E' : tutor.distanceInfo.circleColor}; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-              <img src="${tutor.avatarUrl || '/placeholder-avatar.jpg'}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+      sortedTutorsWithDistance.slice(0, 15).forEach((tutor) => {
+        const isSelected = currentSelected && currentSelected.id === tutor.id;
+        const tutorIcon = L.divIcon({
+          className: 'custom-tutor-pin',
+          html: `
+            <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: ${isSelected ? 'scale(1.18)' : 'scale(1)'}; transition: transform 0.2s ease;">
+              <div style="position: relative; width: 36px; height: 36px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.22); border: 2.5px solid ${isSelected ? '#0F766E' : tutor.distanceInfo.circleColor}; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                <img src="${tutor.avatarUrl || '/placeholder-avatar.jpg'}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+              </div>
+              <div style="display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 800; background: ${isSelected ? '#0F172A' : '#FFFFFF'}; color: ${isSelected ? '#FFFFFF' : '#0F172A'}; padding: 2px 7px; border-radius: 6px; border: 1px solid #CBD5E1; box-shadow: 0 2px 5px rgba(0,0,0,0.12); margin-top: -2px; white-space: nowrap;">
+                <span>${tutor.name.split(' ')[0]}</span>
+              </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 2px; font-size: 0.66rem; font-weight: 800; background: ${isSelected ? '#0F172A' : '#FFFFFF'}; color: ${isSelected ? '#FFFFFF' : '#0F172A'}; padding: 2px 5px; border-radius: 5px; border: 1px solid #CBD5E1; box-shadow: 0 2px 5px rgba(0,0,0,0.12); margin-top: -2px; white-space: nowrap;">
-              <span>${tutor.name.split(' ')[0]}</span>
-              <span style="color: #F59E0B;">★${tutor.rating || 5}</span>
-            </div>
-          </div>
-        `,
-        iconSize: [80, 56],
-        iconAnchor: [40, 18],
+          `,
+          iconSize: [80, 56],
+          iconAnchor: [40, 18],
+        });
+
+        const tMarker = L.marker([tutor.computedLat, tutor.computedLng], { icon: tutorIcon, zIndexOffset: isSelected ? 500 : 100 }).addTo(tutorLayerGroupRef.current);
+        tMarker.on('click', () => setSelectedTutor(tutor));
       });
+    }, [L, isCompact, currentCoords, sortedTutorsWithDistance, selectedTutor]);
 
-      const tMarker = L.marker([tutor.computedLat, tutor.computedLng], { icon: tutorIcon, zIndexOffset: isSelected ? 500 : 100 }).addTo(tutorLayerGroupRef.current);
-      tMarker.on('click', () => setSelectedTutor(tutor));
-    });
-  }, [L, isCompact, currentCoords, sortedTutorsWithDistance, selectedTutor]);
+    const handleAutoDetectGPS = () => {
+      setIsDetecting(true);
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        setCurrentCoords({ lat, lng });
+        setPopupCoords({ lat, lng });
+        setLocationSource('GPS');
 
-  const handleAutoDetectGPS = () => {
-    setIsDetecting(true);
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const { latitude: lat, longitude: lng } = pos.coords;
-      setCurrentCoords({ lat, lng });
-      setPopupCoords({ lat, lng });
-      setLocationSource('GPS');
-      const resolved = await handleReverseGeocode(lat, lng);
-      setDetectedAddress(resolved);
-      setIsDetecting(false);
-      onLocationSelected({ address: resolved, lat, lng, nearestTutorsCount: 12 });
-    }, () => { setIsDetecting(false); setShowLocationPopup(true); }, { enableHighAccuracy: true });
-  };
-
-  const handleConfirmLocation = () => {
-    setCurrentCoords(popupCoords);
-    setDetectedAddress(popupAddress);
-    setLocationSource('SAVED');
-    setShowLocationPopup(false);
-    try { localStorage.setItem('user_detected_location', JSON.stringify({ address: popupAddress, lat: popupCoords.lat, lng: popupCoords.lng })); } catch {}
-    onLocationSelected({ address: popupAddress, lat: popupCoords.lat, lng: popupCoords.lng, nearestTutorsCount: 12 });
-  };
-
-  const activeTutorDetail = selectedTutor ? sortedTutorsWithDistance.find((t) => t.id === selectedTutor.id) || sortedTutorsWithDistance[0] : sortedTutorsWithDistance[0];
-  const whatsappInquiryUrl = activeTutorDetail ? `https://wa.me/919217031899?text=${encodeURIComponent(`Hello SSSAM, looking for a teacher in ${detectedAddress}. Interested in ${activeTutorDetail.name}.`)}` : '#';
-
-  return (
-    <>
-      <style jsx global>{`
-        .custom-parent-pin, .custom-tutor-pin {
-          background: transparent !important;
-          border: none !important;
+        if (leafletMapInstanceRef.current) {
+          leafletMapInstanceRef.current.flyTo([lat, lng], 15, { animate: true, duration: 1.2 });
         }
-      `}</style>
-      <div style={{ padding: isCompact ? '0.5rem' : '1.5rem', backgroundColor: '#FFFFFF', borderRadius: isCompact ? '0px' : '24px', border: isCompact ? 'none' : '1px solid #E2E8F0' }}>
-        {!isCompact && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <div>
-              <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#059669', letterSpacing: '0.04em' }}>LIVE PROXIMITY ENGINE</div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '2px 0 0 0', color: '#0F172A' }}>Verified Teachers in Your Sector</h3>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={handleAutoDetectGPS} style={{ fontSize: '0.8rem', fontWeight: 700, padding: '0.45rem 0.85rem', borderRadius: '10px' }} className="btn btn-secondary">Use GPS</button>
-              <button onClick={() => setShowLocationPopup(true)} style={{ fontSize: '0.8rem', fontWeight: 800, padding: '0.45rem 0.85rem', borderRadius: '10px', backgroundColor: '#0F6E56', color: '#FFFFFF' }} className="btn btn-primary">Change Sector</button>
-            </div>
-          </div>
-        )}
 
-        <div ref={mapContainerRef} style={{ position: 'relative', height: isCompact ? '200px' : '380px', borderRadius: '16px', overflow: 'hidden', border: '1px solid #CBD5E1', marginBottom: '0.85rem', zIndex: 1, backgroundColor: '#E2E8F0' }} />
+        const resolved = await handleReverseGeocode(lat, lng);
+        setDetectedAddress(resolved);
+        setIsDetecting(false);
+        onLocationSelected({ address: resolved, lat, lng, nearestTutorsCount: 12 });
+      }, () => {
+        setIsDetecting(false);
+        setShowLocationPopup(true);
+      }, { enableHighAccuracy: true });
+    };
+
+    const handleConfirmLocation = () => {
+      setCurrentCoords(popupCoords);
+      setDetectedAddress(popupAddress);
+      setLocationSource('SAVED');
+      setShowLocationPopup(false);
+
+      if (leafletMapInstanceRef.current) {
+        leafletMapInstanceRef.current.flyTo([popupCoords.lat, popupCoords.lng], 15, { animate: true, duration: 1.2 });
+      }
+
+      try { localStorage.setItem('user_detected_location', JSON.stringify({ address: popupAddress, lat: popupCoords.lat, lng: popupCoords.lng })); } catch {}
+      onLocationSelected({ address: popupAddress, lat: popupCoords.lat, lng: popupCoords.lng, nearestTutorsCount: 12 });
+    };
+
+    const activeTutorDetail = selectedTutor ? sortedTutorsWithDistance.find((t) => t.id === selectedTutor.id) || sortedTutorsWithDistance[0] : sortedTutorsWithDistance[0];
+    const whatsappInquiryUrl = activeTutorDetail ? `https://wa.me/919217031899?text=${encodeURIComponent(`Hello SSSAM, looking for a teacher in ${detectedAddress}. Interested in ${activeTutorDetail.name}.`)}` : '#';
+
+    return (
+      <>
+        <style jsx global>{`
+          .custom-parent-pin, .custom-tutor-pin {
+            background: transparent !important;
+            border: none !important;
+          }
+        `}</style>
+        <div style={{ padding: isCompact ? '0.5rem' : '1.5rem', backgroundColor: '#FFFFFF', borderRadius: isCompact ? '0px' : '24px', border: isCompact ? 'none' : '1px solid #E2E8F0' }}>
+          {!isCompact && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div>
+                <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#059669', letterSpacing: '0.04em' }}>LIVE PROXIMITY ENGINE</div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '2px 0 0 0', color: '#0F172A' }}>Verified Teachers in Your Sector</h3>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={handleAutoDetectGPS}
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '10px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                  }}
+                  className="btn btn-secondary"
+                >
+                  <Crosshair size={14} color="#059669" />
+                  <span>{isDetecting ? 'Detecting...' : 'Get Current Location'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowLocationPopup(true)}
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 800,
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '10px',
+                    backgroundColor: '#0F6E56',
+                    color: '#FFFFFF',
+                  }}
+                  className="btn btn-primary"
+                >
+                  Change Sector
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div ref={mapContainerRef} style={{ position: 'relative', height: isCompact ? '200px' : '380px', borderRadius: '16px', overflow: 'hidden', border: '1px solid #CBD5E1', marginBottom: '0.85rem', zIndex: 1, backgroundColor: '#E2E8F0' }} />
 
         {activeTutorDetail && (
           <div style={{ backgroundColor: '#F8FAFC', border: `1.5px solid ${activeTutorDetail.distanceInfo.badgeBorder}`, borderRadius: '16px', padding: '1rem' }}>
