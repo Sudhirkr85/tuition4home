@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { encrypt } from '@/lib/crypto';
 import { sendTutorProfileSubmittedEmail } from '@/lib/brevo';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 export const dynamic = 'force-dynamic';
 
@@ -141,7 +142,39 @@ export async function POST(req: Request) {
     if (hourlyRateHomeMin !== undefined && !isNaN(Number(hourlyRateHomeMin))) profileUpdateData.hourlyRateHome = Number(hourlyRateHomeMin);
     if (hourlyRateOnlineMin !== undefined && !isNaN(Number(hourlyRateOnlineMin))) profileUpdateData.hourlyRateOnline = Number(hourlyRateOnlineMin);
 
-    if (avatarUrl !== undefined) profileUpdateData.avatarUrl = avatarUrl;
+    // Auto-upload Base64 avatar to Cloudinary if needed
+    let finalAvatarUrl = avatarUrl;
+    if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.startsWith('data:image/')) {
+      try {
+        const uploadRes = await uploadToCloudinary(avatarUrl, 'tuitionforhome/avatars', 'image');
+        finalAvatarUrl = uploadRes.secureUrl;
+      } catch (err) {
+        console.error('Failed to upload base64 avatar to Cloudinary:', err);
+      }
+    }
+
+    // Auto-upload Base64 KYC docs to Cloudinary if needed
+    let finalIdDocUrl = idDocUrl;
+    if (idDocUrl && typeof idDocUrl === 'string' && idDocUrl.startsWith('data:')) {
+      try {
+        const uploadRes = await uploadToCloudinary(idDocUrl, 'tuitionforhome/kyc', 'auto');
+        finalIdDocUrl = uploadRes.secureUrl;
+      } catch (err) {
+        console.error('Failed to upload base64 idDoc to Cloudinary:', err);
+      }
+    }
+
+    let finalDegreeDocUrl = degreeDocUrl;
+    if (degreeDocUrl && typeof degreeDocUrl === 'string' && degreeDocUrl.startsWith('data:')) {
+      try {
+        const uploadRes = await uploadToCloudinary(degreeDocUrl, 'tuitionforhome/degrees', 'auto');
+        finalDegreeDocUrl = uploadRes.secureUrl;
+      } catch (err) {
+        console.error('Failed to upload base64 degreeDoc to Cloudinary:', err);
+      }
+    }
+
+    if (finalAvatarUrl !== undefined) profileUpdateData.avatarUrl = finalAvatarUrl;
     if (introVideoUrl !== undefined) profileUpdateData.introVideoUrl = introVideoUrl;
     if (body.isAvailable !== undefined) profileUpdateData.isAvailable = Boolean(body.isAvailable);
     
@@ -181,14 +214,14 @@ export async function POST(req: Request) {
           idNumberEncrypted,
         };
 
-        if (idDocUrl) {
-          kycUpdateData.idDocUrl = idDocUrl;
+        if (finalIdDocUrl) {
+          kycUpdateData.idDocUrl = finalIdDocUrl;
           kycUpdateData.idStatus = 'PENDING';
           kycUpdateData.idRejectionNote = null;
         }
 
-        if (degreeDocUrl !== undefined) {
-          kycUpdateData.degreeDocUrl = degreeDocUrl;
+        if (finalDegreeDocUrl !== undefined) {
+          kycUpdateData.degreeDocUrl = finalDegreeDocUrl;
           kycUpdateData.degreeStatus = 'PENDING';
           kycUpdateData.degreeRejectionNote = null;
         }
@@ -200,10 +233,10 @@ export async function POST(req: Request) {
             idType,
             idLast4,
             idNumberEncrypted,
-            idDocUrl: idDocUrl || '/placeholder-doc.png',
+            idDocUrl: finalIdDocUrl || '/placeholder-doc.png',
             idStatus: 'PENDING',
-            degreeDocUrl: degreeDocUrl || null,
-            degreeStatus: degreeDocUrl ? 'PENDING' : 'PENDING',
+            degreeDocUrl: finalDegreeDocUrl || null,
+            degreeStatus: finalDegreeDocUrl ? 'PENDING' : 'PENDING',
           },
           update: kycUpdateData
         });
