@@ -54,6 +54,7 @@ export interface MockTutor {
   travelRadiusKm: number;
   latitude?: number;
   longitude?: number;
+  formattedAddress?: string;
   hourlyRateHome: number;
   hourlyRateHomeMin?: number;
   hourlyRateHomeMax?: number;
