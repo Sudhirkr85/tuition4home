@@ -79,7 +79,6 @@ model TutorProfile {
   user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   avatarUrl         String?      @db.LongText // Profile Photo (Cloudinary or Data URI)
   introVideoUrl     String?      @db.LongText // 60-90s Intro Video (Direct upload or YouTube/Vimeo embed)
-  videoThumbnailUrl String?      @db.LongText
   bio               String?      @db.Text
   experienceYears   Int          @default(0)
   highestDegree     String?
@@ -111,7 +110,6 @@ model TutorProfile {
   interviewNotes    String?      @db.Text
   rating            Float        @default(5.0)
   totalReviews      Int          @default(0)
-  reliabilityScore  Int          @default(100)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
@@ -168,7 +166,6 @@ model Lead {
   assignedTutor    TutorProfile?  @relation("TutorAssignedLeads", fields: [assignedTutorId], references: [id], onDelete: SetNull)
   demoDate         DateTime?
   commissionAmount Int?
-  isTwoSplit       Boolean        @default(false) // 50% Day 2 + 50% Day 15 option
   isCommissionPaid Boolean        @default(false)
   notes            String?        @db.Text
   createdAt        DateTime       @default(now())

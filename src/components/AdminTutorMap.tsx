@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import { MapPin, Navigation, Crosshair, ZoomIn, ZoomOut, Check, Sliders } from 'lucide-react';
-import { POPULAR_GURGAON_SECTORS } from '@/components/RapidoStyleMap';
+import { POPULAR_GURGAON_SECTORS } from '@/lib/geo';
 import 'leaflet/dist/leaflet.css';
 
 interface AdminTutorMapProps {

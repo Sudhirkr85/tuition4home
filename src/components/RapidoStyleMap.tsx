@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import {
   Navigation,
   X,
@@ -16,161 +18,63 @@ import {
   Sparkles,
   Phone,
   Check,
+  Loader2,
 } from 'lucide-react';
 import { VERIFIED_TUTORS, SSSAM_OFFICE_DETAILS, MockTutor } from '@/lib/data';
-import 'leaflet/dist/leaflet.css';
+import {
+  POPULAR_GURGAON_SECTORS,
+  calculateHaversineKm,
+  getTeacherCoordinates,
+  getDistanceInfo,
+  GurgaonSector,
+} from '@/lib/geo';
+
+// Re-export for backward compatibility
+export {
+  POPULAR_GURGAON_SECTORS,
+  calculateHaversineKm,
+  getTeacherCoordinates,
+  getDistanceInfo,
+};
 
 interface RapidoStyleMapProps {
   onLocationSelected: (data: { address: string; lat: number; lng: number; nearestTutorsCount: number }) => void;
   onOpenBookingForTutor?: (tutor: MockTutor) => void;
   isCompact?: boolean;
-}
-
-export const POPULAR_GURGAON_SECTORS = [
-  { name: 'DLF Phase 5', landmark: 'The Aralias, Magnolias, Horizon Centre', lat: 28.4552, lng: 77.0945 },
-  { name: 'Golf Course Road', landmark: 'Sector 42, One Horizon, Mega Mall', lat: 28.4595, lng: 77.0988 },
-  { name: 'DLF Phase 1', landmark: 'Silver Oaks, Qutab Plaza', lat: 28.4795, lng: 77.1025 },
-  { name: 'DLF Phase 2', landmark: 'Cyber City, Jacaranda Marg', lat: 28.4895, lng: 77.0895 },
-  { name: 'DLF Phase 4', landmark: 'Galleria Market, Supermart 1 & 2', lat: 28.4685, lng: 77.0855 },
-  { name: 'Sector 14 & Old DLF', landmark: 'SSSAM Academy Center, Sector 14 Market', lat: 28.4728, lng: 77.0345 },
-  { name: 'Sector 56', landmark: 'HUDA Market, Rapid Metro, Kendriya Vihar', lat: 28.4315, lng: 77.1035 },
-  { name: 'Sector 57', landmark: 'Hong Kong Bazaar, Sushant Lok 3', lat: 28.4255, lng: 77.0885 },
-  { name: 'Sector 50 / Nirvana Country', landmark: 'Unitech Fresco, South City 2', lat: 28.4185, lng: 77.0655 },
-  { name: 'Sector 48 / Sohna Road', landmark: 'Vipul Greens, Central Park 2, JMD Megapolis', lat: 28.4205, lng: 77.0395 },
-  { name: 'Sushant Lok 1', landmark: 'Gold Souk, Vyapar Kendra, Fortis Hospital', lat: 28.4615, lng: 77.0785 },
-  { name: 'Palam Vihar', landmark: 'Ansal Plaza, Chiranjiv Bharati School', lat: 28.5095, lng: 77.0425 },
-  { name: 'New Gurgaon (Sector 82-84)', landmark: 'Vatika India Next, Mapsko Mount Ville', lat: 28.3895, lng: 76.9655 },
-  { name: 'Sector 49', landmark: 'South City 2, Orchid Petals, Vatika City', lat: 28.4125, lng: 77.0515 },
-  { name: 'Sector 31', landmark: 'HUDA Market, Sector 31 Gurgaon', lat: 28.4555, lng: 77.0505 },
-  { name: 'Sector 45', landmark: 'Greenwoods City, DPS Gurgaon', lat: 28.4485, lng: 77.0715 },
-  { name: 'Sector 46', landmark: 'Amity International School, Sector 46', lat: 28.4415, lng: 77.0625 },
-];
-
-/**
- * Calculates distance between two GPS coordinates using Haversine formula
- */
-export function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Earth radius in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-/**
- * Resolves stable GPS coordinates for any teacher based on their stored GPS or primary Gurgaon sector
- */
-export function getTeacherCoordinates(tutor: { latitude?: number; longitude?: number; serviceAreas?: string[] }): { lat: number; lng: number } {
-  if (tutor.latitude && tutor.longitude && !isNaN(tutor.latitude) && !isNaN(tutor.longitude) && tutor.latitude > 25) {
-    return { lat: tutor.latitude, lng: tutor.longitude };
-  }
-  if (tutor.serviceAreas && tutor.serviceAreas.length > 0) {
-    for (const area of tutor.serviceAreas) {
-      const match = POPULAR_GURGAON_SECTORS.find((s) => area.toLowerCase().includes(s.name.toLowerCase()) || s.name.toLowerCase().includes(area.toLowerCase()));
-      if (match) return { lat: match.lat, lng: match.lng };
-    }
-  }
-  return { lat: 28.4552, lng: 77.0945 }; // Default DLF Phase 5
-}
-
-/**
- * Formats distance into human-friendly Gurgaon travel text with color zones
- */
-export function getDistanceInfo(km: number) {
-  const approxMins = Math.max(5, Math.round(km * 3.5)); // ~3.5 mins per km in Gurgaon traffic
-  if (km < 0.6) {
-    return {
-      km,
-      distanceText: '~500 m away',
-      travelTime: '< 5 mins travel',
-      zone: 'green' as const,
-      badgeText: 'In Immediate Sector (Home Visit Ready)',
-      badgeColor: '#059669',
-      badgeBg: '#ECFDF5',
-      badgeBorder: '#A7F3D0',
-      circleColor: '#059669',
-    };
-  }
-  if (km < 1.0) {
-    return {
-      km,
-      distanceText: '~800 m away',
-      travelTime: '< 5 mins travel',
-      zone: 'green' as const,
-      badgeText: 'In Immediate Sector (Home Visit Ready)',
-      badgeColor: '#059669',
-      badgeBg: '#ECFDF5',
-      badgeBorder: '#A7F3D0',
-      circleColor: '#059669',
-    };
-  }
-  const distStr = km < 10 ? km.toFixed(1) : Math.round(km).toString();
-  if (km <= 3.5) {
-    return {
-      km,
-      distanceText: `~${distStr} km away`,
-      travelTime: `~${approxMins} mins travel`,
-      zone: 'green' as const,
-      badgeText: 'In Service Zone (Home Visit Ready)',
-      badgeColor: '#059669',
-      badgeBg: '#ECFDF5',
-      badgeBorder: '#A7F3D0',
-      circleColor: '#059669',
-    };
-  } else if (km <= 7.0) {
-    return {
-      km,
-      distanceText: `~${distStr} km away`,
-      travelTime: `~${approxMins} mins travel`,
-      zone: 'yellow' as const,
-      badgeText: 'Moderate Distance (Home Visit / Online)',
-      badgeColor: '#D97706',
-      badgeBg: '#FFFBEB',
-      badgeBorder: '#FDE68A',
-      circleColor: '#D97706',
-    };
-  } else {
-    return {
-      km,
-      distanceText: `~${distStr} km away`,
-      travelTime: `~${approxMins} mins travel`,
-      zone: 'red' as const,
-      badgeText: 'Far Distance (Online 1-on-1 Recommended)',
-      badgeColor: '#DC2626',
-      badgeBg: '#FEF2F2',
-      badgeBorder: '#FECACA',
-      circleColor: '#DC2626',
-    };
-  }
+  tutors?: MockTutor[];
 }
 
 export default function RapidoStyleMap({
   onLocationSelected,
   onOpenBookingForTutor,
   isCompact = false,
+  tutors: propTutors,
 }: RapidoStyleMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const popupMapRef = useRef<HTMLDivElement>(null);
 
   // Leaflet references
-  const [L, setL] = useState<any>(null);
-  const leafletMapInstanceRef = useRef<any>(null);
-  const leafletPopupMapInstanceRef = useRef<any>(null);
-  const leafletPopupMarkerRef = useRef<any>(null);
-  const tutorLayerGroupRef = useRef<any>(null);
-  const parentMarkerRef = useRef<any>(null);
-  const radiusCircleRef = useRef<any>(null);
+  const leafletMapInstanceRef = useRef<L.Map | null>(null);
+  const leafletPopupMapInstanceRef = useRef<L.Map | null>(null);
+  const leafletPopupMarkerRef = useRef<L.Marker | null>(null);
+  const tutorLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const parentMarkerRef = useRef<L.Marker | null>(null);
+  const radiusCircleRef = useRef<L.Circle | null>(null);
 
   // State values
+  const [isMapReady, setIsMapReady] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectedAddress, setDetectedAddress] = useState('DLF Phase 5, Golf Course Road, Gurugram');
   const [locationSource, setLocationSource] = useState<'SAVED' | 'GPS' | 'DEFAULT'>('DEFAULT');
-  const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>([]);
+  const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>(propTutors && propTutors.length > 0 ? propTutors : []);
   const [selectedTutor, setSelectedTutor] = useState<MockTutor | null>(null);
+
+  // Sync with prop tutors if passed from parent
+  useEffect(() => {
+    if (propTutors && propTutors.length > 0) {
+      setDynamicTutors(propTutors);
+    }
+  }, [propTutors]);
 
   // Location popup state
   const [showLocationPopup, setShowLocationPopup] = useState(false);
@@ -186,44 +90,52 @@ export default function RapidoStyleMap({
   // Current coordinates (Default: DLF Phase 5, Gurgaon)
   const [currentCoords, setCurrentCoords] = useState({ lat: 28.4552, lng: 77.0945 });
 
-  // 1. Fetch live verified teachers strictly from Database
+  // 1. Fetch live verified teachers only if not already provided by parent
   useEffect(() => {
+    if (propTutors && propTutors.length > 0) return;
     fetch('/api/tutors/list')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && Array.isArray(data.tutors)) {
+        if (data.success && Array.isArray(data.tutors) && data.tutors.length > 0) {
           setDynamicTutors(data.tutors);
-        } else {
-          setDynamicTutors([]);
         }
       })
-      .catch(() => setDynamicTutors([]));
-  }, []);
-
-  // 2. Preload Leaflet on client
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      import('leaflet').then((mod) => setL(mod.default));
-    }
-  }, []);
-
-  const handleReverseGeocode = useCallback(async (lat: number, lng: number): Promise<string> => {
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`, { headers: { 'Accept-Language': 'en' } });
-      const data = await res.json();
-      return data.display_name || 'Gurugram, Haryana';
-    } catch { return 'Gurugram, Haryana'; }
-  }, []);
+      .catch(() => {});
+  }, [propTutors]);
 
   const getNearestKnownSector = useCallback((lat: number, lng: number) => {
     let nearest = POPULAR_GURGAON_SECTORS[0];
     let minDistance = Infinity;
     for (const sector of POPULAR_GURGAON_SECTORS) {
       const d = Math.hypot(sector.lat - lat, sector.lng - lng);
-      if (d < minDistance) { minDistance = d; nearest = sector; }
+      if (d < minDistance) {
+        minDistance = d;
+        nearest = sector;
+      }
     }
     return minDistance < 0.15 ? nearest : null;
   }, []);
+
+  const handleReverseGeocode = useCallback(
+    async (lat: number, lng: number): Promise<string> => {
+      // Instant local resolution if close to known Gurgaon sector
+      const nearest = getNearestKnownSector(lat, lng);
+      if (nearest) {
+        return `${nearest.name}, ${nearest.landmark.split(',')[0]}, Gurugram`;
+      }
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`,
+          { headers: { 'Accept-Language': 'en' } }
+        );
+        const data = await res.json();
+        return data.display_name || 'Gurugram, Haryana';
+      } catch {
+        return 'Gurugram, Haryana';
+      }
+    },
+    [getNearestKnownSector]
+  );
 
   useEffect(() => {
     try {
@@ -236,52 +148,92 @@ export default function RapidoStyleMap({
           setPopupCoords({ lat: parsed.lat, lng: parsed.lng });
           setPopupAddress(parsed.address);
           setLocationSource('SAVED');
-          onLocationSelected({ address: parsed.address, lat: parsed.lat, lng: parsed.lng, nearestTutorsCount: 12 });
+          onLocationSelected({
+            address: parsed.address,
+            lat: parsed.lat,
+            lng: parsed.lng,
+            nearestTutorsCount: 12,
+          });
         }
       }
     } catch {}
   }, [onLocationSelected]);
 
   const sortedTutorsWithDistance = useMemo(() => {
-    return dynamicTutors.map((tutor, idx) => {
-      const tCoords = getTeacherCoordinates(tutor);
+    return dynamicTutors
+      .map((tutor, idx) => {
+        const tCoords = getTeacherCoordinates(tutor);
 
-      // Micro-jitter for pins in identical coordinates so they don't overlap on the map
-      const jitterAngle = (idx * 1.25) + 0.5;
-      const jitterDist = 0.0025 + ((idx % 3) * 0.0015);
-      const finalLat = tCoords.lat + jitterDist * Math.sin(jitterAngle);
-      const finalLng = tCoords.lng + jitterDist * Math.cos(jitterAngle);
+        // Micro-jitter for pins in identical coordinates so they don't overlap on the map
+        const jitterAngle = idx * 1.25 + 0.5;
+        const jitterDist = 0.0025 + (idx % 3) * 0.0015;
+        const finalLat = tCoords.lat + jitterDist * Math.sin(jitterAngle);
+        const finalLng = tCoords.lng + jitterDist * Math.cos(jitterAngle);
 
-      const km = calculateHaversineKm(currentCoords.lat, currentCoords.lng, tCoords.lat, tCoords.lng);
-      const distanceInfo = getDistanceInfo(km);
+        const km = calculateHaversineKm(
+          currentCoords.lat,
+          currentCoords.lng,
+          tCoords.lat,
+          tCoords.lng
+        );
+        const distanceInfo = getDistanceInfo(km);
 
-      return { ...tutor, computedLat: finalLat, computedLng: finalLng, distanceKm: km, distanceInfo };
-    }).sort((a, b) => a.distanceKm - b.distanceKm);
+        return {
+          ...tutor,
+          computedLat: finalLat,
+          computedLng: finalLng,
+          distanceKm: km,
+          distanceInfo,
+        };
+      })
+      .sort((a, b) => a.distanceKm - b.distanceKm);
   }, [dynamicTutors, currentCoords]);
-
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-    if (!query || query.trim().length === 0) { setSearchResults([]); return; }
+    if (!query || query.trim().length === 0) {
+      setSearchResults([]);
+      return;
+    }
     const q = query.toLowerCase().trim();
-    const localMatches = POPULAR_GURGAON_SECTORS.filter((s) => s.name.toLowerCase().includes(q) || s.landmark.toLowerCase().includes(q));
+    const localMatches = POPULAR_GURGAON_SECTORS.filter(
+      (s) => s.name.toLowerCase().includes(q) || s.landmark.toLowerCase().includes(q)
+    );
     setSearchResults(localMatches);
     if (q.length >= 3) {
       setIsSearching(true);
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Gurgaon')}&countrycodes=in&limit=4`, { headers: { 'Accept-Language': 'en' } })
+      fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          query + ', Gurgaon'
+        )}&countrycodes=in&limit=4`,
+        { headers: { 'Accept-Language': 'en' } }
+      )
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {
-            const osmResults = data.map((item) => ({ name: item.display_name.split(',')[0], landmark: item.display_name.split(',').slice(1, 3).join(',').trim(), lat: parseFloat(item.lat), lng: parseFloat(item.lon) }));
+            const osmResults = data.map((item) => ({
+              name: item.display_name.split(',')[0],
+              landmark: item.display_name.split(',').slice(1, 3).join(',').trim(),
+              lat: parseFloat(item.lat),
+              lng: parseFloat(item.lon),
+            }));
             const existingNames = new Set(localMatches.map((m) => m.name.toLowerCase()));
-            setSearchResults([...localMatches, ...osmResults.filter((o) => !existingNames.has(o.name.toLowerCase()))]);
+            setSearchResults([
+              ...localMatches,
+              ...osmResults.filter((o) => !existingNames.has(o.name.toLowerCase())),
+            ]);
           }
         })
         .finally(() => setIsSearching(false));
     }
   };
 
-  const handleSelectSearchResult = (result: { name: string; landmark?: string; lat: number; lng: number }) => {
+  const handleSelectSearchResult = (result: {
+    name: string;
+    landmark?: string;
+    lat: number;
+    lng: number;
+  }) => {
     setPopupCoords({ lat: result.lat, lng: result.lng });
     setPopupAddress(`${result.name}, ${result.landmark ? result.landmark + ', ' : ''}Gurugram`);
     setSearchQuery('');
@@ -292,37 +244,57 @@ export default function RapidoStyleMap({
     }
   };
 
-  const handleQuickSectorSelect = (sector: typeof POPULAR_GURGAON_SECTORS[0]) => {
+  const handleQuickSectorSelect = (sector: GurgaonSector) => {
     const addr = `${sector.name}, ${sector.landmark.split(',')[0]}, Gurugram`;
     setCurrentCoords({ lat: sector.lat, lng: sector.lng });
     setDetectedAddress(addr);
     setPopupCoords({ lat: sector.lat, lng: sector.lng });
     setPopupAddress(addr);
     setLocationSource('SAVED');
-    try { localStorage.setItem('user_detected_location', JSON.stringify({ address: addr, lat: sector.lat, lng: sector.lng })); } catch {}
-    if (leafletMapInstanceRef.current) leafletMapInstanceRef.current.setView([sector.lat, sector.lng], 14);
+    try {
+      localStorage.setItem(
+        'user_detected_location',
+        JSON.stringify({ address: addr, lat: sector.lat, lng: sector.lng })
+      );
+    } catch {}
+    if (leafletMapInstanceRef.current) {
+      leafletMapInstanceRef.current.setView([sector.lat, sector.lng], 14);
+    }
     onLocationSelected({ address: addr, lat: sector.lat, lng: sector.lng, nearestTutorsCount: 12 });
   };
 
+  // Main Map Lifecycle
   useEffect(() => {
-    if (!L || !mapContainerRef.current) return;
+    if (!mapContainerRef.current) return;
 
     if (!leafletMapInstanceRef.current) {
+      // Clean up leftover leaflet id if re-mounting
+      if ((mapContainerRef.current as any)._leaflet_id) {
+        delete (mapContainerRef.current as any)._leaflet_id;
+      }
+
       const map = L.map(mapContainerRef.current, {
         center: [currentCoords.lat, currentCoords.lng],
         zoom: 14,
         zoomControl: !isCompact,
         attributionControl: false,
       });
+
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 19,
+        subdomains: 'abcd',
         attribution: '&copy; OpenStreetMap &copy; CARTO',
       }).addTo(map);
+
       leafletMapInstanceRef.current = map;
       tutorLayerGroupRef.current = L.layerGroup().addTo(map);
-      setTimeout(() => map.invalidateSize(), 150);
+      setIsMapReady(true);
+      setTimeout(() => map.invalidateSize(), 100);
     } else {
-      leafletMapInstanceRef.current.setView([currentCoords.lat, currentCoords.lng], leafletMapInstanceRef.current.getZoom() || 14);
+      leafletMapInstanceRef.current.setView(
+        [currentCoords.lat, currentCoords.lng],
+        leafletMapInstanceRef.current.getZoom() || 14
+      );
     }
 
     const map = leafletMapInstanceRef.current;
@@ -330,8 +302,11 @@ export default function RapidoStyleMap({
 
     // Render Parent Marker
     if (parentMarkerRef.current) {
-      try { map.removeLayer(parentMarkerRef.current); } catch {}
+      try {
+        map.removeLayer(parentMarkerRef.current);
+      } catch {}
     }
+
     const parentIcon = L.divIcon({
       className: 'custom-parent-pin',
       html: `
@@ -347,7 +322,11 @@ export default function RapidoStyleMap({
       iconSize: [90, 56],
       iconAnchor: [45, 16],
     });
-    parentMarkerRef.current = L.marker([currentCoords.lat, currentCoords.lng], { icon: parentIcon, zIndexOffset: 1000 }).addTo(map);
+
+    parentMarkerRef.current = L.marker([currentCoords.lat, currentCoords.lng], {
+      icon: parentIcon,
+      zIndexOffset: 1000,
+    }).addTo(map);
 
     // Clear & Re-render Tutor Markers
     if (tutorLayerGroupRef.current) {
@@ -357,75 +336,198 @@ export default function RapidoStyleMap({
     }
 
     if (radiusCircleRef.current) {
-      try { map.removeLayer(radiusCircleRef.current); } catch {}
+      try {
+        map.removeLayer(radiusCircleRef.current);
+      } catch {}
       radiusCircleRef.current = null;
     }
 
-    const currentSelected = selectedTutor ? (sortedTutorsWithDistance.find((t) => t.id === selectedTutor.id) || null) : null;
+    const currentSelected = selectedTutor
+      ? sortedTutorsWithDistance.find((t) => t.id === selectedTutor.id) || null
+      : null;
 
     if (currentSelected) {
-      radiusCircleRef.current = L.circle([currentSelected.computedLat, currentSelected.computedLng], {
-        radius: 2800,
-        color: currentSelected.distanceInfo.circleColor,
-        fillOpacity: 0.07,
-        weight: 1.5,
-        dashArray: '5 5',
-      }).addTo(map);
+      radiusCircleRef.current = L.circle(
+        [currentSelected.computedLat, currentSelected.computedLng],
+        {
+          radius: 2800,
+          color: currentSelected.distanceInfo.circleColor,
+          fillOpacity: 0.07,
+          weight: 1.5,
+          dashArray: '5 5',
+        }
+      ).addTo(map);
     }
 
     map.on('click', () => {
       setSelectedTutor(null);
     });
 
-      sortedTutorsWithDistance.slice(0, 15).forEach((tutor) => {
-        const isSelected = currentSelected && currentSelected.id === tutor.id;
-        const tutorIcon = L.divIcon({
-          className: 'custom-tutor-pin',
-          html: `
-            <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: ${isSelected ? 'scale(1.18)' : 'scale(1)'}; transition: transform 0.2s ease;">
-              <div style="position: relative; width: 36px; height: 36px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.22); border: 2.5px solid ${isSelected ? '#0F766E' : tutor.distanceInfo.circleColor}; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-                <img src="${tutor.avatarUrl || '/placeholder-avatar.jpg'}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
-              </div>
-              <div style="display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 800; background: ${isSelected ? '#0F172A' : '#FFFFFF'}; color: ${isSelected ? '#FFFFFF' : '#0F172A'}; padding: 2px 7px; border-radius: 6px; border: 1px solid #CBD5E1; box-shadow: 0 2px 5px rgba(0,0,0,0.12); margin-top: -2px; white-space: nowrap;">
-                <span>${tutor.name.split(' ')[0]}</span>
-              </div>
+    sortedTutorsWithDistance.slice(0, 15).forEach((tutor) => {
+      const isSelected = currentSelected && currentSelected.id === tutor.id;
+      const tutorIcon = L.divIcon({
+        className: 'custom-tutor-pin',
+        html: `
+          <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: ${
+            isSelected ? 'scale(1.18)' : 'scale(1)'
+          }; transition: transform 0.2s ease;">
+            <div style="position: relative; width: 36px; height: 36px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.22); border: 2.5px solid ${
+              isSelected ? '#0F766E' : tutor.distanceInfo.circleColor
+            }; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+              <img src="${
+                tutor.avatarUrl || '/placeholder-avatar.jpg'
+              }" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
             </div>
-          `,
-          iconSize: [80, 56],
-          iconAnchor: [40, 18],
-        });
-
-        const popupHtml = `
-          <div style="font-family: inherit; padding: 4px; min-width: 200px; text-align: left;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-              <img src="${tutor.avatarUrl || '/placeholder-avatar.jpg'}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1.5px solid #0F6E56;" />
-              <div style="flex: 1; min-width: 0;">
-                <div style="font-weight: 800; font-size: 0.9rem; color: #0F172A; line-height: 1.2;">${tutor.name}</div>
-                <div style="font-size: 0.72rem; color: #64748B; margin-top: 1px;">${tutor.highestDegree || 'Verified Educator'}</div>
-              </div>
-            </div>
-            <div style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 700; background: ${tutor.distanceInfo.badgeBg}; color: ${tutor.distanceInfo.badgeColor}; padding: 3px 6px; border-radius: 6px; border: 1px solid ${tutor.distanceInfo.badgeBorder}; margin-bottom: 8px; width: 100%; box-sizing: border-box;">
-              <span>🟢 ${tutor.distanceInfo.distanceText} (${tutor.distanceInfo.travelTime})</span>
-            </div>
-            <div style="display: flex; gap: 6px;">
-              <a href="/tutors/${tutor.id}" style="flex: 1; text-align: center; font-size: 0.72rem; font-weight: 700; background: #F1F5F9; color: #0F172A; padding: 6px 8px; border-radius: 6px; text-decoration: none; border: 1px solid #CBD5E1;">View Profile</a>
-              <a href="https://wa.me/919217031899?text=${encodeURIComponent(`Hello SSSAM, I want to book a home teacher in ${detectedAddress} (${tutor.name}).`)}" target="_blank" rel="noopener noreferrer" style="font-size: 0.72rem; font-weight: 700; background: #25D366; color: #FFFFFF; padding: 6px 8px; border-radius: 6px; text-decoration: none;">WhatsApp</a>
+            <div style="display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 800; background: ${
+              isSelected ? '#0F172A' : '#FFFFFF'
+            }; color: ${
+          isSelected ? '#FFFFFF' : '#0F172A'
+        }; padding: 2px 7px; border-radius: 6px; border: 1px solid #CBD5E1; box-shadow: 0 2px 5px rgba(0,0,0,0.12); margin-top: -2px; white-space: nowrap;">
+              <span>${tutor.name.split(' ')[0]}</span>
             </div>
           </div>
-        `;
+        `,
+        iconSize: [80, 56],
+        iconAnchor: [40, 18],
+      });
 
-        const tMarker = L.marker([tutor.computedLat, tutor.computedLng], { icon: tutorIcon, zIndexOffset: isSelected ? 500 : 100 }).addTo(tutorLayerGroupRef.current);
+      const popupHtml = `
+        <div style="font-family: inherit; padding: 4px; min-width: 200px; text-align: left;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+            <img src="${
+              tutor.avatarUrl || '/placeholder-avatar.jpg'
+            }" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1.5px solid #0F6E56;" />
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 800; font-size: 0.9rem; color: #0F172A; line-height: 1.2;">${
+                tutor.name
+              }</div>
+              <div style="font-size: 0.72rem; color: #64748B; margin-top: 1px;">${
+                tutor.highestDegree || 'Verified Educator'
+              }</div>
+            </div>
+          </div>
+          <div style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 700; background: ${
+            tutor.distanceInfo.badgeBg
+          }; color: ${tutor.distanceInfo.badgeColor}; padding: 3px 6px; border-radius: 6px; border: 1px solid ${
+        tutor.distanceInfo.badgeBorder
+      }; margin-bottom: 8px; width: 100%; box-sizing: border-box;">
+            <span>🟢 ${tutor.distanceInfo.distanceText} (${
+        tutor.distanceInfo.travelTime
+      })</span>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <a href="/tutors/${
+              tutor.id
+            }" style="flex: 1; text-align: center; font-size: 0.72rem; font-weight: 700; background: #F1F5F9; color: #0F172A; padding: 6px 8px; border-radius: 6px; text-decoration: none; border: 1px solid #CBD5E1;">View Profile</a>
+            <a href="https://wa.me/919217031899?text=${encodeURIComponent(
+              `Hello SSSAM, I want to book a home teacher in ${detectedAddress} (${tutor.name}).`
+            )}" target="_blank" rel="noopener noreferrer" style="font-size: 0.72rem; font-weight: 700; background: #25D366; color: #FFFFFF; padding: 6px 8px; border-radius: 6px; text-decoration: none;">WhatsApp</a>
+          </div>
+        </div>
+      `;
+
+      if (tutorLayerGroupRef.current) {
+        const tMarker = L.marker([tutor.computedLat, tutor.computedLng], {
+          icon: tutorIcon,
+          zIndexOffset: isSelected ? 500 : 100,
+        }).addTo(tutorLayerGroupRef.current);
         tMarker.bindPopup(popupHtml, { offset: [0, -16] });
         tMarker.on('click', () => {
           setSelectedTutor(tutor);
           tMarker.openPopup();
         });
-      });
-    }, [L, isCompact, currentCoords, sortedTutorsWithDistance, selectedTutor]);
+      }
+    });
+  }, [isCompact, currentCoords, sortedTutorsWithDistance, selectedTutor, detectedAddress]);
 
-    const handleAutoDetectGPS = () => {
-      setIsDetecting(true);
-      navigator.geolocation.getCurrentPosition(async (pos) => {
+  // Modal Popup Map Lifecycle
+  useEffect(() => {
+    if (!showLocationPopup || !popupMapRef.current) return;
+
+    const timer = setTimeout(() => {
+      if (!popupMapRef.current) return;
+      if (leafletPopupMapInstanceRef.current) {
+        try {
+          leafletPopupMapInstanceRef.current.remove();
+        } catch {}
+        leafletPopupMapInstanceRef.current = null;
+      }
+      if ((popupMapRef.current as any)._leaflet_id) {
+        delete (popupMapRef.current as any)._leaflet_id;
+      }
+
+      const map = L.map(popupMapRef.current, {
+        center: [popupCoords.lat, popupCoords.lng],
+        zoom: 15,
+        zoomControl: true,
+        attributionControl: false,
+      });
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        subdomains: 'abcd',
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+      }).addTo(map);
+
+      const pinIcon = L.divIcon({
+        className: 'custom-parent-pin',
+        html: `
+          <div style="display: flex; flex-direction: column; align-items: center; cursor: grab;">
+            <div style="width: 34px; height: 34px; border-radius: 50%; background: #0F6E56; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(15,110,86,0.6);">
+              <div style="width: 10px; height: 10px; border-radius: 50%; background: #FFFFFF;"></div>
+            </div>
+            <div style="width: 3px; height: 14px; background: #0F6E56; margin-top: -2px;"></div>
+          </div>
+        `,
+        iconSize: [34, 48],
+        iconAnchor: [17, 48],
+      });
+
+      const marker = L.marker([popupCoords.lat, popupCoords.lng], {
+        icon: pinIcon,
+        draggable: true,
+      }).addTo(map);
+
+      leafletPopupMarkerRef.current = marker;
+      leafletPopupMapInstanceRef.current = map;
+
+      const onPosChanged = async (lat: number, lng: number) => {
+        setPopupCoords({ lat, lng });
+        setIsReverseGeocoding(true);
+        const addr = await handleReverseGeocode(lat, lng);
+        setPopupAddress(addr);
+        setIsReverseGeocoding(false);
+      };
+
+      marker.on('dragend', async () => {
+        const pos = marker.getLatLng();
+        await onPosChanged(pos.lat, pos.lng);
+      });
+
+      map.on('click', async (e: any) => {
+        marker.setLatLng(e.latlng);
+        await onPosChanged(e.latlng.lat, e.latlng.lng);
+      });
+
+      map.invalidateSize();
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (leafletPopupMapInstanceRef.current) {
+        try {
+          leafletPopupMapInstanceRef.current.remove();
+        } catch {}
+        leafletPopupMapInstanceRef.current = null;
+      }
+      leafletPopupMarkerRef.current = null;
+    };
+  }, [showLocationPopup, popupCoords.lat, popupCoords.lng, handleReverseGeocode]);
+
+  const handleAutoDetectGPS = () => {
+    setIsDetecting(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords;
         setCurrentCoords({ lat, lng });
         setPopupCoords({ lat, lng });
@@ -439,33 +541,56 @@ export default function RapidoStyleMap({
         setDetectedAddress(resolved);
         setIsDetecting(false);
         onLocationSelected({ address: resolved, lat, lng, nearestTutorsCount: 12 });
-      }, () => {
+      },
+      () => {
         setIsDetecting(false);
         setShowLocationPopup(true);
-      }, { enableHighAccuracy: true });
-    };
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  };
 
-    const handleConfirmLocation = () => {
-      setCurrentCoords(popupCoords);
-      setDetectedAddress(popupAddress);
-      setLocationSource('SAVED');
-      setShowLocationPopup(false);
+  const handleConfirmLocation = () => {
+    setCurrentCoords(popupCoords);
+    setDetectedAddress(popupAddress);
+    setLocationSource('SAVED');
+    setShowLocationPopup(false);
 
-      if (leafletMapInstanceRef.current) {
-        leafletMapInstanceRef.current.flyTo([popupCoords.lat, popupCoords.lng], 15, { animate: true, duration: 1.2 });
-      }
+    if (leafletMapInstanceRef.current) {
+      leafletMapInstanceRef.current.flyTo([popupCoords.lat, popupCoords.lng], 15, {
+        animate: true,
+        duration: 1.2,
+      });
+    }
 
-      try { localStorage.setItem('user_detected_location', JSON.stringify({ address: popupAddress, lat: popupCoords.lat, lng: popupCoords.lng })); } catch {}
-      onLocationSelected({ address: popupAddress, lat: popupCoords.lat, lng: popupCoords.lng, nearestTutorsCount: 12 });
-    };
+    try {
+      localStorage.setItem(
+        'user_detected_location',
+        JSON.stringify({ address: popupAddress, lat: popupCoords.lat, lng: popupCoords.lng })
+      );
+    } catch {}
+    onLocationSelected({
+      address: popupAddress,
+      lat: popupCoords.lat,
+      lng: popupCoords.lng,
+      nearestTutorsCount: 12,
+    });
+  };
 
-    const activeTutorDetail = selectedTutor ? (sortedTutorsWithDistance.find((t) => t.id === selectedTutor.id) || null) : null;
-    const whatsappInquiryUrl = activeTutorDetail ? `https://wa.me/919217031899?text=${encodeURIComponent(`Hello SSSAM, looking for a teacher in ${detectedAddress}. Interested in ${activeTutorDetail.name}.`)}` : '#';
+  const activeTutorDetail = selectedTutor
+    ? sortedTutorsWithDistance.find((t) => t.id === selectedTutor.id) || null
+    : null;
+  const whatsappInquiryUrl = activeTutorDetail
+    ? `https://wa.me/919217031899?text=${encodeURIComponent(
+        `Hello SSSAM, looking for a teacher in ${detectedAddress}. Interested in ${activeTutorDetail.name}.`
+      )}`
+    : '#';
 
-    return (
+  return (
     <>
       <style jsx global>{`
-        .custom-parent-pin, .custom-tutor-pin {
+        .custom-parent-pin,
+        .custom-tutor-pin {
           background: transparent !important;
           border: none !important;
         }
@@ -480,12 +605,39 @@ export default function RapidoStyleMap({
           }
         }
       `}</style>
-      <div style={{ padding: isCompact ? '0.25rem' : '1.25rem', backgroundColor: '#FFFFFF', borderRadius: isCompact ? '0px' : '24px', border: isCompact ? 'none' : '1px solid #E2E8F0' }}>
+      <div
+        style={{
+          padding: isCompact ? '0.25rem' : '1.25rem',
+          backgroundColor: '#FFFFFF',
+          borderRadius: isCompact ? '0px' : '24px',
+          border: isCompact ? 'none' : '1px solid #E2E8F0',
+        }}
+      >
         {!isCompact && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              marginBottom: '1rem',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+            }}
+          >
             <div>
-              <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#059669', letterSpacing: '0.04em' }}>LIVE PROXIMITY ENGINE</div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '2px 0 0 0', color: '#0F172A' }}>Verified Teachers in Your Sector</h3>
+              <div
+                style={{
+                  fontSize: '0.74rem',
+                  fontWeight: 800,
+                  color: '#059669',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                LIVE PROXIMITY ENGINE
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '2px 0 0 0', color: '#0F172A' }}>
+                Verified Teachers in Your Sector
+              </h3>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
@@ -507,7 +659,11 @@ export default function RapidoStyleMap({
               </button>
               <button
                 type="button"
-                onClick={() => setShowLocationPopup(true)}
+                onClick={() => {
+                  setPopupCoords(currentCoords);
+                  setPopupAddress(detectedAddress);
+                  setShowLocationPopup(true);
+                }}
                 style={{
                   fontSize: '0.8rem',
                   fontWeight: 800,
@@ -525,67 +681,172 @@ export default function RapidoStyleMap({
         )}
 
         {/* Outer Map Frame with Floating In-Map Overlays */}
-        <div style={{
-          position: 'relative',
-          height: isCompact ? '280px' : '440px',
-          borderRadius: '18px',
-          overflow: 'hidden',
-          border: '1.5px solid #CBD5E1',
-          backgroundColor: '#E2E8F0',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-        }}>
+        <div
+          style={{
+            position: 'relative',
+            height: isCompact ? '280px' : '440px',
+            borderRadius: '18px',
+            overflow: 'hidden',
+            border: '1.5px solid #CBD5E1',
+            backgroundColor: '#F1F5F9',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+          }}
+        >
+          {/* Skeleton Loader during initial tile render */}
+          {!isMapReady && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#F8FAFC',
+                zIndex: 2,
+                gap: '0.5rem',
+                color: '#0F6E56',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+              }}
+            >
+              <Loader2 size={20} className="animate-spin" />
+              <span>Loading Gurgaon Interactive Map...</span>
+            </div>
+          )}
+
           {/* Leaflet Map Canvas */}
           <div ref={mapContainerRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
 
-          {/* Floating In-Map Teacher Profile Card (Opens directly inside the map) */}
+          {/* Floating In-Map Teacher Profile Card */}
           {activeTutorDetail && (
-            <div style={{
-              position: 'absolute',
-              bottom: '10px',
-              left: '10px',
-              right: '10px',
-              zIndex: 1000,
-              backgroundColor: 'rgba(255, 255, 255, 0.97)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: `1.5px solid ${activeTutorDetail.distanceInfo.badgeBorder}`,
-              borderRadius: '14px',
-              padding: '0.85rem 1rem',
-              boxShadow: '0 8px 30px rgba(15, 23, 42, 0.18)',
-              animation: 'slideUpMapCard 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.65rem' }}>
-                <Link href={`/tutors/${activeTutorDetail.id}`} style={{ position: 'relative', display: 'block', flexShrink: 0 }}>
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '10px',
+                left: '10px',
+                right: '10px',
+                zIndex: 1000,
+                backgroundColor: 'rgba(255, 255, 255, 0.97)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                border: `1.5px solid ${activeTutorDetail.distanceInfo.badgeBorder}`,
+                borderRadius: '14px',
+                padding: '0.85rem 1rem',
+                boxShadow: '0 8px 30px rgba(15, 23, 42, 0.18)',
+                animation: 'slideUpMapCard 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  marginBottom: '0.65rem',
+                }}
+              >
+                <Link
+                  href={`/tutors/${activeTutorDetail.id}`}
+                  style={{ position: 'relative', display: 'block', flexShrink: 0 }}
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={activeTutorDetail.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+                    src={
+                      activeTutorDetail.avatarUrl ||
+                      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+                    }
                     alt={activeTutorDetail.name}
-                    style={{ width: '46px', height: '46px', borderRadius: '12px', border: '2px solid #059669', objectFit: 'cover' }}
+                    style={{
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: '12px',
+                      border: '2px solid #059669',
+                      objectFit: 'cover',
+                    }}
                   />
-                  <span style={{ position: 'absolute', bottom: '-3px', right: '-3px', backgroundColor: '#059669', borderRadius: '50%', width: '15px', height: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', border: '1.5px solid #FFFFFF' }}>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      bottom: '-3px',
+                      right: '-3px',
+                      backgroundColor: '#059669',
+                      borderRadius: '50%',
+                      width: '15px',
+                      height: '15px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#FFFFFF',
+                      border: '1.5px solid #FFFFFF',
+                    }}
+                  >
                     <ShieldCheck size={9} />
                   </span>
                 </Link>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.4rem',
+                    }}
+                  >
                     <Link href={`/tutors/${activeTutorDetail.id}`} style={{ textDecoration: 'none' }}>
-                      <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div
+                        style={{
+                          fontSize: '0.98rem',
+                          fontWeight: 800,
+                          color: '#0F172A',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
                         {activeTutorDetail.name}
                       </div>
                     </Link>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F6E56', backgroundColor: '#ECFDF5', padding: '1px 6px', borderRadius: '4px', border: '1px solid #A7F3D0', flexShrink: 0 }}>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        color: '#0F6E56',
+                        backgroundColor: '#ECFDF5',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        border: '1px solid #A7F3D0',
+                        flexShrink: 0,
+                      }}
+                    >
                       ₹{activeTutorDetail.hourlyRateHome || 600}/hr
                     </span>
                   </div>
 
-                  <div style={{ fontSize: '0.74rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '1px', flexWrap: 'wrap' }}>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
+                  <div
+                    style={{
+                      fontSize: '0.74rem',
+                      color: '#64748B',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      marginTop: '1px',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <span
+                      style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: '140px',
+                      }}
+                    >
                       🎓 {activeTutorDetail.highestDegree || 'Verified Teacher'}
                     </span>
                     <span>•</span>
                     <span style={{ color: activeTutorDetail.distanceInfo.badgeColor, fontWeight: 700 }}>
-                      🟢 {activeTutorDetail.distanceInfo.distanceText} ({activeTutorDetail.distanceInfo.travelTime})
+                      🟢 {activeTutorDetail.distanceInfo.distanceText} (
+                      {activeTutorDetail.distanceInfo.travelTime})
                     </span>
                   </div>
                 </div>
@@ -616,7 +877,18 @@ export default function RapidoStyleMap({
                 <Link
                   href={`/tutors/${activeTutorDetail.id}`}
                   className="btn btn-secondary btn-sm"
-                  style={{ flex: '1 1 95px', padding: '0.45rem 0.65rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, textAlign: 'center', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
+                  style={{
+                    flex: '1 1 95px',
+                    padding: '0.45rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    textAlign: 'center',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.25rem',
+                  }}
                 >
                   <span>Profile</span>
                   <ArrowUpRight size={13} />
@@ -625,7 +897,14 @@ export default function RapidoStyleMap({
                   type="button"
                   onClick={() => onOpenBookingForTutor?.(activeTutorDetail)}
                   className="btn btn-primary btn-sm"
-                  style={{ flex: '1 1 125px', padding: '0.45rem 0.65rem', borderRadius: '8px', backgroundColor: '#0F6E56', fontSize: '0.78rem', fontWeight: 800 }}
+                  style={{
+                    flex: '1 1 125px',
+                    padding: '0.45rem 0.65rem',
+                    borderRadius: '8px',
+                    backgroundColor: '#0F6E56',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                  }}
                 >
                   Request Visit
                 </button>
@@ -633,7 +912,18 @@ export default function RapidoStyleMap({
                   href={whatsappInquiryUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ padding: '0.45rem 0.75rem', borderRadius: '8px', backgroundColor: '#25D366', color: '#FFFFFF', textDecoration: 'none', fontWeight: 700, fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                  style={{
+                    padding: '0.45rem 0.75rem',
+                    borderRadius: '8px',
+                    backgroundColor: '#25D366',
+                    color: '#FFFFFF',
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.78rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                  }}
                 >
                   <MessageCircle size={14} />
                   <span>WhatsApp</span>
@@ -769,6 +1059,41 @@ export default function RapidoStyleMap({
                 )}
               </div>
 
+              {/* Quick Sectors Pill Strip */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '0.35rem',
+                  overflowX: 'auto',
+                  padding: '0.5rem 0 0.25rem',
+                  scrollbarWidth: 'none',
+                }}
+              >
+                {POPULAR_GURGAON_SECTORS.slice(0, 6).map((sec) => (
+                  <button
+                    key={sec.name}
+                    type="button"
+                    onClick={() => {
+                      handleQuickSectorSelect(sec);
+                      setShowLocationPopup(false);
+                    }}
+                    style={{
+                      whiteSpace: 'nowrap',
+                      padding: '0.25rem 0.6rem',
+                      borderRadius: '6px',
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      color: '#0F6E56',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {sec.name}
+                  </button>
+                ))}
+              </div>
+
               {/* Autocomplete Dropdown */}
               {searchResults.length > 0 && (
                 <div
@@ -804,9 +1129,19 @@ export default function RapidoStyleMap({
                     >
                       <MapPin size={14} color="#0F6E56" style={{ flexShrink: 0 }} />
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0F172A' }}>{res.name}</div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0F172A' }}>
+                          {res.name}
+                        </div>
                         {res.landmark && (
-                          <div style={{ fontSize: '0.72rem', color: '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div
+                            style={{
+                              fontSize: '0.72rem',
+                              color: '#64748B',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
                             {res.landmark}
                           </div>
                         )}
@@ -879,8 +1214,8 @@ export default function RapidoStyleMap({
                   padding: '0.45rem 0.9rem',
                   borderRadius: '999px',
                   border: 'none',
-                  background: isReverseGeocoding 
-                    ? '#94A3B8' 
+                  background: isReverseGeocoding
+                    ? '#94A3B8'
                     : 'linear-gradient(135deg, #0F6E56 0%, #0D9488 100%)',
                   color: '#FFFFFF',
                   fontWeight: 800,
@@ -889,7 +1224,9 @@ export default function RapidoStyleMap({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.4rem',
-                  animation: isReverseGeocoding ? 'none' : 'gpsFloatingPulseMap 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1)',
+                  animation: isReverseGeocoding
+                    ? 'none'
+                    : 'gpsFloatingPulseMap 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1)',
                   transition: 'all 0.2s ease',
                 }}
               >
@@ -907,17 +1244,37 @@ export default function RapidoStyleMap({
 
             {/* Address Details & Confirm */}
             <div style={{ padding: '1.25rem 1.5rem' }}>
-              <div style={{
-                backgroundColor: '#F8FAFC',
-                border: '1px solid #E2E8F0',
-                borderRadius: '12px',
-                padding: '0.85rem 1rem',
-                marginBottom: '1rem',
-              }}>
-                <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.3rem' }}>
+              <div
+                style={{
+                  backgroundColor: '#F8FAFC',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '12px',
+                  padding: '0.85rem 1rem',
+                  marginBottom: '1rem',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    color: '#94A3B8',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    marginBottom: '0.3rem',
+                  }}
+                >
                   DETECTED ADDRESS
                 </div>
-                <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <div
+                  style={{
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    color: '#0F172A',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
                   {isReverseGeocoding ? (
                     <span style={{ color: '#94A3B8', fontWeight: 600 }}>Detecting address...</span>
                   ) : (
@@ -934,10 +1291,19 @@ export default function RapidoStyleMap({
                 onClick={handleConfirmLocation}
                 disabled={isReverseGeocoding || !popupAddress}
                 style={{
-                  width: '100%', padding: '0.85rem', borderRadius: '12px', border: 'none',
-                  background: popupAddress ? '#0F6E56' : '#CBD5E1', color: '#FFFFFF',
-                  fontWeight: 800, fontSize: '0.92rem', cursor: popupAddress ? 'pointer' : 'not-allowed',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem',
+                  width: '100%',
+                  padding: '0.85rem',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: popupAddress ? '#0F6E56' : '#CBD5E1',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: '0.92rem',
+                  cursor: popupAddress ? 'pointer' : 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.45rem',
                   boxShadow: popupAddress ? '0 4px 14px rgba(15,110,86,0.3)' : 'none',
                 }}
               >

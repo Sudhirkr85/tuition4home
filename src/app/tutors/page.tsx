@@ -11,7 +11,7 @@ import {
   getDistanceInfo,
   getTeacherCoordinates,
   POPULAR_GURGAON_SECTORS,
-} from '@/components/RapidoStyleMap';
+} from '@/lib/geo';
 import {
   Search,
   MapPin,

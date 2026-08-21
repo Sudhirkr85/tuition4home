@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { MapPin, Clock, CheckCircle2, ShieldCheck } from 'lucide-react';
-import { calculateHaversineKm, getDistanceInfo, POPULAR_GURGAON_SECTORS } from '@/components/RapidoStyleMap';
+import { calculateHaversineKm, getDistanceInfo, POPULAR_GURGAON_SECTORS } from '@/lib/geo';
 
 interface TutorDistanceBadgeProps {
   tutorLatitude?: number;

@@ -6,14 +6,19 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // 1. Fetch all SEO localities from database
+    // 1. Fetch active localities from database
     const dbLocalities = await prisma.localitySEO.findMany({
       where: { isActive: true },
+      select: {
+        slug: true,
+        name: true,
+        pincode: true,
+      },
     });
 
-    // 2. Fetch all active verified tutors from MySQL database to calculate live sector tutor counts
+    // 2. Fetch tutor service areas with minimal columns
     const activeTutors = await prisma.tutorProfile.findMany({
-      where: { status: 'ACTIVE_VERIFIED' },
+      where: { status: 'ACTIVE_VERIFIED', isAvailable: true },
       select: { serviceAreas: true },
     });
 
@@ -47,21 +52,31 @@ export async function GET() {
       };
     });
 
-    const totalTutors = await prisma.tutorProfile.count({
-      where: { status: 'ACTIVE_VERIFIED' },
-    });
-
-    return NextResponse.json({
-      success: true,
-      localities,
-      totalTutorsCount: totalTutors,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        localities,
+        totalTutorsCount: activeTutors.length,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        },
+      }
+    );
   } catch (error: any) {
     console.error('Failed to fetch dynamic localities:', error);
-    return NextResponse.json({
-      success: true,
-      localities: GURGAON_LOCALITIES,
-      totalTutorsCount: 100,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        localities: GURGAON_LOCALITIES,
+        totalTutorsCount: 100,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        },
+      }
+    );
   }
 }

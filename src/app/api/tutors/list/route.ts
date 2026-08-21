@@ -3,6 +3,22 @@ import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
+// Helper to sanitize avatar url so heavy base64 strings don't bloat JSON payload
+function sanitizeAvatarUrl(url: string | null | undefined, gender?: string): string {
+  if (!url) {
+    return gender === 'MALE'
+      ? '/tutor_rohit_sharma_avatar.webp'
+      : '/tutor_ananya_sengupta_avatar.webp';
+  }
+  // If raw base64 data URI exceeds 500 chars, use lightweight fallback to prevent multi-megabyte payloads
+  if (url.startsWith('data:image/') && url.length > 500) {
+    return gender === 'MALE'
+      ? '/tutor_rohit_sharma_avatar.webp'
+      : '/tutor_ananya_sengupta_avatar.webp';
+  }
+  return url;
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -10,12 +26,39 @@ export async function GET(req: Request) {
     const locality = searchParams.get('locality');
     const search = searchParams.get('q');
 
+    // 1. Fetch only active verified tutors without heavy kycDoc joins
     const tutorProfiles = await prisma.tutorProfile.findMany({
       where: {
         status: 'ACTIVE_VERIFIED',
         isAvailable: true,
       },
-      include: {
+      select: {
+        id: true,
+        avatarUrl: true,
+        introVideoUrl: true,
+        highestDegree: true,
+        experienceYears: true,
+        teachingMode: true,
+        subjects: true,
+        classes: true,
+        boards: true,
+        serviceAreas: true,
+        travelRadiusKm: true,
+        latitude: true,
+        longitude: true,
+        hourlyRateHome: true,
+        hourlyRateHomeMin: true,
+        hourlyRateHomeMax: true,
+        hourlyRateOnline: true,
+        hourlyRateOnlineMin: true,
+        hourlyRateOnlineMax: true,
+        monthlyRateMin: true,
+        isVerified: true,
+        hasPoliceCheck: true,
+        gender: true,
+        rating: true,
+        totalReviews: true,
+        bio: true,
         user: {
           select: {
             name: true,
@@ -23,11 +66,10 @@ export async function GET(req: Request) {
             phone: true,
           },
         },
-        kycDoc: true,
         reviews: {
           where: { isApproved: true },
-          select: { rating: true }
-        }
+          select: { rating: true },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -67,16 +109,21 @@ export async function GET(req: Request) {
 
       const approvedRev = tp.reviews || [];
       const reviewCount = approvedRev.length;
-      const calculatedRating = reviewCount > 0
-        ? Math.round((approvedRev.reduce((acc: number, r: any) => acc + r.rating, 0) / reviewCount) * 10) / 10
-        : (tp.rating && Number(tp.rating) > 0 ? Number(tp.rating) : 0);
+      const calculatedRating =
+        reviewCount > 0
+          ? Math.round(
+              (approvedRev.reduce((acc: number, r: any) => acc + r.rating, 0) / reviewCount) * 10
+            ) / 10
+          : tp.rating && Number(tp.rating) > 0
+          ? Number(tp.rating)
+          : 0;
 
       return {
         id: tp.id,
-        name: tp.user.name,
-        phone: tp.user.phone || '9811204921',
-        email: tp.user.email,
-        avatarUrl: tp.avatarUrl || '',
+        name: tp.user?.name || 'Verified Educator',
+        phone: tp.user?.phone || '9811204921',
+        email: tp.user?.email || '',
+        avatarUrl: sanitizeAvatarUrl(tp.avatarUrl, tp.gender),
         introVideoUrl: tp.introVideoUrl || '',
         videoDuration: tp.introVideoUrl ? '1m 20s' : '',
         highestDegree: tp.highestDegree || '',
@@ -91,7 +138,9 @@ export async function GET(req: Request) {
         longitude: tp.longitude || null,
         hourlyRateHome: tp.hourlyRateHome || tp.hourlyRateHomeMin || 500,
         hourlyRateHomeMin: tp.hourlyRateHomeMin || tp.hourlyRateHome || 500,
-        hourlyRateHomeMax: tp.hourlyRateHomeMax || (tp.hourlyRateHome ? Math.round((tp.hourlyRateHome * 1.5) / 50) * 50 : 1000),
+        hourlyRateHomeMax:
+          tp.hourlyRateHomeMax ||
+          (tp.hourlyRateHome ? Math.round((tp.hourlyRateHome * 1.5) / 50) * 50 : 1000),
         hourlyRateOnline: tp.hourlyRateOnline || tp.hourlyRateOnlineMin || 400,
         hourlyRateOnlineMin: tp.hourlyRateOnlineMin || tp.hourlyRateOnline || 400,
         hourlyRateOnlineMax: tp.hourlyRateOnlineMax || 800,
@@ -109,12 +158,16 @@ export async function GET(req: Request) {
     // Apply query filters if provided
     if (subject) {
       const sLower = subject.toLowerCase();
-      tutors = tutors.filter((t: any) => t.subjects.some((s: string) => s.toLowerCase().includes(sLower)));
+      tutors = tutors.filter((t: any) =>
+        t.subjects.some((s: string) => s.toLowerCase().includes(sLower))
+      );
     }
 
     if (locality) {
       const locLower = locality.toLowerCase();
-      tutors = tutors.filter((t: any) => t.serviceAreas.some((a: string) => a.toLowerCase().includes(locLower)));
+      tutors = tutors.filter((t: any) =>
+        t.serviceAreas.some((a: string) => a.toLowerCase().includes(locLower))
+      );
     }
 
     if (search) {
@@ -128,11 +181,18 @@ export async function GET(req: Request) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      count: tutors.length,
-      tutors,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        count: tutors.length,
+        tutors,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+        },
+      }
+    );
   } catch (error: any) {
     console.error('Error fetching dynamic tutors:', error);
     return NextResponse.json(

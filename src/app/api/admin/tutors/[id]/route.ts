@@ -129,7 +129,6 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     if (body.avatarUrl !== undefined) profileUpdates.avatarUrl = body.avatarUrl;
     if (body.introVideoUrl !== undefined) profileUpdates.introVideoUrl = body.introVideoUrl;
-    if (body.videoThumbnailUrl !== undefined) profileUpdates.videoThumbnailUrl = body.videoThumbnailUrl;
     if (body.bio !== undefined) profileUpdates.bio = body.bio;
     if (body.highestDegree !== undefined) profileUpdates.highestDegree = body.highestDegree;
     if (body.gender !== undefined) profileUpdates.gender = body.gender;

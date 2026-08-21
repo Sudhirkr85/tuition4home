@@ -37,7 +37,7 @@ import {
   getDistanceInfo,
   getTeacherCoordinates,
   POPULAR_GURGAON_SECTORS,
-} from '@/components/RapidoStyleMap';
+} from '@/lib/geo';
 import {
   Sparkles,
   ShieldCheck,
@@ -535,6 +535,7 @@ export default function HomePage() {
           <section aria-label="Interactive Gurgaon Tutor Map" style={{ padding: '3.5rem 0 1rem 0' }}>
             <div className="container">
               <RapidoStyleMap
+                tutors={dynamicTutors}
                 onOpenBookingForTutor={(tutor) => handleOpenBooking(tutor)}
                 onLocationSelected={(data) => {
                   if (data.address) {
