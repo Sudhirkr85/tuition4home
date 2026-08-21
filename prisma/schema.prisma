@@ -106,8 +106,6 @@ model TutorProfile {
   isVerified        Boolean      @default(false)
   isAvailable       Boolean      @default(true) // Active / Inactive service availability toggle
   hasPoliceCheck    Boolean      @default(false) // Gold background check badge
-  interviewScore    Int?         // 1 to 10
-  interviewNotes    String?      @db.Text
   rating            Float        @default(5.0)
   totalReviews      Int          @default(0)
   createdAt         DateTime     @default(now())
@@ -137,8 +135,6 @@ model TutorKYC {
   degreeDocUrl     String?      @db.LongText // Secure Cloudinary URL or Data URI for Highest Qualification Degree/Marksheet
   degreeStatus     String       @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
   degreeRejectionNote String?   @db.Text
-  verificationDate DateTime?
-  verifiedByAdmin  String?      // Admin/Caller User ID who verified
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 }
