@@ -342,31 +342,158 @@ export default async function TutorProfilePage({ params }: PageProps) {
             </Link>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1.8fr) minmax(320px, 380px)',
-            gap: '2.5rem',
-            alignItems: 'start',
-          }} className="tutor-profile-grid">
+          <style>{`
+            @keyframes avatarPulse {
+              0%, 100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.35), 0 8px 24px rgba(15, 110, 86, 0.12); }
+              50% { box-shadow: 0 0 0 8px rgba(5, 150, 105, 0.12), 0 12px 32px rgba(15, 110, 86, 0.25); }
+            }
+            @keyframes pulseLiveDot {
+              0%, 100% { transform: scale(1); opacity: 1; }
+              50% { transform: scale(1.35); opacity: 0.7; }
+            }
+            @keyframes fadeInUp {
+              from { opacity: 0; transform: translateY(12px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            .profile-animated-card {
+              animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+            .avatar-glow-ring {
+              animation: avatarPulse 2.8s infinite ease-in-out;
+            }
+            .live-pulse-dot {
+              animation: pulseLiveDot 1.8s infinite ease-in-out;
+            }
+
+            .tutor-profile-grid {
+              display: grid;
+              grid-template-columns: minmax(0, 1.8fr) minmax(320px, 380px);
+              gap: 2rem;
+              align-items: start;
+            }
+            .tutor-hero-header {
+              display: flex;
+              gap: 1.5rem;
+              align-items: center;
+            }
+            .tutor-avatar-box {
+              position: relative;
+              width: 105px;
+              height: 105px;
+              flex-shrink: 0;
+            }
+            .tutor-meta-box {
+              flex: 1;
+              min-width: 220px;
+            }
+            .tutor-name-title {
+              font-size: 1.85rem;
+              font-weight: 800;
+              color: #0F172A;
+              margin: 0 0 0.35rem 0;
+              letter-spacing: -0.02em;
+            }
+            .tutor-badge-row {
+              display: flex;
+              gap: 0.45rem;
+              flex-wrap: wrap;
+              align-items: center;
+              margin-bottom: 0.4rem;
+            }
+            .tutor-stats-strip {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 0.65rem;
+              margin-top: 1.15rem;
+            }
+            .mobile-bottom-bar {
+              display: none;
+            }
+
+            /* Mobile Viewport Polish (< 768px) */
+            @media (max-width: 768px) {
+              .tutor-profile-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1.25rem !important;
+              }
+              .tutor-hero-header {
+                flex-direction: column !important;
+                text-align: center !important;
+                align-items: center !important;
+              }
+              .tutor-avatar-box {
+                width: 120px !important;
+                height: 120px !important;
+                margin: 0 auto 0.85rem auto !important;
+              }
+              .tutor-meta-box {
+                width: 100% !important;
+                text-align: center !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+              }
+              .tutor-name-title {
+                font-size: 1.65rem !important;
+                text-align: center !important;
+              }
+              .tutor-badge-row {
+                justify-content: center !important;
+              }
+              .tutor-distance-container {
+                display: flex !important;
+                justify-content: center !important;
+                width: 100% !important;
+              }
+              .tutor-stats-strip {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.65rem !important;
+              }
+              .mobile-bottom-bar {
+                display: flex !important;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 9999;
+                background: rgba(255, 255, 255, 0.96);
+                backdrop-filter: blur(10px);
+                border-top: 1.5px solid #E2E8F0;
+                padding: 0.75rem 1rem;
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.75rem;
+              }
+              .main-content-padding {
+                padding-bottom: 5.5rem !important;
+              }
+            }
+          `}</style>
+
+          <div className="tutor-profile-grid">
             {/* LEFT COLUMN: Main Profile Content */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-              {/* Profile Card Header */}
-              <div className="apple-card-static" style={{ padding: '2rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1px solid #E2E8F0' }}>
-                <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.25rem' }}>
-                  <div style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+              
+              {/* Profile Card Header (Centered on Mobile) */}
+              <div className="apple-card-static profile-animated-card" style={{ padding: '1.75rem', backgroundColor: '#FFFFFF', borderRadius: '24px', border: '1.5px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                <div className="tutor-hero-header">
+                  
+                  {/* Centered Avatar with Glow Pulse */}
+                  <div className="tutor-avatar-box avatar-glow-ring" style={{ borderRadius: '28px' }}>
                     {tutorData.avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={tutorData.avatarUrl}
                         alt={tutorData.name}
-                        style={{ width: '100%', height: '100%', borderRadius: '22px', objectFit: 'cover', border: '2px solid #E2E8F0' }}
+                        style={{ width: '100%', height: '100%', borderRadius: '26px', objectFit: 'cover', border: '2.5px solid #059669', display: 'block' }}
                       />
                     ) : (
                       <div
                         style={{
                           width: '100%',
                           height: '100%',
-                          borderRadius: '22px',
+                          borderRadius: '26px',
                           backgroundColor: '#0F766E',
                           color: '#FFFFFF',
                           display: 'flex',
@@ -374,96 +501,89 @@ export default async function TutorProfilePage({ params }: PageProps) {
                           justifyContent: 'center',
                           fontSize: '2.5rem',
                           fontWeight: 900,
-                          border: '2px solid #E2E8F0'
+                          border: '2.5px solid #059669'
                         }}
                       >
                         {tutorData.name ? tutorData.name.charAt(0).toUpperCase() : 'T'}
                       </div>
                     )}
-                    <span style={{
-                      position: 'absolute',
-                      bottom: '-4px',
-                      right: '-4px',
-                      backgroundColor: '#047857',
-                      borderRadius: '50%',
-                      width: '24px',
-                      height: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#FFFFFF',
-                      border: '3px solid #FFFFFF',
-                    }}>
-                      <ShieldCheck size={14} />
+                    <span
+                      title="100% Background & KYC Verified"
+                      style={{
+                        position: 'absolute',
+                        bottom: '-4px',
+                        right: '-4px',
+                        backgroundColor: '#059669',
+                        borderRadius: '50%',
+                        width: '28px',
+                        height: '28px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#FFFFFF',
+                        border: '2.5px solid #FFFFFF',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                      }}
+                    >
+                      <ShieldCheck size={16} />
                     </span>
                   </div>
 
-                  <div style={{ flex: 1, minWidth: '220px' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.35rem' }}>
-                      <span className="badge badge-emerald" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  {/* Centered Meta Content */}
+                  <div className="tutor-meta-box">
+                    <div className="tutor-badge-row">
+                      <span className="badge badge-emerald" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', padding: '0.2rem 0.6rem' }}>
                         <ShieldCheck size={13} />
                         <span>SSSAM ACADEMY VERIFIED PRO</span>
                       </span>
-                      <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', backgroundColor: '#F1F5F9', color: '#475569', borderRadius: '6px', fontWeight: 700 }}>
+                      <span style={{ fontSize: '0.74rem', padding: '0.2rem 0.55rem', backgroundColor: '#F1F5F9', color: '#334155', borderRadius: '6px', fontWeight: 700 }}>
                         {tutorData.teachingMode === 'OFFLINE_HOME' ? '🏡 Home Visits Only' : tutorData.teachingMode === 'ONLINE_LIVE' ? '💻 Online 1-on-1' : '🏡 Home & Online'}
                       </span>
+                      {tutorData.gender?.toUpperCase() === 'FEMALE' && (
+                        <span style={{ backgroundColor: '#F0FDFA', color: '#0F766E', fontSize: '0.72rem', fontWeight: 800, padding: '0.2rem 0.55rem', borderRadius: '6px', border: '1px solid #CCFBF1' }}>
+                          👩 Female Educator
+                        </span>
+                      )}
                     </div>
 
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem 0' }}>
+                    <h1 className="tutor-name-title">
                       {tutorData.name}
                     </h1>
 
-                    {/* Star Rating & Review Count Strip (Honest Airbnb Standard) */}
-                    {!isNewTutor ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              size={16}
-                              fill={star <= Math.round(tutorData.rating || 5) ? '#F59E0B' : '#E2E8F0'}
-                              color={star <= Math.round(tutorData.rating || 5) ? '#F59E0B' : '#CBD5E1'}
-                            />
-                          ))}
-                        </div>
-                        <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.92rem' }}>
-                          {(tutorData.rating || 5.0).toFixed(1)}
-                        </span>
-                        <span style={{ color: '#64748B', fontSize: '0.85rem' }}>•</span>
-                        <a
-                          href="#parent-reviews"
-                          style={{ color: '#0F6E56', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none' }}
-                        >
-                          {tutorData.totalReviews} Verified Parent Reviews
-                        </a>
+                    {/* Star Rating & Review Count Strip */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'inherit', marginBottom: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={16}
+                            fill={star <= Math.round(tutorData.rating || 5) ? '#F59E0B' : '#E2E8F0'}
+                            color={star <= Math.round(tutorData.rating || 5) ? '#F59E0B' : '#CBD5E1'}
+                          />
+                        ))}
                       </div>
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
-                        <span style={{
-                          fontSize: '0.74rem',
-                          fontWeight: 800,
-                          color: '#065F46',
-                          backgroundColor: '#ECFDF5',
-                          border: '1px solid #A7F3D0',
-                          padding: '0.2rem 0.6rem',
-                          borderRadius: '999px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                        }}>
-                          <Sparkles size={12} color="#059669" />
-                          <span>✨ New Verified Educator</span>
-                        </span>
-                        <span style={{ color: '#64748B', fontSize: '0.8rem', fontWeight: 600 }}>
-                          • First session reviews pending
-                        </span>
-                      </div>
-                    )}
+                      <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.92rem' }}>
+                        {(tutorData.rating || 5.0).toFixed(1)}
+                      </span>
+                      <span style={{ color: '#64748B', fontSize: '0.82rem' }}>•</span>
+                      <a
+                        href="#parent-reviews"
+                        style={{ color: '#0F6E56', fontWeight: 700, fontSize: '0.82rem', textDecoration: 'none' }}
+                      >
+                        {tutorData.totalReviews > 0 ? `${tutorData.totalReviews} Verified Reviews` : 'New Verified Educator'}
+                      </a>
+                    </div>
+
+                    {/* Live Availability Status Indicator */}
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.74rem', color: '#166534', backgroundColor: '#F0FDF4', padding: '0.2rem 0.65rem', borderRadius: '999px', border: '1px solid #DCFCE7' }}>
+                      <span className="live-pulse-dot" style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#059669' }}></span>
+                      <span style={{ fontWeight: 700 }}>Available for 1-on-1 Home Demo Classes</span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Live Distance Proximity Badge from Parent's Selected Sector */}
-                <div style={{ marginBottom: '1.25rem' }}>
+                <div className="tutor-distance-container" style={{ margin: '1.25rem 0 0.85rem 0' }}>
                   <TutorDistanceBadge
                     tutorLatitude={tutorData.latitude}
                     tutorLongitude={tutorData.longitude}
@@ -474,49 +594,41 @@ export default async function TutorProfilePage({ params }: PageProps) {
 
                 {/* 4-Pillar Quick Stats Strip */}
                 <div className="tutor-stats-strip">
-                  <div className="tutor-stat-item">
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D97706', flexShrink: 0 }}>
-                      <Star size={16} fill="#D97706" />
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>RATING</div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#92400E', whiteSpace: 'nowrap' }}>
-                        {!isNewTutor ? `${(tutorData.rating || 5.0).toFixed(1)} / 5.0` : 'New Educator'}
+                  <div style={{ backgroundColor: '#FFFBEB', border: '1px solid #FEF3C7', padding: '0.65rem 0.75rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <Star size={18} fill="#D97706" color="#D97706" />
+                    <div>
+                      <div style={{ fontSize: '0.64rem', color: '#92400E', fontWeight: 700, textTransform: 'uppercase' }}>RATING</div>
+                      <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#78350F' }}>
+                        {(tutorData.rating || 5.0).toFixed(1)} / 5.0
                       </div>
                     </div>
                   </div>
 
-                  <div className="tutor-stat-item">
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', flexShrink: 0 }}>
-                      <Briefcase size={16} />
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>EXPERIENCE</div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#065F46', whiteSpace: 'nowrap' }}>
-                        {tutorData.experienceYears > 0 ? `${tutorData.experienceYears}+ Years` : 'Educator'}
+                  <div style={{ backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.65rem 0.75rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <Briefcase size={18} color="#059669" />
+                    <div>
+                      <div style={{ fontSize: '0.64rem', color: '#065F46', fontWeight: 700, textTransform: 'uppercase' }}>EXPERIENCE</div>
+                      <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#064E3B' }}>
+                        {tutorData.experienceYears > 0 ? `${tutorData.experienceYears}+ Years` : 'Certified'}
                       </div>
                     </div>
                   </div>
 
-                  <div className="tutor-stat-item">
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', flexShrink: 0 }}>
-                      <GraduationCap size={16} />
-                    </div>
+                  <div style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', padding: '0.65rem 0.75rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <GraduationCap size={18} color="#2563EB" />
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>DEGREE</div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1E3A8A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tutorData.highestDegree}>
+                      <div style={{ fontSize: '0.64rem', color: '#1E40AF', fontWeight: 700, textTransform: 'uppercase' }}>DEGREE</div>
+                      <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#1E3A8A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tutorData.highestDegree}>
                         {tutorData.highestDegree || 'Graduate'}
                       </div>
                     </div>
                   </div>
 
-                  <div className="tutor-stat-item">
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C3AED', flexShrink: 0 }}>
-                      <MapPin size={16} />
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>COVERAGE</div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#5B21B6', whiteSpace: 'nowrap' }}>
+                  <div style={{ backgroundColor: '#F5F3FF', border: '1px solid #DDD6FE', padding: '0.65rem 0.75rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <MapPin size={18} color="#7C3AED" />
+                    <div>
+                      <div style={{ fontSize: '0.64rem', color: '#5B21B6', fontWeight: 700, textTransform: 'uppercase' }}>COVERAGE</div>
+                      <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#4C1D95' }}>
                         {tutorData.travelRadiusKm || 5} KM Radius
                       </div>
                     </div>
@@ -525,29 +637,31 @@ export default async function TutorProfilePage({ params }: PageProps) {
 
                 {/* SSSAM Academy Trust Strip */}
                 <div style={{
-                  padding: '0.9rem 1.15rem',
-                  borderRadius: '14px',
-                  backgroundColor: '#F0FDF4',
-                  border: '1px solid #DCFCE7',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                  gap: '0.65rem',
-                  fontSize: '0.82rem',
-                  color: '#166534',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px',
+                  backgroundColor: '#F8FAFC',
+                  border: '1px solid #E2E8F0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                  fontSize: '0.76rem',
+                  color: '#475569',
                   fontWeight: 600,
                   marginTop: '0.85rem',
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={16} color="#059669" />
-                    <span>Degree Transcripts Audited</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <CheckCircle2 size={14} color="#059669" />
+                    <span>Degree Verified</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={16} color="#059669" />
-                    <span>Government ID &amp; KYC Verified</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <CheckCircle2 size={14} color="#059669" />
+                    <span>Government ID Audited</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={16} color="#059669" />
-                    <span>Interview Verified • {tutorData.serviceAreas.length > 0 ? tutorData.serviceAreas[0] : 'Gurgaon'}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <CheckCircle2 size={14} color="#059669" />
+                    <span>100% Replacement Guarantee</span>
                   </div>
                 </div>
               </div>
@@ -1204,6 +1318,37 @@ export default async function TutorProfilePage({ params }: PageProps) {
           </div>
         </div>
       </main>
+
+      {/* FIXED MOBILE BOTTOM CTA BAR (Only visible on screens < 768px) */}
+      <div className="mobile-bottom-bar">
+        <div>
+          <span style={{ fontSize: '0.68rem', color: '#64748B', display: 'block', fontWeight: 700 }}>Home Visit Rate</span>
+          <strong style={{ fontSize: '1.15rem', color: '#0F172A', fontWeight: 900 }}>
+            ₹{tutorData.hourlyRateHomeMin || 600}
+            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#64748B' }}>/hr</span>
+          </strong>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+          <a
+            href={`https://wa.me/919811204921?text=${encodeURIComponent(`Hi SSSAM Academy, I want to book a trial class with ${tutorData.name} in Gurgaon.`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#166534', textDecoration: 'none' }}
+            title="Chat on WhatsApp"
+          >
+            <MessageSquare size={18} />
+          </a>
+
+          <Link
+            href={`/request-tutor?tutor=${encodeURIComponent(tutorData.name)}`}
+            className="btn btn-primary btn-sm"
+            style={{ padding: '0.65rem 1.15rem', fontSize: '0.85rem', fontWeight: 800 }}
+          >
+            <span>Book Trial Class</span>
+          </Link>
+        </div>
+      </div>
 
       <Footer />
     </div>
