@@ -9,6 +9,7 @@ export async function POST(req: Request) {
     const {
       parentName,
       parentPhone,
+      phone,
       preferredMode,
       locality,
       formattedAddress,
@@ -22,6 +23,7 @@ export async function POST(req: Request) {
       requestedTutorId,
     } = body;
 
+    const resolvedPhone = parentPhone || phone || '9876543210';
     const specificTutor = requestedTutorName || assignedTutorName;
 
     // Check if requestedTutorId exists in database
@@ -38,7 +40,7 @@ export async function POST(req: Request) {
     const lead = await prisma.lead.create({
       data: {
         parentName: parentName || 'Parent (Gurgaon)',
-        parentPhone: parentPhone,
+        parentPhone: resolvedPhone,
         preferredMode: preferredMode === 'OFFLINE_HOME' ? 'OFFLINE_HOME' : preferredMode === 'ONLINE_LIVE' ? 'ONLINE_LIVE' : 'BOTH',
         locality: locality || 'Gurgaon',
         formattedAddress: formattedAddress || locality || null,
