@@ -143,10 +143,10 @@ export default function VideoModal({ tutor, onClose, onSelectTutor }: VideoModal
                 <Play size={28} />
               </div>
               <h4 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 0.4rem 0', color: '#FFFFFF' }}>
-                60s Video Intro &amp; Demo Session
+                60s Video Introduction &amp; Audition
               </h4>
               <p style={{ fontSize: '0.85rem', color: '#94A3B8', maxWidth: '440px', margin: 0, lineHeight: 1.5 }}>
-                {tutor.name}&apos;s live video intro is presented during official student demo matching. Click below to request a 1-on-1 trial class.
+                {tutor.name}&apos;s verified video introduction is recorded during teacher verification. Click below to request a 1-on-1 trial class.
               </p>
             </div>
           )}

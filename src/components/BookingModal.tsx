@@ -933,7 +933,7 @@ export default function BookingModal({
           </div>
 
           <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.35rem', letterSpacing: '-0.3px' }}>
-            Demo Request Received! 🎉
+            Tuition Request Received! 🎉
           </h3>
           <p
             style={{

@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     template: '%s | TuitionForHome Gurgaon',
   },
   description:
-    'Find top-rated, background-checked CBSE, ICSE, IB & Coding home tutors in Gurgaon (DLF Phase 1-5, Golf Course Rd, Sohna Rd, Sector 56). Verified by SSSAM Academy Sector 14 Gurugram. 1 Free Demo Class + 100% Replacement Guarantee.',
+    'Find top-rated, background-checked CBSE, ICSE, IB & Coding home tutors in Gurgaon (DLF Phase 1-5, Golf Course Rd, Sohna Rd, Sector 56). Verified by SSSAM Academy Sector 14 Gurugram. 1-on-1 Trial Class + 100% Replacement Guarantee.',
   keywords: [
     'home tutor in gurgaon',
     'home tuition in gurgaon',
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'TuitionForHome — Verified Home & Online Tutors in Gurgaon',
     description:
-      'Book top 1% verified home and online tutors in Gurgaon & Delhi NCR with a free demo class. Operated by SSSAM Academy, Sector 14 Gurugram.',
+      'Book top 1% verified home and online tutors in Gurgaon & Delhi NCR with 1-on-1 trial class. Operated by SSSAM Academy, Sector 14 Gurugram.',
     url: 'https://tuitionforhome.com',
     siteName: 'TuitionForHome',
     images: [
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'TuitionForHome — #1 Verified Home & Online Tutors in Gurgaon',
     description:
-      'Book background-checked CBSE, ICSE & IB home tutors in Gurgaon within 3.5 km. 1 Free Demo Class + 100% Replacement Guarantee.',
+      'Book background-checked CBSE, ICSE & IB home tutors in Gurgaon within 3.5 km. 1-on-1 Trial Class + 100% Replacement Guarantee.',
     images: ['https://sssamacademy.com/assets/home_page.webp'],
   },
   robots: {

@@ -640,7 +640,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                     {/* Live Availability Status Indicator */}
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.74rem', color: '#166534', backgroundColor: '#F0FDF4', padding: '0.2rem 0.65rem', borderRadius: '999px', border: '1px solid #DCFCE7' }}>
                       <span className="live-pulse-dot" style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#059669' }}></span>
-                      <span style={{ fontWeight: 700 }}>Available for 1-on-1 Home Demo Classes</span>
+                      <span style={{ fontWeight: 700 }}>Available for 1-on-1 Home Tuition Classes</span>
                     </div>
                   </div>
                 </div>

@@ -398,10 +398,17 @@ export default function TutorPublicReviewPage({
                 </p>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#D97706', fontWeight: 800 }}>
-                    <Star size={15} fill="#D97706" />
-                    <span>{averageRating} ({reviews.length} Verified Reviews)</span>
-                  </span>
+                  {reviews.length > 0 ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#D97706', fontWeight: 800 }}>
+                      <Star size={15} fill="#D97706" />
+                      <span>{averageRating} ({reviews.length} {reviews.length === 1 ? 'Verified Review' : 'Verified Reviews'})</span>
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: '#047857', fontWeight: 800, backgroundColor: '#ECFDF5', padding: '0.15rem 0.55rem', borderRadius: '6px', border: '1px solid #A7F3D0' }}>
+                      <Sparkles size={13} color="#059669" />
+                      <span>New Verified Educator</span>
+                    </span>
+                  )}
                   <span>•</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     <MapPin size={14} style={{ color: 'var(--brand-teal)' }} />
@@ -411,10 +418,10 @@ export default function TutorPublicReviewPage({
               </div>
             </div>
 
-            {/* Quick Demo Booking CTA */}
+            {/* Quick Trial Booking CTA */}
             <div className="tutor-review-cta-wrap">
               <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hello TuitionForHome Counselor! I would like to book a home tuition demo session with tutor ${tutorName} (ID: TFH-${tutorId.slice(0, 6).toUpperCase()}) in Gurgaon.`)}`}
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hello TuitionForHome Counselor! I would like to request 1-on-1 home tuition classes with tutor ${tutorName} (ID: TFH-${tutorId.slice(0, 6).toUpperCase()}) in Gurgaon.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-primary"
@@ -433,7 +440,7 @@ export default function TutorPublicReviewPage({
                 }}
               >
                 <Phone size={16} />
-                <span>Book 1-on-1 Demo</span>
+                <span>Book 1-on-1 Trial Class</span>
               </a>
 
               <span style={{ fontSize: '0.72rem', color: 'var(--text-light)', textAlign: 'center' }}>

@@ -334,7 +334,7 @@ function ParentLoginContent() {
                   100% Background-Verified Educators
                 </h3>
                 <p style={{ fontSize: '0.82rem', color: '#94A3B8', marginTop: '0.2rem', lineHeight: 1.45 }}>
-                  Every tutor undergoes government ID verification, subject knowledge testing &amp; demo screening.
+                  Every tutor undergoes government ID verification, subject knowledge testing &amp; teaching trial screening.
                 </p>
               </div>
             </div>
@@ -712,7 +712,7 @@ function ParentLoginContent() {
                     <Phone size={16} color="#94A3B8" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
                   </div>
                   <span style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '0.35rem', display: 'block' }}>
-                    Our counselors will share matched tutor demo confirmations on this number.
+                    Our counselors will share matched tutor class confirmations on this number.
                   </span>
                 </div>
 

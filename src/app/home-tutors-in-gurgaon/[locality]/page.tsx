@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     twitter: {
       card: 'summary_large_image',
       title: `Best Home Tutors in ${loc.name}, Gurgaon`,
-      description: `Find verified home tutors in ${loc.name} (${loc.landmark}). Free Demo Class + 100% Replacement Guarantee.`,
+      description: `Find verified home tutors in ${loc.name} (${loc.landmark}). 1-on-1 Trial Class + 100% Replacement Guarantee.`,
     },
   };
 }

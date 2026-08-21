@@ -38,7 +38,7 @@ function BookDemoContent() {
 
 export default function BookDemoPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading demo form...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading request form...</div>}>
       <BookDemoContent />
     </Suspense>
   );

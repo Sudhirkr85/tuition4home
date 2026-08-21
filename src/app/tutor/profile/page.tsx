@@ -1620,7 +1620,7 @@ export default function TutorProfileDashboard() {
 
                       {/* WhatsApp Share */}
                       <a
-                        href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hello! View my verified TuitionForHome tutor profile and book a home tuition demo in Gurgaon: ${reviewLink || `https://tuitionforhome.com/tutor/review/${userId}`}`)}`}
+                        href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hello! View my verified TuitionForHome tutor profile and request 1-on-1 home tuition in Gurgaon: ${reviewLink || `https://tuitionforhome.com/tutor/review/${userId}`}`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn btn-secondary btn-sm"
