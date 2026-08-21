@@ -211,7 +211,7 @@ export default function FeeEstimator({ onBookWithEstimate }: FeeEstimatorProps) 
                     ESTIMATED MONTHLY RATE
                   </span>
                   <span className="badge" style={{ backgroundColor: 'rgba(5, 150, 105, 0.2)', color: '#34D399', border: '1px solid rgba(5, 150, 105, 0.4)' }}>
-                    ✨ Trial Class Available
+                    ✨ Verified Teachers Available
                   </span>
                 </div>
 
@@ -255,7 +255,7 @@ export default function FeeEstimator({ onBookWithEstimate }: FeeEstimatorProps) 
                 className="btn btn-primary btn-lg"
                 style={{ width: '100%', justifyContent: 'center' }}
               >
-                <span>Request Trial Class at this Rate</span>
+                <span>Book Teacher at this Rate</span>
                 <ArrowRight size={18} />
               </button>
             </div>

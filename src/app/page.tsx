@@ -1155,7 +1155,7 @@ export default function HomePage() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                     <CheckCircle2 size={18} color="#2DD4BF" />
-                    <span>Option to have your trial class at our Sector 14 classrooms</span>
+                    <span>Option to have classes at our Sector 14 classrooms</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                     <CheckCircle2 size={18} color="#2DD4BF" />
@@ -1242,7 +1242,7 @@ export default function HomePage() {
                 </div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>Physical Center Anchor</h3>
                 <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  Backed by SSSAM Academy at Sector 14, Old DLF, Gurugram. You have a real physical address, helpline numbers, and center classrooms for trial classes.
+                  Backed by SSSAM Academy at Sector 14, Old DLF, Gurugram. You have a real physical address, helpline numbers, and center classrooms for personalized classes.
                 </p>
               </div>
 

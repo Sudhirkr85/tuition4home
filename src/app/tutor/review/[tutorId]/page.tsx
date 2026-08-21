@@ -418,10 +418,10 @@ export default function TutorPublicReviewPage({
               </div>
             </div>
 
-            {/* Quick Trial Booking CTA */}
+            {/* Quick Direct Booking CTA */}
             <div className="tutor-review-cta-wrap">
               <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hello TuitionForHome Counselor! I would like to request 1-on-1 home tuition classes with tutor ${tutorName} (ID: TFH-${tutorId.slice(0, 6).toUpperCase()}) in Gurgaon.`)}`}
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hello TuitionForHome Counselor! I want to book teacher ${tutorName} (ID: TFH-${tutorId.slice(0, 6).toUpperCase()}) for home tuition in Gurgaon.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-primary"
@@ -440,7 +440,7 @@ export default function TutorPublicReviewPage({
                 }}
               >
                 <Phone size={16} />
-                <span>Book 1-on-1 Trial Class</span>
+                <span>Book Teacher</span>
               </a>
 
               <span style={{ fontSize: '0.72rem', color: 'var(--text-light)', textAlign: 'center' }}>

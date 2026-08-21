@@ -233,7 +233,7 @@ export const SUBJECT_SEO_PAGES: SubjectSEO[] = [
     subjectName: 'Economics & Business Studies',
     targetGrades: 'Class 11 & 12 (CBSE / ISC / CUET Commerce)',
     metaTitle: 'Best Economics & Business Studies Tutors in Gurgaon | SSSAM Academy',
-    metaDesc: 'Hire top Class 11-12 Economics (Micro/Macro) and Business Studies tutors in Gurgaon. Case study mastery, CUET commerce preparation & free trial class.',
+    metaDesc: 'Hire top Class 11-12 Economics (Micro/Macro) and Business Studies tutors in Gurgaon. Case study mastery, CUET commerce preparation & 100% verified educators.',
     h1: 'Economics & Business Studies Tutors in Gurgaon',
     intro: 'Master Microeconomics, Macroeconomic models, Indian Economic Development, and Business Management case studies with Gurgaon’s experienced commerce faculty.',
     highlights: [
@@ -444,7 +444,7 @@ export const SUBJECT_SEO_PAGES: SubjectSEO[] = [
     subjectName: 'French & German Language',
     targetGrades: 'Class 6 to 12 (DELF/Goethe)',
     metaTitle: 'French & German Language Tutors in Gurgaon | SSSAM Academy',
-    metaDesc: 'Learn French & German with certified home tutors in Gurgaon. School syllabus (Class 6-12) and DELF/Goethe certification prep. Book a Free Trial Class.',
+    metaDesc: 'Learn French & German with certified home tutors in Gurgaon. School syllabus (Class 6-12) and DELF/Goethe certification prep. Book Certified Tutors Today.',
     h1: 'French & German Language Tutors in Gurgaon',
     intro: 'Learning a foreign language opens up global opportunities. Our certified French and German tutors in Gurgaon provide immersive lessons for school curriculums and international certification exams.',
     highlights: [

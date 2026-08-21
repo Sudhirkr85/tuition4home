@@ -482,7 +482,7 @@ export default function BookingModal({
                 lineHeight: 1.25,
               }}
             >
-              {tutorDisplayName ? `Book Trial Class with ${tutorDisplayName}` : 'Request a Verified Home & Online Tutor'}
+              {tutorDisplayName ? `Book Teacher: ${tutorDisplayName}` : 'Book a Verified Home & Online Teacher'}
             </h3>
             <p style={{ fontSize: '0.82rem', color: '#64748B', margin: '4px 0 0 0', lineHeight: 1.45 }}>
               Academic counselor calls within <strong>30 minutes</strong> for personalized teacher alignment.

@@ -50,7 +50,7 @@ export default function TutorProfileActions({
   };
 
   const whatsappMessage = encodeURIComponent(
-    `Hello SSSAM Academy, I want to book 1-on-1 trial classes with tutor ${tutorName} (${subjects.slice(0, 2).join(', ')}). Please assist me with tutor scheduling.`
+    `Hello SSSAM Academy, I want to book teacher ${tutorName} (${subjects.slice(0, 2).join(', ')}) for home tuition in Gurgaon. Please share available timings.`
   );
   const whatsappUrl = `https://wa.me/919217031899?text=${whatsappMessage}`;
 

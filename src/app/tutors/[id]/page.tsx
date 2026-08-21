@@ -906,7 +906,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                           🎥 Video Introduction In-Progress
                         </div>
                         <div style={{ fontSize: '0.78rem', color: '#64748B' }}>
-                          {tutorData.name}&apos;s academic degrees and KYC verification are 100% verified. You can book a 1-on-1 trial class directly.
+                          {tutorData.name}&apos;s academic degrees and KYC verification are 100% verified. You can book 1-on-1 home tuition directly.
                         </div>
                       </div>
                     </div>
@@ -1168,7 +1168,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                       Newly Verified Home Tutor
                     </div>
                     <p style={{ fontSize: '0.86rem', color: '#64748B', maxWidth: '440px', margin: '0 auto 1.25rem auto', lineHeight: 1.6 }}>
-                      {tutorData.name}&apos;s background check, KYC credentials, and academic degrees are verified by SSSAM Academy. Book a trial session and be the first parent to share review feedback!
+                      {tutorData.name}&apos;s background check, KYC credentials, and academic degrees are verified by SSSAM Academy. Book teacher {tutorData.name} and be the first parent to share review feedback!
                     </p>
                     <Link
                       href={`/tutor/review/${params.id}`}
@@ -1291,7 +1291,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                   style={{ width: '100%', justifyContent: 'center', padding: '0.9rem', fontSize: '0.95rem', marginBottom: '0.85rem' }}
                 >
                   <Sparkles size={18} />
-                  <span>Request Classes with {tutorData.name.split(' ')[0]}</span>
+                  <span>Book Teacher ({tutorData.name.split(' ')[0]})</span>
                 </Link>
 
                 {/* Client Interactive Actions (WhatsApp & Share) */}
@@ -1408,7 +1408,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
 
         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
           <a
-            href={`https://wa.me/919811204921?text=${encodeURIComponent(`Hi SSSAM Academy, I want to book a trial class with ${tutorData.name} in Gurgaon.`)}`}
+            href={`https://wa.me/919811204921?text=${encodeURIComponent(`Hi SSSAM Academy, I want to book teacher ${tutorData.name} for home tuition in Gurgaon.`)}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#166534', textDecoration: 'none' }}
@@ -1422,7 +1422,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
             className="btn btn-primary btn-sm"
             style={{ padding: '0.65rem 1.15rem', fontSize: '0.85rem', fontWeight: 800 }}
           >
-            <span>Book Trial Class</span>
+            <span>Book Teacher</span>
           </Link>
         </div>
       </div>
