@@ -344,7 +344,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
             >
               <ShieldCheck size={16} color="#059669" />
-              <span>Request Home Tutor</span>
+              <span>Request Home Teacher</span>
             </Link>
           </>
         ) : (
@@ -463,7 +463,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
 
         {/* Desktop Navigation Links */}
         <nav className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', whiteSpace: 'nowrap' }}>
-          <Link href="/tutors" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Find Tutors</Link>
+          <Link href="/tutors" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Find Teachers</Link>
           <Link href="/home-tutors-in-gurgaon" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Gurgaon Localities</Link>
           <Link href="/tuition" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Subjects &amp; Boards</Link>
           <Link href="/#fee-estimator" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1E293B', textDecoration: 'none' }}>Fee Estimator</Link>
@@ -516,7 +516,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
                 }}
               >
                 <GraduationCap size={15} color="#0F6E56" />
-                <span>Join as Tutor</span>
+                <span>I&apos;m a Teacher</span>
               </Link>
 
               {/* For Parents Login */}
@@ -553,7 +553,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
                   boxShadow: '0 4px 14px rgba(6, 95, 70, 0.25)',
                 }}
               >
-                <span>Book a Tutor</span>
+                <span>Find a Teacher</span>
                 <div className="btn-arrow"><ChevronRight size={14} /></div>
               </Link>
             </>
@@ -596,7 +596,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               }}
             >
               <GraduationCap size={13} color="#047857" />
-              <span>Join as Tutor</span>
+              <span>I&apos;m a Teacher</span>
             </Link>
           )}
 

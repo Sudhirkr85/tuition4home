@@ -228,7 +228,7 @@ export default function HomePage() {
                   margin: 0,
                   wordBreak: 'break-word',
                 }}>
-                  Verified <span style={{ color: '#0F6E56' }}>Home & Online Tutors</span> in Gurgaon
+                  Find a <span style={{ color: '#0F6E56' }}>Home Teacher</span> for Your Child in Gurgaon
                 </h1>
 
                 {/* 9. LSI Keywords Subtext */}
@@ -238,65 +238,11 @@ export default function HomePage() {
                   lineHeight: 1.55,
                   margin: 0,
                 }}>
-                  Connect with background-checked <strong>home tutors in Gurgaon</strong> and <strong>online tutors in Gurgaon</strong> for CBSE, ICSE, IB & Coding. Matched within 3.5 km of your sector with a <strong>100% Free Replacement Guarantee</strong>.
+                  Connect with background-checked <strong>home teachers in Gurgaon</strong> for CBSE, ICSE, IB & Coding. Matched within 3.5 km of your sector with a <strong>100% Free Replacement Guarantee</strong>.
                 </p>
 
-                {/* Mode Switcher */}
-                <div>
-                  <div style={{
-                    display: 'inline-flex',
-                    backgroundColor: '#F5F5F7',
-                    padding: '0.35rem',
-                    borderRadius: '999px',
-                    border: '1px solid #E8E8ED',
-                    maxWidth: '100%',
-                    boxSizing: 'border-box',
-                  }}>
-                    <button
-                      type="button"
-                      onClick={() => setSearchMode('OFFLINE_HOME')}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        padding: '0.55rem 1.1rem',
-                        borderRadius: '999px',
-                        border: 'none',
-                        backgroundColor: searchMode === 'OFFLINE_HOME' ? '#0F6E56' : 'transparent',
-                        color: searchMode === 'OFFLINE_HOME' ? '#FFFFFF' : '#1D1D1F',
-                        fontWeight: 700,
-                        fontSize: 'clamp(0.78rem, 2vw, 0.88rem)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      <Home size={15} style={{ flexShrink: 0 }} />
-                      <span>Home Visit (Offline)</span>
-                    </button>
 
-                    <button
-                      type="button"
-                      onClick={() => setSearchMode('ONLINE_LIVE')}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        padding: '0.55rem 1.1rem',
-                        borderRadius: '999px',
-                        border: 'none',
-                        backgroundColor: searchMode === 'ONLINE_LIVE' ? '#0F6E56' : 'transparent',
-                        color: searchMode === 'ONLINE_LIVE' ? '#FFFFFF' : '#1D1D1F',
-                        fontWeight: 700,
-                        fontSize: 'clamp(0.78rem, 2vw, 0.88rem)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      <Video size={15} style={{ flexShrink: 0 }} />
-                      <span>Online 1-on-1</span>
-                    </button>
-                  </div>
-                </div>
+
 
                 {/* 6. Bolder CTA Button Row */}
                 <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', width: '100%' }}>
@@ -319,7 +265,7 @@ export default function HomePage() {
                       boxSizing: 'border-box',
                     }}
                   >
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>Book a Tutor — Free Callback</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>Get a Home Teacher</span>
                     <ChevronRight size={18} style={{ flexShrink: 0 }} />
                   </button>
 
@@ -335,7 +281,7 @@ export default function HomePage() {
                       textDecoration: 'none',
                     }}
                   >
-                    <span>View Tutor Catalog</span>
+                    <span>Browse Verified Teachers</span>
                     <ChevronRight size={16} color="#0F6E56" />
                   </a>
                 </div>
@@ -664,7 +610,7 @@ export default function HomePage() {
                   <span>REVIEW-VERIFIED EDUCATORS</span>
                 </div>
                 <h2 style={{ fontSize: 'clamp(1.75rem, 3vw, 2.35rem)', fontWeight: 800 }}>
-                  Top Verified Tutors {selectedShowcaseSector === 'All Sectors' ? 'Near Your Sector' : `in ${selectedShowcaseSector}`}
+                  Top Verified Teachers {selectedShowcaseSector === 'All Sectors' ? 'Near Your Sector' : `in ${selectedShowcaseSector}`}
                 </h2>
                 <p style={{ color: 'var(--text-muted)', marginTop: '0.35rem' }}>
                   Watch 60-second intro videos and connect with verified educators ready to teach in {selectedShowcaseSector === 'All Sectors' ? 'your Gurgaon sector' : selectedShowcaseSector}.
@@ -672,7 +618,7 @@ export default function HomePage() {
               </div>
 
               <Link href="/tutors" className="btn btn-secondary">
-                <span>Browse All 1,000+ Verified Tutors</span>
+                <span>Browse All Verified Teachers</span>
                 <ChevronRight size={16} color="#0F6E56" />
               </Link>
             </div>
@@ -692,9 +638,9 @@ export default function HomePage() {
                 Filter:
               </span>
               {[
-                { id: 'ALL', label: '🌐 All Verified Tutors' },
-                { id: 'FEMALE', label: '👩 Female Tutors Only', highlight: true },
-                { id: 'MALE', label: '👨 Male Tutors' },
+                { id: 'ALL', label: '🌐 All Verified Teachers' },
+                { id: 'FEMALE', label: '👩 Female Teachers Only', highlight: true },
+                { id: 'MALE', label: '👨 Male Teachers' },
               ].map((cat) => {
                 const isSel = selectedShowcaseGender === cat.id;
                 return (
@@ -832,7 +778,7 @@ export default function HomePage() {
                           className="btn btn-primary"
                           style={{ padding: '0.75rem 1.75rem', backgroundColor: 'var(--brand-teal)' }}
                         >
-                          <span>Request a Home Tutor</span>
+                          <span>Request a Home Teacher</span>
                           <ChevronRight size={16} />
                         </button>
                         <Link href="/tutor/register" className="btn btn-secondary" style={{ padding: '0.75rem 1.75rem' }}>
@@ -1141,7 +1087,7 @@ export default function HomePage() {
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                   <button onClick={() => handleOpenBooking()} className="btn btn-primary btn-lg" style={{ backgroundColor: '#0F6E56' }}>
-                    <span>Book a Tutor — Free Callback</span>
+                    <span>Get a Home Teacher</span>
                     <div className="btn-arrow">
                       <ChevronRight size={16} />
                     </div>
