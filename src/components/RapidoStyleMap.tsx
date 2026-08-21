@@ -259,13 +259,6 @@ export default function RapidoStyleMap({
     }).sort((a, b) => a.distanceKm - b.distanceKm);
   }, [dynamicTutors, currentCoords]);
 
-  useEffect(() => {
-    if (sortedTutorsWithDistance.length > 0) {
-      if (!selectedTutor || !sortedTutorsWithDistance.some((t) => t.id === selectedTutor.id)) {
-        setSelectedTutor(sortedTutorsWithDistance[0]);
-      }
-    }
-  }, [sortedTutorsWithDistance, selectedTutor]);
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
@@ -368,7 +361,7 @@ export default function RapidoStyleMap({
       radiusCircleRef.current = null;
     }
 
-    const currentSelected = selectedTutor ? sortedTutorsWithDistance.find((t) => t.id === selectedTutor.id) || sortedTutorsWithDistance[0] : sortedTutorsWithDistance[0];
+    const currentSelected = selectedTutor ? (sortedTutorsWithDistance.find((t) => t.id === selectedTutor.id) || null) : null;
 
     if (currentSelected) {
       radiusCircleRef.current = L.circle([currentSelected.computedLat, currentSelected.computedLng], {
@@ -379,6 +372,10 @@ export default function RapidoStyleMap({
         dashArray: '5 5',
       }).addTo(map);
     }
+
+    map.on('click', () => {
+      setSelectedTutor(null);
+    });
 
       sortedTutorsWithDistance.slice(0, 15).forEach((tutor) => {
         const isSelected = currentSelected && currentSelected.id === tutor.id;
@@ -398,8 +395,31 @@ export default function RapidoStyleMap({
           iconAnchor: [40, 18],
         });
 
+        const popupHtml = `
+          <div style="font-family: inherit; padding: 4px; min-width: 200px; text-align: left;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <img src="${tutor.avatarUrl || '/placeholder-avatar.jpg'}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1.5px solid #0F6E56;" />
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 800; font-size: 0.9rem; color: #0F172A; line-height: 1.2;">${tutor.name}</div>
+                <div style="font-size: 0.72rem; color: #64748B; margin-top: 1px;">${tutor.highestDegree || 'Verified Educator'}</div>
+              </div>
+            </div>
+            <div style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 700; background: ${tutor.distanceInfo.badgeBg}; color: ${tutor.distanceInfo.badgeColor}; padding: 3px 6px; border-radius: 6px; border: 1px solid ${tutor.distanceInfo.badgeBorder}; margin-bottom: 8px; width: 100%; box-sizing: border-box;">
+              <span>🟢 ${tutor.distanceInfo.distanceText} (${tutor.distanceInfo.travelTime})</span>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <a href="/tutors/${tutor.id}" style="flex: 1; text-align: center; font-size: 0.72rem; font-weight: 700; background: #F1F5F9; color: #0F172A; padding: 6px 8px; border-radius: 6px; text-decoration: none; border: 1px solid #CBD5E1;">View Profile</a>
+              <a href="https://wa.me/919217031899?text=${encodeURIComponent(`Hello SSSAM, I want to book a home teacher in ${detectedAddress} (${tutor.name}).`)}" target="_blank" rel="noopener noreferrer" style="font-size: 0.72rem; font-weight: 700; background: #25D366; color: #FFFFFF; padding: 6px 8px; border-radius: 6px; text-decoration: none;">WhatsApp</a>
+            </div>
+          </div>
+        `;
+
         const tMarker = L.marker([tutor.computedLat, tutor.computedLng], { icon: tutorIcon, zIndexOffset: isSelected ? 500 : 100 }).addTo(tutorLayerGroupRef.current);
-        tMarker.on('click', () => setSelectedTutor(tutor));
+        tMarker.bindPopup(popupHtml, { offset: [0, -16] });
+        tMarker.on('click', () => {
+          setSelectedTutor(tutor);
+          tMarker.openPopup();
+        });
       });
     }, [L, isCompact, currentCoords, sortedTutorsWithDistance, selectedTutor]);
 
@@ -439,80 +459,184 @@ export default function RapidoStyleMap({
       onLocationSelected({ address: popupAddress, lat: popupCoords.lat, lng: popupCoords.lng, nearestTutorsCount: 12 });
     };
 
-    const activeTutorDetail = selectedTutor ? sortedTutorsWithDistance.find((t) => t.id === selectedTutor.id) || sortedTutorsWithDistance[0] : sortedTutorsWithDistance[0];
+    const activeTutorDetail = selectedTutor ? (sortedTutorsWithDistance.find((t) => t.id === selectedTutor.id) || null) : null;
     const whatsappInquiryUrl = activeTutorDetail ? `https://wa.me/919217031899?text=${encodeURIComponent(`Hello SSSAM, looking for a teacher in ${detectedAddress}. Interested in ${activeTutorDetail.name}.`)}` : '#';
 
     return (
-      <>
-        <style jsx global>{`
-          .custom-parent-pin, .custom-tutor-pin {
-            background: transparent !important;
-            border: none !important;
+    <>
+      <style jsx global>{`
+        .custom-parent-pin, .custom-tutor-pin {
+          background: transparent !important;
+          border: none !important;
+        }
+        @keyframes slideUpMapCard {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
           }
-        `}</style>
-        <div style={{ padding: isCompact ? '0.5rem' : '1.5rem', backgroundColor: '#FFFFFF', borderRadius: isCompact ? '0px' : '24px', border: isCompact ? 'none' : '1px solid #E2E8F0' }}>
-          {!isCompact && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <div>
-                <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#059669', letterSpacing: '0.04em' }}>LIVE PROXIMITY ENGINE</div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '2px 0 0 0', color: '#0F172A' }}>Verified Teachers in Your Sector</h3>
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={handleAutoDetectGPS}
-                  style={{
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    padding: '0.45rem 0.85rem',
-                    borderRadius: '10px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                  }}
-                  className="btn btn-secondary"
-                >
-                  <Crosshair size={14} color="#059669" />
-                  <span>{isDetecting ? 'Detecting...' : 'Get Current Location'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowLocationPopup(true)}
-                  style={{
-                    fontSize: '0.8rem',
-                    fontWeight: 800,
-                    padding: '0.45rem 0.85rem',
-                    borderRadius: '10px',
-                    backgroundColor: '#0F6E56',
-                    color: '#FFFFFF',
-                  }}
-                  className="btn btn-primary"
-                >
-                  Change Sector
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div ref={mapContainerRef} style={{ position: 'relative', height: isCompact ? '200px' : '380px', borderRadius: '16px', overflow: 'hidden', border: '1px solid #CBD5E1', marginBottom: '0.85rem', zIndex: 1, backgroundColor: '#E2E8F0' }} />
-
-        {activeTutorDetail && (
-          <div style={{ backgroundColor: '#F8FAFC', border: `1.5px solid ${activeTutorDetail.distanceInfo.badgeBorder}`, borderRadius: '16px', padding: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <img src={activeTutorDetail.avatarUrl} style={{ width: '48px', height: '48px', borderRadius: '12px', border: '2px solid #059669', objectFit: 'cover' }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A' }}>{activeTutorDetail.name}</div>
-                <div style={{ fontSize: '0.76rem', color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  🎓 {activeTutorDetail.highestDegree} • {activeTutorDetail.distanceInfo.distanceText}
-                </div>
-              </div>
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+      <div style={{ padding: isCompact ? '0.25rem' : '1.25rem', backgroundColor: '#FFFFFF', borderRadius: isCompact ? '0px' : '24px', border: isCompact ? 'none' : '1px solid #E2E8F0' }}>
+        {!isCompact && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div>
+              <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#059669', letterSpacing: '0.04em' }}>LIVE PROXIMITY ENGINE</div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '2px 0 0 0', color: '#0F172A' }}>Verified Teachers in Your Sector</h3>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={() => onOpenBookingForTutor?.(activeTutorDetail)} className="btn btn-primary" style={{ flex: 1, padding: '0.55rem', borderRadius: '10px', backgroundColor: '#0F6E56' }}>Request Home Visit</button>
-              <a href={whatsappInquiryUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ padding: '0.55rem 0.85rem', borderRadius: '10px', backgroundColor: '#25D366', color: '#FFFFFF', border: 'none', fontWeight: 700 }}>WhatsApp</a>
+              <button
+                type="button"
+                onClick={handleAutoDetectGPS}
+                style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '10px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                }}
+                className="btn btn-secondary"
+              >
+                <Crosshair size={14} color="#059669" />
+                <span>{isDetecting ? 'Detecting...' : 'Get Current Location'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowLocationPopup(true)}
+                style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '10px',
+                  backgroundColor: '#0F6E56',
+                  color: '#FFFFFF',
+                }}
+                className="btn btn-primary"
+              >
+                Change Sector
+              </button>
             </div>
           </div>
         )}
+
+        {/* Outer Map Frame with Floating In-Map Overlays */}
+        <div style={{
+          position: 'relative',
+          height: isCompact ? '280px' : '440px',
+          borderRadius: '18px',
+          overflow: 'hidden',
+          border: '1.5px solid #CBD5E1',
+          backgroundColor: '#E2E8F0',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+        }}>
+          {/* Leaflet Map Canvas */}
+          <div ref={mapContainerRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
+
+          {/* Floating In-Map Teacher Profile Card (Opens directly inside the map) */}
+          {activeTutorDetail && (
+            <div style={{
+              position: 'absolute',
+              bottom: '10px',
+              left: '10px',
+              right: '10px',
+              zIndex: 1000,
+              backgroundColor: 'rgba(255, 255, 255, 0.97)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: `1.5px solid ${activeTutorDetail.distanceInfo.badgeBorder}`,
+              borderRadius: '14px',
+              padding: '0.85rem 1rem',
+              boxShadow: '0 8px 30px rgba(15, 23, 42, 0.18)',
+              animation: 'slideUpMapCard 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.65rem' }}>
+                <Link href={`/tutors/${activeTutorDetail.id}`} style={{ position: 'relative', display: 'block', flexShrink: 0 }}>
+                  <img src={activeTutorDetail.avatarUrl || '/placeholder-avatar.jpg'} onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'" style={{ width: '46px', height: '46px', borderRadius: '12px', border: '2px solid #059669', objectFit: 'cover' }} />
+                  <span style={{ position: 'absolute', bottom: '-3px', right: '-3px', backgroundColor: '#059669', borderRadius: '50%', width: '15px', height: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', border: '1.5px solid #FFFFFF' }}>
+                    <ShieldCheck size={9} />
+                  </span>
+                </Link>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                    <Link href={`/tutors/${activeTutorDetail.id}`} style={{ textDecoration: 'none' }}>
+                      <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {activeTutorDetail.name}
+                      </div>
+                    </Link>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F6E56', backgroundColor: '#ECFDF5', padding: '1px 6px', borderRadius: '4px', border: '1px solid #A7F3D0', flexShrink: 0 }}>
+                      ₹{activeTutorDetail.hourlyRateHome || 600}/hr
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: '0.74rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '1px', flexWrap: 'wrap' }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
+                      🎓 {activeTutorDetail.highestDegree || 'Verified Teacher'}
+                    </span>
+                    <span>•</span>
+                    <span style={{ color: activeTutorDetail.distanceInfo.badgeColor, fontWeight: 700 }}>
+                      🟢 {activeTutorDetail.distanceInfo.distanceText} ({activeTutorDetail.distanceInfo.travelTime})
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedTutor(null)}
+                  aria-label="Close card"
+                  style={{
+                    background: '#F1F5F9',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '22px',
+                    height: '22px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    marginLeft: 'auto',
+                  }}
+                >
+                  <X size={13} color="#64748B" />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                <Link
+                  href={`/tutors/${activeTutorDetail.id}`}
+                  className="btn btn-secondary btn-sm"
+                  style={{ flex: '1 1 95px', padding: '0.45rem 0.65rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, textAlign: 'center', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
+                >
+                  <span>Profile</span>
+                  <ArrowUpRight size={13} />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => onOpenBookingForTutor?.(activeTutorDetail)}
+                  className="btn btn-primary btn-sm"
+                  style={{ flex: '1 1 125px', padding: '0.45rem 0.65rem', borderRadius: '8px', backgroundColor: '#0F6E56', fontSize: '0.78rem', fontWeight: 800 }}
+                >
+                  Request Visit
+                </button>
+                <a
+                  href={whatsappInquiryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ padding: '0.45rem 0.75rem', borderRadius: '8px', backgroundColor: '#25D366', color: '#FFFFFF', textDecoration: 'none', fontWeight: 700, fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                >
+                  <MessageCircle size={14} />
+                  <span>WhatsApp</span>
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* POPUP MODAL FOR CUSTOM SECTOR SEARCH / PIN DRAG */}
