@@ -218,10 +218,12 @@ export default function ImageCropperModal({
           width: '100%',
           maxWidth: '460px',
           overflow: 'hidden',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.45)',
           display: 'flex',
           flexDirection: 'column',
           animation: 'fadeIn 0.2s ease-out',
+          position: 'relative',
+          zIndex: 100000,
         }}
       >
         {/* Header */}
@@ -232,6 +234,9 @@ export default function ImageCropperModal({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            backgroundColor: '#FFFFFF',
+            position: 'relative',
+            zIndex: 20,
           }}
         >
           <div>
@@ -266,12 +271,14 @@ export default function ImageCropperModal({
         <div
           style={{
             padding: '1.5rem',
-            backgroundColor: '#0F172A',
+            backgroundColor: '#0B1120',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             position: 'relative',
+            zIndex: 10,
+            overflow: 'hidden', // PREVENTS 9999px SHADOW BLEEDING ON BUTTONS
             userSelect: 'none',
             touchAction: 'none',
           }}
@@ -291,7 +298,7 @@ export default function ImageCropperModal({
               position: 'relative',
               borderRadius: circularMask ? '50%' : '16px',
               overflow: 'hidden',
-              boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.75), 0 0 0 3px #10B981',
+              boxShadow: '0 0 0 9999px rgba(11, 17, 32, 0.82), 0 0 0 3px #10B981',
               cursor: isDraggingRef.current ? 'grabbing' : 'grab',
               display: 'flex',
               alignItems: 'center',
@@ -351,18 +358,26 @@ export default function ImageCropperModal({
         </div>
 
         {/* Controls Toolbar */}
-        <div style={{ padding: '1.25rem 1.4rem', backgroundColor: '#F8FAFC' }}>
+        <div
+          style={{
+            padding: '1.25rem 1.4rem',
+            backgroundColor: '#FFFFFF',
+            borderTop: '1px solid #E2E8F0',
+            position: 'relative',
+            zIndex: 20,
+          }}
+        >
           {/* Zoom Slider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
             <button
               type="button"
               onClick={() => setZoom((z) => Math.max(z - 0.2, 0.8))}
               style={{
-                background: '#FFFFFF',
+                background: '#F8FAFC',
                 border: '1px solid #CBD5E1',
                 borderRadius: '8px',
-                width: '34px',
-                height: '34px',
+                width: '36px',
+                height: '36px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -393,11 +408,11 @@ export default function ImageCropperModal({
               type="button"
               onClick={() => setZoom((z) => Math.min(z + 0.2, 3.5))}
               style={{
-                background: '#FFFFFF',
+                background: '#F8FAFC',
                 border: '1px solid #CBD5E1',
                 borderRadius: '8px',
-                width: '34px',
-                height: '34px',
+                width: '36px',
+                height: '36px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -413,16 +428,16 @@ export default function ImageCropperModal({
               type="button"
               onClick={handleRotate}
               style={{
-                background: '#FFFFFF',
+                background: '#F8FAFC',
                 border: '1px solid #CBD5E1',
                 borderRadius: '8px',
-                padding: '0 0.65rem',
-                height: '34px',
+                padding: '0 0.75rem',
+                height: '36px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.35rem',
                 cursor: 'pointer',
-                fontSize: '0.78rem',
+                fontSize: '0.8rem',
                 fontWeight: 700,
                 color: '#334155',
               }}
@@ -441,10 +456,14 @@ export default function ImageCropperModal({
               className="btn btn-secondary"
               style={{
                 flex: 1,
-                padding: '0.75rem',
+                padding: '0.8rem',
                 borderRadius: '12px',
                 fontSize: '0.9rem',
                 fontWeight: 700,
+                cursor: 'pointer',
+                backgroundColor: '#F1F5F9',
+                color: '#334155',
+                border: '1px solid #CBD5E1',
               }}
             >
               Cancel
@@ -456,19 +475,23 @@ export default function ImageCropperModal({
               className="btn btn-primary"
               style={{
                 flex: 1.5,
-                padding: '0.75rem',
+                padding: '0.8rem',
                 borderRadius: '12px',
-                fontSize: '0.9rem',
+                fontSize: '0.92rem',
                 fontWeight: 800,
                 backgroundColor: '#0F6E56',
+                color: '#FFFFFF',
+                border: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.45rem',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(15, 110, 86, 0.28)',
               }}
             >
               <Check size={18} />
-              <span>Crop & Save</span>
+              <span>Crop &amp; Save</span>
             </button>
           </div>
         </div>
