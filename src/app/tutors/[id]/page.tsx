@@ -38,6 +38,53 @@ interface PageProps {
   };
 }
 
+function getDegreeYearLabel(degree: string = '', year: string | number) {
+  const d = degree.toLowerCase().trim();
+  if (
+    d.includes('m.') ||
+    d.includes('master') ||
+    d.includes('mtech') ||
+    d.includes('m tech') ||
+    d.includes('m.tech') ||
+    d.includes('mba') ||
+    d.includes('msc') ||
+    d.includes('m sc') ||
+    d.includes('m.sc') ||
+    d.includes('mca') ||
+    d.includes('m.com') ||
+    d.includes('m com') ||
+    d.includes('m.a') ||
+    d.includes('ma ') ||
+    d.includes('post grad') ||
+    d.includes('pg')
+  ) {
+    return `Post-Graduation: ${year}`;
+  }
+  if (d.includes('phd') || d.includes('ph.d') || d.includes('doctorate')) {
+    return `Doctorate: ${year}`;
+  }
+  if (
+    d.includes('b.') ||
+    d.includes('bachelor') ||
+    d.includes('btech') ||
+    d.includes('b tech') ||
+    d.includes('b.tech') ||
+    d.includes('bsc') ||
+    d.includes('b sc') ||
+    d.includes('b.sc') ||
+    d.includes('bca') ||
+    d.includes('b.com') ||
+    d.includes('b com') ||
+    d.includes('b.a') ||
+    d.includes('ba ') ||
+    d.includes('under grad') ||
+    d.includes('ug')
+  ) {
+    return `Graduation Year: ${year}`;
+  }
+  return `Passing Year: ${year}`;
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   let tutor = VERIFIED_TUTORS.find((t) => t.id === params.id);
   let tutorName = tutor ? tutor.name : 'Verified Home Tutor';
@@ -211,7 +258,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
         monthlyRateMin: dbProfile.monthlyRateMin || 5000,
         isVerified: dbProfile.isVerified,
         hasPoliceCheck: dbProfile.hasPoliceCheck,
-        rating: calculatedRating || 5.0,
+        rating: calculatedRating || (reviews.length > 0 ? 5.0 : 0),
         totalReviews: reviews.length || dbProfile.totalReviews || 0,
         bio: dbProfile.bio || '',
         badge: dbProfile.highestDegree ? `Specialist (${dbProfile.highestDegree})` : 'Verified Educator',
@@ -551,28 +598,44 @@ export default async function TutorProfilePage({ params }: PageProps) {
                     </h1>
 
                     {/* Star Rating & Review Count Strip */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'inherit', marginBottom: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            size={16}
-                            fill={star <= Math.round(tutorData.rating || 5) ? '#F59E0B' : '#E2E8F0'}
-                            color={star <= Math.round(tutorData.rating || 5) ? '#F59E0B' : '#CBD5E1'}
-                          />
-                        ))}
+                    {!isNewTutor && tutorData.rating > 0 ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'inherit', marginBottom: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              size={16}
+                              fill={star <= Math.round(tutorData.rating) ? '#F59E0B' : '#E2E8F0'}
+                              color={star <= Math.round(tutorData.rating) ? '#F59E0B' : '#CBD5E1'}
+                            />
+                          ))}
+                        </div>
+                        <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.92rem' }}>
+                          {tutorData.rating.toFixed(1)}
+                        </span>
+                        <span style={{ color: '#64748B', fontSize: '0.82rem' }}>•</span>
+                        <a
+                          href="#parent-reviews"
+                          style={{ color: '#0F6E56', fontWeight: 700, fontSize: '0.82rem', textDecoration: 'none' }}
+                        >
+                          {`${tutorData.totalReviews} Verified ${tutorData.totalReviews === 1 ? 'Review' : 'Reviews'}`}
+                        </a>
                       </div>
-                      <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.92rem' }}>
-                        {(tutorData.rating || 5.0).toFixed(1)}
-                      </span>
-                      <span style={{ color: '#64748B', fontSize: '0.82rem' }}>•</span>
-                      <a
-                        href="#parent-reviews"
-                        style={{ color: '#0F6E56', fontWeight: 700, fontSize: '0.82rem', textDecoration: 'none' }}
-                      >
-                        {tutorData.totalReviews > 0 ? `${tutorData.totalReviews} Verified Reviews` : 'New Verified Educator'}
-                      </a>
-                    </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'inherit', marginBottom: '0.5rem' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', backgroundColor: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', padding: '0.2rem 0.65rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>
+                          <Sparkles size={13} color="#059669" />
+                          <span>New Verified Educator</span>
+                        </span>
+                        <span style={{ color: '#64748B', fontSize: '0.82rem' }}>•</span>
+                        <a
+                          href="#parent-reviews"
+                          style={{ color: '#0F6E56', fontWeight: 700, fontSize: '0.82rem', textDecoration: 'none' }}
+                        >
+                          Be the first parent to review
+                        </a>
+                      </div>
+                    )}
 
                     {/* Live Availability Status Indicator */}
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.74rem', color: '#166534', backgroundColor: '#F0FDF4', padding: '0.2rem 0.65rem', borderRadius: '999px', border: '1px solid #DCFCE7' }}>
@@ -595,13 +658,27 @@ export default async function TutorProfilePage({ params }: PageProps) {
                 {/* 4-Pillar Quick Stats Strip */}
                 <div className="tutor-stats-strip">
                   <div style={{ backgroundColor: '#FFFBEB', border: '1px solid #FEF3C7', padding: '0.65rem 0.75rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <Star size={18} fill="#D97706" color="#D97706" />
-                    <div>
-                      <div style={{ fontSize: '0.64rem', color: '#92400E', fontWeight: 700, textTransform: 'uppercase' }}>RATING</div>
-                      <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#78350F' }}>
-                        {(tutorData.rating || 5.0).toFixed(1)} / 5.0
-                      </div>
-                    </div>
+                    {!isNewTutor && tutorData.rating > 0 ? (
+                      <>
+                        <Star size={18} fill="#D97706" color="#D97706" />
+                        <div>
+                          <div style={{ fontSize: '0.64rem', color: '#92400E', fontWeight: 700, textTransform: 'uppercase' }}>RATING</div>
+                          <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#78350F' }}>
+                            {tutorData.rating.toFixed(1)} / 5.0
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={18} color="#D97706" />
+                        <div>
+                          <div style={{ fontSize: '0.64rem', color: '#92400E', fontWeight: 700, textTransform: 'uppercase' }}>RATING</div>
+                          <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#78350F' }}>
+                            ✨ Verified
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div style={{ backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.65rem 0.75rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -779,7 +856,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
                               {qual.institute}
                             </div>
                             <div style={{ fontSize: '0.8rem', color: '#64748B' }}>
-                              {qual.year ? `Graduation Year: ${qual.year}` : 'Verified Academic Transcript'} {qual.grade ? `• Grade: ${qual.grade}` : ''}
+                              {qual.year ? getDegreeYearLabel(qual.degree, qual.year) : 'Verified Academic Transcript'} {qual.grade ? `• Grade: ${qual.grade}` : ''}
                             </div>
                           </div>
                         </div>
