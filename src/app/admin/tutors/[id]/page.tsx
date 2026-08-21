@@ -8,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 const AdminTutorMap = dynamic(() => import('@/components/AdminTutorMap'), { ssr: false });
+const TutorVideoPlayer = dynamic(() => import('@/components/TutorVideoPlayer'), { ssr: false });
 import {
   ShieldCheck,
   CheckCircle2,
@@ -38,6 +39,7 @@ import {
   Sparkles,
   Layers,
   Clock,
+  Upload,
 } from 'lucide-react';
 
 interface TutorAuditData {
@@ -104,6 +106,35 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<any>({});
   const [editSaving, setEditSaving] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+
+  const handleVideoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingVideo(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', 'video');
+      formData.append('folder', 'tuitionforhome/videos');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setEditFormData((prev: any) => ({ ...prev, introVideoUrl: data.url }));
+      } else {
+        const localUrl = URL.createObjectURL(file);
+        setEditFormData((prev: any) => ({ ...prev, introVideoUrl: localUrl }));
+      }
+    } catch (err) {
+      console.error('Video upload error:', err);
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
 
   // Detect who is viewing: admin or counselor
   useEffect(() => {
@@ -685,7 +716,7 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
                 </div>
                 {tutor.introVideoUrl ? (
                   <span style={{ fontSize: '0.72rem', fontWeight: 800, backgroundColor: '#DCFCE7', color: '#166534', padding: '2px 7px', borderRadius: '6px' }}>
-                    ✓ Video Uploaded
+                    ✓ Video Active
                   </span>
                 ) : (
                   <span style={{ fontSize: '0.72rem', fontWeight: 800, backgroundColor: '#FEE2E2', color: '#991B1B', padding: '2px 7px', borderRadius: '6px' }}>
@@ -694,34 +725,15 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
                 )}
               </div>
 
-              {tutor.introVideoUrl ? (
-                <div>
-                  <div style={{ borderRadius: '12px', overflow: 'hidden', backgroundColor: '#000000', marginBottom: '0.65rem' }}>
-                    <video
-                      src={tutor.introVideoUrl}
-                      controls
-                      style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', display: 'block' }}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.76rem', color: '#64748B' }}>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
-                      URL: {tutor.introVideoUrl}
-                    </span>
-                    <a href={tutor.introVideoUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#0F6E56', fontWeight: 700, textDecoration: 'none' }}>
-                      Open External ↗
-                    </a>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ padding: '2rem 1rem', textAlign: 'center', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1.5px dashed #CBD5E1' }}>
-                  <Video size={32} color="#94A3B8" style={{ margin: '0 auto 0.5rem auto' }} />
-                  <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#475569' }}>No Introduction Video Uploaded</div>
-                  <p style={{ fontSize: '0.76rem', color: '#94A3B8', margin: '0.25rem 0 0.75rem 0' }}>Tutor hasn&apos;t uploaded a video intro yet.</p>
-                  <button type="button" onClick={handleOpenEditModal} className="btn btn-secondary btn-sm" style={{ fontSize: '0.76rem', fontWeight: 700 }}>
-                    + Add Video URL (Admin)
-                  </button>
-                </div>
-              )}
+              <TutorVideoPlayer
+                videoUrl={tutor.introVideoUrl}
+                tutorName={tutor.name}
+                maxHeight="220px"
+                onSetTestVideo={(url) => {
+                  setEditFormData((prev: any) => ({ ...prev, introVideoUrl: url }));
+                  handleOpenEditModal();
+                }}
+              />
             </div>
 
             {/* Section: Location, Travel Radius & Covered Sectors */}
@@ -1522,30 +1534,109 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Profile Photo Avatar URL</label>
-                  <input
-                    type="text"
-                    value={editFormData.avatarUrl}
-                    onChange={(e) => setEditFormData({ ...editFormData, avatarUrl: e.target.value })}
-                    className="form-control"
-                    style={{ fontSize: '0.82rem' }}
-                    placeholder="https://images.unsplash.com/... or cloudinary url"
-                  />
+              <div style={{ backgroundColor: '#F8FAFC', padding: '1.25rem', borderRadius: '14px', border: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
+                <strong style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F6E56', display: 'block', marginBottom: '0.75rem' }}>
+                  🎥 Introduction Video &amp; Media
+                </strong>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '1rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Profile Photo Avatar URL</label>
+                    <input
+                      type="text"
+                      value={editFormData.avatarUrl}
+                      onChange={(e) => setEditFormData({ ...editFormData, avatarUrl: e.target.value })}
+                      className="form-control"
+                      style={{ fontSize: '0.82rem' }}
+                      placeholder="https://images.unsplash.com/... or Cloudinary URL"
+                    />
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', margin: 0 }}>
+                        Introduction Video (File Upload or Link)
+                      </label>
+                      {uploadingVideo && (
+                        <span style={{ fontSize: '0.72rem', color: '#0F6E56', fontWeight: 700 }}>
+                          Uploading video...
+                        </span>
+                      )}
+                    </div>
+                    
+                    <input
+                      type="text"
+                      value={editFormData.introVideoUrl}
+                      onChange={(e) => setEditFormData({ ...editFormData, introVideoUrl: e.target.value })}
+                      className="form-control"
+                      style={{ fontSize: '0.82rem', marginBottom: '0.5rem' }}
+                      placeholder="Paste YouTube, Vimeo, or MP4 URL"
+                    />
+
+                    {/* Direct Video File Upload & Preset Test Buttons */}
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <label
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          backgroundColor: '#FFFFFF',
+                          color: '#0F6E56',
+                          border: '1px solid #0F6E56',
+                          borderRadius: '6px',
+                          padding: '0.3rem 0.6rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Upload size={13} />
+                        <span>{uploadingVideo ? 'Uploading...' : 'Upload Video File'}</span>
+                        <input
+                          type="file"
+                          accept="video/mp4,video/webm,video/quicktime"
+                          onChange={handleVideoFileUpload}
+                          disabled={uploadingVideo}
+                          style={{ display: 'none' }}
+                        />
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => setEditFormData({ ...editFormData, introVideoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4' })}
+                        className="btn btn-secondary btn-sm"
+                        style={{ fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0.55rem' }}
+                      >
+                        🎥 Test Direct MP4
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setEditFormData({ ...editFormData, introVideoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' })}
+                        className="btn btn-secondary btn-sm"
+                        style={{ fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0.55rem' }}
+                      >
+                        ▶️ Test YouTube Link
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Introduction Video URL</label>
-                  <input
-                    type="text"
-                    value={editFormData.introVideoUrl}
-                    onChange={(e) => setEditFormData({ ...editFormData, introVideoUrl: e.target.value })}
-                    className="form-control"
-                    style={{ fontSize: '0.82rem' }}
-                    placeholder="/videos/... or https://..."
-                  />
-                </div>
+                {/* Live Video Preview Inside Modal */}
+                {editFormData.introVideoUrl && (
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748B', display: 'block', marginBottom: '0.35rem' }}>
+                      Live Video Playback Preview:
+                    </span>
+                    <div style={{ maxWidth: '400px' }}>
+                      <TutorVideoPlayer
+                        videoUrl={editFormData.introVideoUrl}
+                        tutorName={editFormData.name}
+                        maxHeight="160px"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem', backgroundColor: '#F8FAFC', padding: '1rem', borderRadius: '12px' }}>

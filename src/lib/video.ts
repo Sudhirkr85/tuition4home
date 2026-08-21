@@ -7,6 +7,7 @@ export interface VideoSourceInfo {
   embedUrl: string;
   originalUrl: string;
   isEmbeddable: boolean;
+  title?: string;
 }
 
 export function getVideoSourceInfo(url?: string | null): VideoSourceInfo {
@@ -16,10 +17,8 @@ export function getVideoSourceInfo(url?: string | null): VideoSourceInfo {
 
   const trimmed = url.trim();
 
-  // Filter out any placeholder / dummy strings
+  // Filter out invalid/empty placeholders
   if (
-    trimmed.toLowerCase().includes('placeholder') ||
-    trimmed === '/placeholder-video.mp4' ||
     trimmed === '#' ||
     trimmed === 'null' ||
     trimmed === 'undefined' ||
@@ -37,9 +36,10 @@ export function getVideoSourceInfo(url?: string | null): VideoSourceInfo {
     const videoId = ytMatch[1];
     return {
       type: 'youtube',
-      embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`,
+      embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1`,
       originalUrl: trimmed,
       isEmbeddable: true,
+      title: 'YouTube Video',
     };
   }
 
@@ -49,9 +49,10 @@ export function getVideoSourceInfo(url?: string | null): VideoSourceInfo {
     const videoId = vimeoMatch[3] || vimeoMatch[1];
     return {
       type: 'vimeo',
-      embedUrl: `https://player.vimeo.com/video/${videoId}?autoplay=1`,
+      embedUrl: `https://player.vimeo.com/video/${videoId}`,
       originalUrl: trimmed,
       isEmbeddable: true,
+      title: 'Vimeo Video',
     };
   }
 
@@ -63,20 +64,25 @@ export function getVideoSourceInfo(url?: string | null): VideoSourceInfo {
       embedUrl: `https://drive.google.com/file/d/${gdriveMatch[1]}/preview`,
       originalUrl: trimmed,
       isEmbeddable: true,
+      title: 'Google Drive Video',
     };
   }
 
-  // 4. Direct Video Files (MP4, WebM, QuickTime, Cloudinary, Base64 data URI)
+  // 4. Direct Video Files (.mp4, .webm, .mov, data URI, blob, or cloudinary/s3 URL)
   const isDirectVideo =
-    (trimmed.startsWith('https://') || trimmed.startsWith('http://') || trimmed.startsWith('data:video/') || trimmed.startsWith('blob:') || trimmed.startsWith('/uploads/')) &&
-    (trimmed.endsWith('.mp4') ||
-     trimmed.endsWith('.webm') ||
-     trimmed.endsWith('.mov') ||
-     trimmed.startsWith('data:video/') ||
-     trimmed.includes('cloudinary.com') ||
-     trimmed.includes('/video/upload/') ||
-     trimmed.startsWith('blob:') ||
-     trimmed.startsWith('/uploads/'));
+    trimmed.endsWith('.mp4') ||
+    trimmed.endsWith('.webm') ||
+    trimmed.endsWith('.mov') ||
+    trimmed.includes('.mp4?') ||
+    trimmed.includes('.webm?') ||
+    trimmed.includes('/video/upload/') ||
+    trimmed.includes('cloudinary.com') ||
+    trimmed.startsWith('data:video/') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('/uploads/') ||
+    trimmed.startsWith('/videos/') ||
+    trimmed.startsWith('/placeholder-video.mp4') ||
+    (trimmed.startsWith('http') && (trimmed.includes('video') || trimmed.includes('.mp4') || trimmed.includes('.webm')));
 
   if (isDirectVideo) {
     return {
@@ -84,6 +90,18 @@ export function getVideoSourceInfo(url?: string | null): VideoSourceInfo {
       embedUrl: trimmed,
       originalUrl: trimmed,
       isEmbeddable: true,
+      title: 'Direct Video File',
+    };
+  }
+
+  // Fallback for any other valid HTTP URL: try as direct video
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return {
+      type: 'direct',
+      embedUrl: trimmed,
+      originalUrl: trimmed,
+      isEmbeddable: true,
+      title: 'Web Video Stream',
     };
   }
 
