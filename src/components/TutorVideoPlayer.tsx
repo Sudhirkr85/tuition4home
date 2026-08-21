@@ -27,10 +27,6 @@ export default function TutorVideoPlayer({
     setHasError(false);
   }, [videoUrl]);
 
-  // Sample working test videos
-  const SAMPLE_DIRECT_VIDEO = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
-  const SAMPLE_YOUTUBE_LINK = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-
   if (!videoUrl || info.type === 'none') {
     return (
       <div
@@ -51,30 +47,9 @@ export default function TutorVideoPlayer({
           <Video size={24} />
         </div>
         <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#334155' }}>No Introduction Video Uploaded</div>
-        <p style={{ fontSize: '0.76rem', color: '#94A3B8', margin: '0.25rem 0 0.85rem 0', maxWidth: '280px' }}>
+        <p style={{ fontSize: '0.76rem', color: '#94A3B8', margin: '0.25rem 0 0', maxWidth: '280px' }}>
           Upload an MP4 file or paste a YouTube / Vimeo link.
         </p>
-
-        {onSetTestVideo && (
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <button
-              type="button"
-              onClick={() => onSetTestVideo(SAMPLE_DIRECT_VIDEO)}
-              className="btn btn-secondary btn-sm"
-              style={{ fontSize: '0.72rem', fontWeight: 700, padding: '0.35rem 0.65rem' }}
-            >
-              🎥 Test Direct MP4
-            </button>
-            <button
-              type="button"
-              onClick={() => onSetTestVideo(SAMPLE_YOUTUBE_LINK)}
-              className="btn btn-secondary btn-sm"
-              style={{ fontSize: '0.72rem', fontWeight: 700, padding: '0.35rem 0.65rem' }}
-            >
-              ▶️ Test YouTube Link
-            </button>
-          </div>
-        )}
       </div>
     );
   }
