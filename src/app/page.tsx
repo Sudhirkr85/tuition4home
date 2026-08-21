@@ -59,6 +59,7 @@ import {
   Smartphone,
   Globe,
   ChevronDown,
+  ChevronUp,
   HelpCircle,
   Check,
   Headphones,
@@ -83,6 +84,7 @@ export default function HomePage() {
   const [activeVideoTutor, setActiveVideoTutor] = useState<MockTutor | null>(null);
   const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>([]);
   const [dynamicLocalities, setDynamicLocalities] = useState<LocalityInfo[]>(GURGAON_LOCALITIES);
+  const [showAllLocalities, setShowAllLocalities] = useState(false);
   const [totalVerifiedTutors, setTotalVerifiedTutors] = useState<string>('');
   const [selectedShowcaseSector, setSelectedShowcaseSector] = useState<string>('All Sectors');
   const [selectedShowcaseGender, setSelectedShowcaseGender] = useState<'ALL' | 'FEMALE' | 'MALE'>('ALL');
@@ -1329,7 +1331,7 @@ export default function HomePage() {
               gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
               gap: '1rem',
             }}>
-              {dynamicLocalities.map((loc) => (
+              {(showAllLocalities ? dynamicLocalities : dynamicLocalities.slice(0, 8)).map((loc) => (
                 <Link
                   key={loc.slug}
                   href={`/home-tutors-in-gurgaon/${loc.slug}`}
@@ -1358,9 +1360,44 @@ export default function HomePage() {
               ))}
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-              <Link href="/home-tutors-in-gurgaon" className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span>View Full Gurgaon &amp; Delhi Directory</span>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginTop: '2rem', flexWrap: 'wrap' }}>
+              {dynamicLocalities.length > 8 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllLocalities(!showAllLocalities)}
+                  className="btn btn-primary"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    padding: '0.75rem 1.4rem',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    backgroundColor: '#0F6E56',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(15, 110, 86, 0.15)',
+                  }}
+                >
+                  <span>{showAllLocalities ? 'Show Fewer Sectors' : `Explore All ${dynamicLocalities.length}+ Gurgaon Sectors`}</span>
+                  {showAllLocalities ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+              )}
+
+              <Link
+                href="/home-tutors-in-gurgaon"
+                className="btn btn-secondary"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.75rem 1.25rem',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  borderRadius: '12px',
+                }}
+              >
+                <span>Full Directory Page</span>
                 <ChevronRight size={16} />
               </Link>
             </div>
