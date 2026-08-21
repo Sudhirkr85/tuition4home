@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import TutorProfileActions from '@/components/TutorProfileActions';
+import TutorDistanceBadge from '@/components/TutorDistanceBadge';
 import prisma from '@/lib/prisma';
 import { VERIFIED_TUTORS, SSSAM_OFFICE_DETAILS, MockTutor } from '@/lib/data';
 import {
@@ -456,6 +457,16 @@ export default async function TutorProfilePage({ params }: PageProps) {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Live Distance Proximity Badge from Parent's Selected Sector */}
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <TutorDistanceBadge
+                    tutorLatitude={tutorData.latitude}
+                    tutorLongitude={tutorData.longitude}
+                    serviceAreas={tutorData.serviceAreas}
+                    tutorName={tutorData.name}
+                  />
                 </div>
 
                 {/* 4-Pillar Quick Stats Strip */}

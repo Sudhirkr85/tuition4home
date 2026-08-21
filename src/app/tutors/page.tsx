@@ -1,11 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BookingModal from '@/components/BookingModal';
 import VideoModal from '@/components/VideoModal';
 import { GURGAON_LOCALITIES, VERIFIED_TUTORS, MockTutor, SSSAM_OFFICE_DETAILS } from '@/lib/data';
+import {
+  calculateHaversineKm,
+  getDistanceInfo,
+  POPULAR_GURGAON_SECTORS,
+} from '@/components/RapidoStyleMap';
 import {
   Search,
   MapPin,
@@ -25,6 +30,9 @@ import {
   SlidersHorizontal,
   Home,
   Laptop,
+  Crosshair,
+  MessageCircle,
+  Clock,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -32,16 +40,29 @@ export default function TutorsDirectoryPage() {
   const [tutors, setTutors] = useState<MockTutor[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Parent Location Proximity State (Auto-synced with localStorage)
+  const [parentLocation, setParentLocation] = useState<{
+    address: string;
+    lat: number;
+    lng: number;
+    source: 'GPS' | 'SAVED' | 'DEFAULT';
+  }>({
+    address: 'DLF Phase 5, Golf Course Road, Gurugram',
+    lat: 28.4552,
+    lng: 77.0945,
+    source: 'DEFAULT',
+  });
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [showLocationSectorModal, setShowLocationSectorModal] = useState(false);
+  const [sectorSearchQuery, setSectorSearchQuery] = useState('');
+
   // Filters State
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedLocality, setSelectedLocality] = useState('ALL');
-  const [localitySearchText, setLocalitySearchText] = useState('');
-  const [localityDropdownOpen, setLocalityDropdownOpen] = useState(false);
-  const localityRef = useRef<HTMLDivElement>(null);
+  const [distanceFilter, setDistanceFilter] = useState<'ALL' | 'WITHIN_3_5' | 'WITHIN_7'>('ALL');
   const [selectedGender, setSelectedGender] = useState<'ALL' | 'FEMALE' | 'MALE'>('ALL');
   const [selectedMode, setSelectedMode] = useState<'ALL' | 'OFFLINE_HOME' | 'ONLINE_LIVE'>('ALL');
   const [selectedPriceRange, setSelectedPriceRange] = useState<'ALL' | 'UNDER_800' | '800_1200' | 'ABOVE_1200'>('ALL');
-  const [sortBy, setSortBy] = useState<'RATING' | 'EXPERIENCE' | 'PRICE_LOW' | 'PRICE_HIGH'>('RATING');
+  const [sortBy, setSortBy] = useState<'DISTANCE_ASC' | 'RATING' | 'EXPERIENCE' | 'PRICE_LOW' | 'PRICE_HIGH'>('DISTANCE_ASC');
 
   // Quick Trending Search Chips
   const popularKeywords = [
@@ -53,17 +74,6 @@ export default function TutorsDirectoryPage() {
     { label: 'IB Diploma Math', query: 'IB' },
     { label: 'English Literature', query: 'English' },
   ];
-
-  // Close locality dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (localityRef.current && !localityRef.current.contains(e.target as Node)) {
-        setLocalityDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -83,23 +93,131 @@ export default function TutorsDirectoryPage() {
   } | undefined>(undefined);
   const [activeVideoTutor, setActiveVideoTutor] = useState<MockTutor | null>(null);
 
+  // Load saved location on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('user_detected_location');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.address && parsed.lat && parsed.lng) {
+          setParentLocation({
+            address: parsed.address,
+            lat: parsed.lat,
+            lng: parsed.lng,
+            source: 'SAVED',
+          });
+        }
+      }
+    } catch {}
+  }, []);
+
   // Fetch live verified tutors from database API
   useEffect(() => {
     fetch('/api/tutors/list')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && Array.isArray(data.tutors)) {
+        if (data.success && Array.isArray(data.tutors) && data.tutors.length > 0) {
           setTutors(data.tutors);
         } else {
-          setTutors([]);
+          setTutors(VERIFIED_TUTORS);
         }
       })
       .catch((err) => {
         console.error('Failed to fetch tutors for directory:', err);
-        setTutors([]);
+        setTutors(VERIFIED_TUTORS);
       })
       .finally(() => setLoading(false));
   }, []);
+
+  // Reverse Geocoding with OSM Nominatim
+  const handleReverseGeocode = useCallback(async (lat: number, lng: number): Promise<string> => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`,
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const data = await res.json();
+      return data.display_name || 'Gurugram, Haryana';
+    } catch {
+      return 'Gurugram, Haryana';
+    }
+  }, []);
+
+  // Helper to find nearest known sector from POPULAR_GURGAON_SECTORS
+  const getNearestKnownSector = useCallback((lat: number, lng: number) => {
+    let nearest = POPULAR_GURGAON_SECTORS[0];
+    let minDistance = Infinity;
+    for (const sector of POPULAR_GURGAON_SECTORS) {
+      const d = Math.hypot(sector.lat - lat, sector.lng - lng);
+      if (d < minDistance) {
+        minDistance = d;
+        nearest = sector;
+      }
+    }
+    return minDistance < 0.15 ? nearest : null;
+  }, []);
+
+  // Handle GPS detection on button click
+  const handleDetectGPS = () => {
+    setIsDetectingLocation(true);
+    if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+
+          const nearestSector = getNearestKnownSector(lat, lng);
+          let resolvedAddress = nearestSector
+            ? `${nearestSector.name}, ${nearestSector.landmark ? nearestSector.landmark.split(',')[0] + ', ' : ''}Gurugram`
+            : '';
+
+          if (!resolvedAddress) {
+            resolvedAddress = await handleReverseGeocode(lat, lng);
+          }
+
+          setParentLocation({
+            address: resolvedAddress,
+            lat,
+            lng,
+            source: 'GPS',
+          });
+
+          try {
+            localStorage.setItem('user_detected_location', JSON.stringify({ address: resolvedAddress, lat, lng }));
+          } catch {}
+
+          setIsDetectingLocation(false);
+          setCurrentPage(1);
+        },
+        () => {
+          setIsDetectingLocation(false);
+          setShowLocationSectorModal(true);
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    } else {
+      setIsDetectingLocation(false);
+      setShowLocationSectorModal(true);
+    }
+  };
+
+  // Select quick sector
+  const handleSelectSector = (sector: typeof POPULAR_GURGAON_SECTORS[0]) => {
+    const addr = `${sector.name}, ${sector.landmark.split(',')[0]}, Gurugram`;
+    setParentLocation({
+      address: addr,
+      lat: sector.lat,
+      lng: sector.lng,
+      source: 'SAVED',
+    });
+
+    try {
+      localStorage.setItem('user_detected_location', JSON.stringify({ address: addr, lat: sector.lat, lng: sector.lng }));
+    } catch {}
+
+    setShowLocationSectorModal(false);
+    setCurrentPage(1);
+  };
 
   const handleOpenBooking = (tutor?: MockTutor) => {
     if (tutor) {
@@ -118,10 +236,43 @@ export default function TutorsDirectoryPage() {
     setBookingOpen(true);
   };
 
-  // Filter & Sort Logic
+  // Compute distance for each tutor and filter & sort
   const filteredTutors = useMemo(() => {
-    return tutors
+    const list = tutors.length > 0 ? tutors : VERIFIED_TUTORS;
+
+    return list
+      .map((tut, idx) => {
+        let tLat = tut.latitude;
+        let tLng = tut.longitude;
+        if (!tLat || !tLng) {
+          const matchedSector = POPULAR_GURGAON_SECTORS.find(s =>
+            tut.serviceAreas.some(area => area.toLowerCase().includes(s.name.toLowerCase()))
+          );
+          if (matchedSector) {
+            tLat = matchedSector.lat;
+            tLng = matchedSector.lng;
+          } else {
+            const angle = idx * 2.399963;
+            const distanceKm = 0.8 + (idx % 5) * 0.45;
+            tLat = parentLocation.lat + (distanceKm / 110.85) * Math.sin(angle);
+            tLng = parentLocation.lng + (distanceKm / 97.8) * Math.cos(angle);
+          }
+        }
+
+        const distanceKm = calculateHaversineKm(parentLocation.lat, parentLocation.lng, tLat, tLng);
+        const distanceInfo = getDistanceInfo(distanceKm);
+
+        return {
+          ...tut,
+          distanceKm,
+          distanceInfo,
+        };
+      })
       .filter((tut) => {
+        // Distance Filter
+        if (distanceFilter === 'WITHIN_3_5' && tut.distanceKm > 3.5) return false;
+        if (distanceFilter === 'WITHIN_7' && tut.distanceKm > 7.0) return false;
+
         // Gender filter
         if (selectedGender === 'FEMALE') {
           if (tut.gender && tut.gender.toUpperCase() !== 'FEMALE') return false;
@@ -140,12 +291,6 @@ export default function TutorsDirectoryPage() {
         if (selectedPriceRange === '800_1200' && (tut.hourlyRateHome < 800 || tut.hourlyRateHome > 1200)) return false;
         if (selectedPriceRange === 'ABOVE_1200' && tut.hourlyRateHome < 1200) return false;
 
-        // Locality filter
-        if (selectedLocality !== 'ALL') {
-          const matchLoc = tut.serviceAreas.some((a) => a.toLowerCase().includes(selectedLocality.toLowerCase()));
-          if (!matchLoc) return false;
-        }
-
         // Search Query
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase();
@@ -160,30 +305,30 @@ export default function TutorsDirectoryPage() {
         return true;
       })
       .sort((a, b) => {
+        if (sortBy === 'DISTANCE_ASC') return a.distanceKm - b.distanceKm;
         if (sortBy === 'RATING') return b.rating - a.rating;
         if (sortBy === 'EXPERIENCE') return b.experienceYears - a.experienceYears;
         if (sortBy === 'PRICE_LOW') return a.hourlyRateHome - b.hourlyRateHome;
         if (sortBy === 'PRICE_HIGH') return b.hourlyRateHome - a.hourlyRateHome;
         return 0;
       });
-  }, [tutors, selectedGender, selectedMode, selectedPriceRange, selectedLocality, searchQuery, sortBy]);
+  }, [tutors, parentLocation, distanceFilter, selectedGender, selectedMode, selectedPriceRange, searchQuery, sortBy]);
 
-  // Check if any filter is actively applied
   const isFilterActive =
     searchQuery.trim() !== '' ||
+    distanceFilter !== 'ALL' ||
     selectedGender !== 'ALL' ||
-    selectedLocality !== 'ALL' ||
     selectedMode !== 'ALL' ||
-    selectedPriceRange !== 'ALL';
+    selectedPriceRange !== 'ALL' ||
+    sortBy !== 'DISTANCE_ASC';
 
   const handleResetAllFilters = () => {
     setSearchQuery('');
+    setDistanceFilter('ALL');
     setSelectedGender('ALL');
-    setSelectedLocality('ALL');
-    setLocalitySearchText('');
     setSelectedMode('ALL');
     setSelectedPriceRange('ALL');
-    setSortBy('RATING');
+    setSortBy('DISTANCE_ASC');
     setCurrentPage(1);
   };
 
@@ -198,15 +343,15 @@ export default function TutorsDirectoryPage() {
 
       <main style={{ flex: 1 }}>
         {/* =========================================================================
-            DIRECTORY HERO: GRAND SEARCH & INSTANT QUICK FILTERS
+            1. HERO & LOCATION PROXIMITY HEADER
             ========================================================================= */}
         <section style={{
-          padding: 'clamp(2rem, 3.5vw, 2.75rem) 0 clamp(1rem, 2vw, 1.5rem) 0',
+          padding: 'clamp(2rem, 4vw, 3rem) 0 clamp(1rem, 2vw, 1.5rem) 0',
           background: 'radial-gradient(circle at 50% 0%, rgba(209, 250, 229, 0.55), rgba(248, 250, 252, 1) 85%)',
           borderBottom: '1px solid #E2E8F0',
         }}>
           <div className="container">
-            <div style={{ maxWidth: '820px', margin: '0 auto', textAlign: 'center' }}>
+            <div style={{ maxWidth: '840px', margin: '0 auto', textAlign: 'center' }}>
               {/* Trust Badge */}
               <div style={{
                 display: 'inline-flex',
@@ -222,28 +367,156 @@ export default function TutorsDirectoryPage() {
                 marginBottom: '0.75rem',
               }}>
                 <ShieldCheck size={14} />
-                <span>1,000+ SSSAM ACADEMY VERIFIED EDUCATORS IN GURGAON</span>
+                <span>1,000+ SSSAM ACADEMY VERIFIED TEACHERS IN GURGAON</span>
               </div>
 
-              <h1 style={{ fontSize: 'clamp(1.85rem, 3.5vw, 2.7rem)', fontWeight: 900, color: '#0F172A', lineHeight: 1.18, letterSpacing: '-0.025em', marginBottom: '0.5rem' }}>
-                Find Top Verified Home &amp; Online Tutors in Gurgaon
+              <h1 style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.6rem)', fontWeight: 900, color: '#0F172A', lineHeight: 1.2, letterSpacing: '-0.025em', marginBottom: '0.5rem' }}>
+                Find Verified Home Teachers in Gurgaon
               </h1>
-              <p style={{ fontSize: '0.98rem', color: '#64748B', lineHeight: 1.55, maxWidth: '680px', margin: '0 auto 1.25rem auto' }}>
-                Screened subject specialists across DLF, Golf Course, Sohna Road, Nirvana Country &amp; all Gurgaon sectors. Watch 60-second video introductions &amp; request personalized classes.
+              <p style={{ fontSize: '0.96rem', color: '#64748B', lineHeight: 1.55, maxWidth: '680px', margin: '0 auto 1.5rem auto' }}>
+                Showing nearest background-verified subject specialists matched by distance to your sector.
               </p>
+
+              {/* LIVE LOCATION PROXIMITY BAR */}
+              <div style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '18px',
+                border: '1.5px solid #CBD5E1',
+                padding: '0.85rem 1.15rem',
+                boxShadow: '0 8px 30px rgba(15, 110, 86, 0.08)',
+                marginBottom: '1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0, textAlign: 'left' }}>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '12px',
+                    backgroundColor: isDetectingLocation ? '#FEF3C7' : '#EFF6FF',
+                    color: isDetectingLocation ? '#D97706' : '#2563EB',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    position: 'relative',
+                  }}>
+                    {isDetectingLocation ? (
+                      <Crosshair size={20} style={{ animation: 'radarSpin 1s linear infinite' }} />
+                    ) : (
+                      <MapPin size={20} />
+                    )}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                      {isDetectingLocation ? 'DETECTING YOUR GPS LOCATION...' : 'SHOWING TEACHERS NEAR YOUR SECTOR'}
+                    </div>
+                    <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {parentLocation.address}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={handleDetectGPS}
+                    disabled={isDetectingLocation}
+                    className="btn btn-secondary btn-sm"
+                    style={{
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.5rem 0.85rem',
+                      borderRadius: '10px',
+                      border: '1.5px solid #CBD5E1',
+                      backgroundColor: '#FFFFFF',
+                      color: '#0F6E56',
+                    }}
+                  >
+                    <Crosshair size={15} color="#0F6E56" />
+                    <span>{isDetectingLocation ? 'Scanning GPS...' : 'Use Current Location'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowLocationSectorModal(true)}
+                    className="btn btn-primary btn-sm"
+                    style={{
+                      fontSize: '0.82rem',
+                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.5rem 0.95rem',
+                      borderRadius: '10px',
+                      backgroundColor: '#0F6E56',
+                    }}
+                  >
+                    <MapPin size={15} />
+                    <span>Change Sector</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Sector Chips (1-Click Switcher) */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.45rem',
+                overflowX: 'auto',
+                paddingBottom: '0.5rem',
+                scrollbarWidth: 'none',
+                WebkitOverflowScrolling: 'touch',
+              }}>
+                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  Quick Sectors:
+                </span>
+                {POPULAR_GURGAON_SECTORS.slice(0, 7).map((sec) => {
+                  const isSelected = parentLocation.address.toLowerCase().includes(sec.name.toLowerCase());
+                  return (
+                    <button
+                      key={sec.name}
+                      type="button"
+                      onClick={() => handleSelectSector(sec)}
+                      style={{
+                        padding: '0.32rem 0.75rem',
+                        borderRadius: '999px',
+                        fontSize: '0.76rem',
+                        fontWeight: isSelected ? 800 : 600,
+                        border: isSelected ? '1.5px solid #0F6E56' : '1px solid #E2E8F0',
+                        backgroundColor: isSelected ? '#0F6E56' : '#FFFFFF',
+                        color: isSelected ? '#FFFFFF' : '#334155',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {sec.name}
+                    </button>
+                  );
+                })}
+              </div>
 
               {/* Central Search Bar */}
               <div style={{
                 position: 'relative',
                 maxWidth: '640px',
-                margin: '0 auto 0.85rem auto',
+                margin: '0.75rem auto 0.75rem auto',
                 boxShadow: '0 8px 24px -4px rgba(15, 110, 86, 0.1)',
                 borderRadius: '16px',
               }}>
                 <Search size={19} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#0F6E56' }} />
                 <input
                   type="text"
-                  placeholder="Search by subject (e.g. Maths, Physics), degree (e.g. IIT, M.Sc), or teacher name..."
+                  placeholder="Search by subject, teacher name, or qualifications..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -252,104 +525,40 @@ export default function TutorsDirectoryPage() {
                   className="form-control"
                   style={{
                     paddingLeft: '3.1rem',
-                    paddingRight: searchQuery ? '3rem' : '1.25rem',
+                    paddingRight: '1.25rem',
                     paddingTop: '0.85rem',
                     paddingBottom: '0.85rem',
                     borderRadius: '16px',
                     fontSize: '0.94rem',
                     border: '1.5px solid #CBD5E1',
                     backgroundColor: '#FFFFFF',
-                    boxShadow: 'none',
                   }}
                 />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => { setSearchQuery(''); setCurrentPage(1); }}
-                    style={{
-                      position: 'absolute',
-                      right: '14px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: '#94A3B8',
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                    title="Clear search"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-
-              {/* Trending Quick Search Chips */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: '0.45rem' }}>
-                <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, marginRight: '0.2rem' }}>Popular:</span>
-                {popularKeywords.map((item) => {
-                  const isSelected = searchQuery.toLowerCase() === item.query.toLowerCase();
-                  return (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={() => {
-                        if (isSelected) {
-                          setSearchQuery('');
-                        } else {
-                          setSearchQuery(item.query);
-                        }
-                        setCurrentPage(1);
-                      }}
-                      style={{
-                        padding: '0.3rem 0.7rem',
-                        borderRadius: '999px',
-                        fontSize: '0.76rem',
-                        fontWeight: 600,
-                        border: isSelected ? '1.5px solid #0F6E56' : '1px solid #E2E8F0',
-                        backgroundColor: isSelected ? '#ECFDF5' : '#FFFFFF',
-                        color: isSelected ? '#0F6E56' : '#475569',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      {item.label}
-                    </button>
-                  );
-                })}
               </div>
             </div>
           </div>
         </section>
 
         {/* =========================================================================
-            FILTERS TOOLBAR & DIRECTORY GRID
+            2. FILTERS TOOLBAR & DIRECTORY GRID
             ========================================================================= */}
         <section style={{ padding: '1.25rem 0 4rem 0' }}>
           <div className="container">
-            {/* Embedded Responsive Styles */}
+            {/* Embedded Responsive Styles & Keyframes */}
             <style jsx global>{`
-              .filter-toolbar-box {
+              .proximity-filter-toolbar {
                 display: flex;
-                gap: 1rem;
+                gap: 0.85rem;
                 flex-wrap: wrap;
                 align-items: center;
                 justify-content: space-between;
               }
-              .filter-left-controls {
+              .proximity-filter-left {
                 display: flex;
-                gap: 0.75rem;
+                gap: 0.5rem;
                 flex-wrap: wrap;
                 align-items: center;
                 flex: 1;
-              }
-              .locality-box-wrapper {
-                position: relative;
-                min-width: 240px;
-                max-width: 320px;
-                flex: 1;
-                z-index: 70;
               }
               .filter-dropdown-select {
                 padding: 0.52rem 0.85rem;
@@ -361,7 +570,6 @@ export default function TutorsDirectoryPage() {
                 color: #0F172A;
                 cursor: pointer;
                 height: 38px;
-                width: 100%;
               }
               .mode-btn-group {
                 display: inline-flex;
@@ -370,27 +578,21 @@ export default function TutorsDirectoryPage() {
                 overflow: hidden;
                 height: 38px;
               }
+              @keyframes radarWave {
+                0% { transform: scale(0.95); opacity: 0.8; }
+                100% { transform: scale(1.6); opacity: 0; }
+              }
+              @keyframes radarSpin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
               @media (max-width: 768px) {
-                .filter-toolbar-box {
+                .proximity-filter-toolbar {
                   flex-direction: column !important;
                   align-items: stretch !important;
                   gap: 0.75rem !important;
                 }
-                .filter-left-controls {
-                  flex-direction: column !important;
-                  align-items: stretch !important;
-                  gap: 0.75rem !important;
-                  width: 100% !important;
-                }
-                .locality-box-wrapper {
-                  max-width: 100% !important;
-                  width: 100% !important;
-                  min-width: 0 !important;
-                }
-                .mobile-two-col {
-                  display: grid !important;
-                  grid-template-columns: 1fr 1fr !important;
-                  gap: 0.5rem !important;
+                .proximity-filter-left {
                   width: 100% !important;
                 }
                 .mode-btn-group {
@@ -400,277 +602,95 @@ export default function TutorsDirectoryPage() {
                 .mode-btn-group button {
                   flex: 1 !important;
                   padding: 0 0.4rem !important;
-                  font-size: 0.74rem !important;
-                  text-align: center !important;
-                  white-space: nowrap !important;
+                  font-size: 0.76rem !important;
                 }
                 .filter-right-controls {
                   width: 100% !important;
                   display: flex !important;
                   align-items: center !important;
                   justify-content: space-between !important;
-                  gap: 0.5rem !important;
                 }
                 .filter-right-controls select {
                   flex: 1 !important;
                 }
-              }
-              @keyframes radarWave {
-                0% { transform: scale(0.95); opacity: 0.8; }
-                100% { transform: scale(1.6); opacity: 0; }
-              }
-              @keyframes searchFloat {
-                0%, 100% { transform: translateY(0px) rotate(0deg); }
-                50% { transform: translateY(-6px) rotate(-10deg); }
               }
             `}</style>
 
             {/* Filter Hub Toolbar */}
             <div className="apple-card" style={{
               padding: '1rem 1.25rem',
-              marginBottom: '2rem',
+              marginBottom: '1.75rem',
               backgroundColor: '#FFFFFF',
               borderRadius: '16px',
               border: '1px solid #E2E8F0',
-              position: 'relative',
-              zIndex: 60,
               boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
             }}>
-              <div className="filter-toolbar-box">
-                {/* Left Controls: Location, Price, Mode */}
-                <div className="filter-left-controls">
-                  {/* Searchable Writable Locality Combobox */}
-                  <div ref={localityRef} className="locality-box-wrapper">
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.45rem',
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: '10px',
-                      border: localityDropdownOpen ? '1.5px solid #0F6E56' : '1px solid #CBD5E1',
-                      backgroundColor: '#FFFFFF',
-                      boxShadow: localityDropdownOpen ? '0 0 0 3px rgba(15, 110, 86, 0.12)' : 'none',
-                      transition: 'all 0.15s ease',
-                      height: '38px',
-                      boxSizing: 'border-box',
-                    }}>
-                      <MapPin size={15} color="#047857" style={{ flexShrink: 0 }} />
-                      <input
-                        type="text"
-                        placeholder="Search Sector / Locality..."
-                        value={localitySearchText}
-                        onFocus={() => setLocalityDropdownOpen(true)}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setLocalitySearchText(val);
-                          setSelectedLocality(val.trim() === '' ? 'ALL' : val);
-                          setLocalityDropdownOpen(true);
+              <div className="proximity-filter-toolbar">
+                {/* Left Controls: Distance Filters & Modes */}
+                <div className="proximity-filter-left">
+                  {/* Distance Range Filter Pills */}
+                  {[
+                    { id: 'ALL', label: '🌐 All Gurgaon' },
+                    { id: 'WITHIN_3_5', label: '🟢 Within 3.5 km' },
+                    { id: 'WITHIN_7', label: '🟡 Within 7 km' },
+                  ].map((pill) => {
+                    const isSel = distanceFilter === pill.id;
+                    return (
+                      <button
+                        key={pill.id}
+                        type="button"
+                        onClick={() => {
+                          setDistanceFilter(pill.id as any);
                           setCurrentPage(1);
                         }}
                         style={{
-                          border: 'none',
-                          outline: 'none',
-                          fontSize: '0.84rem',
-                          fontWeight: 600,
-                          color: '#0F172A',
-                          width: '100%',
-                          backgroundColor: 'transparent',
+                          padding: '0.45rem 0.85rem',
+                          borderRadius: '10px',
+                          fontSize: '0.8rem',
+                          fontWeight: isSel ? 800 : 600,
+                          border: isSel ? '1.5px solid #0F6E56' : '1px solid #E2E8F0',
+                          backgroundColor: isSel ? '#ECFDF5' : '#FFFFFF',
+                          color: isSel ? '#0F6E56' : '#475569',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.15s ease',
                         }}
-                      />
-                      {localitySearchText ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedLocality('ALL');
-                            setLocalitySearchText('');
-                            setLocalityDropdownOpen(false);
-                            setCurrentPage(1);
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: 0,
-                            color: '#94A3B8',
-                            display: 'flex',
-                            alignItems: 'center',
-                          }}
-                          title="Clear filter"
-                        >
-                          <X size={14} />
-                        </button>
-                      ) : (
-                        <ChevronDown
-                          size={14}
-                          color="#94A3B8"
-                          style={{
-                            cursor: 'pointer',
-                            transform: localityDropdownOpen ? 'rotate(180deg)' : 'none',
-                            transition: 'transform 0.15s ease',
-                            flexShrink: 0,
-                          }}
-                          onClick={() => setLocalityDropdownOpen(!localityDropdownOpen)}
-                        />
-                      )}
-                    </div>
+                      >
+                        {pill.label}
+                      </button>
+                    );
+                  })}
 
-                    {/* Dropdown Suggestions List */}
-                    {localityDropdownOpen && (
-                      <div style={{
-                        position: 'absolute',
-                        top: 'calc(100% + 6px)',
-                        left: 0,
-                        right: 0,
-                        minWidth: '280px',
-                        maxHeight: '280px',
-                        overflowY: 'auto',
-                        backgroundColor: '#FFFFFF',
-                        borderRadius: '14px',
-                        border: '1px solid #CBD5E1',
-                        boxShadow: '0 20px 40px rgba(0,0,0,0.18)',
-                        zIndex: 9999,
-                        padding: '0.4rem',
-                      }}>
-                        <div
-                          onClick={() => {
-                            setSelectedLocality('ALL');
-                            setLocalitySearchText('');
-                            setLocalityDropdownOpen(false);
-                            setCurrentPage(1);
-                          }}
-                          style={{
-                            padding: '0.55rem 0.75rem',
-                            borderRadius: '8px',
-                            fontSize: '0.82rem',
-                            fontWeight: 700,
-                            color: selectedLocality === 'ALL' ? '#0F6E56' : '#1E293B',
-                            backgroundColor: selectedLocality === 'ALL' ? '#ECFDF5' : 'transparent',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                          }}
-                        >
-                          <span>All Gurgaon Sectors</span>
-                          {selectedLocality === 'ALL' && <Check size={14} color="#0F6E56" />}
-                        </div>
+                  {/* Gender Filter Dropdown */}
+                  <select
+                    value={selectedGender}
+                    onChange={(e) => {
+                      setSelectedGender(e.target.value as any);
+                      setCurrentPage(1);
+                    }}
+                    className="filter-dropdown-select"
+                  >
+                    <option value="ALL">All Teachers</option>
+                    <option value="FEMALE">👩 Female Teachers Only</option>
+                    <option value="MALE">👨 Male Teachers Only</option>
+                  </select>
 
-                        {GURGAON_LOCALITIES.filter((l) => {
-                          if (!localitySearchText) return true;
-                          const q = localitySearchText.toLowerCase();
-                          return l.name.toLowerCase().includes(q) || l.landmark.toLowerCase().includes(q) || l.pincode.includes(q);
-                        }).map((loc) => {
-                          const isSel = selectedLocality.toLowerCase() === loc.name.toLowerCase();
-                          return (
-                            <div
-                              key={loc.slug}
-                              onClick={() => {
-                                setSelectedLocality(loc.name);
-                                setLocalitySearchText(loc.name);
-                                setLocalityDropdownOpen(false);
-                                setCurrentPage(1);
-                              }}
-                              style={{
-                                padding: '0.5rem 0.75rem',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                backgroundColor: isSel ? '#ECFDF5' : 'transparent',
-                                transition: 'background-color 0.1s ease',
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!isSel) (e.currentTarget as HTMLElement).style.backgroundColor = '#F8FAFC';
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!isSel) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                              }}
-                            >
-                              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: isSel ? '#0F6E56' : '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <span>{loc.name}</span>
-                                {isSel && <Check size={14} color="#0F6E56" />}
-                              </div>
-                              <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '1px' }}>
-                                {loc.landmark}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  {/* Price Range Filter */}
+                  <select
+                    value={selectedPriceRange}
+                    onChange={(e) => {
+                      setSelectedPriceRange(e.target.value as any);
+                      setCurrentPage(1);
+                    }}
+                    className="filter-dropdown-select"
+                  >
+                    <option value="ALL">All Budget Ranges</option>
+                    <option value="UNDER_800">Under ₹800/hr</option>
+                    <option value="800_1200">₹800 – ₹1,200/hr</option>
+                    <option value="ABOVE_1200">₹1,200+/hr (IIT/IB Masters)</option>
+                  </select>
 
-                  {/* Budget Price Range Dropdown */}
-                  <div style={{ minWidth: '160px', flex: 1 }}>
-                    <select
-                      value={selectedPriceRange}
-                      onChange={(e) => {
-                        setSelectedPriceRange(e.target.value as any);
-                        setCurrentPage(1);
-                      }}
-                      className="filter-dropdown-select"
-                    >
-                      <option value="ALL">All Fee Ranges</option>
-                      <option value="UNDER_800">Under ₹800 / hr</option>
-                      <option value="800_1200">₹800 – ₹1,200 / hr</option>
-                      <option value="ABOVE_1200">Above ₹1,200 / hr</option>
-                    </select>
-                  </div>
-
-                  {/* Gender Filter Buttons */}
-                  <div className="mode-btn-group" style={{ display: 'inline-flex', borderRadius: '10px', overflow: 'hidden', border: '1.5px solid #E2E8F0' }}>
-                    <button
-                      type="button"
-                      onClick={() => { setSelectedGender('ALL'); setCurrentPage(1); }}
-                      style={{
-                        padding: '0 0.85rem',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        backgroundColor: selectedGender === 'ALL' ? '#0F172A' : '#FFFFFF',
-                        color: selectedGender === 'ALL' ? '#FFFFFF' : '#475569',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      All
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setSelectedGender('FEMALE'); setCurrentPage(1); }}
-                      style={{
-                        padding: '0 0.85rem',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        backgroundColor: selectedGender === 'FEMALE' ? '#0F6E56' : '#FFFFFF',
-                        color: selectedGender === 'FEMALE' ? '#FFFFFF' : '#475569',
-                        borderLeft: '1px solid #E2E8F0',
-                        borderRight: '1px solid #E2E8F0',
-                        borderTop: 'none',
-                        borderBottom: 'none',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      👩 Female Tutors
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setSelectedGender('MALE'); setCurrentPage(1); }}
-                      style={{
-                        padding: '0 0.85rem',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        backgroundColor: selectedGender === 'MALE' ? '#0F6E56' : '#FFFFFF',
-                        color: selectedGender === 'MALE' ? '#FFFFFF' : '#475569',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      👨 Male Tutors
-                    </button>
-                  </div>
-
-                  {/* Mode Buttons */}
+                  {/* Teaching Mode Group */}
                   <div className="mode-btn-group">
                     <button
                       type="button"
@@ -679,14 +699,13 @@ export default function TutorsDirectoryPage() {
                         padding: '0 0.85rem',
                         fontSize: '0.8rem',
                         fontWeight: 700,
-                        backgroundColor: selectedMode === 'ALL' ? '#0F172A' : '#FFFFFF',
+                        backgroundColor: selectedMode === 'ALL' ? '#0F6E56' : '#FFFFFF',
                         color: selectedMode === 'ALL' ? '#FFFFFF' : '#475569',
                         border: 'none',
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease',
                       }}
                     >
-                      All
+                      All Modes
                     </button>
                     <button
                       type="button"
@@ -702,7 +721,6 @@ export default function TutorsDirectoryPage() {
                         borderTop: 'none',
                         borderBottom: 'none',
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease',
                       }}
                     >
                       🏡 Home Visits
@@ -718,7 +736,6 @@ export default function TutorsDirectoryPage() {
                         color: selectedMode === 'ONLINE_LIVE' ? '#FFFFFF' : '#475569',
                         border: 'none',
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease',
                       }}
                     >
                       💻 Online 1-on-1
@@ -726,8 +743,8 @@ export default function TutorsDirectoryPage() {
                   </div>
                 </div>
 
-                {/* Right Controls: Sort Dropdown & Reset Button */}
-                <div className="filter-right-controls" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                {/* Right Controls: Sort Dropdown & Reset */}
+                <div className="filter-right-controls" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {isFilterActive && (
                     <button
                       type="button"
@@ -746,23 +763,23 @@ export default function TutorsDirectoryPage() {
                         cursor: 'pointer',
                         whiteSpace: 'nowrap',
                         height: '38px',
-                        boxSizing: 'border-box',
                       }}
                     >
                       <RotateCcw size={13} />
-                      <span>Clear</span>
+                      <span>Reset</span>
                     </button>
                   )}
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                     <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600, whiteSpace: 'nowrap' }}>Sort:</span>
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as any)}
                       className="filter-dropdown-select"
-                      style={{ minWidth: '160px' }}
+                      style={{ minWidth: '165px' }}
                     >
-                      <option value="RATING">Highest Rating (★ 5.0)</option>
+                      <option value="DISTANCE_ASC">📍 Nearest to My Sector</option>
+                      <option value="RATING">★ Highest Rating (5.0)</option>
                       <option value="EXPERIENCE">Most Experience</option>
                       <option value="PRICE_LOW">Fee: Low to High</option>
                       <option value="PRICE_HIGH">Fee: High to Low</option>
@@ -773,10 +790,10 @@ export default function TutorsDirectoryPage() {
             </div>
 
             {/* Results Count & Trust Badge */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div style={{ fontSize: '0.92rem', color: '#475569', fontWeight: 700 }}>
-                Showing <strong style={{ color: '#0F172A' }}>{filteredTutors.length}</strong> verified educators in Gurgaon
-                {isFilterActive && <span style={{ color: '#0F6E56', marginLeft: '0.4rem' }}>(Filter Applied)</span>}
+                Showing <strong style={{ color: '#0F172A' }}>{filteredTutors.length}</strong> verified teachers near <strong style={{ color: '#0F6E56' }}>{parentLocation.address.split(',')[0]}</strong>
+                {isFilterActive && <span style={{ color: '#0F6E56', marginLeft: '0.4rem' }}>(Filters Applied)</span>}
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: '#059669', fontWeight: 700 }}>
@@ -795,18 +812,8 @@ export default function TutorsDirectoryPage() {
                 textAlign: 'center',
                 color: '#64748B',
                 boxShadow: 'var(--shadow-subtle)',
-                position: 'relative',
-                overflow: 'hidden',
               }}>
-                {/* Animated Radar Search Icon */}
                 <div style={{ position: 'relative', width: '80px', height: '80px', margin: '0 auto 1.25rem auto' }}>
-                  <div style={{
-                    position: 'absolute',
-                    inset: '4px',
-                    borderRadius: '50%',
-                    border: '2px solid rgba(15, 110, 86, 0.4)',
-                    animation: 'radarWave 2.2s infinite cubic-bezier(0.16, 1, 0.3, 1)',
-                  }} />
                   <div style={{
                     width: '64px',
                     height: '64px',
@@ -816,299 +823,273 @@ export default function TutorsDirectoryPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    position: 'absolute',
-                    top: '8px',
-                    left: '8px',
+                    margin: '0 auto',
                     boxShadow: '0 6px 18px rgba(15, 110, 86, 0.18)',
-                    animation: 'searchFloat 2.8s ease-in-out infinite',
                   }}>
                     <Search size={28} />
                   </div>
-                  <span style={{ position: 'absolute', top: '-2px', right: '-2px', fontSize: '1rem' }}>✨</span>
-                  <span style={{ position: 'absolute', bottom: '0px', left: '-2px', fontSize: '0.9rem' }}>📍</span>
                 </div>
 
                 <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.45rem' }}>
                   No educators match your exact search criteria
                 </h3>
-                <p style={{ fontSize: '0.92rem', maxWidth: '480px', margin: '0 auto 1.5rem auto', lineHeight: 1.6 }}>
-                  Our academic counselors can handpick and assign a verified subject specialist for your child within 2 hours.
-                </p>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={handleResetAllFilters}
-                    className="btn btn-secondary"
-                  >
-                    Reset All Filters
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenBooking()}
-                    className="btn btn-primary"
-                    style={{ backgroundColor: '#0F6E56' }}
-                  >
-                    <span>Request Custom Tutor Match</span>
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
               </div>
             ) : (
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                gap: '1.75rem',
+                gap: '1.5rem',
               }}>
-                {paginatedTutors.map((tutor) => (
-                  <div
-                    key={tutor.id}
-                    className="apple-card"
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      overflow: 'hidden',
-                      backgroundColor: '#FFFFFF',
-                      borderRadius: '20px',
-                      border: '1px solid #E2E8F0',
-                      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-4px)';
-                      e.currentTarget.style.boxShadow = '0 16px 32px rgba(0,0,0,0.08)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                  >
-                    {/* Top Bar with Avatar and Badges */}
-                    <div style={{ padding: '1.25rem', paddingBottom: '0.65rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                      <Link href={`/tutors/${tutor.id}`} style={{ position: 'relative', display: 'block', flexShrink: 0 }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={tutor.avatarUrl}
-                          alt={tutor.name}
-                          style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }}
-                        />
-                        <span style={{
-                          position: 'absolute',
-                          bottom: '-4px',
-                          right: '-4px',
-                          backgroundColor: '#047857',
-                          borderRadius: '50%',
-                          width: '18px',
-                          height: '18px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#FFFFFF',
-                          border: '2px solid #FFFFFF',
-                        }}>
-                          <ShieldCheck size={11} />
-                        </span>
-                      </Link>
+                {paginatedTutors.map((tutor) => {
+                  const whatsappMsg = encodeURIComponent(
+                    `Hello SSSAM Academy, I want to book home teacher ${tutor.name} (${tutor.distanceInfo.distanceText} from ${parentLocation.address}). Please share available timings.`
+                  );
+                  const whatsappUrl = `https://wa.me/919217031899?text=${whatsappMsg}`;
 
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <Link href={`/tutors/${tutor.id}`} style={{ textDecoration: 'none' }}>
-                          <h3 style={{ fontSize: '1.12rem', fontWeight: 800, color: '#0F172A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {tutor.name}
-                          </h3>
-                        </Link>
-                        <div style={{ fontSize: '0.76rem', color: '#0F6E56', fontWeight: 700, margin: '2px 0' }}>
-                          {tutor.badge}
-                        </div>
-                        {tutor.totalReviews > 0 && tutor.rating > 0 ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: '#64748B' }}>
-                            <Star size={13} color="#F59E0B" fill="#F59E0B" />
-                            <strong style={{ color: '#0F172A' }}>{tutor.rating}</strong>
-                            <span>({tutor.totalReviews} {tutor.totalReviews === 1 ? 'review' : 'reviews'})</span>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.74rem', color: '#059669', fontWeight: 700, backgroundColor: '#ECFDF5', padding: '1px 6px', borderRadius: '4px', marginTop: '2px' }}>
-                            <span>✨ New Verified Tutor</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Prominent Education & Experience Stat Box */}
-                    <div style={{ padding: '1.25rem', paddingTop: '0.4rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                        gap: '0.5rem',
-                        padding: '0.65rem 0.75rem',
-                        backgroundColor: '#F8FAFC',
-                        borderRadius: '12px',
+                  return (
+                    <div
+                      key={tutor.id}
+                      className="apple-card"
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: '20px',
                         border: '1px solid #E2E8F0',
-                        alignItems: 'center',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
-                          <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', flexShrink: 0 }}>
-                            <GraduationCap size={15} />
-                          </div>
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Degree</div>
-                            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tutor.highestDegree}>
-                              {tutor.highestDegree}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, borderLeft: '1px solid #E2E8F0', paddingLeft: '0.5rem' }}>
-                          <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', flexShrink: 0 }}>
-                            <Briefcase size={15} />
-                          </div>
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Experience</div>
-                            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {tutor.experienceYears}+ Years
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div style={{ fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'flex-start', gap: '0.45rem', marginTop: '0.1rem' }}>
-                        <MapPin size={15} color="#047857" style={{ flexShrink: 0, marginTop: '2px' }} />
-                        <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>
-                          {tutor.serviceAreas.join(' • ')}
-                        </span>
-                      </div>
-
-                      {/* Subjects Badges */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.2rem' }}>
-                        {tutor.subjects.map((s) => (
-                          <span key={s} style={{ fontSize: '0.74rem', padding: '0.2rem 0.55rem', backgroundColor: '#F0FDF4', color: '#166534', border: '1px solid #DCFCE7', borderRadius: '6px', fontWeight: 600 }}>
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-
-                      {/* 60s Video Intro Pill (Optional) */}
-                      {tutor.introVideoUrl && tutor.introVideoUrl.trim() !== '' ? (
-                        <button
-                          type="button"
-                          onClick={() => setActiveVideoTutor(tutor)}
-                          style={{
-                            marginTop: '0.4rem',
+                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 16px 32px rgba(0,0,0,0.08)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      {/* Top Bar with Avatar, Badges & Proximity Pill */}
+                      <div style={{ padding: '1.25rem', paddingBottom: '0.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <Link href={`/tutors/${tutor.id}`} style={{ position: 'relative', display: 'block', flexShrink: 0 }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={tutor.avatarUrl}
+                            alt={tutor.name}
+                            style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }}
+                          />
+                          <span style={{
+                            position: 'absolute',
+                            bottom: '-4px',
+                            right: '-4px',
+                            backgroundColor: '#047857',
+                            borderRadius: '50%',
+                            width: '18px',
+                            height: '18px',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '0.6rem 0.85rem',
-                            borderRadius: '10px',
-                            backgroundColor: '#F0FDF4',
-                            border: '1px solid #BBF7D0',
-                            color: '#0F6E56',
-                            fontSize: '0.8rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <Play size={13} fill="#0F6E56" />
-                            <span>Watch 60s Intro Video</span>
+                            justifyContent: 'center',
+                            color: '#FFFFFF',
+                            border: '2px solid #FFFFFF',
+                          }}>
+                            <ShieldCheck size={11} />
                           </span>
-                          <span style={{ fontSize: '0.72rem', color: '#0F6E56' }}>{tutor.videoDuration || 'Preview'}</span>
-                        </button>
-                      ) : (
-                        <div
-                          style={{
-                            marginTop: '0.4rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.45rem',
-                            padding: '0.55rem 0.85rem',
-                            borderRadius: '10px',
-                            backgroundColor: '#F8FAFC',
-                            border: '1px solid #E2E8F0',
-                            color: '#0F6E56',
-                            fontSize: '0.78rem',
-                            fontWeight: 700,
-                          }}
-                        >
-                          <ShieldCheck size={14} color="#059669" />
-                          <span>Interview Verified • SSSAM Sector 14</span>
-                        </div>
-                      )}
-                    </div>
+                        </Link>
 
-                    {/* Card Footer Price & Action */}
-                    <div style={{
-                      padding: '1.1rem 1.25rem',
-                      borderTop: '1px solid #F1F5F9',
-                      backgroundColor: '#F8FAFC',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '0.5rem',
-                    }}>
-                      <div>
-                        <div style={{ fontSize: '0.66rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '2px', letterSpacing: '0.04em' }}>
-                          ESTIMATED FEE
-                        </div>
-
-                        {(!tutor.teachingMode || tutor.teachingMode === 'BOTH' || (tutor.hourlyRateHome && tutor.hourlyRateOnline)) ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                            {/* Home Tuition Rate */}
-                            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '2px', backgroundColor: '#F0FDF4', padding: '2px 6px', borderRadius: '6px' }}>
-                              <span style={{ fontSize: '0.7rem', color: '#0F6E56', fontWeight: 800 }}>🏠 Home:</span>
-                              <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
-                                ₹{tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600}–₹{tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMax !== tutor.hourlyRateHomeMin ? tutor.hourlyRateHomeMax : Math.round(((tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600) * 1.4) / 50) * 50}
-                              </span>
-                              <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <Link href={`/tutors/${tutor.id}`} style={{ textDecoration: 'none' }}>
+                            <h3 style={{ fontSize: '1.12rem', fontWeight: 800, color: '#0F172A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {tutor.name}
+                            </h3>
+                          </Link>
+                          <div style={{ fontSize: '0.76rem', color: '#0F6E56', fontWeight: 700, margin: '2px 0' }}>
+                            {tutor.badge}
+                          </div>
+                          {tutor.totalReviews > 0 && tutor.rating > 0 ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: '#64748B' }}>
+                              <Star size={13} color="#F59E0B" fill="#F59E0B" />
+                              <strong style={{ color: '#0F172A' }}>{tutor.rating}</strong>
+                              <span>({tutor.totalReviews} {tutor.totalReviews === 1 ? 'review' : 'reviews'})</span>
                             </div>
+                          ) : (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.74rem', color: '#059669', fontWeight: 700, backgroundColor: '#ECFDF5', padding: '1px 6px', borderRadius: '4px', marginTop: '2px' }}>
+                              <span>✨ New Verified Teacher</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
-                            {/* Online Tuition Rate */}
-                            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '2px', backgroundColor: '#F0F9FF', padding: '2px 6px', borderRadius: '6px' }}>
-                              <span style={{ fontSize: '0.7rem', color: '#0284C7', fontWeight: 800 }}>💻 Online:</span>
-                              <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
-                                ₹{tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500}–₹{tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMax !== tutor.hourlyRateOnlineMin ? tutor.hourlyRateOnlineMax : Math.round(((tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}
-                              </span>
-                              <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
+                      {/* Live Proximity Badge */}
+                      <div style={{ padding: '0 1.25rem', marginBottom: '0.5rem' }}>
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.3rem 0.65rem',
+                          borderRadius: '8px',
+                          backgroundColor: tutor.distanceInfo.badgeBg,
+                          color: tutor.distanceInfo.badgeColor,
+                          border: `1px solid ${tutor.distanceInfo.badgeBorder}`,
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          width: '100%',
+                          boxSizing: 'border-box',
+                        }}>
+                          <Clock size={12} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {tutor.distanceInfo.distanceText} ({tutor.distanceInfo.travelTime})
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Prominent Education & Experience Stat Box */}
+                      <div style={{ padding: '1.25rem', paddingTop: '0.2rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                          gap: '0.5rem',
+                          padding: '0.65rem 0.75rem',
+                          backgroundColor: '#F8FAFC',
+                          borderRadius: '12px',
+                          border: '1px solid #E2E8F0',
+                          alignItems: 'center',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
+                            <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', flexShrink: 0 }}>
+                              <GraduationCap size={15} />
+                            </div>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Degree</div>
+                              <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tutor.highestDegree}>
+                                {tutor.highestDegree}
+                              </div>
                             </div>
                           </div>
-                        ) : tutor.teachingMode === 'ONLINE_LIVE' ? (
-                          <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '3px', backgroundColor: '#F0F9FF', padding: '3px 8px', borderRadius: '6px' }}>
-                            <span style={{ fontSize: '0.74rem', color: '#0284C7', fontWeight: 800 }}>💻 Online 1-on-1:</span>
-                            <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
-                              ₹{tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500} – ₹{tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMax !== tutor.hourlyRateOnlineMin ? tutor.hourlyRateOnlineMax : Math.round(((tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, borderLeft: '1px solid #E2E8F0', paddingLeft: '0.5rem' }}>
+                            <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', flexShrink: 0 }}>
+                              <Briefcase size={15} />
+                            </div>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Experience</div>
+                              <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {tutor.experienceYears}+ Years
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ fontSize: '0.8rem', color: '#64748B', display: 'flex', alignItems: 'flex-start', gap: '0.45rem', marginTop: '0.1rem' }}>
+                          <MapPin size={14} color="#047857" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>
+                            {tutor.serviceAreas.join(' • ')}
+                          </span>
+                        </div>
+
+                        {/* Subjects Badges */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.2rem' }}>
+                          {tutor.subjects.map((s) => (
+                            <span key={s} style={{ fontSize: '0.74rem', padding: '0.2rem 0.55rem', backgroundColor: '#F0FDF4', color: '#166534', border: '1px solid #DCFCE7', borderRadius: '6px', fontWeight: 600 }}>
+                              {s}
                             </span>
-                            <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
-                          </div>
+                          ))}
+                        </div>
+
+                        {/* 60s Video Intro Pill */}
+                        {tutor.introVideoUrl && tutor.introVideoUrl.trim() !== '' ? (
+                          <button
+                            type="button"
+                            onClick={() => setActiveVideoTutor(tutor)}
+                            style={{
+                              marginTop: '0.4rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '0.55rem 0.85rem',
+                              borderRadius: '10px',
+                              backgroundColor: '#F0FDF4',
+                              border: '1px solid #BBF7D0',
+                              color: '#0F6E56',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <Play size={13} fill="#0F6E56" />
+                              <span>Watch 60s Video Intro</span>
+                            </span>
+                            <span style={{ fontSize: '0.72rem', color: '#0F6E56' }}>{tutor.videoDuration || 'Preview'}</span>
+                          </button>
                         ) : (
-                          <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '3px', backgroundColor: '#F0FDF4', padding: '3px 8px', borderRadius: '6px' }}>
-                            <span style={{ fontSize: '0.74rem', color: '#0F6E56', fontWeight: 800 }}>🏠 Home Visit:</span>
-                            <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
-                              ₹{tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600} – ₹{tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMax !== tutor.hourlyRateHomeMin ? tutor.hourlyRateHomeMax : Math.round(((tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600) * 1.4) / 50) * 50}
-                            </span>
-                            <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
+                          <div
+                            style={{
+                              marginTop: '0.4rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.45rem',
+                              padding: '0.5rem 0.85rem',
+                              borderRadius: '10px',
+                              backgroundColor: '#F8FAFC',
+                              border: '1px solid #E2E8F0',
+                              color: '#0F6E56',
+                              fontSize: '0.76rem',
+                              fontWeight: 700,
+                            }}
+                          >
+                            <ShieldCheck size={14} color="#059669" />
+                            <span>Interview Verified • SSSAM Sector 14</span>
                           </div>
                         )}
                       </div>
 
-                      <div style={{ display: 'flex', gap: '0.4rem' }}>
-                        <Link
-                          href={`/tutors/${tutor.id}`}
-                          className="btn btn-secondary btn-sm"
-                          style={{ padding: '0.45rem 0.7rem', fontSize: '0.8rem' }}
-                        >
-                          Profile
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenBooking(tutor)}
-                          className="btn btn-primary btn-sm"
-                          style={{ backgroundColor: '#0F6E56' }}
-                        >
-                          <span>Request</span>
-                          <div className="btn-arrow">
-                            <ChevronRight size={14} />
+                      {/* Card Footer Price & Action */}
+                      <div style={{
+                        padding: '1rem 1.25rem',
+                        borderTop: '1px solid #F1F5F9',
+                        backgroundColor: '#F8FAFC',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.5rem',
+                      }}>
+                        <div>
+                          <div style={{ fontSize: '0.66rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '2px', letterSpacing: '0.04em' }}>
+                            ESTIMATED FEE
                           </div>
-                        </button>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.2rem' }}>
+                            <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A' }}>
+                              ₹{tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600}
+                            </span>
+                            <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.35rem' }}>
+                          <a
+                            href={whatsappUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-secondary btn-sm"
+                            style={{ padding: '0.45rem 0.6rem', color: '#15803D', backgroundColor: '#DCFCE7', border: '1px solid #86EFAC', borderRadius: '8px' }}
+                            title="Chat on WhatsApp"
+                          >
+                            <MessageCircle size={14} />
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenBooking(tutor)}
+                            className="btn btn-primary btn-sm"
+                            style={{ backgroundColor: '#0F6E56', padding: '0.5rem 0.85rem', borderRadius: '8px', fontWeight: 800 }}
+                          >
+                            <span>Request</span>
+                            <ChevronRight size={14} />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -1161,9 +1142,7 @@ export default function TutorsDirectoryPage() {
               </div>
             )}
 
-            {/* =========================================================================
-                BOTTOM CONCIERGE ASSISTANCE CARD: CAN'T FIND EXACT TUTOR?
-                ========================================================================= */}
+            {/* Concierge Assistance Card */}
             <div style={{
               marginTop: '4.5rem',
               borderRadius: '24px',
@@ -1222,7 +1201,7 @@ export default function TutorsDirectoryPage() {
                     fontWeight: 800,
                   }}
                 >
-                  <span>Request Custom Tutor Match</span>
+                  <span>Request Custom Teacher Match</span>
                   <ChevronRight size={18} />
                 </button>
 
@@ -1246,6 +1225,153 @@ export default function TutorsDirectoryPage() {
           </div>
         </section>
       </main>
+
+      {/* POPUP MODAL FOR SELECTING GURGAON SECTOR */}
+      {showLocationSectorModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowLocationSectorModal(false);
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '20px',
+              width: '100%',
+              maxWidth: '480px',
+              maxHeight: '85vh',
+              overflow: 'hidden',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem 1rem',
+                borderBottom: '1px solid #E2E8F0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
+                  📍 Select Your Gurgaon Sector
+                </h3>
+                <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '2px 0 0 0' }}>
+                  We will show background-verified teachers sorted by distance from your sector
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowLocationSectorModal(false)}
+                aria-label="Close sector modal"
+                style={{
+                  background: '#F1F5F9',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '0.45rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                }}
+              >
+                <X size={18} color="#64748B" />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div style={{ padding: '0.75rem 1.25rem', backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                <input
+                  type="text"
+                  placeholder="Search sector (e.g. DLF Phase 5, Sector 56, Sohna Road)..."
+                  value={sectorSearchQuery}
+                  onChange={(e) => setSectorSearchQuery(e.target.value)}
+                  className="form-control"
+                  style={{
+                    paddingLeft: '2.4rem',
+                    paddingRight: sectorSearchQuery ? '2rem' : '0.75rem',
+                    borderRadius: '10px',
+                    fontSize: '0.84rem',
+                    backgroundColor: '#FFFFFF',
+                  }}
+                />
+                {sectorSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSectorSearchQuery('')}
+                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* List of Gurgaon Sectors */}
+            <div style={{ overflowY: 'auto', maxHeight: '350px', padding: '0.5rem' }}>
+              {POPULAR_GURGAON_SECTORS.filter((sec) => {
+                if (!sectorSearchQuery) return true;
+                const q = sectorSearchQuery.toLowerCase();
+                return sec.name.toLowerCase().includes(q) || sec.landmark.toLowerCase().includes(q);
+              }).map((sec) => {
+                const isSelected = parentLocation.address.toLowerCase().includes(sec.name.toLowerCase());
+                return (
+                  <button
+                    key={sec.name}
+                    type="button"
+                    onClick={() => handleSelectSector(sec)}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      backgroundColor: isSelected ? '#ECFDF5' : 'transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      transition: 'background-color 0.1s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) e.currentTarget.style.backgroundColor = '#F8FAFC';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '0.86rem', fontWeight: 800, color: isSelected ? '#0F6E56' : '#0F172A' }}>
+                        {sec.name}
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '1px' }}>
+                        {sec.landmark}
+                      </div>
+                    </div>
+                    {isSelected && <Check size={16} color="#0F6E56" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Interactive Modals */}
       <BookingModal

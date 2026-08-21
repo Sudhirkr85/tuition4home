@@ -491,6 +491,7 @@ export default function HomePage() {
           <section aria-label="Interactive Gurgaon Tutor Map" style={{ padding: '3.5rem 0 1rem 0' }}>
             <div className="container">
               <RapidoStyleMap
+                onOpenBookingForTutor={(tutor) => handleOpenBooking(tutor)}
                 onLocationSelected={(data) => {
                   if (data.address) {
                     const sectorPart = data.address.split(',')[0].replace('(Auto-Detected GPS)', '').trim();

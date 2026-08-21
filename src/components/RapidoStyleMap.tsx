@@ -1,17 +1,32 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { Navigation, X, CheckCircle2, ShieldCheck, MapPin, ArrowUpRight, Crosshair, Search } from 'lucide-react';
-import { VERIFIED_TUTORS, MockTutor } from '@/lib/data';
+import {
+  Navigation,
+  X,
+  CheckCircle2,
+  ShieldCheck,
+  MapPin,
+  ArrowUpRight,
+  Crosshair,
+  Search,
+  MessageCircle,
+  Clock,
+  Sparkles,
+  Phone,
+  Check,
+} from 'lucide-react';
+import { VERIFIED_TUTORS, SSSAM_OFFICE_DETAILS, MockTutor } from '@/lib/data';
 import 'leaflet/dist/leaflet.css';
 
 interface RapidoStyleMapProps {
   onLocationSelected: (data: { address: string; lat: number; lng: number; nearestTutorsCount: number }) => void;
+  onOpenBookingForTutor?: (tutor: MockTutor) => void;
   isCompact?: boolean;
 }
 
-const POPULAR_GURGAON_SECTORS = [
+export const POPULAR_GURGAON_SECTORS = [
   { name: 'DLF Phase 5', landmark: 'The Aralias, Magnolias, Horizon Centre', lat: 28.4552, lng: 77.0945 },
   { name: 'Golf Course Road', landmark: 'Sector 42, One Horizon, Mega Mall', lat: 28.4595, lng: 77.0988 },
   { name: 'DLF Phase 1', landmark: 'Silver Oaks, Qutab Plaza', lat: 28.4795, lng: 77.1025 },
@@ -31,7 +46,85 @@ const POPULAR_GURGAON_SECTORS = [
   { name: 'Sector 46', landmark: 'Amity International School, Sector 46', lat: 28.4415, lng: 77.0625 },
 ];
 
-export default function RapidoStyleMap({ onLocationSelected, isCompact = false }: RapidoStyleMapProps) {
+/**
+ * Calculates distance between two GPS coordinates using Haversine formula
+ */
+export function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+/**
+ * Formats distance into human-friendly Gurgaon travel text with color zones
+ */
+export function getDistanceInfo(km: number) {
+  const approxMins = Math.max(5, Math.round(km * 3.5)); // ~3.5 mins per km in Gurgaon traffic
+  if (km < 1) {
+    const meters = Math.max(150, Math.round(km * 10) * 100);
+    return {
+      km,
+      distanceText: `~${meters} m away`,
+      travelTime: '< 5 mins travel',
+      zone: 'green' as const,
+      badgeText: 'In Immediate Sector (Home Visit Ready)',
+      badgeColor: '#059669',
+      badgeBg: '#ECFDF5',
+      badgeBorder: '#A7F3D0',
+      circleColor: '#059669',
+    };
+  }
+  const distStr = km < 10 ? km.toFixed(1) : Math.round(km).toString();
+  if (km <= 3.5) {
+    return {
+      km,
+      distanceText: `~${distStr} km from your sector`,
+      travelTime: `~${approxMins} mins travel`,
+      zone: 'green' as const,
+      badgeText: 'In Service Zone (Home Visit Ready)',
+      badgeColor: '#059669',
+      badgeBg: '#ECFDF5',
+      badgeBorder: '#A7F3D0',
+      circleColor: '#059669',
+    };
+  } else if (km <= 7.0) {
+    return {
+      km,
+      distanceText: `~${distStr} km away`,
+      travelTime: `~${approxMins} mins travel`,
+      zone: 'yellow' as const,
+      badgeText: 'Moderate Distance (Home Visit / Online)',
+      badgeColor: '#D97706',
+      badgeBg: '#FFFBEB',
+      badgeBorder: '#FDE68A',
+      circleColor: '#D97706',
+    };
+  } else {
+    return {
+      km,
+      distanceText: `~${distStr} km away`,
+      travelTime: `~${approxMins} mins travel`,
+      zone: 'red' as const,
+      badgeText: 'Far Distance (Online 1-on-1 Recommended)',
+      badgeColor: '#DC2626',
+      badgeBg: '#FEF2F2',
+      badgeBorder: '#FECACA',
+      circleColor: '#DC2626',
+    };
+  }
+}
+
+export default function RapidoStyleMap({
+  onLocationSelected,
+  onOpenBookingForTutor,
+  isCompact = false,
+}: RapidoStyleMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const popupMapRef = useRef<HTMLDivElement>(null);
 
@@ -40,17 +133,21 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
   const leafletMapInstanceRef = useRef<any>(null);
   const leafletPopupMapInstanceRef = useRef<any>(null);
   const leafletPopupMarkerRef = useRef<any>(null);
+  const tutorLayerGroupRef = useRef<any>(null);
+  const parentMarkerRef = useRef<any>(null);
+  const radiusCircleRef = useRef<any>(null);
 
   // State values
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectedAddress, setDetectedAddress] = useState('DLF Phase 5, Golf Course Road, Gurugram');
+  const [locationSource, setLocationSource] = useState<'SAVED' | 'GPS' | 'DEFAULT'>('DEFAULT');
   const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>([]);
   const [selectedTutor, setSelectedTutor] = useState<MockTutor | null>(null);
 
   // Location popup state
   const [showLocationPopup, setShowLocationPopup] = useState(false);
   const [popupAddress, setPopupAddress] = useState('');
-  const [popupCoords, setPopupCoords] = useState({ lat: 28.4728, lng: 77.0345 });
+  const [popupCoords, setPopupCoords] = useState({ lat: 28.4552, lng: 77.0945 });
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
 
   // Search state
@@ -58,82 +155,49 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
   const [searchResults, setSearchResults] = useState<Array<{ name: string; landmark?: string; lat: number; lng: number }>>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Current coordinates (Center of Gurgaon, Haryana)
-  const [currentCoords, setCurrentCoords] = useState({ lat: 28.4728, lng: 77.0345 });
+  // Current coordinates (Default: DLF Phase 5, Gurgaon)
+  const [currentCoords, setCurrentCoords] = useState({ lat: 28.4552, lng: 77.0945 });
 
-  // 1. Fetch live verified tutors
+  // 1. Fetch live verified teachers
   useEffect(() => {
     fetch('/api/tutors/list')
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.tutors) && data.tutors.length > 0) {
           setDynamicTutors(data.tutors);
-          setSelectedTutor(data.tutors[0]);
         } else {
           setDynamicTutors(VERIFIED_TUTORS);
-          setSelectedTutor(VERIFIED_TUTORS[0]);
         }
       })
-      .catch((err) => {
-        console.error('Failed to fetch live tutors for map:', err);
-        setDynamicTutors(VERIFIED_TUTORS);
-        setSelectedTutor(VERIFIED_TUTORS[0]);
-      });
+      .catch(() => setDynamicTutors(VERIFIED_TUTORS));
   }, []);
 
   // 2. Preload Leaflet on client
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      import('leaflet').then((mod) => {
-        setL(mod.default);
-      });
+      import('leaflet').then((mod) => setL(mod.default));
     }
   }, []);
 
-  // Reverse Geocoding with OSM Nominatim
   const handleReverseGeocode = useCallback(async (lat: number, lng: number): Promise<string> => {
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`,
-        { headers: { 'Accept-Language': 'en' } }
-      );
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`, { headers: { 'Accept-Language': 'en' } });
       const data = await res.json();
-      if (data?.address) {
-        const a = data.address;
-        const parts: string[] = [];
-        if (a.neighbourhood) parts.push(a.neighbourhood);
-        else if (a.suburb) parts.push(a.suburb);
-        if (a.road) parts.push(a.road);
-        if (a.city || a.town || a.village) parts.push(a.city || a.town || a.village);
-        if (a.state_district) parts.push(a.state_district);
-        return parts.length > 0 ? parts.join(', ') : (data.display_name || 'Gurugram, Haryana');
-      }
       return data.display_name || 'Gurugram, Haryana';
-    } catch {
-      return 'Gurugram, Haryana';
-    }
+    } catch { return 'Gurugram, Haryana'; }
   }, []);
 
-  // Helper to find nearest known sector from POPULAR_GURGAON_SECTORS
   const getNearestKnownSector = useCallback((lat: number, lng: number) => {
     let nearest = POPULAR_GURGAON_SECTORS[0];
     let minDistance = Infinity;
     for (const sector of POPULAR_GURGAON_SECTORS) {
       const d = Math.hypot(sector.lat - lat, sector.lng - lng);
-      if (d < minDistance) {
-        minDistance = d;
-        nearest = sector;
-      }
+      if (d < minDistance) { minDistance = d; nearest = sector; }
     }
-    if (minDistance < 0.15) {
-      return nearest;
-    }
-    return null;
+    return minDistance < 0.15 ? nearest : null;
   }, []);
 
-  // Auto-detect user's current GPS location on mount
   useEffect(() => {
-    // 1. Check local storage first
     try {
       const saved = localStorage.getItem('user_detected_location');
       if (saved) {
@@ -143,638 +207,262 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
           setCurrentCoords({ lat: parsed.lat, lng: parsed.lng });
           setPopupCoords({ lat: parsed.lat, lng: parsed.lng });
           setPopupAddress(parsed.address);
-          onLocationSelected({
-            address: parsed.address,
-            lat: parsed.lat,
-            lng: parsed.lng,
-            nearestTutorsCount: 12,
-          });
+          setLocationSource('SAVED');
+          onLocationSelected({ address: parsed.address, lat: parsed.lat, lng: parsed.lng, nearestTutorsCount: 12 });
         }
       }
     } catch {}
+  }, [onLocationSelected]);
 
-    // 2. Request live GPS in background
-    if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          setCurrentCoords({ lat, lng });
-          setPopupCoords({ lat, lng });
+  const sortedTutorsWithDistance = useMemo(() => {
+    const list = Array.isArray(dynamicTutors) && dynamicTutors.length > 0 ? dynamicTutors : VERIFIED_TUTORS;
+    return list.map((tutor, idx) => {
+      let tLat = tutor.latitude || (28.44 + (Math.random() * 0.05));
+      let tLng = tutor.longitude || (77.06 + (Math.random() * 0.05));
+      
+      const km = calculateHaversineKm(currentCoords.lat, currentCoords.lng, tLat, tLng);
+      const distanceInfo = getDistanceInfo(km);
 
-          const nearestSector = getNearestKnownSector(lat, lng);
-          let resolvedAddress = nearestSector
-            ? `${nearestSector.name}, ${nearestSector.landmark ? nearestSector.landmark.split(',')[0] + ', ' : ''}Gurugram`
-            : '';
+      return { ...tutor, computedLat: tLat, computedLng: tLng, distanceKm: km, distanceInfo };
+    }).sort((a, b) => a.distanceKm - b.distanceKm);
+  }, [dynamicTutors, currentCoords]);
 
-          if (!resolvedAddress) {
-            resolvedAddress = await handleReverseGeocode(lat, lng);
-          }
-
-          if (resolvedAddress) {
-            setDetectedAddress(resolvedAddress);
-            setPopupAddress(resolvedAddress);
-            try {
-              localStorage.setItem(
-                'user_detected_location',
-                JSON.stringify({ address: resolvedAddress, lat, lng })
-              );
-            } catch {}
-            onLocationSelected({
-              address: resolvedAddress,
-              lat,
-              lng,
-              nearestTutorsCount: 12,
-            });
-          }
-
-          if (leafletMapInstanceRef.current) {
-            leafletMapInstanceRef.current.setView([lat, lng], 14);
-          }
-        },
-        (err) => {
-          console.debug('Geolocation not granted or timeout:', err.message);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-      );
+  useEffect(() => {
+    if (sortedTutorsWithDistance.length > 0) {
+      if (!selectedTutor || !sortedTutorsWithDistance.some(t => t.id === selectedTutor.id)) {
+        setSelectedTutor(sortedTutorsWithDistance[0]);
+      }
     }
-  }, [getNearestKnownSector, handleReverseGeocode, onLocationSelected]);
+  }, [sortedTutorsWithDistance, selectedTutor]);
 
-  // Search handler for Gurgaon sectors & landmarks
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-    if (!query || query.trim().length === 0) {
-      setSearchResults([]);
-      return;
-    }
-
+    if (!query || query.trim().length === 0) { setSearchResults([]); return; }
     const q = query.toLowerCase().trim();
-    const localMatches = POPULAR_GURGAON_SECTORS.filter(
-      (s) => s.name.toLowerCase().includes(q) || s.landmark.toLowerCase().includes(q)
-    );
-
+    const localMatches = POPULAR_GURGAON_SECTORS.filter((s) => s.name.toLowerCase().includes(q) || s.landmark.toLowerCase().includes(q));
     setSearchResults(localMatches);
-
-    // If query has 3+ chars, also query Nominatim for additional specific landmarks
     if (q.length >= 3) {
       setIsSearching(true);
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Gurgaon')}&countrycodes=in&limit=4`, {
-        headers: { 'Accept-Language': 'en' }
-      })
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Gurgaon')}&countrycodes=in&limit=4`, { headers: { 'Accept-Language': 'en' } })
         .then((res) => res.json())
         .then((data) => {
-          if (Array.isArray(data) && data.length > 0) {
-            const osmResults = data.map((item) => ({
-              name: item.display_name.split(',')[0],
-              landmark: item.display_name.split(',').slice(1, 3).join(',').trim(),
-              lat: parseFloat(item.lat),
-              lng: parseFloat(item.lon),
-            }));
-
-            // Merge local matches and OSM matches without duplicate names
+          if (Array.isArray(data)) {
+            const osmResults = data.map((item) => ({ name: item.display_name.split(',')[0], landmark: item.display_name.split(',').slice(1, 3).join(',').trim(), lat: parseFloat(item.lat), lng: parseFloat(item.lon) }));
             const existingNames = new Set(localMatches.map((m) => m.name.toLowerCase()));
-            const uniqueOsm = osmResults.filter((o) => !existingNames.has(o.name.toLowerCase()));
-            setSearchResults([...localMatches, ...uniqueOsm]);
+            setSearchResults([...localMatches, ...osmResults.filter((o) => !existingNames.has(o.name.toLowerCase()))]);
           }
         })
-        .catch(() => {})
         .finally(() => setIsSearching(false));
     }
   };
 
-  // Select search result
   const handleSelectSearchResult = (result: { name: string; landmark?: string; lat: number; lng: number }) => {
     setPopupCoords({ lat: result.lat, lng: result.lng });
-    setPopupAddress(result.name + (result.landmark ? ` (${result.landmark})` : '') + ', Gurugram');
+    setPopupAddress(`${result.name}, ${result.landmark ? result.landmark + ', ' : ''}Gurugram`);
     setSearchQuery('');
     setSearchResults([]);
-
     if (leafletPopupMapInstanceRef.current && leafletPopupMarkerRef.current) {
       leafletPopupMapInstanceRef.current.setView([result.lat, result.lng], 16);
       leafletPopupMarkerRef.current.setLatLng([result.lat, result.lng]);
     }
   };
 
-  // =========================================================================
-  // MAIN MAP INITIALIZATION (100% PURE OPENSTREETMAP LEAFLET)
-  // =========================================================================
+  const handleQuickSectorSelect = (sector: typeof POPULAR_GURGAON_SECTORS[0]) => {
+    const addr = `${sector.name}, ${sector.landmark.split(',')[0]}, Gurugram`;
+    setCurrentCoords({ lat: sector.lat, lng: sector.lng });
+    setDetectedAddress(addr);
+    setPopupCoords({ lat: sector.lat, lng: sector.lng });
+    setPopupAddress(addr);
+    setLocationSource('SAVED');
+    try { localStorage.setItem('user_detected_location', JSON.stringify({ address: addr, lat: sector.lat, lng: sector.lng })); } catch {}
+    if (leafletMapInstanceRef.current) leafletMapInstanceRef.current.setView([sector.lat, sector.lng], 14);
+    onLocationSelected({ address: addr, lat: sector.lat, lng: sector.lng, nearestTutorsCount: 12 });
+  };
+
   useEffect(() => {
     if (!L || !mapContainerRef.current) return;
-
-    if (leafletMapInstanceRef.current) {
-      leafletMapInstanceRef.current.remove();
-      leafletMapInstanceRef.current = null;
-    }
-    if ((mapContainerRef.current as any)._leaflet_id) {
-      delete (mapContainerRef.current as any)._leaflet_id;
-    }
-
-    const map = L.map(mapContainerRef.current, {
-      center: [currentCoords.lat, currentCoords.lng],
-      zoom: 14,
-      zoomControl: !isCompact,
-      attributionControl: false,
-    });
-
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
-      subdomains: 'abcd',
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
-    }).addTo(map);
-
+    if (leafletMapInstanceRef.current) { leafletMapInstanceRef.current.remove(); }
+    const map = L.map(mapContainerRef.current, { center: [currentCoords.lat, currentCoords.lng], zoom: 14, zoomControl: !isCompact, attributionControl: false });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap &copy; CARTO' }).addTo(map);
     leafletMapInstanceRef.current = map;
-
-    // Trigger invalidateSize to ensure tiles render immediately
+    tutorLayerGroupRef.current = L.layerGroup().addTo(map);
     map.invalidateSize();
-    setTimeout(() => { if (map) map.invalidateSize(); }, 100);
-    setTimeout(() => { if (map) map.invalidateSize(); }, 300);
-    setTimeout(() => { if (map) map.invalidateSize(); }, 800);
+    return () => { if (map) map.remove(); };
+  }, [L, isCompact]);
 
-    // Parent pin
-    try {
-      const parentIcon = L.divIcon({
-        className: 'custom-parent-pin',
-        html: `
-          <div style="display: flex; flex-direction: column; align-items: center;">
-            <div style="width: 28px; height: 28px; border-radius: 50%; background: #2563EB; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(37,99,235,0.45);">
-              <div style="width: 8px; height: 8px; border-radius: 50%; background: #FFFFFF;"></div>
-            </div>
-          </div>
-        `,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
-      });
-
-      L.marker([currentCoords.lat, currentCoords.lng], {
-        icon: parentIcon,
-        title: 'Selected Parent Location',
-        alt: 'Selected Location Pin',
-      }).addTo(map);
-    } catch {
-      // Parent marker fallback
+  useEffect(() => {
+    const map = leafletMapInstanceRef.current;
+    if (!map || !L) return;
+    if (parentMarkerRef.current) parentMarkerRef.current.setLatLng([currentCoords.lat, currentCoords.lng]);
+    else {
+      const parentIcon = L.divIcon({ className: 'custom-parent-pin', html: `<div style="display: flex; flex-direction: column; align-items: center;"><div style="width: 32px; height: 32px; border-radius: 50%; background: #2563EB; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(37,99,235,0.5);"><div style="width: 10px; height: 10px; border-radius: 50%; background: #FFFFFF;"></div></div><span style="font-size: 0.65rem; font-weight: 800; background: #2563EB; color: #FFFFFF; padding: 1px 6px; border-radius: 999px; margin-top: 2px;">Your Location</span></div>`, iconSize: [80, 52], iconAnchor: [40, 16] });
+      parentMarkerRef.current = L.marker([currentCoords.lat, currentCoords.lng], { icon: parentIcon, zIndexOffset: 1000 }).addTo(map);
     }
-
-    // Tutor pins
-    const nearbyTutorsList = Array.isArray(dynamicTutors) ? dynamicTutors.slice(0, 12) : [];
-    nearbyTutorsList.forEach((tutor, idx) => {
-      try {
-        let tLat = tutor.latitude;
-        let tLng = tutor.longitude;
-
-        if (!tLat || !tLng) {
-          const angle = idx * 2.399963;
-          const distanceKm = 0.8 + idx * 0.32;
-          tLat = currentCoords.lat + (distanceKm / 110.85) * Math.sin(angle);
-          tLng = currentCoords.lng + (distanceKm / 97.8) * Math.cos(angle);
-        }
-
-        const tutorName = tutor?.name || 'Verified Tutor';
-        const tutorAvatar = tutor?.avatarUrl || '';
-        const initial = tutorName.charAt(0).toUpperCase() || 'T';
-
-        const tutorIcon = L.divIcon({
-          className: 'custom-tutor-pin',
-          html: `
-            <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-              <div style="position: relative; padding: 2px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.18);">
-                ${tutorAvatar 
-                  ? `<img src="${tutorAvatar}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; display: block;" />`
-                  : `<div style="width: 28px; height: 28px; border-radius: 50%; background: #0F766E; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;">${initial}</div>`}
-              </div>
-              <span style="font-size: 0.65rem; font-weight: 800; background: #FFF; color: #0F172A; padding: 0.1rem 0.35rem; border-radius: 4px; border: 1px solid #CBD5E1; margin-top: 1px;">
-                ${tutorName.split(' ')[0]}
-              </span>
-            </div>
-          `,
-          iconSize: [60, 50],
-          iconAnchor: [30, 15],
-        });
-
-        const homeMin = tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600;
-        const homeMax = tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMax !== homeMin ? tutor.hourlyRateHomeMax : Math.round((homeMin * 1.4) / 50) * 50;
-        const onlineMin = tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500;
-        const onlineMax = tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMax !== onlineMin ? tutor.hourlyRateOnlineMax : Math.round((onlineMin * 1.4) / 50) * 50;
-
-        let priceHtml = '';
-        if (!tutor.teachingMode || tutor.teachingMode === 'BOTH') {
-          priceHtml = `<div>🏠 Home: ₹${homeMin}–₹${homeMax}/hr</div><div style="margin-top:2px;">💻 Online: ₹${onlineMin}–₹${onlineMax}/hr</div>`;
-        } else if (tutor.teachingMode === 'ONLINE_LIVE') {
-          priceHtml = `<div>💻 Online: ₹${onlineMin}–₹${onlineMax}/hr</div>`;
-        } else {
-          priceHtml = `<div>🏠 Home: ₹${homeMin}–₹${homeMax}/hr</div>`;
-        }
-
-        const popupContent = `
-          <div style="font-family: system-ui, -apple-system, sans-serif; padding: 4px; min-width: 190px;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-              ${tutorAvatar ? `<img src="${tutorAvatar}" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1.5px solid #059669;" />` : ''}
-              <div>
-                <div style="font-weight: 800; font-size: 13px; color: #0F172A;">${tutorName}</div>
-                <div style="font-size: 10px; color: #047857; font-weight: 700;">✓ SSSAM Verified</div>
-              </div>
-            </div>
-            <div style="font-size: 11px; color: #475569; margin-bottom: 8px; line-height: 1.4;">
-              <div style="font-weight: 700; color: #334155;">🎓 ${tutor.highestDegree || 'Verified Educator'}</div>
-              <div style="color: #0F766E; font-weight: 700; margin-top: 3px; font-size: 11px;">
-                ${priceHtml}
-              </div>
-            </div>
-            <a href="/tutors/${tutor.id}" style="display: flex; align-items: center; justify-content: center; gap: 4px; background: #0F172A; color: #FFFFFF; text-decoration: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 800;">
-              <span>View Profile</span>
-              <span>↗</span>
-            </a>
-          </div>
-        `;
-
-        const tMarker = L.marker([tLat, tLng], {
-          icon: tutorIcon,
-          title: `Tutor: ${tutor.name}`,
-          alt: `Location marker for tutor ${tutor.name}`,
-        }).addTo(map);
-        tMarker.bindPopup(popupContent, {
-          closeButton: true,
-          offset: [0, -10],
-          className: 'custom-map-popup',
-        });
-
-        tMarker.on('click', () => {
-          setSelectedTutor(tutor);
-          tMarker.openPopup();
-        });
-      } catch {
-        // Tutor marker fallback
-      }
+    if (tutorLayerGroupRef.current) tutorLayerGroupRef.current.clearLayers();
+    if (radiusCircleRef.current) { map.removeLayer(radiusCircleRef.current); radiusCircleRef.current = null; }
+    const currentSelected = selectedTutor ? sortedTutorsWithDistance.find((t) => t.id === selectedTutor.id) || sortedTutorsWithDistance[0] : sortedTutorsWithDistance[0];
+    if (currentSelected) { radiusCircleRef.current = L.circle([currentSelected.computedLat, currentSelected.computedLng], { radius: 3200, color: currentSelected.distanceInfo.circleColor, fillOpacity: 0.08, weight: 1.5, dashArray: '5 5' }).addTo(map); }
+    sortedTutorsWithDistance.slice(0, 12).forEach((tutor) => {
+      const isSelected = currentSelected && currentSelected.id === tutor.id;
+      const tutorIcon = L.divIcon({ className: 'custom-tutor-pin', html: `<div style="display: flex; flex-direction: column; align-items: center; transform: ${isSelected ? 'scale(1.12)' : 'scale(1)'};"><div style="position: relative; padding: 2px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 3px 8px rgba(0,0,0,0.18); border: ${isSelected ? '2px solid #0F766E' : 'none'};"><img src="${tutor.avatarUrl}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; display: block;" /></div><span style="font-size: 0.64rem; font-weight: 800; background: ${isSelected ? '#0F172A' : '#FFFFFF'}; color: ${isSelected ? '#FFFFFF' : '#0F172A'}; padding: 1px 5px; border-radius: 4px; border: 1px solid #CBD5E1;">${tutor.name.split(' ')[0]}</span></div>`, iconSize: [70, 58], iconAnchor: [35, 18] });
+      const tMarker = L.marker([tutor.computedLat, tutor.computedLng], { icon: tutorIcon, zIndexOffset: isSelected ? 500 : 100 }).addTo(tutorLayerGroupRef.current);
+      tMarker.bindPopup(`<div style="min-width: 200px;"><strong>${tutor.name}</strong><br/>${tutor.distanceInfo.distanceText}</div>`);
+      tMarker.on('click', () => setSelectedTutor(tutor));
     });
+  }, [L, currentCoords, sortedTutorsWithDistance, selectedTutor]);
 
-    return () => {
-      if (map) {
-        map.remove();
-        leafletMapInstanceRef.current = null;
-      }
-    };
-  }, [L, currentCoords, dynamicTutors, isCompact]);
-
-  // =========================================================================
-  // POPUP MAP INITIALIZATION (100% PURE LEAFLET)
-  // =========================================================================
-  useEffect(() => {
-    if (!showLocationPopup || !popupMapRef.current || !L) return;
-
-    const timer = setTimeout(() => {
-      if (!popupMapRef.current) return;
-
-      if (leafletPopupMapInstanceRef.current) {
-        leafletPopupMapInstanceRef.current.remove();
-        leafletPopupMapInstanceRef.current = null;
-      }
-      if ((popupMapRef.current as any)._leaflet_id) {
-        delete (popupMapRef.current as any)._leaflet_id;
-      }
-
-      const pMap = L.map(popupMapRef.current, {
-        center: [popupCoords.lat, popupCoords.lng],
-        zoom: 16,
-        zoomControl: true,
-        attributionControl: false,
-      });
-
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        subdomains: 'abcd',
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-      }).addTo(pMap);
-
-      const markerIcon = L.divIcon({
-        className: 'popup-location-pin',
-        html: `
-          <div style="display: flex; flex-direction: column; align-items: center;">
-            <div style="width: 36px; height: 36px; border-radius: 50%; background: #2563EB; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(37,99,235,0.5); cursor: grab;">
-              <div style="width: 12px; height: 12px; border-radius: 50%; background: #FFFFFF;"></div>
-            </div>
-            <div style="width: 3px; height: 12px; background: #2563EB; margin-top: -2px;"></div>
-          </div>
-        `,
-        iconSize: [36, 50],
-        iconAnchor: [18, 50],
-      });
-
-      const marker = L.marker([popupCoords.lat, popupCoords.lng], {
-        icon: markerIcon,
-        title: 'Selected Location Pin',
-        alt: 'Selected Location Pin',
-        draggable: true,
-      }).addTo(pMap);
-
-      leafletPopupMarkerRef.current = marker;
-
-      marker.on('dragend', async () => {
-        const pos = marker.getLatLng();
-        setPopupCoords({ lat: pos.lat, lng: pos.lng });
-        setIsReverseGeocoding(true);
-        const addr = await handleReverseGeocode(pos.lat, pos.lng);
-        setPopupAddress(addr);
-        setIsReverseGeocoding(false);
-      });
-
-      pMap.on('click', async (e: any) => {
-        marker.setLatLng(e.latlng);
-        setPopupCoords({ lat: e.latlng.lat, lng: e.latlng.lng });
-        setIsReverseGeocoding(true);
-        const addr = await handleReverseGeocode(e.latlng.lat, e.latlng.lng);
-        setPopupAddress(addr);
-        setIsReverseGeocoding(false);
-      });
-
-      leafletPopupMapInstanceRef.current = pMap;
-
-      setTimeout(() => {
-        if (pMap) pMap.invalidateSize();
-      }, 150);
-    }, 150);
-
-    return () => clearTimeout(timer);
-  }, [showLocationPopup, L]);
-
-  // Cleanup popup map
-  useEffect(() => {
-    if (!showLocationPopup) {
-      if (leafletPopupMapInstanceRef.current) {
-        leafletPopupMapInstanceRef.current.remove();
-        leafletPopupMapInstanceRef.current = null;
-      }
-    }
-  }, [showLocationPopup]);
-
-  // GPS Auto-detection handler
   const handleAutoDetectGPS = () => {
     setIsDetecting(true);
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          setCurrentCoords({ lat, lng });
-          setPopupCoords({ lat, lng });
-
-          const nearestSector = getNearestKnownSector(lat, lng);
-          let resolvedAddress = nearestSector
-            ? `${nearestSector.name}, ${nearestSector.landmark ? nearestSector.landmark.split(',')[0] + ', ' : ''}Gurugram`
-            : '';
-
-          if (!resolvedAddress) {
-            resolvedAddress = await handleReverseGeocode(lat, lng);
-          }
-
-          if (resolvedAddress) {
-            setDetectedAddress(resolvedAddress);
-            setPopupAddress(resolvedAddress);
-            try {
-              localStorage.setItem(
-                'user_detected_location',
-                JSON.stringify({ address: resolvedAddress, lat, lng })
-              );
-            } catch {}
-            onLocationSelected({
-              address: resolvedAddress,
-              lat,
-              lng,
-              nearestTutorsCount: 12,
-            });
-          }
-
-          if (leafletMapInstanceRef.current) {
-            leafletMapInstanceRef.current.setView([lat, lng], 14);
-          }
-          setIsDetecting(false);
-        },
-        () => {
-          setIsDetecting(false);
-          setShowLocationPopup(true);
-        },
-        { enableHighAccuracy: true, timeout: 8000 }
-      );
-    } else {
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      setCurrentCoords({ lat, lng });
+      setPopupCoords({ lat, lng });
+      setLocationSource('GPS');
+      const resolved = await handleReverseGeocode(lat, lng);
+      setDetectedAddress(resolved);
       setIsDetecting(false);
-      setShowLocationPopup(true);
-    }
+      onLocationSelected({ address: resolved, lat, lng, nearestTutorsCount: 12 });
+    }, () => { setIsDetecting(false); setShowLocationPopup(true); }, { enableHighAccuracy: true });
   };
 
   const handleConfirmLocation = () => {
     setCurrentCoords(popupCoords);
     setDetectedAddress(popupAddress);
+    setLocationSource('SAVED');
     setShowLocationPopup(false);
-
-    try {
-      localStorage.setItem(
-        'user_detected_location',
-        JSON.stringify({ address: popupAddress, lat: popupCoords.lat, lng: popupCoords.lng })
-      );
-    } catch {}
-
-    if (leafletMapInstanceRef.current) {
-      leafletMapInstanceRef.current.setView([popupCoords.lat, popupCoords.lng], 14);
-    }
-
-    onLocationSelected({
-      address: popupAddress,
-      lat: popupCoords.lat,
-      lng: popupCoords.lng,
-      nearestTutorsCount: 12,
-    });
+    try { localStorage.setItem('user_detected_location', JSON.stringify({ address: popupAddress, lat: popupCoords.lat, lng: popupCoords.lng })); } catch {}
+    onLocationSelected({ address: popupAddress, lat: popupCoords.lat, lng: popupCoords.lng, nearestTutorsCount: 12 });
   };
+
+  const activeTutorDetail = selectedTutor ? sortedTutorsWithDistance.find((t) => t.id === selectedTutor.id) || sortedTutorsWithDistance[0] : sortedTutorsWithDistance[0];
+  const whatsappInquiryUrl = activeTutorDetail ? `https://wa.me/919217031899?text=${encodeURIComponent(`Hello SSSAM, looking for a teacher in ${detectedAddress}. Interested in ${activeTutorDetail.name}.`)}` : '#';
 
   return (
     <>
-      <div style={{
-        padding: isCompact ? '0.5rem' : '1.5rem',
-        backgroundColor: '#FFFFFF',
-        overflow: 'hidden',
-        borderRadius: isCompact ? '0px' : '24px',
-      }}>
+      <div style={{ padding: isCompact ? '0.5rem' : '1.5rem', backgroundColor: '#FFFFFF', borderRadius: isCompact ? '0px' : '24px', border: isCompact ? 'none' : '1px solid #E2E8F0' }}>
         {!isCompact && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap' }}>
             <div>
-              <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--brand-emerald)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span className="pulse-emerald" />
-                <span>📍 LIVE LOCATION PROXIMITY ENGINE</span>
-              </div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '2px' }}>
-                Nearby Verified Tutors in Your Sector
-              </h3>
+              <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#059669' }}>LIVE PROXIMITY ENGINE</div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0' }}>Verified Teachers Near You</h3>
             </div>
-
-            <button
-              type="button"
-              onClick={handleAutoDetectGPS}
-              disabled={isDetecting}
-              className="btn btn-primary btn-sm"
-            >
-              <span>{isDetecting ? 'Detecting...' : '📍 Use Current Location'}</span>
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button onClick={handleAutoDetectGPS} style={{ fontSize: '0.8rem', fontWeight: 700, padding: '0.45rem 0.85rem', borderRadius: '10px' }} className="btn btn-secondary">Use GPS</button>
+              <button onClick={() => setShowLocationPopup(true)} style={{ fontSize: '0.8rem', fontWeight: 800, padding: '0.45rem 0.85rem', borderRadius: '10px' }} className="btn btn-primary">Change Sector</button>
+            </div>
           </div>
         )}
 
-        {/* Map Container */}
-        <div
-          ref={mapContainerRef}
-          style={{
-            position: 'relative',
-            height: isCompact ? '180px' : '280px',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            border: '1px solid var(--border-hairline)',
-            marginBottom: isCompact ? '0.5rem' : '1.25rem',
-            zIndex: 1,
-            backgroundColor: '#E2E8F0',
-          }}
-        />
+        <div ref={mapContainerRef} style={{ position: 'relative', height: isCompact ? '180px' : '300px', borderRadius: '16px', overflow: 'hidden', border: '1px solid #CBD5E1', marginBottom: '0.85rem', zIndex: 1, backgroundColor: '#E2E8F0' }} />
 
-        {/* Selected Tutor Clickable Card */}
-        {selectedTutor && (
-          <Link
-            href={`/tutors/${selectedTutor.id}`}
-            style={{
-              backgroundColor: '#F0FDF4',
-              border: '1.5px solid #BBF7D0',
-              borderRadius: '14px',
-              padding: '0.75rem 1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: isCompact ? '0.5rem' : '1rem',
-              textDecoration: 'none',
-              color: 'inherit',
-              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.08)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-              <img src={selectedTutor.avatarUrl} alt={selectedTutor.name} style={{ width: '42px', height: '42px', borderRadius: '10px', objectFit: 'cover', border: '1.5px solid #059669', flexShrink: 0 }} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span>{selectedTutor.name}</span>
-                  <span style={{ fontSize: '0.68rem', color: '#047857', fontWeight: 700, backgroundColor: '#DCFCE7', padding: '0.1rem 0.4rem', borderRadius: '6px' }}>✓ SSSAM Verified</span>
-                </div>
-                <div style={{ fontSize: '0.74rem', color: '#475569', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 600 }}>{selectedTutor.highestDegree}</span>
-                  <span>•</span>
-                  {(!selectedTutor.teachingMode || selectedTutor.teachingMode === 'BOTH') ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                      <span style={{ color: '#0F6E56', fontWeight: 700, backgroundColor: '#F0FDF4', padding: '1px 5px', borderRadius: '4px' }}>
-                        🏠 Home: ₹{selectedTutor.hourlyRateHomeMin || selectedTutor.hourlyRateHome || 600}–₹{selectedTutor.hourlyRateHomeMax && selectedTutor.hourlyRateHomeMax !== selectedTutor.hourlyRateHomeMin ? selectedTutor.hourlyRateHomeMax : Math.round(((selectedTutor.hourlyRateHomeMin || selectedTutor.hourlyRateHome || 600) * 1.4) / 50) * 50}/hr
-                      </span>
-                      <span style={{ color: '#0284C7', fontWeight: 700, backgroundColor: '#F0F9FF', padding: '1px 5px', borderRadius: '4px' }}>
-                        💻 Online: ₹{selectedTutor.hourlyRateOnlineMin || selectedTutor.hourlyRateOnline || 500}–₹{selectedTutor.hourlyRateOnlineMax && selectedTutor.hourlyRateOnlineMax !== selectedTutor.hourlyRateOnlineMin ? selectedTutor.hourlyRateOnlineMax : Math.round(((selectedTutor.hourlyRateOnlineMin || selectedTutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}/hr
-                      </span>
-                    </span>
-                  ) : selectedTutor.teachingMode === 'ONLINE_LIVE' ? (
-                    <span style={{ color: '#0284C7', fontWeight: 700, backgroundColor: '#F0F9FF', padding: '1px 5px', borderRadius: '4px' }}>
-                      💻 Online: ₹{selectedTutor.hourlyRateOnlineMin || selectedTutor.hourlyRateOnline || 500}–₹{selectedTutor.hourlyRateOnlineMax && selectedTutor.hourlyRateOnlineMax !== selectedTutor.hourlyRateOnlineMin ? selectedTutor.hourlyRateOnlineMax : Math.round(((selectedTutor.hourlyRateOnlineMin || selectedTutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}/hr
-                    </span>
-                  ) : (
-                    <span style={{ color: '#0F6E56', fontWeight: 700, backgroundColor: '#F0FDF4', padding: '1px 5px', borderRadius: '4px' }}>
-                      🏠 Home Visit: ₹{selectedTutor.hourlyRateHomeMin || selectedTutor.hourlyRateHome || 600}–₹{selectedTutor.hourlyRateHomeMax && selectedTutor.hourlyRateHomeMax !== selectedTutor.hourlyRateHomeMin ? selectedTutor.hourlyRateHomeMax : Math.round(((selectedTutor.hourlyRateHomeMin || selectedTutor.hourlyRateHome || 600) * 1.4) / 50) * 50}/hr
-                    </span>
-                  )}
-                </div>
+        {activeTutorDetail && (
+          <div style={{ backgroundColor: '#F8FAFC', border: `1.5px solid ${activeTutorDetail.distanceInfo.badgeBorder}`, borderRadius: '16px', padding: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <img src={activeTutorDetail.avatarUrl} style={{ width: '48px', height: '48px', borderRadius: '12px', border: '2px solid #059669' }} />
+              <div>
+                <div style={{ fontSize: '1rem', fontWeight: 800 }}>{activeTutorDetail.name}</div>
+                <div style={{ fontSize: '0.76rem', color: '#64748B' }}>🎓 {activeTutorDetail.highestDegree} • {activeTutorDetail.distanceInfo.distanceText}</div>
               </div>
             </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', backgroundColor: '#0F172A', color: '#FFFFFF', padding: '0.4rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 800, flexShrink: 0 }}>
-              <span>View Profile</span>
-              <ArrowUpRight size={13} />
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button onClick={() => onOpenBookingForTutor?.(activeTutorDetail)} className="btn btn-primary" style={{ flex: 1, padding: '0.55rem', borderRadius: '10px' }}>Request Visit</button>
+              <a href={whatsappInquiryUrl} target="_blank" className="btn btn-secondary" style={{ padding: '0.55rem', borderRadius: '10px' }}>WhatsApp</a>
             </div>
-          </Link>
+          </div>
         )}
-
-        {/* Current Address display & Edit button */}
-        <div style={{
-          backgroundColor: 'var(--bg-card-subtle)',
-          border: '1px solid var(--border-hairline)',
-          borderRadius: '10px',
-          padding: '0.65rem 0.85rem',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
-            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-              CONFIRM NEAREST SECTOR
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowLocationPopup(true)}
-              style={{ fontSize: '0.72rem', color: 'var(--brand-blue)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
-            >
-              <MapPin size={12} />
-              <span>Change Location</span>
-            </button>
-          </div>
-
-          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-            <CheckCircle2 size={14} color="var(--brand-emerald)" />
-            <span>{detectedAddress}</span>
-          </div>
-        </div>
       </div>
 
-      {/* POPUP MODAL */}
+      {/* POPUP MODAL FOR CUSTOM SECTOR SEARCH / PIN DRAG */}
       {showLocationPopup && (
         <div
           style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
             backgroundColor: 'rgba(0,0,0,0.6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '1rem', backdropFilter: 'blur(4px)',
-          }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowLocationPopup(false); }}
-        >
-          <div style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '20px',
-            width: '100%',
-            maxWidth: '520px',
-            maxHeight: '92vh',
-            overflow: 'hidden',
-            boxShadow: '0 24px 80px rgba(0,0,0,0.25)',
             display: 'flex',
-            flexDirection: 'column',
-          }}>
-            {/* Modal Header */}
-            <div style={{
-              padding: '1.25rem 1.5rem 1rem',
-              borderBottom: '1px solid #E2E8F0',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowLocationPopup(false);
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '20px',
+              width: '100%',
+              maxWidth: '520px',
+              maxHeight: '92vh',
+              overflow: 'hidden',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.25)',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '0.75rem',
-            }}>
+              flexDirection: 'column',
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem 1rem',
+                borderBottom: '1px solid #E2E8F0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.75rem',
+              }}
+            >
               <div>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
-                  📍 Set Your Location
+                  📍 Set Your Gurgaon Sector
                 </h3>
                 <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '2px 0 0 0' }}>
-                  Search sector, drag pin, or tap on map
+                  Search your sector, colony, or drag the marker to your location
                 </p>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowLocationPopup(false)}
-                  aria-label="Close location popup"
-                  style={{ background: '#F1F5F9', border: 'none', borderRadius: '10px', padding: '0.45rem', cursor: 'pointer', display: 'flex', transition: 'background 0.15s ease' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#E2E8F0'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F1F5F9'; }}
-                >
-                  <X size={18} color="#64748B" />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowLocationPopup(false)}
+                aria-label="Close location popup"
+                style={{
+                  background: '#F1F5F9',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '0.45rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                }}
+              >
+                <X size={18} color="#64748B" />
+              </button>
             </div>
 
-            {/* Sector / Landmark Search Box */}
-            <div style={{ padding: '0.75rem 1.25rem 0.5rem', backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', position: 'relative' }}>
+            {/* Search Input */}
+            <div
+              style={{
+                padding: '0.75rem 1.25rem 0.5rem',
+                backgroundColor: '#F8FAFC',
+                borderBottom: '1px solid #E2E8F0',
+                position: 'relative',
+              }}
+            >
               <div style={{ position: 'relative' }}>
-                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                <Search
+                  size={16}
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#94A3B8',
+                  }}
+                />
                 <input
                   type="text"
-                  placeholder="Search Gurgaon sector, colony, or landmark (e.g. Sector 56, DLF Phase 5)..."
+                  placeholder="Search sector (e.g. DLF Phase 5, Sector 56, Golf Course Road)..."
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="form-control"
@@ -789,51 +477,62 @@ export default function RapidoStyleMap({ onLocationSelected, isCompact = false }
                 {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => { setSearchQuery(''); setSearchResults([]); }}
-                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSearchResults([]);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#94A3B8',
+                    }}
                   >
                     <X size={14} />
                   </button>
                 )}
               </div>
 
-              {/* Live Search Autocomplete Dropdown */}
+              {/* Autocomplete Dropdown */}
               {searchResults.length > 0 && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: '1.25rem',
-                  right: '1.25rem',
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: '12px',
-                  boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
-                  border: '1.5px solid #E2E8F0',
-                  zIndex: 100,
-                  maxHeight: '200px',
-                  overflowY: 'auto',
-                  marginTop: '4px',
-                }}>
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: '1.25rem',
+                    right: '1.25rem',
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '12px',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
+                    border: '1px solid #E2E8F0',
+                    maxHeight: '220px',
+                    overflowY: 'auto',
+                    zIndex: 100,
+                    marginTop: '4px',
+                  }}
+                >
                   {searchResults.map((res, i) => (
                     <div
                       key={i}
                       onClick={() => handleSelectSearchResult(res)}
                       style={{
-                        padding: '0.65rem 1rem',
-                        borderBottom: i < searchResults.length - 1 ? '1px solid #F1F5F9' : 'none',
+                        padding: '0.65rem 0.95rem',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.5rem',
-                        transition: 'background 0.15s ease',
+                        borderBottom: i < searchResults.length - 1 ? '1px solid #F1F5F9' : 'none',
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F0FDF4')}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
-                      <MapPin size={14} color="#059669" style={{ flexShrink: 0 }} />
+                      <MapPin size={14} color="#0F6E56" style={{ flexShrink: 0 }} />
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0F172A' }}>
-                          {res.name}
-                        </div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0F172A' }}>{res.name}</div>
                         {res.landmark && (
                           <div style={{ fontSize: '0.72rem', color: '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {res.landmark}
