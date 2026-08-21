@@ -20,7 +20,7 @@ const VideoModal = dynamic(() => import('@/components/VideoModal'), {
 });
 const RapidoStyleMap = dynamic(() => import('@/components/RapidoStyleMap'), {
   ssr: false,
-  loading: () => <div style={{ height: '480px', backgroundColor: '#F8FAFC', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}>Loading Gurgaon Tutors Map...</div>,
+  loading: () => <div style={{ height: '480px', backgroundColor: '#F8FAFC', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}>Loading Gurgaon Teachers Map...</div>,
 });
 
 import {
@@ -32,6 +32,12 @@ import {
   MockTutor,
   LocalityInfo,
 } from '@/lib/data';
+import {
+  calculateHaversineKm,
+  getDistanceInfo,
+  getTeacherCoordinates,
+  POPULAR_GURGAON_SECTORS,
+} from '@/components/RapidoStyleMap';
 import {
   Sparkles,
   ShieldCheck,
@@ -58,6 +64,7 @@ import {
   Headphones,
   RotateCcw,
   BadgeCheck,
+  Clock,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -245,45 +252,80 @@ export default function HomePage() {
 
 
                 {/* 6. Bolder CTA Button Row */}
-                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', width: '100%' }}>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenBooking()}
-                    className="btn btn-primary btn-lg"
-                    style={{
-                      backgroundColor: '#0F6E56',
-                      padding: '0.85rem 1.4rem',
-                      fontSize: 'clamp(0.88rem, 2.4vw, 1.05rem)',
-                      fontWeight: 800,
-                      borderRadius: '999px',
-                      boxShadow: '0 4px 14px rgba(15, 110, 86, 0.28)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      maxWidth: '100%',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>Get a Home Teacher</span>
-                    <ChevronRight size={18} style={{ flexShrink: 0 }} />
-                  </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%', maxWidth: '440px' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    flexWrap: 'wrap',
+                    width: '100%',
+                  }}>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenBooking()}
+                      className="btn btn-primary btn-lg"
+                      style={{
+                        backgroundColor: '#0F6E56',
+                        padding: '0.85rem 1.35rem',
+                        fontSize: 'clamp(0.9rem, 2.4vw, 1.02rem)',
+                        fontWeight: 800,
+                        borderRadius: '999px',
+                        boxShadow: '0 4px 14px rgba(15, 110, 86, 0.28)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.45rem',
+                        flex: '1 1 190px',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <span>Get a Home Teacher</span>
+                      <ChevronRight size={17} style={{ flexShrink: 0 }} />
+                    </button>
 
-                  <a
-                    href="#find-tutor"
-                    style={{
-                      fontSize: '0.95rem',
-                      fontWeight: 700,
-                      color: '#1D1D1F',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    <span>Browse Verified Teachers</span>
-                    <ChevronRight size={16} color="#0F6E56" />
-                  </a>
+                    <a
+                      href="https://wa.me/919217031899?text=Hello%20SSSAM%20Academy%2C%20I%20want%20to%20find%20a%20home%20teacher%20for%20my%20child%20in%20Gurgaon."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '0.85rem 1.35rem',
+                        fontSize: 'clamp(0.9rem, 2.4vw, 1.02rem)',
+                        fontWeight: 800,
+                        borderRadius: '999px',
+                        backgroundColor: '#25D366',
+                        color: '#FFFFFF',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.45rem',
+                        textDecoration: 'none',
+                        boxShadow: '0 4px 14px rgba(37, 211, 102, 0.28)',
+                        flex: '1 1 190px',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <MessageSquare size={17} />
+                      <span>Chat on WhatsApp</span>
+                    </a>
+                  </div>
+
+                  <div>
+                    <a
+                      href="#find-tutor"
+                      style={{
+                        fontSize: '0.88rem',
+                        fontWeight: 700,
+                        color: '#475569',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <span>Browse Verified Teachers in Gurgaon</span>
+                      <ChevronRight size={15} color="#0F6E56" />
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -720,13 +762,19 @@ export default function HomePage() {
               })}
             </div>
 
-            {/* Tutors Grid (Filtered Dynamically by Selected Sector & Gender) */}
+            {/* Teachers Grid (Filtered Dynamically by Selected Sector & Gender) */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
               gap: '1.75rem',
             }}>
               {(() => {
+                const showcaseSectorCoords = (() => {
+                  const match = POPULAR_GURGAON_SECTORS.find(s => s.name.toLowerCase().includes(selectedShowcaseSector.toLowerCase()));
+                  if (match) return { lat: match.lat, lng: match.lng };
+                  return { lat: 28.4552, lng: 77.0945 };
+                })();
+
                 const baseList = selectedShowcaseGender === 'ALL'
                   ? dynamicTutors
                   : dynamicTutors.filter(t => (t.gender || '').toUpperCase() === selectedShowcaseGender);
@@ -767,10 +815,10 @@ export default function HomePage() {
                         <Sparkles size={28} />
                       </div>
                       <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
-                        Educator Verification & Matching Active
+                        Teacher Verification & Matching Active
                       </h3>
                       <p style={{ color: 'var(--text-muted)', fontSize: '0.94rem', maxWidth: '540px', margin: '0 auto 1.75rem auto', lineHeight: 1.6 }}>
-                        SSSAM Academy academic counselors are actively matching verified educators across all Gurgaon sectors. Submit your requirement to get matched directly within 2 hours!
+                        SSSAM Academy academic counselors are actively matching verified teachers across all Gurgaon sectors. Submit your requirement to get matched directly within 2 hours!
                       </p>
                       <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                         <button
@@ -790,250 +838,279 @@ export default function HomePage() {
                   );
                 }
 
-                return filtered.map((tutor) => (
-                <div key={tutor.id} className="apple-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  {/* Top Bar */}
-                  <div style={{ padding: '1.25rem', paddingBottom: '0.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <Link href={`/tutors/${tutor.id}`} style={{ position: 'relative', display: 'block' }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={tutor.avatarUrl}
-                        alt={tutor.name}
-                        style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }}
-                      />
-                      <span style={{
-                        position: 'absolute',
-                        bottom: '-4px',
-                        right: '-4px',
-                        backgroundColor: '#047857',
-                        borderRadius: '50%',
-                        width: '18px',
-                        height: '18px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#FFFFFF',
-                        border: '2px solid #FFFFFF',
-                      }}>
-                        <ShieldCheck size={11} />
-                      </span>
-                    </Link>
+                return filtered.map((tutor) => {
+                  const tCoords = getTeacherCoordinates(tutor);
+                  const distanceKm = calculateHaversineKm(showcaseSectorCoords.lat, showcaseSectorCoords.lng, tCoords.lat, tCoords.lng);
+                  const distanceInfo = getDistanceInfo(distanceKm);
 
-                    <div style={{ flex: 1 }}>
-                      <Link href={`/tutors/${tutor.id}`} style={{ textDecoration: 'none' }}>
-                        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                          {tutor.name}
-                        </h3>
-                      </Link>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', margin: '2px 0' }}>
-                        <span style={{ fontSize: '0.78rem', color: '#0F6E56', fontWeight: 700 }}>
-                          {tutor.badge}
-                        </span>
-                        {tutor.gender?.toUpperCase() === 'FEMALE' && (
-                          <span style={{ backgroundColor: '#F0FDFA', color: '#0F766E', fontSize: '0.7rem', fontWeight: 800, padding: '1px 5px', borderRadius: '4px', border: '1px solid #CCFBF1' }}>
-                            👩 Female Educator
+                  return (
+                    <div key={tutor.id} className="apple-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                      {/* Top Bar */}
+                      <div style={{ padding: '1.25rem', paddingBottom: '0.45rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <Link href={`/tutors/${tutor.id}`} style={{ position: 'relative', display: 'block' }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={tutor.avatarUrl}
+                            alt={tutor.name}
+                            style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }}
+                          />
+                          <span style={{
+                            position: 'absolute',
+                            bottom: '-4px',
+                            right: '-4px',
+                            backgroundColor: '#047857',
+                            borderRadius: '50%',
+                            width: '18px',
+                            height: '18px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#FFFFFF',
+                            border: '2px solid #FFFFFF',
+                          }}>
+                            <ShieldCheck size={11} />
                           </span>
+                        </Link>
+
+                        <div style={{ flex: 1 }}>
+                          <Link href={`/tutors/${tutor.id}`} style={{ textDecoration: 'none' }}>
+                            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                              {tutor.name}
+                            </h3>
+                          </Link>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', margin: '2px 0' }}>
+                            <span style={{ fontSize: '0.78rem', color: '#0F6E56', fontWeight: 700 }}>
+                              {tutor.badge}
+                            </span>
+                            {tutor.gender?.toUpperCase() === 'FEMALE' && (
+                              <span style={{ backgroundColor: '#F0FDFA', color: '#0F766E', fontSize: '0.7rem', fontWeight: 800, padding: '1px 5px', borderRadius: '4px', border: '1px solid #CCFBF1' }}>
+                                👩 Female Educator
+                              </span>
+                            )}
+                          </div>
+                          {tutor.totalReviews > 0 && tutor.rating > 0 ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                              <Star size={13} color="var(--brand-amber)" fill="var(--brand-amber)" />
+                              <strong>{tutor.rating}</strong>
+                              <span>({tutor.totalReviews} {tutor.totalReviews === 1 ? 'review' : 'reviews'})</span>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.74rem', color: '#059669', fontWeight: 700, backgroundColor: '#ECFDF5', padding: '1px 6px', borderRadius: '4px', marginTop: '2px' }}>
+                              <span>✨ New Verified Teacher</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Live Proximity Badge */}
+                      <div style={{ padding: '0 1.25rem', marginBottom: '0.4rem' }}>
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.28rem 0.65rem',
+                          borderRadius: '8px',
+                          backgroundColor: distanceInfo.badgeBg,
+                          color: distanceInfo.badgeColor,
+                          border: `1px solid ${distanceInfo.badgeBorder}`,
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          width: '100%',
+                          boxSizing: 'border-box',
+                        }}>
+                          <Clock size={12} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {distanceInfo.distanceText} ({distanceInfo.travelTime})
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Prominent Education & Experience Stat Box */}
+                      <div style={{ padding: '1.25rem', paddingTop: '0.2rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                          gap: '0.5rem',
+                          padding: '0.65rem 0.75rem',
+                          backgroundColor: '#F8FAFC',
+                          borderRadius: '12px',
+                          border: '1px solid #E2E8F0',
+                          alignItems: 'center',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
+                            <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', flexShrink: 0 }}>
+                              <GraduationCap size={15} />
+                            </div>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Degree</div>
+                              <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tutor.highestDegree}>
+                                {tutor.highestDegree}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, borderLeft: '1px solid #E2E8F0', paddingLeft: '0.5rem' }}>
+                            <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', flexShrink: 0 }}>
+                              <Briefcase size={15} />
+                            </div>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Experience</div>
+                              <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {tutor.experienceYears}+ Years
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'flex-start', gap: '0.45rem', marginTop: '0.1rem' }}>
+                          <MapPin size={15} color="#047857" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>
+                            {tutor.serviceAreas.join(' • ')}
+                          </span>
+                        </div>
+
+                        {/* Subjects Badges */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.2rem' }}>
+                          {tutor.subjects.map((s) => (
+                            <span key={s} style={{ fontSize: '0.74rem', padding: '0.2rem 0.55rem', backgroundColor: '#F0FDF4', color: '#166534', border: '1px solid #DCFCE7', borderRadius: '6px', fontWeight: 600 }}>
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* 60s Video Intro Pill (Optional) */}
+                        {tutor.introVideoUrl && tutor.introVideoUrl.trim() !== '' ? (
+                          <button
+                            type="button"
+                            onClick={() => setActiveVideoTutor(tutor)}
+                            style={{
+                              marginTop: '0.5rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '0.6rem 0.85rem',
+                              borderRadius: '10px',
+                              backgroundColor: '#F0FDF4',
+                              border: '1px solid #BBF7D0',
+                              color: '#0F6E56',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <Play size={14} fill="#0F6E56" />
+                              <span>Watch 60s Intro Video</span>
+                            </span>
+                            <span style={{ fontSize: '0.72rem', color: '#0F6E56' }}>{tutor.videoDuration || 'Preview'}</span>
+                          </button>
+                        ) : (
+                          <div
+                            style={{
+                              marginTop: '0.5rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.45rem',
+                              padding: '0.55rem 0.85rem',
+                              borderRadius: '10px',
+                              backgroundColor: '#F8FAFC',
+                              border: '1px solid #E2E8F0',
+                              color: '#0F6E56',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                            }}
+                          >
+                            <ShieldCheck size={14} color="#059669" />
+                            <span>Interview Verified • SSSAM Sector 14</span>
+                          </div>
                         )}
                       </div>
-                      {tutor.totalReviews > 0 && tutor.rating > 0 ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                          <Star size={13} color="var(--brand-amber)" fill="var(--brand-amber)" />
-                          <strong>{tutor.rating}</strong>
-                          <span>({tutor.totalReviews} {tutor.totalReviews === 1 ? 'review' : 'reviews'})</span>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.74rem', color: '#059669', fontWeight: 700, backgroundColor: '#ECFDF5', padding: '1px 6px', borderRadius: '4px', marginTop: '2px' }}>
-                          <span>✨ New Verified Tutor</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
 
-                  {/* Prominent Education & Experience Stat Box */}
-                  <div style={{ padding: '1.25rem', paddingTop: '0.4rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                      gap: '0.5rem',
-                      padding: '0.65rem 0.75rem',
-                      backgroundColor: '#F8FAFC',
-                      borderRadius: '12px',
-                      border: '1px solid #E2E8F0',
-                      alignItems: 'center',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
-                        <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', flexShrink: 0 }}>
-                          <GraduationCap size={15} />
-                        </div>
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Degree</div>
-                          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tutor.highestDegree}>
-                            {tutor.highestDegree}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, borderLeft: '1px solid #E2E8F0', paddingLeft: '0.5rem' }}>
-                        <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', flexShrink: 0 }}>
-                          <Briefcase size={15} />
-                        </div>
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Experience</div>
-                          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {tutor.experienceYears}+ Years
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'flex-start', gap: '0.45rem', marginTop: '0.1rem' }}>
-                      <MapPin size={15} color="#047857" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>
-                        {tutor.serviceAreas.join(' • ')}
-                      </span>
-                    </div>
-
-                    {/* Subjects Badges */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.2rem' }}>
-                      {tutor.subjects.map((s) => (
-                        <span key={s} style={{ fontSize: '0.74rem', padding: '0.2rem 0.55rem', backgroundColor: '#F0FDF4', color: '#166534', border: '1px solid #DCFCE7', borderRadius: '6px', fontWeight: 600 }}>
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* 60s Video Intro Pill (Optional) */}
-                    {tutor.introVideoUrl && tutor.introVideoUrl.trim() !== '' ? (
-                      <button
-                        type="button"
-                        onClick={() => setActiveVideoTutor(tutor)}
-                        style={{
-                          marginTop: '0.5rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '0.6rem 0.85rem',
-                          borderRadius: '10px',
-                          backgroundColor: '#F0FDF4',
-                          border: '1px solid #BBF7D0',
-                          color: '#0F6E56',
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <Play size={14} fill="#0F6E56" />
-                          <span>Watch 60s Intro Video</span>
-                        </span>
-                        <span style={{ fontSize: '0.72rem', color: '#0F6E56' }}>{tutor.videoDuration || 'Preview'}</span>
-                      </button>
-                    ) : (
-                      <div
-                        style={{
-                          marginTop: '0.5rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.45rem',
-                          padding: '0.55rem 0.85rem',
-                          borderRadius: '10px',
-                          backgroundColor: '#F8FAFC',
-                          border: '1px solid #E2E8F0',
-                          color: '#0F6E56',
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                        }}
-                      >
-                        <ShieldCheck size={14} color="#059669" />
-                        <span>Interview Verified • SSSAM Sector 14</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Card Footer Price & Action */}
-                  <div style={{
-                    padding: '1.25rem',
-                    borderTop: '1px solid var(--border-hairline)',
-                    backgroundColor: 'var(--bg-card-subtle)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '0.5rem',
-                  }}>
-                    <div>
-                      <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '2px', letterSpacing: '0.04em' }}>
-                        ESTIMATED FEE
-                      </div>
-
-                      {(!tutor.teachingMode || tutor.teachingMode === 'BOTH' || (tutor.hourlyRateHome && tutor.hourlyRateOnline)) ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          {/* Home Tuition Rate */}
-                          <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '2px', backgroundColor: '#F0FDF4', padding: '2px 6px', borderRadius: '6px' }}>
-                            <span style={{ fontSize: '0.7rem', color: '#0F6E56', fontWeight: 800 }}>🏠 Home:</span>
-                            <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
-                              ₹{tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600}–₹{tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMax !== tutor.hourlyRateHomeMin ? tutor.hourlyRateHomeMax : Math.round(((tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600) * 1.4) / 50) * 50}
-                            </span>
-                            <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
+                      {/* Card Footer Price & Action */}
+                      <div style={{
+                        padding: '1.25rem',
+                        borderTop: '1px solid var(--border-hairline)',
+                        backgroundColor: 'var(--bg-card-subtle)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.5rem',
+                      }}>
+                        <div>
+                          <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '2px', letterSpacing: '0.04em' }}>
+                            ESTIMATED FEE
                           </div>
 
-                          {/* Online Tuition Rate */}
-                          <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '2px', backgroundColor: '#F0F9FF', padding: '2px 6px', borderRadius: '6px' }}>
-                            <span style={{ fontSize: '0.7rem', color: '#0284C7', fontWeight: 800 }}>💻 Online:</span>
-                            <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
-                              ₹{tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500}–₹{tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMax !== tutor.hourlyRateOnlineMin ? tutor.hourlyRateOnlineMax : Math.round(((tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}
-                            </span>
-                            <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
-                          </div>
-                        </div>
-                      ) : tutor.teachingMode === 'ONLINE_LIVE' ? (
-                        <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '3px', backgroundColor: '#F0F9FF', padding: '3px 8px', borderRadius: '6px' }}>
-                          <span style={{ fontSize: '0.74rem', color: '#0284C7', fontWeight: 800 }}>💻 Online 1-on-1:</span>
-                          <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
-                            ₹{tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500} – ₹{tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMax !== tutor.hourlyRateOnlineMin ? tutor.hourlyRateOnlineMax : Math.round(((tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}
-                          </span>
-                          <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '3px', backgroundColor: '#F0FDF4', padding: '3px 8px', borderRadius: '6px' }}>
-                          <span style={{ fontSize: '0.74rem', color: '#0F6E56', fontWeight: 800 }}>🏠 Home Visit:</span>
-                          <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
-                            ₹{tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600} – ₹{tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMax !== tutor.hourlyRateHomeMin ? tutor.hourlyRateHomeMax : Math.round(((tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600) * 1.4) / 50) * 50}
-                          </span>
-                          <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
-                        </div>
-                      )}
-                    </div>
+                          {(!tutor.teachingMode || tutor.teachingMode === 'BOTH' || (tutor.hourlyRateHome && tutor.hourlyRateOnline)) ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              {/* Home Tuition Rate */}
+                              <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '2px', backgroundColor: '#F0FDF4', padding: '2px 6px', borderRadius: '6px' }}>
+                                <span style={{ fontSize: '0.7rem', color: '#0F6E56', fontWeight: 800 }}>🏠 Home:</span>
+                                <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
+                                  ₹{tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600}–₹{tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMax !== tutor.hourlyRateHomeMin ? tutor.hourlyRateHomeMax : Math.round(((tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600) * 1.4) / 50) * 50}
+                                </span>
+                                <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
+                              </div>
 
-                    <div style={{ display: 'flex', gap: '0.4rem' }}>
-                      <Link
-                        href={`/tutors/${tutor.id}`}
-                        className="btn btn-secondary btn-sm"
-                        style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }}
-                      >
-                        Profile
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenBooking(tutor)}
-                        className="btn btn-primary btn-sm"
-                        style={{ backgroundColor: '#0F6E56' }}
-                      >
-                        <span>Request</span>
-                        <div className="btn-arrow">
-                          <ChevronRight size={14} />
+                              {/* Online Tuition Rate */}
+                              <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '2px', backgroundColor: '#F0F9FF', padding: '2px 6px', borderRadius: '6px' }}>
+                                <span style={{ fontSize: '0.7rem', color: '#0284C7', fontWeight: 800 }}>💻 Online:</span>
+                                <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
+                                  ₹{tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500}–₹{tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMax !== tutor.hourlyRateOnlineMin ? tutor.hourlyRateOnlineMax : Math.round(((tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}
+                                </span>
+                                <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
+                              </div>
+                            </div>
+                          ) : tutor.teachingMode === 'ONLINE_LIVE' ? (
+                            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '3px', backgroundColor: '#F0F9FF', padding: '3px 8px', borderRadius: '6px' }}>
+                              <span style={{ fontSize: '0.74rem', color: '#0284C7', fontWeight: 800 }}>💻 Online 1-on-1:</span>
+                              <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
+                                ₹{tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500} – ₹{tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMax !== tutor.hourlyRateOnlineMin ? tutor.hourlyRateOnlineMax : Math.round(((tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}
+                              </span>
+                              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '3px', backgroundColor: '#F0FDF4', padding: '3px 8px', borderRadius: '6px' }}>
+                              <span style={{ fontSize: '0.74rem', color: '#0F6E56', fontWeight: 800 }}>🏠 Home Visit:</span>
+                              <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
+                                ₹{tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600} – ₹{tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMax !== tutor.hourlyRateHomeMin ? tutor.hourlyRateHomeMax : Math.round(((tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600) * 1.4) / 50) * 50}
+                              </span>
+                              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
+                            </div>
+                          )}
                         </div>
-                      </button>
+
+                        <div style={{ display: 'flex', gap: '0.4rem' }}>
+                          <Link
+                            href={`/tutors/${tutor.id}`}
+                            className="btn btn-secondary btn-sm"
+                            style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }}
+                          >
+                            Profile
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenBooking(tutor)}
+                            className="btn btn-primary btn-sm"
+                            style={{ backgroundColor: '#0F6E56' }}
+                          >
+                            <span>Request</span>
+                            <div className="btn-arrow">
+                              <ChevronRight size={14} />
+                            </div>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ));
-            })()}
+                  );
+                });
+              })()}
             </div>
 
             {/* Bottom Explore Button */}
             <div style={{ textAlign: 'center', marginTop: '3rem' }}>
               <Link href="/tutors" className="btn btn-primary btn-lg" style={{ padding: '0.9rem 2.25rem' }}>
-                <span>Explore All 1,000+ Verified Tutors in Gurgaon</span>
+                <span>Explore All 1,000+ Verified Teachers in Gurgaon</span>
                 <ChevronRight size={18} />
               </Link>
             </div>

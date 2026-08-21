@@ -979,6 +979,21 @@ h3 {
   }
 }
 
+/* =========================================================================
+   LEAFLET CUSTOM PIN RESET (RAPIDO STYLE MAP)
+   ========================================================================= */
+.custom-parent-pin,
+.custom-tutor-pin,
+.custom-gps-pin {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.leaflet-container {
+  font-family: inherit !important;
+}
+
 
 
 

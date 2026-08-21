@@ -62,15 +62,43 @@ export function calculateHaversineKm(lat1: number, lon1: number, lat2: number, l
 }
 
 /**
+ * Resolves stable GPS coordinates for any teacher based on their stored GPS or primary Gurgaon sector
+ */
+export function getTeacherCoordinates(tutor: { latitude?: number; longitude?: number; serviceAreas?: string[] }): { lat: number; lng: number } {
+  if (tutor.latitude && tutor.longitude && !isNaN(tutor.latitude) && !isNaN(tutor.longitude) && tutor.latitude > 25) {
+    return { lat: tutor.latitude, lng: tutor.longitude };
+  }
+  if (tutor.serviceAreas && tutor.serviceAreas.length > 0) {
+    for (const area of tutor.serviceAreas) {
+      const match = POPULAR_GURGAON_SECTORS.find((s) => area.toLowerCase().includes(s.name.toLowerCase()) || s.name.toLowerCase().includes(area.toLowerCase()));
+      if (match) return { lat: match.lat, lng: match.lng };
+    }
+  }
+  return { lat: 28.4552, lng: 77.0945 }; // Default DLF Phase 5
+}
+
+/**
  * Formats distance into human-friendly Gurgaon travel text with color zones
  */
 export function getDistanceInfo(km: number) {
   const approxMins = Math.max(5, Math.round(km * 3.5)); // ~3.5 mins per km in Gurgaon traffic
-  if (km < 1) {
-    const meters = Math.max(150, Math.round(km * 10) * 100);
+  if (km < 0.6) {
     return {
       km,
-      distanceText: `~${meters} m away`,
+      distanceText: '~500 m away',
+      travelTime: '< 5 mins travel',
+      zone: 'green' as const,
+      badgeText: 'In Immediate Sector (Home Visit Ready)',
+      badgeColor: '#059669',
+      badgeBg: '#ECFDF5',
+      badgeBorder: '#A7F3D0',
+      circleColor: '#059669',
+    };
+  }
+  if (km < 1.0) {
+    return {
+      km,
+      distanceText: '~800 m away',
       travelTime: '< 5 mins travel',
       zone: 'green' as const,
       badgeText: 'In Immediate Sector (Home Visit Ready)',
@@ -84,7 +112,7 @@ export function getDistanceInfo(km: number) {
   if (km <= 3.5) {
     return {
       km,
-      distanceText: `~${distStr} km from your sector`,
+      distanceText: `~${distStr} km away`,
       travelTime: `~${approxMins} mins travel`,
       zone: 'green' as const,
       badgeText: 'In Service Zone (Home Visit Ready)',
@@ -158,18 +186,18 @@ export default function RapidoStyleMap({
   // Current coordinates (Default: DLF Phase 5, Gurgaon)
   const [currentCoords, setCurrentCoords] = useState({ lat: 28.4552, lng: 77.0945 });
 
-  // 1. Fetch live verified teachers
+  // 1. Fetch live verified teachers strictly from Database
   useEffect(() => {
     fetch('/api/tutors/list')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && Array.isArray(data.tutors) && data.tutors.length > 0) {
+        if (data.success && Array.isArray(data.tutors)) {
           setDynamicTutors(data.tutors);
         } else {
-          setDynamicTutors(VERIFIED_TUTORS);
+          setDynamicTutors([]);
         }
       })
-      .catch(() => setDynamicTutors(VERIFIED_TUTORS));
+      .catch(() => setDynamicTutors([]));
   }, []);
 
   // 2. Preload Leaflet on client
@@ -215,21 +243,25 @@ export default function RapidoStyleMap({
   }, [onLocationSelected]);
 
   const sortedTutorsWithDistance = useMemo(() => {
-    const list = Array.isArray(dynamicTutors) && dynamicTutors.length > 0 ? dynamicTutors : VERIFIED_TUTORS;
-    return list.map((tutor, idx) => {
-      let tLat = tutor.latitude || (28.44 + (Math.random() * 0.05));
-      let tLng = tutor.longitude || (77.06 + (Math.random() * 0.05));
-      
-      const km = calculateHaversineKm(currentCoords.lat, currentCoords.lng, tLat, tLng);
+    return dynamicTutors.map((tutor, idx) => {
+      const tCoords = getTeacherCoordinates(tutor);
+
+      // Micro-jitter for pins in identical coordinates so they don't overlap on the map
+      const jitterAngle = (idx * 1.25) + 0.5;
+      const jitterDist = 0.0025 + ((idx % 3) * 0.0015);
+      const finalLat = tCoords.lat + jitterDist * Math.sin(jitterAngle);
+      const finalLng = tCoords.lng + jitterDist * Math.cos(jitterAngle);
+
+      const km = calculateHaversineKm(currentCoords.lat, currentCoords.lng, tCoords.lat, tCoords.lng);
       const distanceInfo = getDistanceInfo(km);
 
-      return { ...tutor, computedLat: tLat, computedLng: tLng, distanceKm: km, distanceInfo };
+      return { ...tutor, computedLat: finalLat, computedLng: finalLng, distanceKm: km, distanceInfo };
     }).sort((a, b) => a.distanceKm - b.distanceKm);
   }, [dynamicTutors, currentCoords]);
 
   useEffect(() => {
     if (sortedTutorsWithDistance.length > 0) {
-      if (!selectedTutor || !sortedTutorsWithDistance.some(t => t.id === selectedTutor.id)) {
+      if (!selectedTutor || !sortedTutorsWithDistance.some((t) => t.id === selectedTutor.id)) {
         setSelectedTutor(sortedTutorsWithDistance[0]);
       }
     }
@@ -281,35 +313,96 @@ export default function RapidoStyleMap({
 
   useEffect(() => {
     if (!L || !mapContainerRef.current) return;
-    if (leafletMapInstanceRef.current) { leafletMapInstanceRef.current.remove(); }
-    const map = L.map(mapContainerRef.current, { center: [currentCoords.lat, currentCoords.lng], zoom: 14, zoomControl: !isCompact, attributionControl: false });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap &copy; CARTO' }).addTo(map);
-    leafletMapInstanceRef.current = map;
-    tutorLayerGroupRef.current = L.layerGroup().addTo(map);
-    map.invalidateSize();
-    return () => { if (map) map.remove(); };
-  }, [L, isCompact]);
 
-  useEffect(() => {
-    const map = leafletMapInstanceRef.current;
-    if (!map || !L) return;
-    if (parentMarkerRef.current) parentMarkerRef.current.setLatLng([currentCoords.lat, currentCoords.lng]);
-    else {
-      const parentIcon = L.divIcon({ className: 'custom-parent-pin', html: `<div style="display: flex; flex-direction: column; align-items: center;"><div style="width: 32px; height: 32px; border-radius: 50%; background: #2563EB; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(37,99,235,0.5);"><div style="width: 10px; height: 10px; border-radius: 50%; background: #FFFFFF;"></div></div><span style="font-size: 0.65rem; font-weight: 800; background: #2563EB; color: #FFFFFF; padding: 1px 6px; border-radius: 999px; margin-top: 2px;">Your Location</span></div>`, iconSize: [80, 52], iconAnchor: [40, 16] });
-      parentMarkerRef.current = L.marker([currentCoords.lat, currentCoords.lng], { icon: parentIcon, zIndexOffset: 1000 }).addTo(map);
+    if (!leafletMapInstanceRef.current) {
+      const map = L.map(mapContainerRef.current, {
+        center: [currentCoords.lat, currentCoords.lng],
+        zoom: 14,
+        zoomControl: !isCompact,
+        attributionControl: false,
+      });
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+      }).addTo(map);
+      leafletMapInstanceRef.current = map;
+      tutorLayerGroupRef.current = L.layerGroup().addTo(map);
+      setTimeout(() => map.invalidateSize(), 150);
+    } else {
+      leafletMapInstanceRef.current.setView([currentCoords.lat, currentCoords.lng], leafletMapInstanceRef.current.getZoom() || 14);
     }
-    if (tutorLayerGroupRef.current) tutorLayerGroupRef.current.clearLayers();
-    if (radiusCircleRef.current) { map.removeLayer(radiusCircleRef.current); radiusCircleRef.current = null; }
+
+    const map = leafletMapInstanceRef.current;
+    if (!map) return;
+
+    // Render Parent Marker
+    if (parentMarkerRef.current) {
+      try { map.removeLayer(parentMarkerRef.current); } catch {}
+    }
+    const parentIcon = L.divIcon({
+      className: 'custom-parent-pin',
+      html: `
+        <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #0F6E56; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(15,110,86,0.5);">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #FFFFFF;"></div>
+          </div>
+          <span style="font-size: 0.68rem; font-weight: 800; background: #0F6E56; color: #FFFFFF; padding: 2px 7px; border-radius: 999px; margin-top: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.18); white-space: nowrap;">
+            📍 Your Sector
+          </span>
+        </div>
+      `,
+      iconSize: [90, 56],
+      iconAnchor: [45, 16],
+    });
+    parentMarkerRef.current = L.marker([currentCoords.lat, currentCoords.lng], { icon: parentIcon, zIndexOffset: 1000 }).addTo(map);
+
+    // Clear & Re-render Tutor Markers
+    if (tutorLayerGroupRef.current) {
+      tutorLayerGroupRef.current.clearLayers();
+    } else {
+      tutorLayerGroupRef.current = L.layerGroup().addTo(map);
+    }
+
+    if (radiusCircleRef.current) {
+      try { map.removeLayer(radiusCircleRef.current); } catch {}
+      radiusCircleRef.current = null;
+    }
+
     const currentSelected = selectedTutor ? sortedTutorsWithDistance.find((t) => t.id === selectedTutor.id) || sortedTutorsWithDistance[0] : sortedTutorsWithDistance[0];
-    if (currentSelected) { radiusCircleRef.current = L.circle([currentSelected.computedLat, currentSelected.computedLng], { radius: 3200, color: currentSelected.distanceInfo.circleColor, fillOpacity: 0.08, weight: 1.5, dashArray: '5 5' }).addTo(map); }
-    sortedTutorsWithDistance.slice(0, 12).forEach((tutor) => {
+
+    if (currentSelected) {
+      radiusCircleRef.current = L.circle([currentSelected.computedLat, currentSelected.computedLng], {
+        radius: 2800,
+        color: currentSelected.distanceInfo.circleColor,
+        fillOpacity: 0.07,
+        weight: 1.5,
+        dashArray: '5 5',
+      }).addTo(map);
+    }
+
+    sortedTutorsWithDistance.slice(0, 15).forEach((tutor) => {
       const isSelected = currentSelected && currentSelected.id === tutor.id;
-      const tutorIcon = L.divIcon({ className: 'custom-tutor-pin', html: `<div style="display: flex; flex-direction: column; align-items: center; transform: ${isSelected ? 'scale(1.12)' : 'scale(1)'};"><div style="position: relative; padding: 2px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 3px 8px rgba(0,0,0,0.18); border: ${isSelected ? '2px solid #0F766E' : 'none'};"><img src="${tutor.avatarUrl}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; display: block;" /></div><span style="font-size: 0.64rem; font-weight: 800; background: ${isSelected ? '#0F172A' : '#FFFFFF'}; color: ${isSelected ? '#FFFFFF' : '#0F172A'}; padding: 1px 5px; border-radius: 4px; border: 1px solid #CBD5E1;">${tutor.name.split(' ')[0]}</span></div>`, iconSize: [70, 58], iconAnchor: [35, 18] });
+      const tutorIcon = L.divIcon({
+        className: 'custom-tutor-pin',
+        html: `
+          <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: ${isSelected ? 'scale(1.18)' : 'scale(1)'}; transition: transform 0.2s ease;">
+            <div style="position: relative; width: 36px; height: 36px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.22); border: 2.5px solid ${isSelected ? '#0F766E' : tutor.distanceInfo.circleColor}; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+              <img src="${tutor.avatarUrl || '/placeholder-avatar.jpg'}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+            </div>
+            <div style="display: flex; align-items: center; gap: 2px; font-size: 0.66rem; font-weight: 800; background: ${isSelected ? '#0F172A' : '#FFFFFF'}; color: ${isSelected ? '#FFFFFF' : '#0F172A'}; padding: 2px 5px; border-radius: 5px; border: 1px solid #CBD5E1; box-shadow: 0 2px 5px rgba(0,0,0,0.12); margin-top: -2px; white-space: nowrap;">
+              <span>${tutor.name.split(' ')[0]}</span>
+              <span style="color: #F59E0B;">★${tutor.rating || 5}</span>
+            </div>
+          </div>
+        `,
+        iconSize: [80, 56],
+        iconAnchor: [40, 18],
+      });
+
       const tMarker = L.marker([tutor.computedLat, tutor.computedLng], { icon: tutorIcon, zIndexOffset: isSelected ? 500 : 100 }).addTo(tutorLayerGroupRef.current);
-      tMarker.bindPopup(`<div style="min-width: 200px;"><strong>${tutor.name}</strong><br/>${tutor.distanceInfo.distanceText}</div>`);
       tMarker.on('click', () => setSelectedTutor(tutor));
     });
-  }, [L, currentCoords, sortedTutorsWithDistance, selectedTutor]);
+  }, [L, isCompact, currentCoords, sortedTutorsWithDistance, selectedTutor]);
 
   const handleAutoDetectGPS = () => {
     setIsDetecting(true);
@@ -339,34 +432,42 @@ export default function RapidoStyleMap({
 
   return (
     <>
+      <style jsx global>{`
+        .custom-parent-pin, .custom-tutor-pin {
+          background: transparent !important;
+          border: none !important;
+        }
+      `}</style>
       <div style={{ padding: isCompact ? '0.5rem' : '1.5rem', backgroundColor: '#FFFFFF', borderRadius: isCompact ? '0px' : '24px', border: isCompact ? 'none' : '1px solid #E2E8F0' }}>
         {!isCompact && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div>
-              <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#059669' }}>LIVE PROXIMITY ENGINE</div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0' }}>Verified Teachers Near You</h3>
+              <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#059669', letterSpacing: '0.04em' }}>LIVE PROXIMITY ENGINE</div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '2px 0 0 0', color: '#0F172A' }}>Verified Teachers in Your Sector</h3>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button onClick={handleAutoDetectGPS} style={{ fontSize: '0.8rem', fontWeight: 700, padding: '0.45rem 0.85rem', borderRadius: '10px' }} className="btn btn-secondary">Use GPS</button>
-              <button onClick={() => setShowLocationPopup(true)} style={{ fontSize: '0.8rem', fontWeight: 800, padding: '0.45rem 0.85rem', borderRadius: '10px' }} className="btn btn-primary">Change Sector</button>
+              <button onClick={() => setShowLocationPopup(true)} style={{ fontSize: '0.8rem', fontWeight: 800, padding: '0.45rem 0.85rem', borderRadius: '10px', backgroundColor: '#0F6E56', color: '#FFFFFF' }} className="btn btn-primary">Change Sector</button>
             </div>
           </div>
         )}
 
-        <div ref={mapContainerRef} style={{ position: 'relative', height: isCompact ? '180px' : '300px', borderRadius: '16px', overflow: 'hidden', border: '1px solid #CBD5E1', marginBottom: '0.85rem', zIndex: 1, backgroundColor: '#E2E8F0' }} />
+        <div ref={mapContainerRef} style={{ position: 'relative', height: isCompact ? '200px' : '380px', borderRadius: '16px', overflow: 'hidden', border: '1px solid #CBD5E1', marginBottom: '0.85rem', zIndex: 1, backgroundColor: '#E2E8F0' }} />
 
         {activeTutorDetail && (
           <div style={{ backgroundColor: '#F8FAFC', border: `1.5px solid ${activeTutorDetail.distanceInfo.badgeBorder}`, borderRadius: '16px', padding: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <img src={activeTutorDetail.avatarUrl} style={{ width: '48px', height: '48px', borderRadius: '12px', border: '2px solid #059669' }} />
-              <div>
-                <div style={{ fontSize: '1rem', fontWeight: 800 }}>{activeTutorDetail.name}</div>
-                <div style={{ fontSize: '0.76rem', color: '#64748B' }}>🎓 {activeTutorDetail.highestDegree} • {activeTutorDetail.distanceInfo.distanceText}</div>
+              <img src={activeTutorDetail.avatarUrl} style={{ width: '48px', height: '48px', borderRadius: '12px', border: '2px solid #059669', objectFit: 'cover' }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A' }}>{activeTutorDetail.name}</div>
+                <div style={{ fontSize: '0.76rem', color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  🎓 {activeTutorDetail.highestDegree} • {activeTutorDetail.distanceInfo.distanceText}
+                </div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={() => onOpenBookingForTutor?.(activeTutorDetail)} className="btn btn-primary" style={{ flex: 1, padding: '0.55rem', borderRadius: '10px' }}>Request Visit</button>
-              <a href={whatsappInquiryUrl} target="_blank" className="btn btn-secondary" style={{ padding: '0.55rem', borderRadius: '10px' }}>WhatsApp</a>
+              <button onClick={() => onOpenBookingForTutor?.(activeTutorDetail)} className="btn btn-primary" style={{ flex: 1, padding: '0.55rem', borderRadius: '10px', backgroundColor: '#0F6E56' }}>Request Home Visit</button>
+              <a href={whatsappInquiryUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ padding: '0.55rem 0.85rem', borderRadius: '10px', backgroundColor: '#25D366', color: '#FFFFFF', border: 'none', fontWeight: 700 }}>WhatsApp</a>
             </div>
           </div>
         )}

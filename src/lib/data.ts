@@ -266,9 +266,9 @@ export function getSubjectsForClass(selectedClass: string): string[] {
 }
 
 export const BOARD_OPTIONS = ['CBSE', 'ICSE', 'IB (International Baccalaureate)', 'IGCSE / Cambridge', 'State Board'];
-export const FALLBACK_SHOWCASE_TUTORS: MockTutor[] = [];
 
 export const VERIFIED_TUTORS: MockTutor[] = [];
+export const FALLBACK_SHOWCASE_TUTORS: MockTutor[] = [];
 
 export const SSSAM_OFFICE_DETAILS = {
   name: 'TuitionForHome',

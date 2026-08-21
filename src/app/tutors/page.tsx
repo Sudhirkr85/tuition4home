@@ -9,6 +9,7 @@ import { GURGAON_LOCALITIES, VERIFIED_TUTORS, MockTutor, SSSAM_OFFICE_DETAILS } 
 import {
   calculateHaversineKm,
   getDistanceInfo,
+  getTeacherCoordinates,
   POPULAR_GURGAON_SECTORS,
 } from '@/components/RapidoStyleMap';
 import {
@@ -111,20 +112,20 @@ export default function TutorsDirectoryPage() {
     } catch {}
   }, []);
 
-  // Fetch live verified tutors from database API
+  // Fetch live verified tutors strictly from database API
   useEffect(() => {
     fetch('/api/tutors/list')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && Array.isArray(data.tutors) && data.tutors.length > 0) {
+        if (data.success && Array.isArray(data.tutors)) {
           setTutors(data.tutors);
         } else {
-          setTutors(VERIFIED_TUTORS);
+          setTutors([]);
         }
       })
       .catch((err) => {
         console.error('Failed to fetch tutors for directory:', err);
-        setTutors(VERIFIED_TUTORS);
+        setTutors([]);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -238,28 +239,12 @@ export default function TutorsDirectoryPage() {
 
   // Compute distance for each tutor and filter & sort
   const filteredTutors = useMemo(() => {
-    const list = tutors.length > 0 ? tutors : VERIFIED_TUTORS;
+    const list = tutors;
 
     return list
-      .map((tut, idx) => {
-        let tLat = tut.latitude;
-        let tLng = tut.longitude;
-        if (!tLat || !tLng) {
-          const matchedSector = POPULAR_GURGAON_SECTORS.find(s =>
-            tut.serviceAreas.some(area => area.toLowerCase().includes(s.name.toLowerCase()))
-          );
-          if (matchedSector) {
-            tLat = matchedSector.lat;
-            tLng = matchedSector.lng;
-          } else {
-            const angle = idx * 2.399963;
-            const distanceKm = 0.8 + (idx % 5) * 0.45;
-            tLat = parentLocation.lat + (distanceKm / 110.85) * Math.sin(angle);
-            tLng = parentLocation.lng + (distanceKm / 97.8) * Math.cos(angle);
-          }
-        }
-
-        const distanceKm = calculateHaversineKm(parentLocation.lat, parentLocation.lng, tLat, tLng);
+      .map((tut) => {
+        const tCoords = getTeacherCoordinates(tut);
+        const distanceKm = calculateHaversineKm(parentLocation.lat, parentLocation.lng, tCoords.lat, tCoords.lng);
         const distanceInfo = getDistanceInfo(distanceKm);
 
         return {
