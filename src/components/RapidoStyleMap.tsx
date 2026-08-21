@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
@@ -50,6 +51,7 @@ export default function RapidoStyleMap({
   isCompact = false,
   tutors: propTutors,
 }: RapidoStyleMapProps) {
+  const router = useRouter();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const popupMapRef = useRef<HTMLDivElement>(null);
 
@@ -365,6 +367,11 @@ export default function RapidoStyleMap({
 
     sortedTutorsWithDistance.slice(0, 15).forEach((tutor) => {
       const isSelected = currentSelected && currentSelected.id === tutor.id;
+      const defaultAvatar = tutor.gender === 'MALE'
+        ? '/tutor_rohit_sharma_avatar.webp'
+        : '/tutor_ananya_sengupta_avatar.webp';
+      const avatarSrc = tutor.avatarUrl && tutor.avatarUrl.trim() ? tutor.avatarUrl : defaultAvatar;
+
       const tutorIcon = L.divIcon({
         className: 'custom-tutor-pin',
         html: `
@@ -374,9 +381,7 @@ export default function RapidoStyleMap({
             <div style="position: relative; width: 36px; height: 36px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.22); border: 2.5px solid ${
               isSelected ? '#0F766E' : tutor.distanceInfo.circleColor
             }; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-              <img src="${
-                tutor.avatarUrl || '/placeholder-avatar.jpg'
-              }" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+              <img src="${avatarSrc}" onerror="this.onerror=null; this.src='${defaultAvatar}';" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
             </div>
             <div style="display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 800; background: ${
               isSelected ? '#0F172A' : '#FFFFFF'
@@ -394,9 +399,7 @@ export default function RapidoStyleMap({
       const popupHtml = `
         <div style="font-family: inherit; padding: 4px; min-width: 200px; text-align: left;">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-            <img src="${
-              tutor.avatarUrl || '/placeholder-avatar.jpg'
-            }" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1.5px solid #0F6E56;" />
+            <img src="${avatarSrc}" onerror="this.onerror=null; this.src='${defaultAvatar}';" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1.5px solid #0F6E56;" />
             <div style="flex: 1; min-width: 0;">
               <div style="font-weight: 800; font-size: 0.9rem; color: #0F172A; line-height: 1.2;">${
                 tutor.name
@@ -418,7 +421,7 @@ export default function RapidoStyleMap({
           <div style="display: flex; gap: 6px;">
             <a href="/tutors/${
               tutor.id
-            }" style="flex: 1; text-align: center; font-size: 0.72rem; font-weight: 700; background: #F1F5F9; color: #0F172A; padding: 6px 8px; border-radius: 6px; text-decoration: none; border: 1px solid #CBD5E1;">View Profile</a>
+            }" class="map-view-profile-btn" data-tutor-id="${tutor.id}" style="flex: 1; text-align: center; font-size: 0.72rem; font-weight: 700; background: #F1F5F9; color: #0F172A; padding: 6px 8px; border-radius: 6px; text-decoration: none; border: 1px solid #CBD5E1;">View Profile</a>
             <a href="https://wa.me/919217031899?text=${encodeURIComponent(
               `Hello SSSAM, I want to book a home teacher in ${detectedAddress} (${tutor.name}).`
             )}" target="_blank" rel="noopener noreferrer" style="font-size: 0.72rem; font-weight: 700; background: #25D366; color: #FFFFFF; padding: 6px 8px; border-radius: 6px; text-decoration: none;">WhatsApp</a>
@@ -433,12 +436,35 @@ export default function RapidoStyleMap({
         }).addTo(tutorLayerGroupRef.current);
         tMarker.bindPopup(popupHtml, { offset: [0, -16] });
         tMarker.on('click', () => {
+          try {
+            router.prefetch(`/tutors/${tutor.id}`);
+          } catch {}
           setSelectedTutor(tutor);
           tMarker.openPopup();
         });
       }
     });
-  }, [isCompact, currentCoords, sortedTutorsWithDistance, selectedTutor, detectedAddress]);
+  }, [isCompact, currentCoords, sortedTutorsWithDistance, selectedTutor, detectedAddress, router]);
+
+  // Fast client-side navigation for Leaflet popup profile links
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    if (!container) return;
+
+    const handleClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest('.map-view-profile-btn');
+      if (target) {
+        const tutorId = target.getAttribute('data-tutor-id');
+        if (tutorId) {
+          e.preventDefault();
+          router.push(`/tutors/${tutorId}`);
+        }
+      }
+    };
+
+    container.addEventListener('click', handleClick);
+    return () => container.removeEventListener('click', handleClick);
+  }, [router]);
 
   // Modal Popup Map Lifecycle
   useEffect(() => {
@@ -746,14 +772,24 @@ export default function RapidoStyleMap({
               >
                 <Link
                   href={`/tutors/${activeTutorDetail.id}`}
+                  prefetch={true}
                   style={{ position: 'relative', display: 'block', flexShrink: 0 }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={
                       activeTutorDetail.avatarUrl ||
-                      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+                      (activeTutorDetail.gender === 'MALE'
+                        ? '/tutor_rohit_sharma_avatar.webp'
+                        : '/tutor_ananya_sengupta_avatar.webp')
                     }
+                    onError={(e: any) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src =
+                        activeTutorDetail.gender === 'MALE'
+                          ? '/tutor_rohit_sharma_avatar.webp'
+                          : '/tutor_ananya_sengupta_avatar.webp';
+                    }}
                     alt={activeTutorDetail.name}
                     style={{
                       width: '46px',
@@ -792,7 +828,7 @@ export default function RapidoStyleMap({
                       gap: '0.4rem',
                     }}
                   >
-                    <Link href={`/tutors/${activeTutorDetail.id}`} style={{ textDecoration: 'none' }}>
+                    <Link href={`/tutors/${activeTutorDetail.id}`} prefetch={true} style={{ textDecoration: 'none' }}>
                       <div
                         style={{
                           fontSize: '0.98rem',

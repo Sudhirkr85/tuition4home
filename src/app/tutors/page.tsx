@@ -855,10 +855,22 @@ export default function TutorsDirectoryPage() {
                     >
                       {/* Top Bar with Avatar, Badges & Proximity Pill */}
                       <div style={{ padding: '1.25rem', paddingBottom: '0.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <Link href={`/tutors/${tutor.id}`} style={{ position: 'relative', display: 'block', flexShrink: 0 }}>
+                        <Link href={`/tutors/${tutor.id}`} prefetch={true} style={{ position: 'relative', display: 'block', flexShrink: 0 }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={tutor.avatarUrl}
+                            src={
+                              tutor.avatarUrl ||
+                              (tutor.gender === 'MALE'
+                                ? '/tutor_rohit_sharma_avatar.webp'
+                                : '/tutor_ananya_sengupta_avatar.webp')
+                            }
+                            onError={(e: any) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src =
+                                tutor.gender === 'MALE'
+                                  ? '/tutor_rohit_sharma_avatar.webp'
+                                  : '/tutor_ananya_sengupta_avatar.webp';
+                            }}
                             alt={tutor.name}
                             style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }}
                           />

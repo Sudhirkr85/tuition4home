@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { cache } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Navbar from '@/components/Navbar';
@@ -31,6 +31,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { getVideoSourceInfo } from '@/lib/video';
+
+export const revalidate = 60; // Cache page for 60 seconds (ISR) for instant loads
 
 interface PageProps {
   params: {
@@ -85,82 +87,18 @@ function getDegreeYearLabel(degree: string = '', year: string | number) {
   return `Passing Year: ${year}`;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  let tutor = VERIFIED_TUTORS.find((t) => t.id === params.id);
-  let tutorName = tutor ? tutor.name : 'Verified Home Tutor';
-  let subjects = tutor ? tutor.subjects.join(', ') : 'All Subjects';
-  let avatarUrl = tutor?.avatarUrl || 'https://sssamacademy.com/assets/home_page.webp';
-
-  try {
-    const dbProfile: any = await prisma.tutorProfile.findFirst({
-      where: {
-        OR: [
-          { id: params.id },
-          { userId: params.id },
-        ],
-      },
-      include: {
-        user: { select: { name: true } },
-      },
-    });
-
-    if (dbProfile) {
-      tutorName = dbProfile.user?.name || tutorName;
-      if (dbProfile.avatarUrl) avatarUrl = dbProfile.avatarUrl;
-      if (dbProfile.subjects) {
-        try {
-          const parsed = JSON.parse(dbProfile.subjects);
-          if (Array.isArray(parsed) && parsed.length > 0) subjects = parsed.join(', ');
-        } catch {
-          subjects = dbProfile.subjects;
-        }
-      }
-    }
-  } catch {}
-
-  return {
-    title: `${tutorName} - Verified Home & Online Tutor in Gurgaon | SSSAM Academy`,
-    description: `Hire ${tutorName} for 1-on-1 home tuition in Gurgaon. Specializes in ${subjects}. Background & KYC verified by SSSAM Academy. 100% Replacement Guarantee.`,
-    alternates: {
-      canonical: `/tutors/${params.id}`,
-    },
-    openGraph: {
-      title: `${tutorName} — Verified Tutor in Gurgaon`,
-      description: `Hire ${tutorName} for ${subjects} in Gurgaon. Verified by SSSAM Academy.`,
-      url: `https://tuitionforhome.com/tutors/${params.id}`,
-      siteName: 'TuitionForHome',
-      images: [
-        {
-          url: avatarUrl,
-          width: 800,
-          height: 800,
-          alt: `${tutorName} Tutor Profile`,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${tutorName} — Verified Tutor in Gurgaon`,
-      description: `Hire ${tutorName} for ${subjects} in Gurgaon. Verified by SSSAM Academy.`,
-    },
-  };
-}
-
-export default async function TutorProfilePage({ params }: PageProps) {
-  // Fetch tutor from Prisma MySQL database with fallback to baseline mock data
-  let tutorData: MockTutor | null = null;
-
+const getTutorData = cache(async (id: string): Promise<MockTutor | null> => {
   try {
     let dbProfile: any = await prisma.tutorProfile.findFirst({
       where: {
         OR: [
-          { id: params.id },
-          { userId: params.id },
+          { id },
+          { userId: id },
         ],
       },
       include: {
         user: {
-          select: { name: true }, // STRICT: DO NOT select phone, email, or password
+          select: { name: true },
         },
         reviews: {
           where: { isApproved: true },
@@ -170,13 +108,12 @@ export default async function TutorProfilePage({ params }: PageProps) {
       },
     });
 
-    // Fallback: If not found directly on TutorProfile, check if params.id is User.id or User.email
     if (!dbProfile) {
       const user = await prisma.user.findFirst({
         where: {
           OR: [
-            { id: params.id },
-            { email: params.id },
+            { id },
+            { email: id },
           ],
         },
         include: {
@@ -230,12 +167,16 @@ export default async function TutorProfilePage({ params }: PageProps) {
         ? dbProfile.rating
         : null;
 
-      tutorData = {
+      const fallbackAvatar = dbProfile.gender === 'MALE'
+        ? '/tutor_rohit_sharma_avatar.webp'
+        : '/tutor_ananya_sengupta_avatar.webp';
+
+      return {
         id: dbProfile.id,
-        name: dbProfile.user.name,
-        phone: '', // STRICT PRIVACY: NEVER EXPOSE
-        email: '', // STRICT PRIVACY: NEVER EXPOSE
-        avatarUrl: dbProfile.avatarUrl || '',
+        name: dbProfile.user?.name || 'Verified Educator',
+        phone: '',
+        email: '',
+        avatarUrl: dbProfile.avatarUrl || fallbackAvatar,
         introVideoUrl: dbProfile.introVideoUrl || '',
         videoDuration: dbProfile.introVideoUrl ? '1m 20s' : '',
         highestDegree: dbProfile.highestDegree || '',
@@ -267,21 +208,58 @@ export default async function TutorProfilePage({ params }: PageProps) {
         reviews,
       };
     }
-  } catch {
-    // DB query fallback
+  } catch (err) {
+    console.error('Error in getTutorData:', err);
   }
 
-  // Fallback to static mock if not in DB
-  if (!tutorData) {
-    const fallback = VERIFIED_TUTORS.find((t) => t.id === params.id);
-    if (fallback) {
-      tutorData = {
-        ...fallback,
-        phone: '', // STRICT PRIVACY
-        email: '', // STRICT PRIVACY
-      };
-    }
+  const fallback = VERIFIED_TUTORS.find((t) => t.id === id);
+  if (fallback) {
+    return {
+      ...fallback,
+      phone: '',
+      email: '',
+    };
   }
+
+  return null;
+});
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const tutorData = await getTutorData(params.id);
+  const tutorName = tutorData ? tutorData.name : 'Verified Home Tutor';
+  const subjects = tutorData && tutorData.subjects.length > 0 ? tutorData.subjects.join(', ') : 'All Subjects';
+  const avatarUrl = tutorData?.avatarUrl || 'https://sssamacademy.com/assets/home_page.webp';
+
+  return {
+    title: `${tutorName} - Verified Home & Online Tutor in Gurgaon | SSSAM Academy`,
+    description: `Hire ${tutorName} for 1-on-1 home tuition in Gurgaon. Specializes in ${subjects}. Background & KYC verified by SSSAM Academy. 100% Replacement Guarantee.`,
+    alternates: {
+      canonical: `/tutors/${params.id}`,
+    },
+    openGraph: {
+      title: `${tutorName} — Verified Tutor in Gurgaon`,
+      description: `Hire ${tutorName} for ${subjects} in Gurgaon. Verified by SSSAM Academy.`,
+      url: `https://tuitionforhome.com/tutors/${params.id}`,
+      siteName: 'TuitionForHome',
+      images: [
+        {
+          url: avatarUrl,
+          width: 800,
+          height: 800,
+          alt: `${tutorName} Tutor Profile`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${tutorName} — Verified Tutor in Gurgaon`,
+      description: `Hire ${tutorName} for ${subjects} in Gurgaon. Verified by SSSAM Academy.`,
+    },
+  };
+}
+
+export default async function TutorProfilePage({ params }: PageProps) {
+  const tutorData = await getTutorData(params.id);
 
   if (!tutorData) {
     notFound();

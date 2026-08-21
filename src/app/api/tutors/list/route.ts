@@ -3,15 +3,9 @@ import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-// Helper to sanitize avatar url so heavy base64 strings don't bloat JSON payload
+// Helper to ensure avatar url has a valid fallback if empty
 function sanitizeAvatarUrl(url: string | null | undefined, gender?: string): string {
-  if (!url) {
-    return gender === 'MALE'
-      ? '/tutor_rohit_sharma_avatar.webp'
-      : '/tutor_ananya_sengupta_avatar.webp';
-  }
-  // If raw base64 data URI exceeds 500 chars, use lightweight fallback to prevent multi-megabyte payloads
-  if (url.startsWith('data:image/') && url.length > 500) {
+  if (!url || !url.trim()) {
     return gender === 'MALE'
       ? '/tutor_rohit_sharma_avatar.webp'
       : '/tutor_ananya_sengupta_avatar.webp';
