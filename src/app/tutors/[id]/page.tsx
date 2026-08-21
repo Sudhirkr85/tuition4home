@@ -894,23 +894,12 @@ export default async function TutorProfilePage({ params }: PageProps) {
 
               {/* 60s Video Audition & Teaching Introduction */}
               {(() => {
+                if (!tutorData.introVideoUrl || tutorData.introVideoUrl.trim() === '') {
+                  return null;
+                }
                 const videoInfo = getVideoSourceInfo(tutorData.introVideoUrl);
                 if (!videoInfo.isEmbeddable) {
-                  return (
-                    <div className="apple-card-static" style={{ padding: '1.25rem 1.5rem', backgroundColor: '#F8FAFC', borderRadius: '20px', border: '1px dashed #CBD5E1', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                      <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', flexShrink: 0 }}>
-                        <Award size={20} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1E293B', marginBottom: '2px' }}>
-                          🎥 Video Introduction In-Progress
-                        </div>
-                        <div style={{ fontSize: '0.78rem', color: '#64748B' }}>
-                          {tutorData.name}&apos;s academic degrees and KYC verification are 100% verified. You can book 1-on-1 home tuition directly.
-                        </div>
-                      </div>
-                    </div>
-                  );
+                  return null;
                 }
 
                 return (
