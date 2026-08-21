@@ -160,7 +160,6 @@ model Lead {
   subjectsNeeded   String         // JSON string: ["Mathematics"]
   board            String         // e.g. "CBSE"
   budgetMonthly    Int?
-  genderPreference String?        // "Any" | "Male" | "Female"
   status           LeadStatus     @default(NEW_LEAD)
   assignedCallerId String?
   assignedCaller   User?          @relation("CallerAssignedLeads", fields: [assignedCallerId], references: [id], onDelete: SetNull)
