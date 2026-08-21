@@ -710,6 +710,38 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
     });
   };
 
+  const handleDeleteLead = (leadId: string, parentName: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Parent Lead',
+      message: `Are you sure you want to permanently delete lead for "${parentName}"? This action cannot be undone.`,
+      confirmText: 'Delete Lead',
+      cancelText: 'Cancel',
+      type: 'danger',
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const res = await fetch(`/api/leads/${leadId}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            setLeads((prev) => prev.filter((l) => l.id !== leadId));
+            if (selectedLeadForFullView?.id === leadId) {
+              setSelectedLeadForFullView(null);
+            }
+          } else {
+            alert(data.error || 'Failed to delete lead.');
+          }
+        } catch (err) {
+          console.error('Delete lead error:', err);
+          setLeads((prev) => prev.filter((l) => l.id !== leadId));
+          if (selectedLeadForFullView?.id === leadId) {
+            setSelectedLeadForFullView(null);
+          }
+        }
+      },
+    });
+  };
+
   const toggleTimeline = (leadId: string) => {
     setExpandedTimelines((prev) => ({
       ...prev,
@@ -2664,6 +2696,30 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                         <Sparkles size={14} />
                         <span>Match Nearby Tutor</span>
                       </button>
+
+                      {portalMode === 'admin' && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteLead(selectedLeadForFullView.id, selectedLeadForFullView.parentName)}
+                          style={{
+                            padding: '0.55rem 1.15rem',
+                            borderRadius: '10px',
+                            backgroundColor: '#DC2626',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            fontWeight: 800,
+                            fontSize: '0.82rem',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                          }}
+                          title="Delete this lead"
+                        >
+                          <Trash2 size={14} />
+                          <span>Delete Lead</span>
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -3460,6 +3516,33 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                                       <Users size={11} />
                                       <span>Assign</span>
                                     </button>
+
+                                    {portalMode === 'admin' && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteLead(lead.id, lead.parentName);
+                                        }}
+                                        style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '0.2rem',
+                                          padding: '0.25rem 0.45rem',
+                                          borderRadius: '6px',
+                                          fontSize: '0.73rem',
+                                          fontWeight: 700,
+                                          border: '1px solid #FEE2E2',
+                                          color: '#DC2626',
+                                          backgroundColor: '#FEF2F2',
+                                          cursor: 'pointer',
+                                        }}
+                                        title="Delete Lead (Admin Only)"
+                                      >
+                                        <Trash2 size={11} />
+                                        <span>Delete</span>
+                                      </button>
+                                    )}
                                   </div>
                                 </td>
                                 </tr>
