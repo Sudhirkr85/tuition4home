@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { sendTutorVerifiedEmail } from '@/lib/brevo';
 
 export async function POST(req: Request) {
   try {
@@ -62,12 +63,15 @@ export async function POST(req: Request) {
     }
 
     // Action: Final Profile Approval & Activation
-    await prisma.tutorProfile.update({
+    const updatedProfile = await prisma.tutorProfile.update({
       where: { id: tutorId },
       data: {
         status: 'ACTIVE_VERIFIED',
         isVerified: true,
         isAvailable: true
+      },
+      include: {
+        user: true
       }
     });
 
@@ -89,6 +93,15 @@ export async function POST(req: Request) {
           degreeStatus: 'APPROVED',
         }
       });
+    }
+
+    // Send congratulatory email to tutor upon complete verification
+    if (updatedProfile.user?.email) {
+      try {
+        await sendTutorVerifiedEmail(updatedProfile.user.email, updatedProfile.user.name);
+      } catch (mailErr) {
+        console.error('Failed to dispatch tutor verification email:', mailErr);
+      }
     }
 
     return NextResponse.json({

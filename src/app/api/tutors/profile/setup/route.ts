@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { encrypt } from '@/lib/crypto';
+import { sendTutorProfileSubmittedEmail } from '@/lib/brevo';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
     // Verify user exists and has a profile (or auto-create draft profile if user exists)
     let profile = userId ? await prisma.tutorProfile.findUnique({
       where: { userId },
-      include: { kycDoc: true }
+      include: { kycDoc: true, user: true }
     }) : null;
 
     if (!profile) {
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
             status: 'DRAFT',
             experienceYears: 0,
           },
-          include: { kycDoc: true }
+          include: { kycDoc: true, user: true }
         });
       }
     }
@@ -208,6 +209,25 @@ export async function POST(req: Request) {
         });
       }
     });
+
+    // Send confirmation email to tutor when profile is submitted for interview/verification
+    if (status === 'PENDING_INTERVIEW' && !profile.isVerified) {
+      try {
+        const tutorEmail = profile.user?.email || body.email;
+        const tutorName = profile.user?.name || 'Educator';
+        if (tutorEmail) {
+          let subjectsArr: string[] = [];
+          if (Array.isArray(subjects)) {
+            subjectsArr = subjects;
+          } else if (typeof subjects === 'string') {
+            try { subjectsArr = JSON.parse(subjects); } catch { subjectsArr = [subjects]; }
+          }
+          await sendTutorProfileSubmittedEmail(tutorEmail, tutorName, subjectsArr);
+        }
+      } catch (mailErr) {
+        console.error('Failed to send tutor profile submitted email:', mailErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,

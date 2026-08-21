@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { sendTutorProfileSubmittedEmail } from '@/lib/brevo';
 
 export async function POST(req: Request) {
   try {
@@ -6,6 +7,15 @@ export async function POST(req: Request) {
     const { name, email, phone, teachingMode, highestDegree, subjects, serviceAreas, hourlyRateHome } = body;
 
     const tutorId = `TUT-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    if (email) {
+      try {
+        const subjectsArr = Array.isArray(subjects) ? subjects : (subjects ? [subjects] : []);
+        await sendTutorProfileSubmittedEmail(email, name || 'Educator', subjectsArr);
+      } catch (e) {
+        console.error('Failed to send tutor registration email:', e);
+      }
+    }
 
     return NextResponse.json({
       success: true,
