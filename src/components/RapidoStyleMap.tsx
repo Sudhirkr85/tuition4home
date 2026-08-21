@@ -556,7 +556,12 @@ export default function RapidoStyleMap({
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.65rem' }}>
                 <Link href={`/tutors/${activeTutorDetail.id}`} style={{ position: 'relative', display: 'block', flexShrink: 0 }}>
-                  <img src={activeTutorDetail.avatarUrl || '/placeholder-avatar.jpg'} onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'" style={{ width: '46px', height: '46px', borderRadius: '12px', border: '2px solid #059669', objectFit: 'cover' }} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={activeTutorDetail.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+                    alt={activeTutorDetail.name}
+                    style={{ width: '46px', height: '46px', borderRadius: '12px', border: '2px solid #059669', objectFit: 'cover' }}
+                  />
                   <span style={{ position: 'absolute', bottom: '-3px', right: '-3px', backgroundColor: '#059669', borderRadius: '50%', width: '15px', height: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', border: '1.5px solid #FFFFFF' }}>
                     <ShieldCheck size={9} />
                   </span>

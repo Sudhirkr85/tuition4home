@@ -2,8 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+
+const AdminTutorMap = dynamic(() => import('@/components/AdminTutorMap'), { ssr: false });
 import {
   ShieldCheck,
   CheckCircle2,
@@ -21,7 +25,19 @@ import {
   ExternalLink,
   Eye,
   UserCheck,
-  BookOpen
+  BookOpen,
+  Video,
+  Play,
+  Navigation,
+  Compass,
+  DollarSign,
+  Edit3,
+  Save,
+  Globe,
+  MessageCircle,
+  Sparkles,
+  Layers,
+  Clock,
 } from 'lucide-react';
 
 interface TutorAuditData {
@@ -31,7 +47,9 @@ interface TutorAuditData {
   email: string;
   phone: string;
   avatarUrl: string;
+  introVideoUrl: string;
   highestDegree: string;
+  gender?: string;
   experienceYears: number;
   teachingMode: string;
   subjects: string[];
@@ -39,11 +57,16 @@ interface TutorAuditData {
   boards: string[];
   serviceAreas: string[];
   travelRadiusKm: number;
+  latitude?: number | null;
+  longitude?: number | null;
   formattedAddress: string;
+  hourlyRateHome?: number;
   hourlyRateHomeMin: number;
   hourlyRateHomeMax: number;
+  hourlyRateOnline?: number;
   hourlyRateOnlineMin: number;
   hourlyRateOnlineMax: number;
+  monthlyRateMin?: number;
   status: string;
   isVerified: boolean;
   isAvailable: boolean;
@@ -76,6 +99,11 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
   const [actionLoading, setActionLoading] = useState(false);
   const [backUrl, setBackUrl] = useState('/admin');
   const [backLabel, setBackLabel] = useState('Back to Admin Portal');
+
+  // Edit Modal State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState<any>({});
+  const [editSaving, setEditSaving] = useState(false);
 
   // Detect who is viewing: admin or counselor
   useEffect(() => {
@@ -136,6 +164,119 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
     }
   }, [tutorId]);
 
+  // Open Edit Modal with pre-populated values
+  const handleOpenEditModal = () => {
+    if (!tutor) return;
+    setEditFormData({
+      name: tutor.name || '',
+      email: tutor.email || '',
+      phone: tutor.phone || '',
+      gender: tutor.gender || 'OTHER',
+      bio: tutor.bio || '',
+      highestDegree: tutor.highestDegree || '',
+      experienceYears: tutor.experienceYears || 0,
+      teachingMode: tutor.teachingMode || 'BOTH',
+      subjects: (tutor.subjects || []).join(', '),
+      classes: (tutor.classes || []).join(', '),
+      boards: (tutor.boards || []).join(', '),
+      serviceAreas: (tutor.serviceAreas || []).join(', '),
+      formattedAddress: tutor.formattedAddress || '',
+      travelRadiusKm: tutor.travelRadiusKm || 5,
+      latitude: tutor.latitude !== null && tutor.latitude !== undefined ? tutor.latitude : '',
+      longitude: tutor.longitude !== null && tutor.longitude !== undefined ? tutor.longitude : '',
+      hourlyRateHomeMin: tutor.hourlyRateHomeMin || 500,
+      hourlyRateHomeMax: tutor.hourlyRateHomeMax || 1000,
+      hourlyRateOnlineMin: tutor.hourlyRateOnlineMin || 400,
+      hourlyRateOnlineMax: tutor.hourlyRateOnlineMax || 800,
+      monthlyRateMin: tutor.monthlyRateMin || 6000,
+      avatarUrl: tutor.avatarUrl || '',
+      introVideoUrl: tutor.introVideoUrl || '',
+      status: tutor.status || 'ACTIVE_VERIFIED',
+      isVerified: tutor.isVerified || false,
+      isAvailable: tutor.isAvailable !== undefined ? tutor.isAvailable : true,
+      hasPoliceCheck: tutor.hasPoliceCheck || false,
+      rating: tutor.rating || 5.0,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  // Submit Edit Modal Changes
+  const handleSaveTutorEdits = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tutor) return;
+    setEditSaving(true);
+
+    try {
+      const payload = {
+        name: editFormData.name,
+        email: editFormData.email,
+        phone: editFormData.phone,
+        gender: editFormData.gender,
+        bio: editFormData.bio,
+        highestDegree: editFormData.highestDegree,
+        experienceYears: Number(editFormData.experienceYears) || 0,
+        teachingMode: editFormData.teachingMode,
+        subjects: editFormData.subjects.split(',').map((s: string) => s.trim()).filter(Boolean),
+        classes: editFormData.classes.split(',').map((s: string) => s.trim()).filter(Boolean),
+        boards: editFormData.boards.split(',').map((s: string) => s.trim()).filter(Boolean),
+        serviceAreas: editFormData.serviceAreas.split(',').map((s: string) => s.trim()).filter(Boolean),
+        formattedAddress: editFormData.formattedAddress,
+        travelRadiusKm: Number(editFormData.travelRadiusKm) || 5,
+        latitude: editFormData.latitude !== '' ? parseFloat(editFormData.latitude) : null,
+        longitude: editFormData.longitude !== '' ? parseFloat(editFormData.longitude) : null,
+        hourlyRateHomeMin: Number(editFormData.hourlyRateHomeMin) || 500,
+        hourlyRateHomeMax: Number(editFormData.hourlyRateHomeMax) || 1000,
+        hourlyRateHome: Number(editFormData.hourlyRateHomeMin) || 500,
+        hourlyRateOnlineMin: Number(editFormData.hourlyRateOnlineMin) || 400,
+        hourlyRateOnlineMax: Number(editFormData.hourlyRateOnlineMax) || 800,
+        hourlyRateOnline: Number(editFormData.hourlyRateOnlineMin) || 400,
+        monthlyRateMin: Number(editFormData.monthlyRateMin) || 6000,
+        avatarUrl: editFormData.avatarUrl,
+        introVideoUrl: editFormData.introVideoUrl,
+        status: editFormData.status,
+        isVerified: Boolean(editFormData.isVerified),
+        isAvailable: Boolean(editFormData.isAvailable),
+        hasPoliceCheck: Boolean(editFormData.hasPoliceCheck),
+        rating: parseFloat(editFormData.rating) || 5.0,
+      };
+
+      const res = await fetch(`/api/admin/tutors/${tutor.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      setEditSaving(false);
+
+      if (data.success) {
+        setIsEditModalOpen(false);
+        setFeedbackModal({
+          isOpen: true,
+          title: '✅ Tutor Updated Successfully',
+          message: 'All profile fields, rates, radius, and verification settings have been saved to the MySQL database.',
+          type: 'success',
+        });
+        fetchTutorDetails();
+      } else {
+        setFeedbackModal({
+          isOpen: true,
+          title: 'Update Failed',
+          message: data.error || 'Could not save changes to tutor profile.',
+          type: 'error',
+        });
+      }
+    } catch (err: any) {
+      setEditSaving(false);
+      setFeedbackModal({
+        isOpen: true,
+        title: 'Connection Error',
+        message: err.message || 'Failed to communicate with server.',
+        type: 'error',
+      });
+    }
+  };
+
   // Trigger Confirmation Modal for any action
   const requestActionConfirmation = (
     actionType: 'APPROVE_ID' | 'REJECT_ID' | 'APPROVE_DEGREE' | 'REJECT_DEGREE' | 'APPROVE_FINAL' | 'ACTIVATE_TUTOR' | 'DEACTIVATE_TUTOR'
@@ -186,7 +327,7 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
         description: `This will grant official SSSAM Verified status to ${tutor?.name} and activate their listing across Gurgaon.`,
         actionType: 'APPROVE_FINAL',
         confirmText: '🏆 Activate Profile Live',
-        confirmBgColor: 'var(--brand-teal)'
+        confirmBgColor: '#0F6E56'
       });
     } else if (actionType === 'ACTIVATE_TUTOR') {
       setConfirmModal({
@@ -388,6 +529,17 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              {/* Edit Button */}
+              <button
+                type="button"
+                onClick={handleOpenEditModal}
+                className="btn btn-primary btn-sm"
+                style={{ borderRadius: '10px', padding: '0.45rem 0.85rem', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem', backgroundColor: 'var(--brand-teal)' }}
+              >
+                <Edit3 size={16} />
+                <span>Edit Details</span>
+              </button>
+
               {/* Availability Status Badge & Toggle */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {tutor.isAvailable ? (
@@ -433,60 +585,320 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
             </div>
           </div>
 
-          {/* Tutor Summary Header Card */}
-          <div style={{ backgroundColor: '#FFFFFF', padding: '1.75rem', borderRadius: '24px', border: '1.5px solid var(--border-hairline)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              {tutor.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={tutor.avatarUrl}
-                  alt={tutor.name}
-                  style={{ width: '90px', height: '90px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--brand-teal-light)', boxShadow: '0 4px 15px rgba(13,148,136,0.15)' }}
-                />
-              ) : (
-                <div style={{ width: '90px', height: '90px', borderRadius: '50%', backgroundColor: 'var(--brand-teal)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.4rem', fontWeight: 900 }}>
-                  {tutor.name.charAt(0)}
-                </div>
-              )}
+          {/* Tutor Summary Hero Card */}
+          <div style={{ backgroundColor: '#FFFFFF', padding: '1.5rem', borderRadius: '20px', border: '1.5px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative' }}>
+                {tutor.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={tutor.avatarUrl}
+                    alt={tutor.name}
+                    style={{ width: '84px', height: '84px', borderRadius: '20px', objectFit: 'cover', border: '2.5px solid #0F6E56', boxShadow: '0 4px 12px rgba(15,110,86,0.18)' }}
+                  />
+                ) : (
+                  <div style={{ width: '84px', height: '84px', borderRadius: '20px', backgroundColor: '#0F6E56', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.2rem', fontWeight: 900 }}>
+                    {tutor.name.charAt(0)}
+                  </div>
+                )}
+                {tutor.isVerified && (
+                  <span style={{ position: 'absolute', bottom: '-4px', right: '-4px', backgroundColor: '#059669', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', border: '2px solid #FFFFFF' }}>
+                    <ShieldCheck size={12} />
+                  </span>
+                )}
+              </div>
 
               <div style={{ flex: 1, minWidth: '260px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-                  <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>{tutor.name}</h1>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 800, backgroundColor: 'var(--brand-teal-light)', color: 'var(--brand-teal)', padding: '0.2rem 0.6rem', borderRadius: '6px' }}>
-                    ID: {tutor.id.slice(0, 8)}
-                  </span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0F172A', margin: 0 }}>{tutor.name}</h1>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, backgroundColor: '#ECFDF5', color: '#0F6E56', padding: '0.2rem 0.6rem', borderRadius: '6px', border: '1px solid #A7F3D0' }}>
+                      ID: {tutor.id.slice(0, 8)}
+                    </span>
+                    {tutor.gender && (
+                      <span style={{ fontSize: '0.72rem', fontWeight: 700, backgroundColor: '#F1F5F9', color: '#475569', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
+                        {tutor.gender}
+                      </span>
+                    )}
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#D97706', backgroundColor: '#FEF3C7', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
+                      ★ {tutor.rating || 5.0} Rating
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.45rem' }}>
+                    <Link
+                      href={`/tutors/${tutor.id}`}
+                      target="_blank"
+                      className="btn btn-secondary btn-sm"
+                      style={{ fontSize: '0.76rem', fontWeight: 700, padding: '0.35rem 0.65rem', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                    >
+                      <span>Public Profile</span>
+                      <ExternalLink size={12} />
+                    </Link>
+                    <a
+                      href={`https://wa.me/91${tutor.phone?.replace(/[^0-9]/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-secondary btn-sm"
+                      style={{ fontSize: '0.76rem', fontWeight: 700, padding: '0.35rem 0.65rem', borderRadius: '8px', backgroundColor: '#25D366', color: '#FFFFFF', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                    >
+                      <MessageCircle size={13} />
+                      <span>WhatsApp</span>
+                    </a>
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginTop: '0.5rem', flexWrap: 'wrap', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginTop: '0.5rem', flexWrap: 'wrap', fontSize: '0.84rem', color: '#64748B' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <Mail size={15} color="var(--brand-teal)" />
+                    <Mail size={14} color="#0F6E56" />
                     {tutor.email}
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <Phone size={15} color="var(--brand-teal)" />
-                    <a href={`tel:${tutor.phone}`} style={{ color: 'var(--brand-teal)', fontWeight: 700, textDecoration: 'none' }}>{tutor.phone}</a>
+                    <Phone size={14} color="#0F6E56" />
+                    <a href={`tel:${tutor.phone}`} style={{ color: '#0F6E56', fontWeight: 700, textDecoration: 'none' }}>{tutor.phone}</a>
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <MapPin size={15} color="var(--brand-teal)" />
-                    {tutor.formattedAddress || 'Sector 14, Gurgaon'} ({tutor.travelRadiusKm} KM)
+                    <GraduationCap size={14} color="#0F6E56" />
+                    <strong>{tutor.highestDegree}</strong> ({tutor.experienceYears} Years Exp)
                   </span>
                 </div>
 
-                {/* Badges */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.75rem' }}>
-                  {(tutor.subjects || []).map(sub => (
-                    <span key={sub} style={{ fontSize: '0.72rem', fontWeight: 700, backgroundColor: '#EFF6FF', color: '#2563EB', padding: '0.2rem 0.55rem', borderRadius: '6px' }}>
-                      {sub}
+                {tutor.bio && (
+                  <p style={{ fontSize: '0.82rem', color: '#334155', margin: '0.65rem 0 0 0', lineHeight: 1.45, backgroundColor: '#F8FAFC', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                    &ldquo;{tutor.bio}&rdquo;
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            
+            {/* Section: Introduction Video Preview */}
+            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', border: '1.5px solid #E2E8F0', padding: '1.25rem', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <Video size={18} color="#0F6E56" />
+                  <strong style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0F172A' }}>
+                    Introduction Video (60-90s)
+                  </strong>
+                </div>
+                {tutor.introVideoUrl ? (
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, backgroundColor: '#DCFCE7', color: '#166534', padding: '2px 7px', borderRadius: '6px' }}>
+                    ✓ Video Uploaded
+                  </span>
+                ) : (
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, backgroundColor: '#FEE2E2', color: '#991B1B', padding: '2px 7px', borderRadius: '6px' }}>
+                    No Video
+                  </span>
+                )}
+              </div>
+
+              {tutor.introVideoUrl ? (
+                <div>
+                  <div style={{ borderRadius: '12px', overflow: 'hidden', backgroundColor: '#000000', marginBottom: '0.65rem' }}>
+                    <video
+                      src={tutor.introVideoUrl}
+                      controls
+                      style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', display: 'block' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.76rem', color: '#64748B' }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
+                      URL: {tutor.introVideoUrl}
                     </span>
-                  ))}
-                  {(tutor.classes || []).map(cls => (
-                    <span key={cls} style={{ fontSize: '0.72rem', fontWeight: 700, backgroundColor: '#FAF5FF', color: '#7C3AED', padding: '0.2rem 0.55rem', borderRadius: '6px' }}>
-                      {cls}
+                    <a href={tutor.introVideoUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#0F6E56', fontWeight: 700, textDecoration: 'none' }}>
+                      Open External ↗
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ padding: '2rem 1rem', textAlign: 'center', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1.5px dashed #CBD5E1' }}>
+                  <Video size={32} color="#94A3B8" style={{ margin: '0 auto 0.5rem auto' }} />
+                  <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#475569' }}>No Introduction Video Uploaded</div>
+                  <p style={{ fontSize: '0.76rem', color: '#94A3B8', margin: '0.25rem 0 0.75rem 0' }}>Tutor hasn&apos;t uploaded a video intro yet.</p>
+                  <button type="button" onClick={handleOpenEditModal} className="btn btn-secondary btn-sm" style={{ fontSize: '0.76rem', fontWeight: 700 }}>
+                    + Add Video URL (Admin)
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Section: Location, Travel Radius & Covered Sectors */}
+            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', border: '1.5px solid #E2E8F0', padding: '1.25rem', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <Navigation size={18} color="#0F6E56" />
+                  <strong style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0F172A' }}>
+                    Location &amp; Travel Radius
+                  </strong>
+                </div>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, backgroundColor: '#ECFDF5', color: '#0F6E56', padding: '2px 7px', borderRadius: '6px', border: '1px solid #A7F3D0' }}>
+                  {tutor.travelRadiusKm} KM Travel Radius
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.82rem' }}>
+                <div>
+                  <span style={{ color: '#64748B', display: 'block', fontSize: '0.72rem' }}>Base Location / Sector</span>
+                  <strong style={{ color: '#0F172A', fontSize: '0.88rem' }}>
+                    📍 {tutor.formattedAddress || 'Gurgaon, Haryana'}
+                  </strong>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F8FAFC', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                  <div>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '0.7rem' }}>GPS Coordinates</span>
+                    <span style={{ color: '#0F172A', fontWeight: 700, fontSize: '0.78rem' }}>
+                      {tutor.latitude ? `${tutor.latitude.toFixed(4)}, ${tutor.longitude?.toFixed(4)}` : 'Auto-Resolved from Sector'}
                     </span>
-                  ))}
+                  </div>
+                  {tutor.latitude && tutor.longitude && (
+                    <a
+                      href={`https://www.google.com/maps?q=${tutor.latitude},${tutor.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: '0.74rem', fontWeight: 700, color: '#0F6E56', textDecoration: 'none' }}
+                    >
+                      Map ↗
+                    </a>
+                  )}
+                </div>
+
+                <div style={{ marginTop: '0.5rem' }}>
+                  <AdminTutorMap
+                    mode="view"
+                    lat={tutor.latitude}
+                    lng={tutor.longitude}
+                    radiusKm={tutor.travelRadiusKm}
+                    tutorName={tutor.name}
+                    address={tutor.formattedAddress}
+                  />
+                </div>
+
+                <div style={{ marginTop: '0.25rem' }}>
+                  <span style={{ color: '#64748B', display: 'block', fontSize: '0.72rem', marginBottom: '0.35rem' }}>
+                    Preferred Service Sectors &amp; Societies ({tutor.serviceAreas?.length || 0}):
+                  </span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    {tutor.serviceAreas && tutor.serviceAreas.length > 0 ? (
+                      tutor.serviceAreas.map((area) => (
+                        <span key={area} style={{ fontSize: '0.72rem', backgroundColor: '#F1F5F9', color: '#334155', padding: '2px 7px', borderRadius: '6px', fontWeight: 600, border: '1px solid #E2E8F0' }}>
+                          {area}
+                        </span>
+                      ))
+                    ) : (
+                      <span style={{ fontSize: '0.74rem', color: '#94A3B8' }}>All Gurgaon sectors within {tutor.travelRadiusKm} km</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
+
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            
+            {/* Section: Teaching Credentials & Subject Matrix */}
+            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', border: '1.5px solid #E2E8F0', padding: '1.25rem', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.85rem' }}>
+                <BookOpen size={18} color="#0F6E56" />
+                <strong style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0F172A' }}>
+                  Subjects, Grades &amp; Boards
+                </strong>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.82rem' }}>
+                <div>
+                  <span style={{ color: '#64748B', display: 'block', fontSize: '0.72rem', marginBottom: '0.3rem' }}>Subjects Handled</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    {(tutor.subjects || []).map((sub) => (
+                      <span key={sub} style={{ fontSize: '0.74rem', backgroundColor: '#EFF6FF', color: '#1E40AF', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, border: '1px solid #DBEAFE' }}>
+                        {sub}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <span style={{ color: '#64748B', display: 'block', fontSize: '0.72rem', marginBottom: '0.3rem' }}>Classes &amp; Grades</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    {(tutor.classes || []).map((cls) => (
+                      <span key={cls} style={{ fontSize: '0.74rem', backgroundColor: '#FAF5FF', color: '#7C3AED', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, border: '1px solid #F3E8FF' }}>
+                        {cls}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <span style={{ color: '#64748B', display: 'block', fontSize: '0.72rem', marginBottom: '0.3rem' }}>Education Boards</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    {(tutor.boards || []).map((b) => (
+                      <span key={b} style={{ fontSize: '0.74rem', backgroundColor: '#ECFDF5', color: '#065F46', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, border: '1px solid #A7F3D0' }}>
+                        {b}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F8FAFC', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                  <span style={{ color: '#64748B', fontSize: '0.74rem' }}>Teaching Mode:</span>
+                  <strong style={{ color: '#0F172A', fontSize: '0.8rem' }}>
+                    {tutor.teachingMode === 'BOTH' ? '🏡 Home Visit + 💻 Online' : tutor.teachingMode === 'OFFLINE_HOME' ? '🏡 Offline Home Visit Only' : '💻 Online Live Only'}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Section: Pricing & Rates */}
+            <div style={{ backgroundColor: '#FFFFFF', borderRadius: '20px', border: '1.5px solid #E2E8F0', padding: '1.25rem', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.85rem' }}>
+                <DollarSign size={18} color="#0F6E56" />
+                <strong style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0F172A' }}>
+                  Tuition Fee Structure
+                </strong>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                  <div>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '0.72rem' }}>Offline Home Visit Rate</span>
+                    <strong style={{ color: '#0F6E56', fontSize: '1rem' }}>
+                      ₹{tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 500} - ₹{tutor.hourlyRateHomeMax || 1000} / hr
+                    </strong>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', backgroundColor: '#ECFDF5', color: '#0F6E56', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                    Home Visit
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                  <div>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '0.72rem' }}>Online Live 1-on-1 Rate</span>
+                    <strong style={{ color: '#2563EB', fontSize: '1rem' }}>
+                      ₹{tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 400} - ₹{tutor.hourlyRateOnlineMax || 800} / hr
+                    </strong>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', backgroundColor: '#EFF6FF', color: '#2563EB', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                    Online 1-on-1
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                  <div>
+                    <span style={{ color: '#64748B', display: 'block', fontSize: '0.72rem' }}>Monthly Package Baseline</span>
+                    <strong style={{ color: '#0F172A', fontSize: '1rem' }}>
+                      ₹{tutor.monthlyRateMin || 6000} / month
+                    </strong>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', backgroundColor: '#F1F5F9', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                    Monthly Min
+                  </span>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           {/* Section 1: Government ID Verification Audit */}
@@ -816,6 +1228,403 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
 
         </div>
       </main>
+
+      {/* FULL ADMIN EDIT MODAL */}
+      {isEditModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.65)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', backdropFilter: 'blur(5px)' }}>
+          <div style={{ backgroundColor: '#FFFFFF', borderRadius: '24px', maxWidth: '850px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 60px -15px rgba(0,0,0,0.3)', border: '1.5px solid #E2E8F0' }}>
+            
+            {/* Modal Header */}
+            <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F8FAFC', position: 'sticky', top: 0, zIndex: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Edit3 size={20} color="#0F6E56" />
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
+                  Edit Tutor Details (Admin Control)
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem', color: '#64748B' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleSaveTutorEdits} style={{ padding: '1.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={editFormData.email}
+                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Phone Number</label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.phone}
+                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Gender</label>
+                  <select
+                    value={editFormData.gender}
+                    onChange={(e) => setEditFormData({ ...editFormData, gender: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.85rem' }}
+                  >
+                    <option value="FEMALE">Female</option>
+                    <option value="MALE">Male</option>
+                    <option value="OTHER">Other / Prefer not to say</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Bio / Teacher Headline</label>
+                <textarea
+                  rows={2}
+                  value={editFormData.bio}
+                  onChange={(e) => setEditFormData({ ...editFormData, bio: e.target.value })}
+                  className="form-control"
+                  style={{ fontSize: '0.85rem' }}
+                  placeholder="Mentor specializing in CBSE / ICSE board exam preparation..."
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Highest Degree</label>
+                  <input
+                    type="text"
+                    value={editFormData.highestDegree}
+                    onChange={(e) => setEditFormData({ ...editFormData, highestDegree: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.85rem' }}
+                    placeholder="M.Sc Mathematics (Delhi University)"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Experience (Years)</label>
+                  <input
+                    type="number"
+                    value={editFormData.experienceYears}
+                    onChange={(e) => setEditFormData({ ...editFormData, experienceYears: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Teaching Mode</label>
+                  <select
+                    value={editFormData.teachingMode}
+                    onChange={(e) => setEditFormData({ ...editFormData, teachingMode: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.85rem' }}
+                  >
+                    <option value="BOTH">Both (Offline Home + Online)</option>
+                    <option value="OFFLINE_HOME">Offline Home Visit Only</option>
+                    <option value="ONLINE_LIVE">Online Live 1-on-1 Only</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Subjects (Comma-separated)</label>
+                <input
+                  type="text"
+                  value={editFormData.subjects}
+                  onChange={(e) => setEditFormData({ ...editFormData, subjects: e.target.value })}
+                  className="form-control"
+                  style={{ fontSize: '0.85rem' }}
+                  placeholder="Mathematics, Physics, Chemistry"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Classes / Grades (Comma-separated)</label>
+                  <input
+                    type="text"
+                    value={editFormData.classes}
+                    onChange={(e) => setEditFormData({ ...editFormData, classes: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.85rem' }}
+                    placeholder="Class 9 & 10, Class 11 & 12"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Boards Handled (Comma-separated)</label>
+                  <input
+                    type="text"
+                    value={editFormData.boards}
+                    onChange={(e) => setEditFormData({ ...editFormData, boards: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.85rem' }}
+                    placeholder="CBSE, ICSE, IB, IGCSE"
+                  />
+                </div>
+              </div>
+
+              <div style={{ backgroundColor: '#F8FAFC', padding: '1.25rem', borderRadius: '14px', border: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
+                <strong style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F6E56', display: 'block', marginBottom: '0.75rem' }}>
+                  📍 Interactive Location &amp; Travel Radius Map
+                </strong>
+
+                {/* Interactive Map Picker for Admin */}
+                <div style={{ marginBottom: '1rem' }}>
+                  <AdminTutorMap
+                    mode="edit"
+                    lat={editFormData.latitude ? parseFloat(editFormData.latitude) : 28.4595}
+                    lng={editFormData.longitude ? parseFloat(editFormData.longitude) : 77.0988}
+                    radiusKm={Number(editFormData.travelRadiusKm) || 5}
+                    tutorName={editFormData.name || 'Tutor'}
+                    address={editFormData.formattedAddress || 'Gurgaon, Haryana'}
+                    onChangeLocation={(data) => {
+                      setEditFormData({
+                        ...editFormData,
+                        latitude: data.lat,
+                        longitude: data.lng,
+                        formattedAddress: data.address,
+                        travelRadiusKm: data.radiusKm,
+                      });
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '0.85rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>Base Address / Sector</label>
+                    <input
+                      type="text"
+                      value={editFormData.formattedAddress}
+                      onChange={(e) => setEditFormData({ ...editFormData, formattedAddress: e.target.value })}
+                      className="form-control"
+                      style={{ fontSize: '0.82rem' }}
+                      placeholder="e.g. DLF Phase 5, Sector 56, Gurgaon"
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>Auto-Resolved GPS Coordinates</label>
+                    <div style={{ backgroundColor: '#FFFFFF', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.82rem', fontWeight: 700, color: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>
+                        {editFormData.latitude ? `${editFormData.latitude}, ${editFormData.longitude}` : 'Auto-Calculated from Map Pin'}
+                      </span>
+                      <span style={{ fontSize: '0.68rem', backgroundColor: '#ECFDF5', color: '#0F6E56', padding: '1px 6px', borderRadius: '4px' }}>
+                        LIVE GPS
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>Service Sectors &amp; Societies (Comma-separated)</label>
+                  <input
+                    type="text"
+                    value={editFormData.serviceAreas}
+                    onChange={(e) => setEditFormData({ ...editFormData, serviceAreas: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.82rem' }}
+                    placeholder="DLF Phase 5, Golf Course Road, Sector 56, Sushant Lok"
+                  />
+                </div>
+              </div>
+
+              <div style={{ backgroundColor: '#F8FAFC', padding: '1.25rem', borderRadius: '14px', border: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
+                <strong style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F6E56', display: 'block', marginBottom: '0.75rem' }}>
+                  💰 Tuition Fee Rates
+                </strong>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>Home Visit Min (₹/hr)</label>
+                    <input
+                      type="number"
+                      value={editFormData.hourlyRateHomeMin}
+                      onChange={(e) => setEditFormData({ ...editFormData, hourlyRateHomeMin: e.target.value })}
+                      className="form-control"
+                      style={{ fontSize: '0.82rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>Home Visit Max (₹/hr)</label>
+                    <input
+                      type="number"
+                      value={editFormData.hourlyRateHomeMax}
+                      onChange={(e) => setEditFormData({ ...editFormData, hourlyRateHomeMax: e.target.value })}
+                      className="form-control"
+                      style={{ fontSize: '0.82rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>Online Min (₹/hr)</label>
+                    <input
+                      type="number"
+                      value={editFormData.hourlyRateOnlineMin}
+                      onChange={(e) => setEditFormData({ ...editFormData, hourlyRateOnlineMin: e.target.value })}
+                      className="form-control"
+                      style={{ fontSize: '0.82rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>Online Max (₹/hr)</label>
+                    <input
+                      type="number"
+                      value={editFormData.hourlyRateOnlineMax}
+                      onChange={(e) => setEditFormData({ ...editFormData, hourlyRateOnlineMax: e.target.value })}
+                      className="form-control"
+                      style={{ fontSize: '0.82rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>Monthly Baseline (₹)</label>
+                    <input
+                      type="number"
+                      value={editFormData.monthlyRateMin}
+                      onChange={(e) => setEditFormData({ ...editFormData, monthlyRateMin: e.target.value })}
+                      className="form-control"
+                      style={{ fontSize: '0.82rem' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Profile Photo Avatar URL</label>
+                  <input
+                    type="text"
+                    value={editFormData.avatarUrl}
+                    onChange={(e) => setEditFormData({ ...editFormData, avatarUrl: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.82rem' }}
+                    placeholder="https://images.unsplash.com/... or cloudinary url"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>Introduction Video URL</label>
+                  <input
+                    type="text"
+                    value={editFormData.introVideoUrl}
+                    onChange={(e) => setEditFormData({ ...editFormData, introVideoUrl: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.82rem' }}
+                    placeholder="/videos/... or https://..."
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem', backgroundColor: '#F8FAFC', padding: '1rem', borderRadius: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>Platform Status</label>
+                  <select
+                    value={editFormData.status}
+                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.82rem' }}
+                  >
+                    <option value="ACTIVE_VERIFIED">ACTIVE_VERIFIED</option>
+                    <option value="PENDING_INTERVIEW">PENDING_INTERVIEW</option>
+                    <option value="INTERVIEW_SCHEDULED">INTERVIEW_SCHEDULED</option>
+                    <option value="SUSPENDED">SUSPENDED</option>
+                    <option value="REJECTED">REJECTED</option>
+                    <option value="DRAFT">DRAFT</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '0.3rem' }}>Rating (out of 5)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    max="5"
+                    value={editFormData.rating}
+                    onChange={(e) => setEditFormData({ ...editFormData, rating: e.target.value })}
+                    className="form-control"
+                    style={{ fontSize: '0.82rem' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.78rem', fontWeight: 700, color: '#0F172A', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={editFormData.isVerified}
+                      onChange={(e) => setEditFormData({ ...editFormData, isVerified: e.target.checked })}
+                    />
+                    <span>Verified Badge (isVerified)</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.78rem', fontWeight: 700, color: '#0F172A', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={editFormData.hasPoliceCheck}
+                      onChange={(e) => setEditFormData({ ...editFormData, hasPoliceCheck: e.target.checked })}
+                    />
+                    <span>Police Check Badge</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="btn btn-secondary"
+                  style={{ padding: '0.65rem 1.25rem', fontSize: '0.88rem', fontWeight: 700 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSaving}
+                  className="btn btn-primary"
+                  style={{ padding: '0.65rem 1.5rem', fontSize: '0.88rem', fontWeight: 800, backgroundColor: '#0F6E56', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <Save size={16} />
+                  <span>{editSaving ? 'Saving to Database...' : '💾 Save All Changes'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Centered Action Confirmation Modal */}
       {confirmModal && (
