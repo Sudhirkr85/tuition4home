@@ -108,3 +108,5 @@ export async function PATCH(
     );
   }
 }
+
+export { PATCH as POST };
