@@ -93,10 +93,11 @@ export default function VideoModal({ tutor, onClose, onSelectTutor }: VideoModal
             />
           ) : videoInfo.isEmbeddable && videoInfo.type === 'direct' ? (
             <video
+              key={videoInfo.embedUrl}
               src={videoInfo.embedUrl}
               controls
-              autoPlay
               playsInline
+              preload="auto"
               style={{
                 position: 'absolute',
                 top: 0,

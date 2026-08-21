@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Play, Video, ExternalLink, AlertCircle, RefreshCw } from 'lucide-react';
 import { getVideoSourceInfo } from '@/lib/video';
 
@@ -21,6 +21,11 @@ export default function TutorVideoPlayer({
 }: TutorVideoPlayerProps) {
   const [hasError, setHasError] = useState(false);
   const info = getVideoSourceInfo(videoUrl);
+
+  // Reset error when URL changes
+  useEffect(() => {
+    setHasError(false);
+  }, [videoUrl]);
 
   // Sample working test videos
   const SAMPLE_DIRECT_VIDEO = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
@@ -78,18 +83,15 @@ export default function TutorVideoPlayer({
     <div style={{ position: 'relative', width: '100%', borderRadius: '14px', overflow: 'hidden', backgroundColor: '#0F172A', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}>
       {/* YouTube or Vimeo iframe embed */}
       {info.type === 'youtube' || info.type === 'vimeo' || info.type === 'gdrive' ? (
-        <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', maxHeight }}>
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', maxHeight }}>
           <iframe
             src={info.embedUrl}
             title={`${tutorName} Introduction Video`}
             style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
               width: '100%',
               height: '100%',
               border: 0,
-              borderRadius: '14px',
+              display: 'block',
             }}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -97,19 +99,18 @@ export default function TutorVideoPlayer({
         </div>
       ) : (
         /* Direct Video (MP4 / WebM / Cloudinary / Stream) */
-        <div style={{ position: 'relative', width: '100%', maxHeight, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', maxHeight, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000000' }}>
           <video
             key={info.embedUrl}
             src={info.embedUrl}
             controls
             playsInline
-            preload="metadata"
+            preload="auto"
             style={{
               width: '100%',
-              maxHeight,
+              height: '100%',
               objectFit: 'contain',
               display: 'block',
-              borderRadius: '14px',
               backgroundColor: '#000000',
             }}
             onError={() => setHasError(true)}
