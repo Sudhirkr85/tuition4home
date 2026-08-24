@@ -11,6 +11,9 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://tuitionforhome.com'),
+  alternates: {
+    canonical: '/',
+  },
   title: {
     default: 'TuitionForHome — #1 Verified Home & Online Tutors in Gurgaon | SSSAM Academy',
     template: '%s | TuitionForHome Gurgaon',
