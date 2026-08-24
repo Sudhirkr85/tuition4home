@@ -447,7 +447,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', textDecoration: 'none' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/tuitionforhome.webp"
+            src="/logo.webp"
             alt="TuitionForHome Logo"
             style={{ height: '44px', width: '44px', objectFit: 'cover', borderRadius: '50%', flexShrink: 0 }}
           />

@@ -1479,7 +1479,7 @@ export default function TutorProfileDashboard() {
                           flexShrink: 0
                         }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/tuitionforhome.webp" alt="Logo" style={{ height: '18px', width: '18px', objectFit: 'cover', borderRadius: '50%' }} />
+                          <img src="/logo.webp" alt="Logo" style={{ height: '18px', width: '18px', objectFit: 'cover', borderRadius: '50%' }} />
                           <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#0F172A', letterSpacing: '-0.02em' }}>TuitionForHome</span>
                         </div>
 

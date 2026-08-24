@@ -1374,7 +1374,7 @@ export default function TutorRegisterLoginPage() {
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/tuitionforhome.webp"
+                    src="/logo.webp"
                     alt="TuitionForHome Logo"
                     style={{
                       height: '38px',

@@ -29,7 +29,7 @@ export default function Footer() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/tuitionforhome.webp"
+                src="/logo.webp"
                 alt="TuitionForHome Logo"
                 style={{
                   height: '48px',

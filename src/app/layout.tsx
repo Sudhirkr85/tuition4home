@@ -36,10 +36,9 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/logo.webp', type: 'image/webp' },
-      { url: '/logo.png', type: 'image/png', sizes: '192x192' },
     ],
     shortcut: '/logo.webp',
-    apple: '/logo.png',
+    apple: '/logo.webp',
   },
 
   openGraph: {
