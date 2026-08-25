@@ -59,10 +59,16 @@ export function resolvePSEOSlug(slug: string): {
     matchedIntent = PSEO_INTENT_TRACKS[0]; // General
   }
 
-  // 2. Resolve Locality Match
-  let matchedLocality = PSEO_LOCALITIES.find(
-    (l) => cleanSlug.includes(l.slug) || cleanSlug.includes(l.slug.replace('-gurgaon', '').replace('-delhi', '').replace('-noida', ''))
-  );
+  // 2. Resolve Locality Match (Sort by longest slug first for maximum specificity)
+  const sortedLocalities = [...PSEO_LOCALITIES].sort((a, b) => b.slug.length - a.slug.length);
+  let matchedLocality = sortedLocalities.find((l) => cleanSlug.includes(l.slug));
+
+  if (!matchedLocality) {
+    matchedLocality = sortedLocalities.find((l) => {
+      const stripped = l.slug.replace('-gurgaon', '').replace('-delhi', '').replace('-noida', '');
+      return cleanSlug.includes(stripped);
+    });
+  }
 
   if (!matchedLocality) {
     if (cleanSlug.includes('noida')) {
