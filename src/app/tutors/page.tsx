@@ -353,7 +353,7 @@ export default function TutorsDirectoryPage() {
                 marginBottom: '0.75rem',
               }}>
                 <ShieldCheck size={14} />
-                <span>1,000+ SSSAM ACADEMY VERIFIED TEACHERS IN GURGAON</span>
+                <span>SSSAM ACADEMY VERIFIED TEACHERS IN GURGAON &amp; NCR</span>
               </div>
 
               <h1 style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.6rem)', fontWeight: 900, color: '#0F172A', lineHeight: 1.2, letterSpacing: '-0.025em', marginBottom: '0.5rem' }}>

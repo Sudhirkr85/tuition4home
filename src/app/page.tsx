@@ -1267,7 +1267,7 @@ export default function HomePage() {
             {/* Bottom Explore Button */}
             <div style={{ textAlign: 'center', marginTop: '3rem' }}>
               <Link href="/tutors" className="btn btn-primary btn-lg" style={{ padding: '0.9rem 2.25rem' }}>
-                <span>Explore All 1,000+ Verified Teachers in Gurgaon</span>
+                <span>Explore All Verified Teachers in Gurgaon &amp; Delhi NCR</span>
                 <ChevronRight size={18} />
               </Link>
             </div>
@@ -1641,7 +1641,7 @@ export default function HomePage() {
                     boxShadow: '0 4px 12px rgba(15, 110, 86, 0.15)',
                   }}
                 >
-                  <span>{showAllLocalities ? 'Show Fewer Sectors' : `Explore All ${dynamicLocalities.length}+ Gurgaon Sectors`}</span>
+                  <span>{showAllLocalities ? 'Show Fewer Sectors' : 'Explore All Gurgaon & NCR Sectors'}</span>
                   {showAllLocalities ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
               )}

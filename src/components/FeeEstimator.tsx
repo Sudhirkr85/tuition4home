@@ -12,20 +12,20 @@ export default function FeeEstimator({ onBookWithEstimate }: FeeEstimatorProps) 
   const [mode, setMode] = useState<'OFFLINE_HOME' | 'ONLINE_LIVE'>('OFFLINE_HOME');
   const [daysPerWeek, setDaysPerWeek] = useState(3);
 
-  // Dynamic Rate Engine starting from ₹1,000+
+  // Dynamic Rate Engine starting from affordable verified market rates
   const calculateFee = () => {
-    let baseHourlyRate = 800;
+    let baseHourlyRate = 550;
 
     if (grade.includes('1 - 5')) {
-      baseHourlyRate = 500;
+      baseHourlyRate = 350;
     } else if (grade.includes('6 - 8')) {
-      baseHourlyRate = 650;
+      baseHourlyRate = 450;
     } else if (grade.includes('9 & 10')) {
-      baseHourlyRate = 850;
+      baseHourlyRate = 550;
     } else if (grade.includes('11 & 12')) {
-      baseHourlyRate = 1100;
+      baseHourlyRate = 700;
     } else if (grade.includes('IB') || grade.includes('IGCSE')) {
-      baseHourlyRate = 1600;
+      baseHourlyRate = 900;
     }
 
     if (mode === 'ONLINE_LIVE') {
@@ -65,7 +65,7 @@ export default function FeeEstimator({ onBookWithEstimate }: FeeEstimatorProps) 
               Calculate Monthly Tuition Rates in Gurgaon
             </h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-              Transparent pricing with zero hidden agency costs. Rates starting from ₹1,000+ depending on grade & subject.
+              Transparent pricing with zero hidden agency costs. Affordable rates tailored to your child's grade &amp; learning mode.
             </p>
           </div>
 

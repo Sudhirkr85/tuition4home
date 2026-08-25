@@ -80,10 +80,13 @@ export function resolvePSEOSlug(slug: string): {
     }
   }
 
-  // 3. Resolve Subject Match
-  let matchedSubject = PSEO_SUBJECTS.find((s) => cleanSlug.includes(s.slug));
+  // 3. Resolve Subject Match (Sort by longest slug first for maximum specificity)
+  const sortedSubjects = [...PSEO_SUBJECTS].sort((a, b) => b.slug.length - a.slug.length);
+  let matchedSubject = sortedSubjects.find((s) => cleanSlug.includes(s.slug));
+
   if (!matchedSubject) {
-    if (cleanSlug.includes('math')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'mathematics');
+    if (cleanSlug.includes('python') || cleanSlug.includes('coding') || cleanSlug.includes('computer')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'computer-science-python');
+    else if (cleanSlug.includes('math')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'mathematics');
     else if (cleanSlug.includes('physic')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'physics');
     else if (cleanSlug.includes('chem')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'chemistry');
     else if (cleanSlug.includes('bio')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'biology');
@@ -91,7 +94,6 @@ export function resolvePSEOSlug(slug: string): {
     else if (cleanSlug.includes('eco')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'economics');
     else if (cleanSlug.includes('french')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'french-language');
     else if (cleanSlug.includes('german')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'german-language');
-    else if (cleanSlug.includes('python') || cleanSlug.includes('coding') || cleanSlug.includes('computer')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'computer-science-python');
     else matchedSubject = PSEO_SUBJECTS[0]; // Default Mathematics
   }
 
@@ -107,25 +109,25 @@ export function resolvePSEOSlug(slug: string): {
  */
 function calculatePseoPricing(locality: PSEOLocality, subject: PSEOSubject, intentTrack: PSEOIntentTrack) {
   let multiplier = 1.0;
-  if (locality.affluenceTier === 'ULTRA_LUXURY') multiplier = 1.35;
-  else if (locality.affluenceTier === 'PREMIUM') multiplier = 1.15;
+  if (locality.affluenceTier === 'ULTRA_LUXURY') multiplier = 1.15;
+  else if (locality.affluenceTier === 'PREMIUM') multiplier = 1.05;
 
-  let baseRate = 850;
+  let baseRate = 450;
   if (intentTrack.slug === 'ib-board' || intentTrack.slug === 'igcse-cambridge') {
-    baseRate = 1400;
+    baseRate = 750;
   } else if (intentTrack.slug === 'neet-prep' || intentTrack.slug === 'jee-main') {
-    baseRate = 1300;
+    baseRate = 650;
   } else if (intentTrack.slug === 'class-12-cbse' || intentTrack.slug === 'class-11-cbse') {
-    baseRate = 1000;
+    baseRate = 550;
   } else if (subject.slug === 'french-language' || subject.slug === 'german-language') {
-    baseRate = 950;
+    baseRate = 500;
   }
 
   const finalMinHourly = Math.round((baseRate * multiplier * 0.9) / 50) * 50;
-  const finalMaxHourly = Math.round((baseRate * multiplier * 1.3) / 50) * 50;
+  const finalMaxHourly = Math.round((baseRate * multiplier * 1.25) / 50) * 50;
 
-  const onlineMinHourly = Math.round((finalMinHourly * 0.75) / 50) * 50;
-  const onlineMaxHourly = Math.round((finalMaxHourly * 0.75) / 50) * 50;
+  const onlineMinHourly = Math.round((finalMinHourly * 0.7) / 50) * 50;
+  const onlineMaxHourly = Math.round((finalMaxHourly * 0.7) / 50) * 50;
 
   const monthly2Days = `₹${(finalMinHourly * 8).toLocaleString('en-IN')} – ₹${(finalMaxHourly * 8).toLocaleString('en-IN')}`;
   const monthly3Days = `₹${(finalMinHourly * 12).toLocaleString('en-IN')} – ₹${(finalMaxHourly * 12).toLocaleString('en-IN')}`;

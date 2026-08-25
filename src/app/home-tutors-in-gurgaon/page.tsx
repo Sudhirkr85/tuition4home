@@ -78,7 +78,7 @@ export default function GurgaonLocalitiesHubPage() {
             <div style={{ maxWidth: '800px' }}>
               <div className="badge badge-emerald" style={{ marginBottom: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Sparkles size={14} />
-                <span>46+ RESIDENTIAL SECTORS &amp; BORDER HUBS</span>
+                <span>RESIDENTIAL SECTORS &amp; NCR BORDER HUBS</span>
               </div>
               <h1 style={{ fontSize: 'clamp(2rem, 4vw, 2.85rem)', fontWeight: 900, color: 'var(--text-main)', lineHeight: 1.15, marginBottom: '1rem', letterSpacing: '-0.03em' }}>
                 Home Tutors in <span style={{ color: '#065F46' }}>Gurgaon &amp; Delhi NCR</span>
