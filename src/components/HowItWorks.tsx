@@ -249,36 +249,8 @@ const Step4Illustration = () => (
 );
 
 export default function HowItWorks({ onOpenBooking }: { onOpenBooking: () => void }) {
-  const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const explainerVideoRef = useRef<HTMLVideoElement | null>(null);
-
-  const toggleMute = () => {
-    if (explainerVideoRef.current) {
-      explainerVideoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  const togglePlay = () => {
-    if (explainerVideoRef.current) {
-      if (isPlaying) {
-        explainerVideoRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        explainerVideoRef.current.play();
-        setIsPlaying(true);
-      }
-    }
-  };
-
-  const handleFullscreen = () => {
-    if (explainerVideoRef.current) {
-      if (explainerVideoRef.current.requestFullscreen) {
-        explainerVideoRef.current.requestFullscreen();
-      }
-    }
-  };
+  const [isWalkthroughMuted, setIsWalkthroughMuted] = useState(true);
+  const walkthroughVideoRef = useRef<HTMLVideoElement | null>(null);
 
   const steps = [
     {
@@ -365,173 +337,181 @@ export default function HowItWorks({ onOpenBooking }: { onOpenBooking: () => voi
         </div>
 
         {/* =========================================================================
-            CINEMA FULLSCREEN EXPLAINER VIDEO SECTION (VIDEO 1: 80s MASTERCLASS)
+            CINEMA RESPONSIVE SHOWCASE (DESKTOP: 2-COL | TAB/MOBILE: 1-COL)
             ========================================================================= */}
         <div style={{
-          backgroundColor: '#0F172A',
-          borderRadius: '24px',
+          background: 'linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 55%, #F8FAFC 100%)',
+          borderRadius: '32px',
           overflow: 'hidden',
-          boxShadow: '0 20px 50px rgba(15, 23, 42, 0.16)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 20px 50px rgba(15, 23, 42, 0.06)',
+          border: '1.5px solid #E2E8F0',
+          padding: 'clamp(1.75rem, 4.5vw, 3.25rem)',
           marginBottom: '2.5rem',
         }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
-            alignItems: 'center',
-          }}>
-            {/* Left Info Column */}
-            <div style={{ padding: 'clamp(1.75rem, 3.5vw, 2.5rem)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="how-it-works-showcase-grid">
+            {/* Left Content Column */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', textAlign: 'left' }}>
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.45rem',
-                backgroundColor: 'rgba(15, 110, 86, 0.25)',
-                color: '#34D399',
-                fontSize: '0.78rem',
+                backgroundColor: '#ECFDF5',
+                color: '#047857',
+                fontSize: '0.76rem',
                 fontWeight: 800,
                 padding: '0.35rem 0.8rem',
                 borderRadius: '999px',
                 alignSelf: 'flex-start',
-                border: '1px solid rgba(52, 211, 153, 0.3)',
+                border: '1px solid #A7F3D0',
+                letterSpacing: '0.04em',
               }}>
-                <ShieldCheck size={14} color="#34D399" />
-                <span>OFFICIAL PLATFORM MASTERCLASS (80s)</span>
+                <ShieldCheck size={14} />
+                <span>HOW SSSAM ACADEMY WORKS</span>
               </div>
 
               <h3 style={{
-                fontSize: 'clamp(1.4rem, 2.6vw, 1.95rem)',
+                fontSize: 'clamp(1.6rem, 2.8vw, 2.3rem)',
                 fontWeight: 800,
-                color: '#FFFFFF',
-                lineHeight: 1.25,
+                color: '#0F172A',
+                lineHeight: 1.22,
                 margin: 0,
+                letterSpacing: '-0.02em',
               }}>
-                Watch How We Screen, Audit &amp; Match Teachers for Your Child
+                Watch How We Screen &amp; Match the Right Teacher for Your Child
               </h3>
 
               <p style={{
-                fontSize: '0.92rem',
-                color: '#94A3B8',
-                lineHeight: 1.6,
+                fontSize: '0.96rem',
+                color: '#475569',
+                lineHeight: 1.65,
                 margin: 0,
               }}>
-                See our complete in-person verification standards, curriculum coverage for Gurgaon top schools, and zero-risk 100% replacement policy.
+                From in-person document screening at our Sector 14 center to customized curriculum pacing for CBSE, ICSE &amp; IB boards.
               </p>
 
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', paddingTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={onOpenBooking}
-                  className="btn btn-primary"
-                  style={{
-                    backgroundColor: '#0F6E56',
-                    padding: '0.75rem 1.4rem',
-                    borderRadius: '999px',
-                    fontWeight: 700,
-                    fontSize: '0.9rem',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.45rem',
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span>Request Home Tutor</span>
-                  <ArrowRight size={16} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleFullscreen}
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    color: '#FFFFFF',
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '999px',
-                    fontWeight: 700,
-                    fontSize: '0.9rem',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.45rem',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Maximize size={15} />
-                  <span>Full Screen</span>
-                </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.9rem', color: '#334155' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                  <CheckCircle2 size={17} color="#059669" />
+                  <span>3-Stage verification: Aadhaar, degrees &amp; video teaching audition</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                  <CheckCircle2 size={17} color="#059669" />
+                  <span>Direct WhatsApp match with tutor intro video in under 2 hours</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                  <CheckCircle2 size={17} color="#059669" />
+                  <span>100% Free replacement guarantee with no lock-in contract</span>
+                </div>
               </div>
             </div>
 
-            {/* Right Video Player Column */}
-            <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', backgroundColor: '#000000', overflow: 'hidden' }}>
-              <video
-                ref={explainerVideoRef}
-                src="https://res.cloudinary.com/jhwajyyw/video/upload/q_auto:eco,f_auto/v1787649409/tuitionforhome/marketing/tuitionforhome_overview_explainer.mp4"
-                poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_3,w_800,q_auto/v1787649409/tuitionforhome/marketing/tuitionforhome_overview_explainer.jpg"
-                autoPlay
-                loop
-                muted={isMuted}
-                playsInline
-                preload="metadata"
-                controls
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  backgroundColor: '#000000',
-                  display: 'block',
-                }}
-              />
-
-              {/* Floating Quick Controls Bar */}
+            {/* Right Video Mockup Column (16:9 Studio Screen) */}
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
               <div style={{
-                position: 'absolute',
-                top: '12px',
-                right: '12px',
-                display: 'flex',
-                gap: '0.5rem',
-                zIndex: 3,
+                position: 'relative',
+                width: '100%',
+                borderRadius: '24px',
+                backgroundColor: '#0F172A',
+                padding: '8px',
+                boxShadow: '0 20px 50px rgba(15, 23, 42, 0.18)',
+                border: '3px solid #1E293B',
               }}>
-                <button
-                  type="button"
-                  onClick={toggleMute}
-                  aria-label={isMuted ? 'Unmute Video' : 'Mute Video'}
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  aspectRatio: '16/9',
+                  borderRadius: '18px',
+                  overflow: 'hidden',
+                  backgroundColor: '#000000',
+                }}>
+                  <video
+                    ref={walkthroughVideoRef}
+                    src="https://res.cloudinary.com/jhwajyyw/video/upload/q_auto:best,f_auto/v1787649409/tuitionforhome/marketing/tuitionforhome_overview_explainer.mp4"
+                    poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_3,w_800,q_auto:best/v1787649409/tuitionforhome/marketing/tuitionforhome_overview_explainer.jpg"
+                    autoPlay
+                    loop
+                    muted={isWalkthroughMuted}
+                    playsInline
+                    preload="metadata"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block',
+                    }}
+                  />
+
+                  {/* Floating Sound Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (walkthroughVideoRef.current) {
+                        const nextMuted = !walkthroughVideoRef.current.muted;
+                        walkthroughVideoRef.current.muted = nextMuted;
+                        setIsWalkthroughMuted(nextMuted);
+                      }
+                    }}
+                    aria-label={isWalkthroughMuted ? 'Unmute video' : 'Mute video'}
+                    style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '12px',
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                      backdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(255, 255, 255, 0.25)',
+                      color: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      zIndex: 5,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                      transition: 'transform 0.2s ease',
+                    }}
+                  >
+                    {isWalkthroughMuted ? <VolumeX size={17} color="#FFFFFF" /> : <Volume2 size={17} color="#10B981" />}
+                  </button>
+
+                  {/* Live Badge */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '10px',
+                    left: '10px',
                     backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                    backdropFilter: 'blur(6px)',
                     color: '#FFFFFF',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    fontSize: '0.7rem',
+                    fontWeight: 800,
+                    padding: '0.25rem 0.6rem',
+                    borderRadius: '999px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    backdropFilter: 'blur(6px)',
-                  }}
-                >
-                  {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} color="#34D399" />}
-                </button>
+                    gap: '0.35rem',
+                  }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22C55E' }} />
+                    <span>TuitionForHome Platform Tour</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom CTA Row */}
-        <div style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: '20px',
-          padding: '1.75rem 2rem',
-          border: '1.5px solid #E2E8F0',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1.25rem',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        {/* Bottom CTA Row (Centered on Mobile, Row on Desktop) */}
+        <div
+          className="how-it-works-bottom-cta"
+          style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '20px',
+            padding: 'clamp(1.5rem, 3.5vw, 2rem)',
+            border: '1.5px solid #E2E8F0',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
+          }}
+        >
+          <div className="how-it-works-bottom-cta-info">
             <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#ECFDF5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <ShieldCheck size={26} />
             </div>
@@ -541,7 +521,7 @@ export default function HowItWorks({ onOpenBooking }: { onOpenBooking: () => voi
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div className="how-it-works-bottom-cta-btn-wrap">
             <button
               type="button"
               onClick={onOpenBooking}
@@ -551,8 +531,10 @@ export default function HowItWorks({ onOpenBooking }: { onOpenBooking: () => voi
                 padding: '0.85rem 1.75rem',
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '0.4rem',
                 cursor: 'pointer',
+                borderRadius: '14px',
               }}
             >
               <span>Request Home Tutor</span>

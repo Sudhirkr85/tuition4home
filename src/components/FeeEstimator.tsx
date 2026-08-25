@@ -194,52 +194,53 @@ export default function FeeEstimator({ onBookWithEstimate }: FeeEstimatorProps) 
               </div>
             </div>
 
-            {/* Right Summary Card */}
+            {/* Right Summary Card (Simple Clean Bright Style) */}
             <div style={{
-              backgroundColor: '#0F172A',
-              color: '#FFFFFF',
+              background: 'linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 55%, #F8FAFC 100%)',
+              color: '#0F172A',
               borderRadius: '20px',
               padding: '2rem',
-              boxShadow: 'var(--shadow-hover)',
+              border: '1.5px solid #E2E8F0',
+              boxShadow: '0 12px 35px rgba(15, 23, 42, 0.05)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
             }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                  <span style={{ fontSize: '0.85rem', color: '#94A3B8', fontWeight: 600 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 700, letterSpacing: '0.03em' }}>
                     ESTIMATED MONTHLY RATE
                   </span>
-                  <span className="badge" style={{ backgroundColor: 'rgba(5, 150, 105, 0.2)', color: '#34D399', border: '1px solid rgba(5, 150, 105, 0.4)' }}>
+                  <span className="badge" style={{ backgroundColor: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', fontWeight: 700 }}>
                     ✨ Verified Teachers Available
                   </span>
                 </div>
 
-                <div style={{ fontSize: 'clamp(2rem, 4vw, 2.75rem)', fontWeight: 800, color: '#FFFFFF', marginBottom: '0.5rem', letterSpacing: '-0.03em' }}>
+                <div style={{ fontSize: 'clamp(2rem, 4vw, 2.75rem)', fontWeight: 800, color: '#0F172A', marginBottom: '0.5rem', letterSpacing: '-0.03em' }}>
                   {currentFee.monthlyRange}
-                  <span style={{ fontSize: '1rem', color: '#94A3B8', fontWeight: 500 }}> / month</span>
+                  <span style={{ fontSize: '1rem', color: '#64748B', fontWeight: 500 }}> / month</span>
                 </div>
 
-                <div style={{ fontSize: '0.88rem', color: '#93C5FD', marginBottom: '0.4rem' }}>
+                <div style={{ fontSize: '0.9rem', color: '#0284C7', fontWeight: 650, marginBottom: '0.4rem' }}>
                   ≈ ₹{currentFee.hourly}/hour • {currentFee.classesPerMonth} personalized classes per month
                 </div>
 
-                <div style={{ fontSize: '0.74rem', color: '#94A3B8', marginBottom: '1.25rem' }}>
+                <div style={{ fontSize: '0.76rem', color: '#64748B', marginBottom: '1.25rem' }}>
                   *Estimated benchmark. Exact price varies on tutor experience &amp; qualifications.
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.75rem', fontSize: '0.85rem', color: '#CBD5E1' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.75rem', fontSize: '0.88rem', color: '#334155' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Check size={16} color="#34D399" />
+                    <Check size={17} color="#059669" />
                     <span>Background-checked educator verified by TuitionForHome</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Check size={16} color="#34D399" />
+                    <Check size={17} color="#059669" />
                     <span>100% Free replacement guarantee if student is unsatisfied</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Check size={16} color="#34D399" />
-                    <span>Monthly academic progress tracking & test reports</span>
+                    <Check size={17} color="#059669" />
+                    <span>Monthly academic progress tracking &amp; test reports</span>
                   </div>
                 </div>
               </div>
@@ -253,7 +254,13 @@ export default function FeeEstimator({ onBookWithEstimate }: FeeEstimatorProps) 
                   estimatedMonthly: currentFee.monthlyRange,
                 })}
                 className="btn btn-primary btn-lg"
-                style={{ width: '100%', justifyContent: 'center' }}
+                style={{
+                  width: '100%',
+                  justifyContent: 'center',
+                  backgroundColor: '#0F6E56',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 14px rgba(15, 110, 86, 0.3)',
+                }}
               >
                 <span>Book Teacher at this Rate</span>
                 <ArrowRight size={18} />

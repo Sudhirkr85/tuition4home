@@ -283,11 +283,41 @@ export default async function LocalityPage({ params }: PageProps) {
               <div style={{
                 backgroundColor: '#FFFFFF',
                 border: '1.5px solid var(--border-subtle)',
-                borderRadius: '20px',
-                padding: '2rem',
+                borderRadius: '24px',
+                padding: '1.75rem',
                 boxShadow: 'var(--shadow-hover)',
+                overflow: 'hidden',
               }}>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-slate-900)', marginBottom: '0.35rem' }}>
+                <div style={{
+                  position: 'relative',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  marginBottom: '1.25rem',
+                  height: '160px',
+                }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/images/how-it-works/step3_teaching.webp"
+                    alt={`1-on-1 Home Tutor in ${loc.name}`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '8px',
+                    left: '8px',
+                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                    backdropFilter: 'blur(6px)',
+                    color: '#34D399',
+                    fontSize: '0.7rem',
+                    fontWeight: 800,
+                    padding: '0.2rem 0.55rem',
+                    borderRadius: '6px',
+                  }}>
+                    ✓ Verified Faculty for {loc.name}
+                  </div>
+                </div>
+
+                <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--color-slate-900)', marginBottom: '0.35rem' }}>
                   Request Tutor in {loc.name}
                 </h3>
                 <p style={{ fontSize: '0.85rem', color: 'var(--color-slate-600)', marginBottom: '1.25rem' }}>

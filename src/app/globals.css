@@ -994,6 +994,63 @@ h3 {
   font-family: inherit !important;
 }
 
+/* =========================================================================
+   HOW IT WORKS VIDEO SHOWCASE & BOTTOM CTA RESPONSIVE GRID
+   Desktop: 2 Columns | Tablet: 1 Column | Mobile: 1 Column (Centered Buttons)
+   ========================================================================= */
+.how-it-works-showcase-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+@media (min-width: 992px) {
+  .how-it-works-showcase-grid {
+    grid-template-columns: 1fr 1.15fr;
+    gap: 3.5rem;
+  }
+}
+
+.how-it-works-bottom-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.how-it-works-bottom-cta-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.how-it-works-bottom-cta-btn-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .how-it-works-bottom-cta {
+    flex-direction: row;
+    text-align: left;
+    align-items: center;
+  }
+  .how-it-works-bottom-cta-info {
+    flex-direction: row;
+    align-items: center;
+  }
+  .how-it-works-bottom-cta-btn-wrap {
+    width: auto;
+    justify-content: flex-end;
+  }
+}
+
+
 
 
 

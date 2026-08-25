@@ -301,9 +301,39 @@ export default async function SubjectPage({ params }: PageProps) {
                 backgroundColor: '#FFFFFF',
                 border: '1.5px solid var(--border-subtle)',
                 borderRadius: '24px',
-                padding: '2.25rem',
+                padding: '2rem',
                 boxShadow: 'var(--shadow-hover)',
+                overflow: 'hidden',
               }}>
+                <div style={{
+                  position: 'relative',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  marginBottom: '1.25rem',
+                  height: '160px',
+                }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/images/how-it-works/step3_teaching.webp"
+                    alt={`1-on-1 ${item.subjectName} Home Tutoring Session`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '8px',
+                    left: '8px',
+                    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                    backdropFilter: 'blur(6px)',
+                    color: '#34D399',
+                    fontSize: '0.7rem',
+                    fontWeight: 800,
+                    padding: '0.2rem 0.55rem',
+                    borderRadius: '6px',
+                  }}>
+                    ✓ 1-on-1 {item.subjectName} Specialist
+                  </div>
+                </div>
+
                 <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-slate-500)', marginBottom: '0.35rem' }}>
                   AVERAGE TUITION FEE IN GURGAON
                 </div>

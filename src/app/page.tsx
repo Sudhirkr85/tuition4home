@@ -267,6 +267,47 @@ export default function HomePage() {
 
                 {/* 6. Bolder CTA Button Row */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%', maxWidth: '440px' }}>
+                  {/* Live Animated Status Badge */}
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    backgroundColor: 'rgba(37, 211, 102, 0.1)',
+                    border: '1px solid rgba(37, 211, 102, 0.3)',
+                    padding: '0.3rem 0.75rem',
+                    borderRadius: '999px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    color: '#047857',
+                    alignSelf: 'flex-start',
+                  }}>
+                    <span style={{
+                      position: 'relative',
+                      display: 'inline-flex',
+                      width: '8px',
+                      height: '8px',
+                    }}>
+                      <span style={{
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '50%',
+                        backgroundColor: '#22C55E',
+                        animation: 'ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite',
+                        opacity: 0.75,
+                      }} />
+                      <span style={{
+                        position: 'relative',
+                        display: 'inline-block',
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: '#16A34A',
+                      }} />
+                    </span>
+                    <span>Verified Teachers Online Now in Gurgaon</span>
+                  </div>
+
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -284,15 +325,17 @@ export default function HomePage() {
                         fontSize: 'clamp(0.9rem, 2.4vw, 1.02rem)',
                         fontWeight: 800,
                         borderRadius: '999px',
-                        boxShadow: '0 4px 14px rgba(15, 110, 86, 0.28)',
+                        boxShadow: '0 6px 18px rgba(15, 110, 86, 0.32)',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '0.45rem',
+                        gap: '0.5rem',
                         flex: '1 1 190px',
                         boxSizing: 'border-box',
+                        transition: 'all 0.2s ease',
                       }}
                     >
+                      <Sparkles size={17} color="#FDE047" style={{ flexShrink: 0 }} />
                       <span>Get a Home Teacher</span>
                       <ChevronRight size={17} style={{ flexShrink: 0 }} />
                     </button>
@@ -311,14 +354,33 @@ export default function HomePage() {
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '0.45rem',
+                        gap: '0.55rem',
                         textDecoration: 'none',
-                        boxShadow: '0 4px 14px rgba(37, 211, 102, 0.28)',
+                        boxShadow: '0 6px 18px rgba(37, 211, 102, 0.35)',
                         flex: '1 1 190px',
                         boxSizing: 'border-box',
+                        transition: 'all 0.2s ease',
                       }}
                     >
-                      <MessageSquare size={17} />
+                      <span style={{
+                        position: 'relative',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '20px',
+                        height: '20px',
+                      }}>
+                        <span style={{
+                          position: 'absolute',
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '50%',
+                          backgroundColor: '#FFFFFF',
+                          opacity: 0.5,
+                          animation: 'ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite',
+                        }} />
+                        <MessageSquare size={17} style={{ position: 'relative', zIndex: 1 }} />
+                      </span>
                       <span>Chat on WhatsApp</span>
                     </a>
                   </div>
@@ -615,8 +677,8 @@ export default function HomePage() {
                   }}>
                     <video
                       ref={parentStoryVideoRef}
-                      src="https://res.cloudinary.com/jhwajyyw/video/upload/v1787651799/tuitionforhome/marketing/tuitionforhome_parent_discussion_reel_hq.mp4"
-                      poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_2,w_800/v1787651799/tuitionforhome/marketing/tuitionforhome_parent_discussion_reel_hq.jpg"
+                      src="https://res.cloudinary.com/jhwajyyw/video/upload/v1787652806/tuitionforhome/marketing/tuitionforhome_student_learning_reel_hq.mp4"
+                      poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_2,w_800/v1787652806/tuitionforhome/marketing/tuitionforhome_student_learning_reel_hq.jpg"
                       autoPlay
                       loop
                       muted={isParentStoryMuted}
@@ -1218,88 +1280,194 @@ export default function HomePage() {
         <FeeEstimator onBookWithEstimate={handleBookWithEstimate} />
 
         {/* =========================================================================
-            7. SSSAM ACADEMY PHYSICAL CENTER TRUST SECTION
+            7. SSSAM ACADEMY PHYSICAL CENTER TRUST SECTION (SIMPLE CLEAN BRIGHT STYLE)
             ========================================================================= */}
-        <section aria-label="Why Parents Trust SSSAM Academy" style={{ padding: '5rem 0', backgroundColor: '#FFFFFF' }}>
+        <section aria-label="Why Parents Trust SSSAM Academy" style={{ padding: '4.5rem 0', backgroundColor: '#FFFFFF' }}>
           <div className="container">
             <div className="apple-card" style={{
-              backgroundColor: '#0F172A',
-              color: '#FFFFFF',
-              padding: 'clamp(2rem, 5vw, 3.5rem)',
+              background: 'linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 55%, #F8FAFC 100%)',
+              color: '#0F172A',
+              padding: 'clamp(1.75rem, 4vw, 3.5rem)',
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '3rem',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 'clamp(1.75rem, 3.5vw, 3.5rem)',
               alignItems: 'center',
+              borderRadius: '32px',
+              border: '1.5px solid #E2E8F0',
+              boxShadow: '0 15px 45px rgba(15, 23, 42, 0.06)',
             }}>
               <div>
-                <div className="badge" style={{ backgroundColor: 'rgba(45, 212, 191, 0.2)', color: '#2DD4BF', border: '1px solid rgba(45, 212, 191, 0.35)', marginBottom: '1rem' }}>
+                <div className="badge" style={{ backgroundColor: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', marginBottom: '1rem', fontWeight: 800, letterSpacing: '0.03em' }}>
                   <Building2 size={14} />
                   <span>ESTABLISHED PHYSICAL CENTER IN GURUGRAM</span>
                 </div>
-                <h2 style={{ color: '#FFFFFF', fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)', fontWeight: 800, marginBottom: '1rem' }}>
+                <h2 style={{ color: '#0F172A', fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)', fontWeight: 800, marginBottom: '1rem', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
                   Not Just a Website. A Real Educational Institute.
                 </h2>
-                <p style={{ color: '#CBD5E1', fontSize: '1rem', lineHeight: 1.6, marginBottom: '1.75rem' }}>
-                  Backed by <strong>SSSAM Academy</strong>, situated in Sector 14, Old DLF, Gurugram. Tutors undergo in-person document screening and video intro audits.
+                <p style={{ color: '#475569', fontSize: '1rem', lineHeight: 1.65, marginBottom: '1.75rem' }}>
+                  Backed by <strong style={{ color: '#0F172A' }}>SSSAM Academy</strong>, situated in Sector 14, Old DLF, Gurugram. Tutors undergo in-person document screening and video intro audits.
                 </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2rem', fontSize: '0.92rem', color: '#E2E8F0' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', fontSize: '0.92rem', color: '#334155' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <CheckCircle2 size={18} color="#2DD4BF" />
-                    <span>In-person tutor document audit & interview screening</span>
+                    <CheckCircle2 size={18} color="#059669" />
+                    <span>In-person tutor document audit &amp; interview screening</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <CheckCircle2 size={18} color="#2DD4BF" />
+                    <CheckCircle2 size={18} color="#059669" />
                     <span>Option to have classes at our Sector 14 classrooms</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <CheckCircle2 size={18} color="#2DD4BF" />
+                    <CheckCircle2 size={18} color="#059669" />
                     <span>100% Free replacement guarantee if student is unsatisfied</span>
                   </div>
                 </div>
 
+                {/* Animated Attention-Grabbing Action Buttons */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-                  <button onClick={() => handleOpenBooking()} className="btn btn-primary btn-lg" style={{ backgroundColor: '#0F6E56' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenBooking()}
+                    className="btn btn-primary btn-lg"
+                    style={{
+                      backgroundColor: '#0F6E56',
+                      padding: '0.9rem 1.85rem',
+                      borderRadius: '14px',
+                      fontWeight: 800,
+                      boxShadow: '0 6px 20px rgba(15, 110, 86, 0.38)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <Sparkles size={17} color="#FDE047" style={{ animation: 'bounce 2s infinite' }} />
                     <span>Get a Home Teacher</span>
-                    <div className="btn-arrow">
-                      <ChevronRight size={16} />
-                    </div>
+                    <ChevronRight size={17} />
                   </button>
-                  <a href={`tel:${SSSAM_OFFICE_DETAILS.phones[0]}`} className="btn btn-secondary btn-lg" style={{ color: 'var(--text-main)' }}>
-                    <Phone size={18} />
+
+                  <a
+                    href={`tel:${SSSAM_OFFICE_DETAILS.phones[0]}`}
+                    className="btn btn-secondary btn-lg"
+                    style={{
+                      backgroundColor: '#FFFFFF',
+                      color: '#0F6E56',
+                      border: '2px solid #0F6E56',
+                      padding: '0.9rem 1.75rem',
+                      borderRadius: '14px',
+                      fontWeight: 800,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.55rem',
+                      boxShadow: '0 4px 14px rgba(15, 110, 86, 0.12)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <span style={{
+                      position: 'relative',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '20px',
+                      height: '20px',
+                    }}>
+                      <span style={{
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '50%',
+                        backgroundColor: '#10B981',
+                        opacity: 0.4,
+                        animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite',
+                      }} />
+                      <Phone size={17} color="#0F6E56" style={{ position: 'relative', zIndex: 1 }} />
+                    </span>
                     <span>Call Sector 14 Center</span>
                   </a>
                 </div>
               </div>
 
-              {/* Address Card */}
+              {/* Right Side: Integrated Showcase Image & Address Card */}
               <div style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                borderRadius: '20px',
-                padding: '2rem',
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid #E2E8F0',
+                borderRadius: '24px',
+                overflow: 'hidden',
+                boxShadow: '0 12px 35px rgba(15, 23, 42, 0.08)',
               }}>
-                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <MapPin size={20} color="#2DD4BF" />
-                  <span>SSSAM Academy Gurugram Center</span>
+                {/* 1-on-1 Academic Tutoring Showcase Image (Full 16:9 Uncropped) */}
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  aspectRatio: '16/9',
+                  backgroundColor: '#0F172A',
+                  overflow: 'hidden',
+                }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/images/how-it-works/step3_teaching.webp"
+                    alt="1-on-1 In-Home Tutoring Session in Gurgaon"
+                    width={1376}
+                    height={768}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center',
+                      display: 'block',
+                    }}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '10px',
+                    left: '10px',
+                    right: '10px',
+                    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+                    backdropFilter: 'blur(8px)',
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '0.35rem',
+                  }}>
+                    <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#34D399' }}>
+                      ✓ 1-on-1 Verified Faculty
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>
+                      Sector 14 &amp; All Gurgaon Sectors
+                    </span>
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.9rem', color: '#CBD5E1' }}>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700 }}>OFFICIAL ADDRESS</div>
-                    <div style={{ color: '#FFFFFF', marginTop: '2px' }}>{SSSAM_OFFICE_DETAILS.address}</div>
+                {/* Address & Helpline Details */}
+                <div style={{ padding: '1.5rem', backgroundColor: '#F8FAFC' }}>
+                  <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <MapPin size={18} color="#0F6E56" />
+                    <span>SSSAM Academy Gurugram Center</span>
                   </div>
 
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700 }}>DIRECT HELPLINE NUMBERS</div>
-                    <div style={{ color: '#93C5FD', fontWeight: 700, marginTop: '2px', fontSize: '1.05rem' }}>
-                      {SSSAM_OFFICE_DETAILS.phones[0]} • {SSSAM_OFFICE_DETAILS.phones[1]}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.86rem', color: '#475569' }}>
+                    <div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>OFFICIAL ADDRESS</div>
+                      <div style={{ color: '#0F172A', fontWeight: 600, marginTop: '2px' }}>{SSSAM_OFFICE_DETAILS.address}</div>
                     </div>
-                  </div>
 
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700 }}>COUNSELOR DESK TIMINGS</div>
-                    <div style={{ color: '#FFFFFF', marginTop: '2px' }}>{SSSAM_OFFICE_DETAILS.hours} (All 7 Days)</div>
+                    <div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>DIRECT HELPLINE NUMBER</div>
+                      <div style={{ color: '#0F6E56', fontWeight: 800, marginTop: '2px', fontSize: '1.05rem' }}>
+                        {SSSAM_OFFICE_DETAILS.phones.filter(Boolean).join(' • ')}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>COUNSELOR DESK TIMINGS</div>
+                      <div style={{ color: '#0F172A', fontWeight: 600, marginTop: '2px' }}>{SSSAM_OFFICE_DETAILS.hours}</div>
+                    </div>
                   </div>
                 </div>
               </div>
