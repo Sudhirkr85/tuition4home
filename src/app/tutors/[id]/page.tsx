@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import TutorProfileActions from '@/components/TutorProfileActions';
 import TutorDistanceBadge from '@/components/TutorDistanceBadge';
+import TutorAvatar from '@/components/TutorAvatar';
 import prisma from '@/lib/prisma';
 import { VERIFIED_TUTORS, SSSAM_OFFICE_DETAILS, MockTutor } from '@/lib/data';
 import {
@@ -501,33 +502,15 @@ export default async function TutorProfilePage({ params }: PageProps) {
                 <div className="tutor-hero-header">
                   
                   {/* Centered Avatar with Glow Pulse */}
-                  <div className="tutor-avatar-box avatar-glow-ring" style={{ borderRadius: '28px' }}>
-                    {tutorData.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={tutorData.avatarUrl}
-                        alt={tutorData.name}
-                        style={{ width: '100%', height: '100%', borderRadius: '26px', objectFit: 'cover', border: '2.5px solid #059669', display: 'block' }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          borderRadius: '26px',
-                          backgroundColor: '#0F766E',
-                          color: '#FFFFFF',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '2.5rem',
-                          fontWeight: 900,
-                          border: '2.5px solid #059669'
-                        }}
-                      >
-                        {tutorData.name ? tutorData.name.charAt(0).toUpperCase() : 'T'}
-                      </div>
-                    )}
+                  <div className="tutor-avatar-box avatar-glow-ring" style={{ borderRadius: '28px', overflow: 'hidden' }}>
+                    <TutorAvatar
+                      src={tutorData.avatarUrl}
+                      name={tutorData.name}
+                      size={120}
+                      borderRadius="26px"
+                      fontSize="2.5rem"
+                      style={{ border: '2.5px solid #059669', width: '100%', height: '100%' }}
+                    />
                     <span
                       title="100% Background & KYC Verified"
                       style={{

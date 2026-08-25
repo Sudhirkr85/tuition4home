@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import TutorAvatar from '@/components/TutorAvatar';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
@@ -781,38 +782,13 @@ export default function RapidoStyleMap({
                   prefetch={true}
                   style={{ position: 'relative', display: 'block', flexShrink: 0 }}
                 >
-                  {activeTutorDetail.avatarUrl ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={activeTutorDetail.avatarUrl}
-                      alt={activeTutorDetail.name}
-                      style={{
-                        width: '46px',
-                        height: '46px',
-                        borderRadius: '12px',
-                        border: '2px solid #059669',
-                        objectFit: 'cover',
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: '46px',
-                        height: '46px',
-                        borderRadius: '12px',
-                        border: '2px solid #059669',
-                        backgroundColor: '#E6F4EA',
-                        color: '#0F6E56',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 800,
-                        fontSize: '1.1rem',
-                      }}
-                    >
-                      {activeTutorDetail.name ? activeTutorDetail.name.trim().charAt(0).toUpperCase() : 'T'}
-                    </div>
-                  )}
+                  <TutorAvatar
+                    src={activeTutorDetail.avatarUrl}
+                    name={activeTutorDetail.name}
+                    size={46}
+                    borderRadius="12px"
+                    style={{ border: '2px solid #059669' }}
+                  />
                   <span
                     style={{
                       position: 'absolute',
