@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import HowItWorks from '@/components/HowItWorks';
 import StickyMobileBar from '@/components/StickyMobileBar';
+import TutorAvatar from '@/components/TutorAvatar';
 
 const FeeEstimator = dynamic(() => import('@/components/FeeEstimator'), {
   ssr: true,
@@ -904,30 +905,12 @@ export default function HomePage() {
                       {/* Top Bar */}
                       <div style={{ padding: '1.25rem', paddingBottom: '0.45rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
                         <Link href={`/tutors/${tutor.id}`} style={{ position: 'relative', display: 'block', flexShrink: 0 }}>
-                          {tutor.avatarUrl ? (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img
-                              src={tutor.avatarUrl}
-                              alt={tutor.name}
-                              style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <div style={{
-                              width: '64px',
-                              height: '64px',
-                              borderRadius: '16px',
-                              backgroundColor: '#E6F4EA',
-                              border: '1.5px solid #C8E6C9',
-                              color: '#0F6E56',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '1.35rem',
-                              fontWeight: 800,
-                            }}>
-                              {tutor.name ? tutor.name.trim().charAt(0).toUpperCase() : 'T'}
-                            </div>
-                          )}
+                          <TutorAvatar
+                            src={tutor.avatarUrl}
+                            name={tutor.name}
+                            size={64}
+                            borderRadius="16px"
+                          />
                           <span style={{
                             position: 'absolute',
                             bottom: '-4px',
