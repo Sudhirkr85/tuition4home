@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BookingModal from '@/components/BookingModal';
 import VideoModal from '@/components/VideoModal';
+import TutorAvatar from '@/components/TutorAvatar';
 import { GURGAON_LOCALITIES, VERIFIED_TUTORS, MockTutor, SSSAM_OFFICE_DETAILS } from '@/lib/data';
 import {
   calculateHaversineKm,
@@ -856,30 +857,12 @@ export default function TutorsDirectoryPage() {
                       {/* Top Bar with Avatar, Badges & Proximity Pill */}
                       <div style={{ padding: '1.25rem', paddingBottom: '0.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
                         <Link href={`/tutors/${tutor.id}`} prefetch={true} style={{ position: 'relative', display: 'block', flexShrink: 0 }}>
-                          {tutor.avatarUrl ? (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img
-                              src={tutor.avatarUrl}
-                              alt={tutor.name}
-                              style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <div style={{
-                              width: '64px',
-                              height: '64px',
-                              borderRadius: '16px',
-                              backgroundColor: '#E6F4EA',
-                              border: '1.5px solid #C8E6C9',
-                              color: '#0F6E56',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '1.35rem',
-                              fontWeight: 800,
-                            }}>
-                              {tutor.name ? tutor.name.trim().charAt(0).toUpperCase() : 'T'}
-                            </div>
-                          )}
+                          <TutorAvatar
+                            src={tutor.avatarUrl}
+                            name={tutor.name}
+                            size={64}
+                            borderRadius="16px"
+                          />
                           <span style={{
                             position: 'absolute',
                             bottom: '-4px',
