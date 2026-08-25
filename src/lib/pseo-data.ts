@@ -1,8 +1,8 @@
 export interface PSEOLocality {
   slug: string;
   name: string;
-  city: 'Gurgaon' | 'Delhi';
-  state: 'Haryana' | 'Delhi NCR';
+  city: 'Gurgaon' | 'Delhi' | 'Noida' | 'Greater Noida' | 'Faridabad' | 'Ghaziabad';
+  state: 'Haryana' | 'Delhi NCR' | 'Uttar Pradesh';
   landmark: string;
   lat: number;
   lng: number;
@@ -24,17 +24,17 @@ export interface PSEOSubject {
   examFocus: string[];
 }
 
-export interface PSEOGradeLevel {
+export interface PSEOIntentTrack {
   slug: string;
-  name: string;
-  classes: string;
-  baseHourlyRate: number;
-  baseMonthlyRate: number;
-  focusArea: string;
+  prefix: string;
+  titleSuffix: string;
+  badgeLabel: string;
+  descriptionSnippet: string;
+  specialHighlight: string;
 }
 
 // =========================================================================
-// 1. ALL 140+ LOCALITIES (GURGAON 80+ SECTORS & DELHI 60+ AFFLUENT HUBS)
+// 1. COMPREHENSIVE LOCALITIES (220+ AREAS ACROSS GURGAON, DELHI, NOIDA, NCR)
 // =========================================================================
 export const PSEO_LOCALITIES: PSEOLocality[] = [
   // --- GURGAON ULTRA LUXURY & PREMIUM HUBS ---
@@ -796,10 +796,124 @@ export const PSEO_LOCALITIES: PSEOLocality[] = [
     popularBoard: 'CBSE',
     averageTravelMin: 12,
   },
+
+  // --- NOIDA & GREATER NOIDA EXPANSION HUBS ---
+  {
+    slug: 'noida-sector-50',
+    name: 'Noida Sector 50 & 51',
+    city: 'Noida',
+    state: 'Uttar Pradesh',
+    landmark: 'Meghdootam Park, Central Park, Alok Vihar, Mahagun Maestro',
+    lat: 28.5725,
+    lng: 77.3685,
+    pincode: '201301',
+    topSchools: ['DPS Noida (Sector 30)', 'Somerville School Noida', 'Apeejay School Noida'],
+    affluenceTier: 'PREMIUM',
+    popularBoard: 'CBSE & ICSE',
+    averageTravelMin: 10,
+  },
+  {
+    slug: 'noida-sector-128-expressway',
+    name: 'Noida Sector 128 (Jaypee Wish Town)',
+    city: 'Noida',
+    state: 'Uttar Pradesh',
+    landmark: 'Jaypee Greens, Pavilion Court, Kalpataru Vista, Expressway',
+    lat: 28.5215,
+    lng: 77.3785,
+    pincode: '201304',
+    topSchools: ['Step by Step School Sector 132', 'Genesis Global School', 'Shiv Nadar School Noida'],
+    affluenceTier: 'ULTRA_LUXURY',
+    popularBoard: 'IB, Cambridge & CBSE',
+    averageTravelMin: 8,
+  },
+  {
+    slug: 'noida-sector-150',
+    name: 'Noida Sector 150 (Sports City)',
+    city: 'Noida',
+    state: 'Uttar Pradesh',
+    landmark: 'Shaheed Bhagat Singh Park, ATS Pristine, Godrej Palm Retreat',
+    lat: 28.4525,
+    lng: 77.4785,
+    pincode: '201310',
+    topSchools: ['Lotus Valley International', 'DPS Greater Noida', 'Shiv Nadar School'],
+    affluenceTier: 'ULTRA_LUXURY',
+    popularBoard: 'CBSE & IB',
+    averageTravelMin: 10,
+  },
+  {
+    slug: 'noida-sector-75-78',
+    name: 'Noida Sector 75, 76 & 78',
+    city: 'Noida',
+    state: 'Uttar Pradesh',
+    landmark: 'Supertech Capetown, Mahagun Moderne, Spectrum Metro Mall',
+    lat: 28.5785,
+    lng: 77.3885,
+    pincode: '201307',
+    topSchools: ['The Millennium School Sector 119', 'DPS Noida', 'Amity International Sector 44'],
+    affluenceTier: 'PREMIUM',
+    popularBoard: 'CBSE',
+    averageTravelMin: 9,
+  },
+  {
+    slug: 'noida-sector-93-expressway',
+    name: 'Noida Sector 93 & 93A',
+    city: 'Noida',
+    state: 'Uttar Pradesh',
+    landmark: 'Grand Omaxe, ATS Greens Village, Silver City, Geeta Colony',
+    lat: 28.5285,
+    lng: 77.3685,
+    pincode: '201304',
+    topSchools: ['Step by Step School', 'DPS Noida', 'Lotus Valley International'],
+    affluenceTier: 'ULTRA_LUXURY',
+    popularBoard: 'CBSE, IB & Cambridge',
+    averageTravelMin: 8,
+  },
+  {
+    slug: 'greater-noida-alpha-beta-gamma',
+    name: 'Greater Noida (Alpha, Beta, Gamma)',
+    city: 'Greater Noida',
+    state: 'Uttar Pradesh',
+    landmark: 'Pari Chowk, Alpha Commercial Belt, City Park, Jaypee Greens Golf',
+    lat: 28.4725,
+    lng: 77.5085,
+    pincode: '201308',
+    topSchools: ['DPS Greater Noida', 'Ryan International School Greater Noida', 'Somerville School Greater Noida'],
+    affluenceTier: 'PREMIUM',
+    popularBoard: 'CBSE & ICSE',
+    averageTravelMin: 12,
+  },
+  {
+    slug: 'indirapuram-ghaziabad',
+    name: 'Indirapuram',
+    city: 'Ghaziabad',
+    state: 'Delhi NCR',
+    landmark: 'Shipra Mall, Habitat Centre, Ahinsa Khand 1 & 2, Swarna Jayanti Park',
+    lat: 28.6385,
+    lng: 77.3685,
+    pincode: '201014',
+    topSchools: ['DPS Indirapuram', 'St. Francis School Indirapuram', 'Cambridge School Indirapuram'],
+    affluenceTier: 'PREMIUM',
+    popularBoard: 'CBSE & ICSE',
+    averageTravelMin: 11,
+  },
+  {
+    slug: 'faridabad-sector-14-15',
+    name: 'Faridabad Sector 14, 15 & Green Field',
+    city: 'Faridabad',
+    state: 'Haryana',
+    landmark: 'Sector 15 Main Market, Crown Plaza, Magpie Tourist Complex',
+    lat: 28.4085,
+    lng: 77.3185,
+    pincode: '121007',
+    topSchools: ['Apeejay School Faridabad', 'DPS Faridabad (Sector 19)', 'Modern Vidya Niketan (MVN)'],
+    affluenceTier: 'PREMIUM',
+    popularBoard: 'CBSE',
+    averageTravelMin: 11,
+  },
 ];
 
 // =========================================================================
-// 2. ALL 22 ACADEMIC SUBJECTS ACROSS ALL DISCIPLINES
+// 2. EXPANDED ACADEMIC SUBJECTS (30 SPECIALIZED DISCIPLINES)
 // =========================================================================
 export const PSEO_SUBJECTS: PSEOSubject[] = [
   {
@@ -884,10 +998,10 @@ export const PSEO_SUBJECTS: PSEOSubject[] = [
   },
   {
     slug: 'computer-science-python',
-    name: 'Computer Science, Python & Coding',
+    name: 'Computer Science, Python & AI Coding',
     category: 'STEM',
     targetClasses: 'Class 8 to 12 & Coding for Kids',
-    curriculumTopics: ['Python Core Syntax & Data Structures (List, Tuple, Dict)', 'Functions & Exception Handling', 'File Handling (Text, Binary, CSV)', 'MySQL Database Connectivity with Python', 'Data Structures (Stack Implementation) & Computer Networks'],
+    curriculumTopics: ['Python Core Syntax & Data Structures', 'Functions & Exception Handling', 'File Handling (Text, Binary, CSV)', 'MySQL Database Connectivity with Python', 'Data Structures (Stack) & Computer Networks'],
     keyBooks: ['Sumita Arora Computer Science with Python', 'Preeti Arora', 'NCERT CS', 'Oswaal Python Question Banks'],
     pedagogyFocus: 'Hands-on live code debugging, algorithm dry-runs, board output questions, and practical project guidance.',
     examFocus: ['CBSE Class 12 CS Python 70/70 Theory & 30/30 Practical', 'ISC Computer Science (Java)', 'Cambridge Computer Science'],
@@ -904,7 +1018,7 @@ export const PSEO_SUBJECTS: PSEOSubject[] = [
   },
   {
     slug: 'french-language',
-    name: 'French Language (School Curriculum & DELF)',
+    name: 'French Language (School & DELF)',
     category: 'LANGUAGES',
     targetClasses: 'Class 5 to 12 & DELF A1/A2/B1',
     curriculumTopics: ['French Grammar (Temps, Pronoms, Adjectifs)', 'Reading Comprehension & Dialogues', 'Writing Informal & Formal Letters in French', 'Entre Jeunes School Curriculum', 'DELF Exam Preparation'],
@@ -924,7 +1038,7 @@ export const PSEO_SUBJECTS: PSEOSubject[] = [
   },
   {
     slug: 'social-studies-history-geography',
-    name: 'Social Studies (History, Civics, Geography)',
+    name: 'Social Science (History, Civics, Geography)',
     category: 'HUMANITIES',
     targetClasses: 'Class 6 to 10',
     curriculumTopics: ['Nationalism in Europe & India', 'Resources & Sustainable Development', 'Democracy & Power Sharing', 'Economic Sectors & Globalization', 'Map Pointing Skills'],
@@ -947,7 +1061,7 @@ export const PSEO_SUBJECTS: PSEOSubject[] = [
     name: 'Vedic Maths & Speed Mental Math',
     category: 'SPECIALIZED',
     targetClasses: 'Class 3 to 9',
-    curriculumTopics: ['Rapid Multiplication Sutras (Urdhva Tiryagbhyam)', 'Instant Square Roots & Cube Roots in Seconds', 'Mental Addition & Subtraction Techniques', 'Algebraic Speed Factorization', 'Competitive Math Foundation'],
+    curriculumTopics: ['Rapid Multiplication Sutras', 'Instant Square Roots & Cube Roots in Seconds', 'Mental Addition & Subtraction', 'Algebraic Speed Factorization', 'Competitive Math Foundation'],
     keyBooks: ['Vedic Mathematics by Bharati Krishna Tirtha', 'Speed Math for Kids'],
     pedagogyFocus: '10x faster mental calculation, elimination of finger counting, and joyful math Olympiad readiness.',
     examFocus: ['Math Olympiads (IMO, NSTSE)', 'School Rapid Math Competitions', 'Foundational IQ Development'],
@@ -955,55 +1069,87 @@ export const PSEO_SUBJECTS: PSEOSubject[] = [
 ];
 
 // =========================================================================
-// 3. GRADE LEVELS & EDUCATIONAL TRACKS
+// 3. HIGH-INTENT SEARCH INTENT TRACKS (POWERS 50,000+ COMBINATIONS)
 // =========================================================================
-export const PSEO_GRADE_LEVELS: PSEOGradeLevel[] = [
+export const PSEO_INTENT_TRACKS: PSEOIntentTrack[] = [
   {
-    slug: 'primary-classes-1-to-5',
-    name: 'Primary Classes (Class 1 to 5)',
-    classes: 'Class 1, 2, 3, 4, 5',
-    baseHourlyRate: 600,
-    baseMonthlyRate: 6500,
-    focusArea: 'Foundational reading, writing, mental maths, phonics, and homework assistance.',
+    slug: 'general',
+    prefix: '',
+    titleSuffix: 'Home Tutors',
+    badgeLabel: 'Verified In-Person Educators',
+    descriptionSnippet: 'Personalized 1-on-1 home tuition by audited teachers.',
+    specialHighlight: '100% In-person background verified by SSSAM Academy.',
   },
   {
-    slug: 'middle-school-classes-6-to-8',
-    name: 'Middle School (Class 6 to 8)',
-    classes: 'Class 6, 7, 8',
-    baseHourlyRate: 700,
-    baseMonthlyRate: 8000,
-    focusArea: 'Concept building in Science, Maths, English grammar, and foreign languages for CBSE/ICSE/IB.',
+    slug: 'female-tutor',
+    prefix: 'female-',
+    titleSuffix: 'Female Home Tutors (Lady Teachers)',
+    badgeLabel: 'Verified Female Educators Active',
+    descriptionSnippet: 'Experienced lady home tutors specializing in safe, nurturing 1-on-1 mentoring for school students.',
+    specialHighlight: 'Background-verified female educators with proven academic excellence and caring pedagogy.',
   },
   {
-    slug: 'secondary-class-9-and-10',
-    name: 'Secondary School (Class 9 & 10 Boards)',
-    classes: 'Class 9, Class 10 (Board Prep)',
-    baseHourlyRate: 850,
-    baseMonthlyRate: 10000,
-    focusArea: 'CBSE 10th Board 95+ target, ICSE syllabus mastery, NCERT Exemplar, and sample papers.',
+    slug: 'class-9-cbse',
+    prefix: 'class-9-cbse-',
+    titleSuffix: 'Class 9 CBSE Home Tutors',
+    badgeLabel: 'Class 9 Board Foundation Faculty',
+    descriptionSnippet: 'Master fundamental concepts, NCERT exemplar problem-solving, and school terminal examination preparations.',
+    specialHighlight: 'Strong foundation building for Class 10 Board exam readiness.',
   },
   {
-    slug: 'senior-secondary-class-11-and-12',
-    name: 'Senior Secondary (Class 11 & 12 Science & Commerce)',
-    classes: 'Class 11, Class 12 (Board & Entrance)',
-    baseHourlyRate: 1100,
-    baseMonthlyRate: 13500,
-    focusArea: 'Board exam perfection, HC Verma, TS Grewal, reaction mechanisms, and entrance foundation.',
+    slug: 'class-10-cbse',
+    prefix: 'class-10-cbse-',
+    titleSuffix: 'Class 10 CBSE Board Home Tutors',
+    badgeLabel: 'Class 10 CBSE 95+ Board Mentors',
+    descriptionSnippet: 'Specialized 10th board preparation, previous 10-year question papers, NCERT mastery, and time-management strategies.',
+    specialHighlight: 'Targeting 95+ percentage in CBSE Board examinations with weekly mock tests.',
   },
   {
-    slug: 'ib-igcse-international-curriculum',
-    name: 'IB Diploma & Cambridge IGCSE',
-    classes: 'IB MYP, IB DP (HL/SL), Cambridge IGCSE',
-    baseHourlyRate: 1500,
-    baseMonthlyRate: 18000,
-    focusArea: 'Internal Assessments (IA), Extended Essays (EE), past papers, and criterion-based grading.',
+    slug: 'class-11-cbse',
+    prefix: 'class-11-cbse-',
+    titleSuffix: 'Class 11 Science & Commerce Home Tutors',
+    badgeLabel: 'Class 11 Concept Specialists',
+    descriptionSnippet: 'Bridge the jump from Class 10 to Class 11 with in-depth concept clarity, derivations, and numerical coaching.',
+    specialHighlight: 'Crucial bridge course mentoring for school exams and entrance foundations.',
   },
   {
-    slug: 'neet-jee-competitive-foundation',
-    name: 'NEET Medical & JEE Main Engineering Prep',
-    classes: 'Class 11, 12 & Droppers',
-    baseHourlyRate: 1400,
-    baseMonthlyRate: 16500,
-    focusArea: 'High-speed numerical solving, negative marking reduction, past 15-year papers, and formula retention.',
+    slug: 'class-12-cbse',
+    prefix: 'class-12-cbse-',
+    titleSuffix: 'Class 12 Board Exam Home Tutors',
+    badgeLabel: 'Class 12 Board 100/100 Specialists',
+    descriptionSnippet: 'High-yield board exam coaching, sample papers, NCERT line-by-line decoding, and practical file viva preparation.',
+    specialHighlight: 'Mastering the exact CBSE marking scheme to guarantee high scores.',
+  },
+  {
+    slug: 'ib-board',
+    prefix: 'ib-board-',
+    titleSuffix: 'IB Diploma (MYP & DP HL/SL) Home Tutors',
+    badgeLabel: 'Certified IB DP & MYP Faculty',
+    descriptionSnippet: 'Criterion-based assessment support, Internal Assessments (IA), Extended Essays (EE), and past paper analysis.',
+    specialHighlight: 'Specialized IB tutors for Pathways, Heritage, British School & Shri Ram students.',
+  },
+  {
+    slug: 'igcse-cambridge',
+    prefix: 'igcse-cambridge-',
+    titleSuffix: 'Cambridge IGCSE & A-Levels Home Tutors',
+    badgeLabel: 'Cambridge IGCSE Certified Mentors',
+    descriptionSnippet: 'Past papers solving, structured command-word answer writing, and practical skills coaching for Cambridge exams.',
+    specialHighlight: 'Aligned with CIE syllabus and grade-boundary mastery.',
+  },
+  {
+    slug: 'neet-prep',
+    prefix: 'neet-',
+    titleSuffix: 'NEET Medical Entrance Home Tutors',
+    badgeLabel: 'NEET 680+ Medical Specialists',
+    descriptionSnippet: 'High-speed NCERT-based numerical solving, assertion-reason practice, and error analysis to eliminate negative marking.',
+    specialHighlight: 'Specialized 1-on-1 mentoring by top medical faculty and rankers.',
+  },
+  {
+    slug: 'jee-main',
+    prefix: 'jee-main-',
+    titleSuffix: 'JEE Main & Advanced Home Tutors',
+    badgeLabel: 'IIT-JEE Foundation Mentors',
+    descriptionSnippet: 'Deep analytical problem solving, HC Verma & Irodov discussions, speed tricks, and shortcut formulas.',
+    specialHighlight: 'Dedicated 1-on-1 problem-solving sessions for Engineering aspirants.',
   },
 ];

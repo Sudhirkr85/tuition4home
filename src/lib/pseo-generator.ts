@@ -1,10 +1,10 @@
 import {
   PSEO_LOCALITIES,
   PSEO_SUBJECTS,
-  PSEO_GRADE_LEVELS,
+  PSEO_INTENT_TRACKS,
   PSEOLocality,
   PSEOSubject,
-  PSEOGradeLevel,
+  PSEOIntentTrack,
 } from './pseo-data';
 import { SSSAM_OFFICE_DETAILS } from './data';
 
@@ -15,6 +15,7 @@ export interface PSEOPagePayload {
   canonicalUrl: string;
   h1: string;
   subheading: string;
+  badgeLabel: string;
   intro: string;
   pedagogyHighlight: string;
   curriculumTopics: string[];
@@ -23,7 +24,7 @@ export interface PSEOPagePayload {
   topSchools: string[];
   locality: PSEOLocality;
   subject: PSEOSubject;
-  gradeLevel?: PSEOGradeLevel;
+  intentTrack: PSEOIntentTrack;
   pricing: {
     hourlyRateHome: string;
     hourlyRateOnline: string;
@@ -41,67 +42,77 @@ export interface PSEOPagePayload {
 }
 
 /**
- * Normalizes and extracts Subject, Locality and Grade from any URL slug
+ * Resolves Locality, Subject and Intent Track from any URL slug
  */
 export function resolvePSEOSlug(slug: string): {
   locality: PSEOLocality;
   subject: PSEOSubject;
-  gradeLevel?: PSEOGradeLevel;
+  intentTrack: PSEOIntentTrack;
 } {
-  const cleanSlug = slug.toLowerCase().replace(/-home-tutor-in-|-tutor-in-|-tuition-in-|-tutor-|-tuition-|-home-tutor-/g, '-');
-  
-  // Find locality match
-  let matchedLocality = PSEO_LOCALITIES.find((l) => slug.includes(l.slug) || cleanSlug.includes(l.slug.replace('-gurgaon', '').replace('-delhi', '')));
-  
+  const cleanSlug = slug.toLowerCase();
+
+  // 1. Resolve Intent Track
+  let matchedIntent = PSEO_INTENT_TRACKS.find(
+    (t) => t.prefix !== '' && cleanSlug.startsWith(t.prefix)
+  );
+  if (!matchedIntent) {
+    matchedIntent = PSEO_INTENT_TRACKS[0]; // General
+  }
+
+  // 2. Resolve Locality Match
+  let matchedLocality = PSEO_LOCALITIES.find(
+    (l) => cleanSlug.includes(l.slug) || cleanSlug.includes(l.slug.replace('-gurgaon', '').replace('-delhi', '').replace('-noida', ''))
+  );
+
   if (!matchedLocality) {
-    // Check city keyword
-    if (slug.includes('delhi')) {
+    if (cleanSlug.includes('noida')) {
+      matchedLocality = PSEO_LOCALITIES.find((l) => l.city === 'Noida') || PSEO_LOCALITIES[0];
+    } else if (cleanSlug.includes('delhi')) {
       matchedLocality = PSEO_LOCALITIES.find((l) => l.city === 'Delhi') || PSEO_LOCALITIES[0];
     } else {
-      matchedLocality = PSEO_LOCALITIES[0]; // Default DLF Phase 5 Gurgaon
+      matchedLocality = PSEO_LOCALITIES[0]; // DLF Phase 5
     }
   }
 
-  // Find subject match
-  let matchedSubject = PSEO_SUBJECTS.find((s) => slug.includes(s.slug) || cleanSlug.includes(s.slug));
+  // 3. Resolve Subject Match
+  let matchedSubject = PSEO_SUBJECTS.find((s) => cleanSlug.includes(s.slug));
   if (!matchedSubject) {
-    if (slug.includes('math')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'mathematics');
-    else if (slug.includes('physic')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'physics');
-    else if (slug.includes('chem')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'chemistry');
-    else if (slug.includes('bio')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'biology');
-    else if (slug.includes('account')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'accountancy');
-    else if (slug.includes('eco')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'economics');
-    else if (slug.includes('french')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'french-language');
-    else if (slug.includes('german')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'german-language');
-    else if (slug.includes('python') || slug.includes('coding') || slug.includes('computer')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'computer-science-python');
+    if (cleanSlug.includes('math')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'mathematics');
+    else if (cleanSlug.includes('physic')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'physics');
+    else if (cleanSlug.includes('chem')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'chemistry');
+    else if (cleanSlug.includes('bio')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'biology');
+    else if (cleanSlug.includes('account')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'accountancy');
+    else if (cleanSlug.includes('eco')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'economics');
+    else if (cleanSlug.includes('french')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'french-language');
+    else if (cleanSlug.includes('german')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'german-language');
+    else if (cleanSlug.includes('python') || cleanSlug.includes('coding') || cleanSlug.includes('computer')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'computer-science-python');
     else matchedSubject = PSEO_SUBJECTS[0]; // Default Mathematics
   }
-
-  // Find grade level match (optional)
-  const matchedGrade = PSEO_GRADE_LEVELS.find((g) => slug.includes(g.slug) || cleanSlug.includes(g.slug));
 
   return {
     locality: matchedLocality || PSEO_LOCALITIES[0],
     subject: matchedSubject || PSEO_SUBJECTS[0],
-    gradeLevel: matchedGrade,
+    intentTrack: matchedIntent,
   };
 }
 
 /**
  * Calculates dynamic hyper-local pricing based on affluence tier and subject
  */
-function calculatePseoPricing(locality: PSEOLocality, subject: PSEOSubject, gradeLevel?: PSEOGradeLevel) {
+function calculatePseoPricing(locality: PSEOLocality, subject: PSEOSubject, intentTrack: PSEOIntentTrack) {
   let multiplier = 1.0;
   if (locality.affluenceTier === 'ULTRA_LUXURY') multiplier = 1.35;
   else if (locality.affluenceTier === 'PREMIUM') multiplier = 1.15;
 
   let baseRate = 850;
-  if (gradeLevel) {
-    baseRate = gradeLevel.baseHourlyRate;
-  } else if (subject.category === 'STEM' && (subject.slug === 'physics' || subject.slug === 'chemistry')) {
-    baseRate = 950;
-  } else if (subject.slug === 'french-language' || subject.slug === 'german-language') {
+  if (intentTrack.slug === 'ib-board' || intentTrack.slug === 'igcse-cambridge') {
+    baseRate = 1400;
+  } else if (intentTrack.slug === 'neet-prep' || intentTrack.slug === 'jee-main') {
+    baseRate = 1300;
+  } else if (intentTrack.slug === 'class-12-cbse' || intentTrack.slug === 'class-11-cbse') {
     baseRate = 1000;
+  } else if (subject.slug === 'french-language' || subject.slug === 'german-language') {
+    baseRate = 950;
   }
 
   const finalMinHourly = Math.round((baseRate * multiplier * 0.9) / 50) * 50;
@@ -125,48 +136,56 @@ function calculatePseoPricing(locality: PSEOLocality, subject: PSEOSubject, grad
 
 /**
  * Master Programmatic SEO Content Generator
- * Generates 100% unique, anti-duplicate landing page payloads
+ * Generates 100% unique, anti-duplicate landing page payloads for all 50,000+ paths
  */
 export function generatePSEOPagePayload(slug: string): PSEOPagePayload {
-  const { locality, subject, gradeLevel } = resolvePSEOSlug(slug);
-  const pricing = calculatePseoPricing(locality, subject, gradeLevel);
+  const { locality, subject, intentTrack } = resolvePSEOSlug(slug);
+  const pricing = calculatePseoPricing(locality, subject, intentTrack);
   const baseUrl = 'https://tuitionforhome.com';
   const canonicalUrl = `${baseUrl}/tuition/${slug}`;
 
   // Unique Dynamic Meta Title & Description
   const schoolMention = locality.topSchools.slice(0, 2).join(' & ');
-  const gradeLabel = gradeLevel ? `${gradeLevel.name} ` : '';
-  
-  const metaTitle = `Best ${gradeLabel}${subject.name} Home Tutors in ${locality.name}, ${locality.city} | SSSAM Academy`;
-  const metaDesc = `Hire verified 1-on-1 ${subject.name} home tutors in ${locality.name}, ${locality.city} (${locality.landmark}). Tailored mentoring for students of ${schoolMention}. 100% in-person verified & free demo class.`;
+  const trackTitle = intentTrack.titleSuffix;
+
+  const metaTitle = `Best ${subject.name} ${trackTitle} in ${locality.name}, ${locality.city} | SSSAM Academy`;
+  const metaDesc = `Hire verified 1-on-1 ${subject.name} ${trackTitle.toLowerCase()} in ${locality.name}, ${locality.city} (${locality.landmark}). ${intentTrack.descriptionSnippet} Aligned with ${schoolMention}. Free demo class.`;
 
   // Unique H1 and Subheading
-  const h1 = `Best ${subject.name} Home Tutors in ${locality.name}, ${locality.city}`;
-  const subheading = `Verified In-Person 1-on-1 Educators for CBSE, ICSE, IB & Cambridge curricula across ${locality.name} (${locality.landmark}).`;
+  const h1 = `Best ${subject.name} ${trackTitle} in ${locality.name}, ${locality.city}`;
+  const subheading = `Certified 1-on-1 In-Home Mentors across ${locality.name} (${locality.landmark}). ${intentTrack.specialHighlight}`;
 
-  // Engaging Anti-Duplicate Intro
-  const intro = `${subject.name} mastery requires individualized attention, structured doubt-clearing sessions, and steady weekly exam preparation. Our certified educators in ${locality.name}, ${locality.city} provide customized 1-on-1 in-home mentoring tailored to the specific examination schedules of leading local institutions including ${locality.topSchools.join(', ')}. Backed by SSSAM Academy Sector 14, every educator is rigorously audited with verified credentials and classroom pedagogy.`;
+  // Engaging Anti-Duplicate Intro tailored to Intent Track
+  let intro = `${subject.name} mentoring requires individualized pace, conceptual problem solving, and steady weekly exam preparation. Our certified educators in ${locality.name}, ${locality.city} deliver customized 1-on-1 in-home coaching tailored to the rigorous academic benchmarks of premier schools in the vicinity including ${locality.topSchools.join(', ')}. Backed by SSSAM Academy Sector 14, each teacher undergoes multi-step in-person auditing and background checks.`;
 
-  // Contextual Localized FAQs
+  if (intentTrack.slug === 'female-tutor') {
+    intro = `Looking for trusted lady home tutors for your child in ${locality.name}? Our verified female ${subject.name} educators in ${locality.name}, ${locality.city} provide compassionate, safe, and academically rigorous 1-on-1 mentoring. Aligned with curricula of institutions such as ${locality.topSchools.join(', ')}, each female tutor is background-checked and audited in person by SSSAM Academy.`;
+  } else if (intentTrack.slug === 'ib-board') {
+    intro = `Mastering ${subject.name} under the International Baccalaureate (IB MYP & DP) requires analytical depth, inquiry-based learning, and mastery of Internal Assessments (IAs). Our IB-certified home educators in ${locality.name} specialize in criterion-based rubrics for students of top international institutions including ${locality.topSchools.join(', ')}.`;
+  } else if (intentTrack.slug === 'neet-prep' || intentTrack.slug === 'jee-main') {
+    intro = `Cracking competitive entrance exams in ${subject.name} demands conceptual speed, high-frequency numerical practice, and error-elimination strategies. Our entrance faculty in ${locality.name}, ${locality.city} provides personalized 1-on-1 coaching focusing on previous 15-year papers and high-yield question formats.`;
+  }
+
+  // Contextual Localized FAQs tailored to Intent & Locality
   const faqs = [
     {
-      question: `How quickly can a verified ${subject.name} home teacher start in ${locality.name}, ${locality.city}?`,
-      answer: `Following your inquiry, SSSAM Academy academic counselors match a background-checked ${subject.name} educator within ${locality.averageTravelMin || 10}–15 minutes. A trial demo class can be scheduled at your residence in ${locality.name} within 24 to 48 hours.`,
+      question: `How quickly can a verified ${subject.name} teacher start in ${locality.name}, ${locality.city}?`,
+      answer: `Following your request, SSSAM Academy academic counselors match a background-checked ${subject.name} educator within ${locality.averageTravelMin || 10}–15 minutes. A trial demo class can be scheduled at your residence in ${locality.name} within 24 to 48 hours.`,
     },
     {
-      question: `Do your tutors teach according to the curriculum of schools near ${locality.name}?`,
-      answer: `Yes, our teachers specialize in the exact syllabi and terminal exam question patterns followed by premier schools around ${locality.name}, including ${locality.topSchools.join(', ')}.`,
+      question: `Do your tutors follow the exact exam pattern of schools in ${locality.name}?`,
+      answer: `Yes, our teachers specialize in the syllabi, assignment standards, and terminal exam question formats followed by leading schools around ${locality.name}, including ${locality.topSchools.join(', ')}.`,
     },
     {
       question: `What are the typical home tuition charges for ${subject.name} in ${locality.name}?`,
-      answer: `In ${locality.name} (${locality.city}), verified 1-on-1 home tuition rates range from ${pricing.hourlyRateHome} depending on the student's grade level, weekly frequency, and board (CBSE, ICSE, IB DP, or IGCSE).`,
+      answer: `In ${locality.name} (${locality.city}), verified 1-on-1 home tuition rates range from ${pricing.hourlyRateHome} depending on class level, frequency (2 to 5 days/week), and board (${locality.popularBoard}).`,
     },
     {
-      question: `What if my child is unsatisfied with the assigned tutor?`,
-      answer: `TuitionForHome provides a 100% Free Replacement Guarantee backed by SSSAM Academy. If the student does not connect with the tutor's teaching pace, an alternate verified educator is arranged immediately at no extra matchmaking fee.`,
+      question: `What if my child does not connect with the assigned tutor?`,
+      answer: `TuitionForHome provides a 100% Free Replacement Guarantee backed by SSSAM Academy. If the student does not connect with the tutor's teaching pace, an alternate verified educator is arranged immediately at no extra charge.`,
     },
     {
-      question: `Are offline in-person classes also available at your Sector 14 center?`,
+      question: `Can students also visit your physical center for offline coaching?`,
       answer: `Yes! Parents who prefer classroom coaching can also enroll their children directly at our SSSAM Academy Physical Learning Center located in Sector 14, Old DLF, Gurugram.`,
     },
   ];
@@ -273,6 +292,7 @@ export function generatePSEOPagePayload(slug: string): PSEOPagePayload {
     canonicalUrl,
     h1,
     subheading,
+    badgeLabel: intentTrack.badgeLabel,
     intro,
     pedagogyHighlight: subject.pedagogyFocus,
     curriculumTopics: subject.curriculumTopics,
@@ -281,7 +301,7 @@ export function generatePSEOPagePayload(slug: string): PSEOPagePayload {
     topSchools: locality.topSchools,
     locality,
     subject,
-    gradeLevel,
+    intentTrack,
     pricing,
     faqs,
     schemaJsonLd: {
@@ -291,26 +311,4 @@ export function generatePSEOPagePayload(slug: string): PSEOPagePayload {
       breadcrumbSchema,
     },
   };
-}
-
-/**
- * Generates all Programmatic Slugs for Gurgaon & Delhi matrix (12,000+ paths)
- */
-export function getAllPSEOSlugs(): string[] {
-  const slugs: string[] = [];
-
-  for (const locality of PSEO_LOCALITIES) {
-    for (const subject of PSEO_SUBJECTS) {
-      // 1. Subject in Locality pattern (e.g. maths-home-tutor-in-dlf-phase-5-gurgaon)
-      slugs.push(`${subject.slug}-home-tutor-in-${locality.slug}`);
-      
-      // 2. Class-specific patterns for top STEM subjects
-      if (subject.slug === 'mathematics' || subject.slug === 'physics' || subject.slug === 'chemistry') {
-        slugs.push(`class-10-cbse-${subject.slug}-tutor-in-${locality.slug}`);
-        slugs.push(`class-12-${subject.slug}-tutor-in-${locality.slug}`);
-      }
-    }
-  }
-
-  return slugs;
 }

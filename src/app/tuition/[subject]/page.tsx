@@ -94,6 +94,7 @@ export default async function SubjectPage({ params }: PageProps) {
   // Fetch live verified tutors from MySQL matching subject category
   let dynamicTutors: MockTutor[] = [];
   try {
+    const isFemaleIntent = payload.intentTrack.slug === 'female-tutor';
     const isMaths = payload.subject.slug === 'mathematics';
     const isPhysics = payload.subject.slug === 'physics';
     const isChemistry = payload.subject.slug === 'chemistry';
@@ -101,8 +102,11 @@ export default async function SubjectPage({ params }: PageProps) {
     const isCS = payload.subject.slug.includes('computer') || payload.subject.slug.includes('python');
     const isCommerce = payload.subject.category === 'COMMERCE';
 
+    const whereCondition: any = { status: 'ACTIVE_VERIFIED' };
+    if (isFemaleIntent) whereCondition.gender = 'FEMALE';
+
     const dbTutors = await prisma.tutorProfile.findMany({
-      where: { status: 'ACTIVE_VERIFIED' },
+      where: whereCondition,
       include: { user: true },
       take: 8,
     });
