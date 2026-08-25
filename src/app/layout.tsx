@@ -176,7 +176,7 @@ export default function RootLayout({
               },
               sameAs: [
                 'https://www.instagram.com/tuition4home',
-                'https://www.facebook.com/tuition4home',
+                'https://www.facebook.com/share/1FL3vBLgqm/',
                 'https://www.youtube.com/@codingwithsudhir',
               ],
             }),

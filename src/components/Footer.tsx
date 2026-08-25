@@ -71,7 +71,7 @@ export default function Footer() {
               </a>
 
               <a
-                href="https://www.facebook.com/tuition4home"
+                href="https://www.facebook.com/share/1FL3vBLgqm/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Tuition4Home Facebook"
