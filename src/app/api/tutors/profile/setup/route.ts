@@ -127,9 +127,36 @@ export async function POST(req: Request) {
     
     if (travelRadiusKm !== undefined) profileUpdateData.travelRadiusKm = Number(travelRadiusKm);
     
-    // Save GPS location for proximity matching
-    if (body.latitude !== undefined && body.latitude !== null && !isNaN(Number(body.latitude))) profileUpdateData.latitude = parseFloat(body.latitude);
-    if (body.longitude !== undefined && body.longitude !== null && !isNaN(Number(body.longitude))) profileUpdateData.longitude = parseFloat(body.longitude);
+    // Save GPS location for proximity matching (or auto-resolve from service areas / address)
+    let resolvedLat = body.latitude !== undefined && body.latitude !== null && !isNaN(Number(body.latitude)) ? parseFloat(body.latitude) : null;
+    let resolvedLng = body.longitude !== undefined && body.longitude !== null && !isNaN(Number(body.longitude)) ? parseFloat(body.longitude) : null;
+
+    if ((!resolvedLat || !resolvedLng) && Array.isArray(serviceAreas) && serviceAreas.length > 0) {
+      for (const area of serviceAreas) {
+        const areaStr = String(area).toLowerCase();
+        // Check common Gurgaon locations
+        if (areaStr.includes('56')) { resolvedLat = 28.4315; resolvedLng = 77.1035; break; }
+        if (areaStr.includes('57')) { resolvedLat = 28.4255; resolvedLng = 77.0885; break; }
+        if (areaStr.includes('50') || areaStr.includes('nirvana')) { resolvedLat = 28.4185; resolvedLng = 77.0655; break; }
+        if (areaStr.includes('49') || areaStr.includes('orchid')) { resolvedLat = 28.4125; resolvedLng = 77.0515; break; }
+        if (areaStr.includes('48') || areaStr.includes('sohna')) { resolvedLat = 28.4205; resolvedLng = 77.0395; break; }
+        if (areaStr.includes('phase 5') || areaStr.includes('aralias')) { resolvedLat = 28.4552; resolvedLng = 77.0945; break; }
+        if (areaStr.includes('golf course')) { resolvedLat = 28.4595; resolvedLng = 77.0988; break; }
+        if (areaStr.includes('phase 1')) { resolvedLat = 28.4795; resolvedLng = 77.1025; break; }
+        if (areaStr.includes('phase 2')) { resolvedLat = 28.4895; resolvedLng = 77.0895; break; }
+        if (areaStr.includes('phase 4') || areaStr.includes('galleria')) { resolvedLat = 28.4685; resolvedLng = 77.0855; break; }
+        if (areaStr.includes('14')) { resolvedLat = 28.4728; resolvedLng = 77.0345; break; }
+        if (areaStr.includes('sushant lok')) { resolvedLat = 28.4615; resolvedLng = 77.0785; break; }
+        if (areaStr.includes('palam vihar')) { resolvedLat = 28.5095; resolvedLng = 77.0425; break; }
+      }
+      if (!resolvedLat || !resolvedLng) {
+        resolvedLat = 28.4595;
+        resolvedLng = 77.0988; // Default Central Gurgaon
+      }
+    }
+
+    if (resolvedLat !== null) profileUpdateData.latitude = resolvedLat;
+    if (resolvedLng !== null) profileUpdateData.longitude = resolvedLng;
     if (body.formattedAddress !== undefined) profileUpdateData.formattedAddress = body.formattedAddress;
 
     // Store price ranges
@@ -188,19 +215,23 @@ export async function POST(req: Request) {
         data: profileUpdateData
       });
 
-      // Update user phone if provided and currently empty (e.g. Google signup users)
+      // Update user phone and role
+      const userUpdates: any = { role: 'TUTOR' };
       if (body.phone) {
-        const cleanPhone = body.phone.replace(/\D/g, '').slice(0, 10);
+        let cleanPhone = String(body.phone).replace(/\D/g, '');
+        if (cleanPhone.startsWith('91') && cleanPhone.length === 12) {
+          cleanPhone = cleanPhone.slice(2);
+        } else if (cleanPhone.length > 10) {
+          cleanPhone = cleanPhone.slice(-10);
+        }
         if (cleanPhone.length === 10) {
-          const existingUser = await tx.user.findUnique({ where: { id: profile.userId } });
-          if (existingUser && (!existingUser.phone || existingUser.phone.trim() === '')) {
-            await tx.user.update({
-              where: { id: profile.userId },
-              data: { phone: cleanPhone },
-            });
-          }
+          userUpdates.phone = cleanPhone;
         }
       }
+      await tx.user.update({
+        where: { id: profile.userId },
+        data: userUpdates,
+      });
 
       // Handle KYC creation/update if not verified or updating before verification
       if (idType && idNumber && !profile.isVerified) {

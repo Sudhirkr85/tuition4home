@@ -666,16 +666,29 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
                       <span>Public Profile</span>
                       <ExternalLink size={12} />
                     </Link>
-                    <a
-                      href={`https://wa.me/91${tutor.phone?.replace(/[^0-9]/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-secondary btn-sm"
-                      style={{ fontSize: '0.76rem', fontWeight: 700, padding: '0.35rem 0.65rem', borderRadius: '8px', backgroundColor: '#25D366', color: '#FFFFFF', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                    >
-                      <MessageCircle size={13} />
-                      <span>WhatsApp</span>
-                    </a>
+                    {tutor.phone && tutor.phone !== 'N/A' ? (
+                      <a
+                        href={`https://wa.me/91${tutor.phone?.replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-secondary btn-sm"
+                        style={{ fontSize: '0.76rem', fontWeight: 700, padding: '0.35rem 0.65rem', borderRadius: '8px', backgroundColor: '#25D366', color: '#FFFFFF', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                      >
+                        <MessageCircle size={13} />
+                        <span>WhatsApp</span>
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleOpenEditModal}
+                        className="btn btn-secondary btn-sm"
+                        style={{ fontSize: '0.76rem', fontWeight: 700, padding: '0.35rem 0.65rem', borderRadius: '8px', backgroundColor: '#F1F5F9', color: '#64748B', border: '1px solid #CBD5E1', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                        title="Click to add phone number"
+                      >
+                        <MessageCircle size={13} />
+                        <span>+ Add Phone for WhatsApp</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -686,7 +699,17 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     <Phone size={14} color="#0F6E56" />
-                    <a href={`tel:${tutor.phone}`} style={{ color: '#0F6E56', fontWeight: 700, textDecoration: 'none' }}>{tutor.phone}</a>
+                    {tutor.phone && tutor.phone !== 'N/A' ? (
+                      <a href={`tel:${tutor.phone}`} style={{ color: '#0F6E56', fontWeight: 700, textDecoration: 'none' }}>{tutor.phone}</a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleOpenEditModal}
+                        style={{ background: 'none', border: 'none', color: '#DC2626', fontWeight: 700, padding: 0, cursor: 'pointer', textDecoration: 'underline', fontSize: 'inherit' }}
+                      >
+                        N/A (Click to Add)
+                      </button>
+                    )}
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     <GraduationCap size={14} color="#0F6E56" />

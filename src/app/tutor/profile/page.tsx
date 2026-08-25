@@ -116,6 +116,7 @@ export default function TutorProfileDashboard() {
   const [hasPoliceCheck, setHasPoliceCheck] = useState(false);
   const [rating, setRating] = useState(5.0);
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [phone, setPhone] = useState('');
   const [cropperOpen, setCropperOpen] = useState(false);
   const [rawPhotoToCrop, setRawPhotoToCrop] = useState('');
   const [reviews, setReviews] = useState<{ id: string; parentName: string; rating: number; comment: string; createdAt: string }[]>([]);
@@ -426,6 +427,7 @@ export default function TutorProfileDashboard() {
             } catch {}
           }
           if (prof.isAvailable !== undefined) setIsAvailable(Boolean(prof.isAvailable));
+          if (prof.user?.phone) setPhone(prof.user.phone);
           setBio(prof.bio || '');
           setGender(prof.gender || 'FEMALE');
           setHighestDegree(prof.highestDegree || '');
@@ -700,6 +702,7 @@ export default function TutorProfileDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: activeUserId,
+          phone,
           gender,
           highestDegree,
           qualifications,
@@ -2945,6 +2948,29 @@ export default function TutorProfileDashboard() {
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  {/* Contact Mobile Number */}
+                  <div className="form-group" style={{ backgroundColor: '#FFFFFF', borderRadius: '16px', padding: '1.25rem', border: '1.5px solid var(--border-hairline)' }}>
+                    <label className="form-label" style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Phone size={16} color="var(--brand-teal)" />
+                      Registered Mobile Number <span style={{ color: '#DC2626' }}>*</span>
+                    </label>
+                    <div style={{ position: 'relative', maxWidth: '360px' }}>
+                      <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748B', fontSize: '0.9rem' }}>📞</span>
+                      <input
+                        type="tel"
+                        maxLength={10}
+                        placeholder="10-digit mobile number"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        className="form-control"
+                        style={{ paddingLeft: '2.8rem', fontWeight: 700, letterSpacing: '0.5px' }}
+                      />
+                    </div>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginTop: '0.35rem' }}>
+                      Our academic counselors and parents use this number for tuition assignments and demo scheduling.
+                    </span>
                   </div>
 
                   {/* Bio & Teaching Philosophy */}

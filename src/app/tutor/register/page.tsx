@@ -425,6 +425,8 @@ export default function TutorRegisterLoginPage() {
       setUserEmail(email);
       if ((authSession.user as any)?.phone && !wizardPhone) {
         setWizardPhone((authSession.user as any).phone);
+      } else if (regPhone && !wizardPhone) {
+        setWizardPhone(regPhone);
       }
       if (image && !profilePhotoUrl) {
         setProfilePhotoUrl(image);
@@ -1084,7 +1086,7 @@ export default function TutorRegisterLoginPage() {
         body: JSON.stringify({
           userId,
           email: userEmail,
-          phone: wizardPhone || regPhone || '',
+          phone: (wizardPhone || regPhone || '').replace(/\D/g, '').slice(-10),
           teachingMode,
           gender,
           highestDegree: degree.trim(),
@@ -2584,52 +2586,58 @@ export default function TutorRegisterLoginPage() {
                   {/* STEP 1: Basic Professional Info */}
                   {currentStep === 1 && (
                     <div>
-                      {/* Mobile Number for Google Sign-in Users */}
-                      {isGoogleUser && (
-                        <div style={{
-                          marginBottom: '1.5rem',
-                          padding: '1.1rem',
-                          borderRadius: '14px',
-                          border: wizardErrorField === 'field-wizardPhone' ? '2px solid #EF4444' : '1.5px solid #A7F3D0',
-                          backgroundColor: wizardErrorField === 'field-wizardPhone' ? '#FEF2F2' : '#F0FDF4',
-                          boxShadow: wizardErrorField === 'field-wizardPhone' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : 'none',
-                        }}>
-                          <label className="form-label" style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      {/* Mobile Number for Matching & Parent Contact */}
+                      <div style={{
+                        marginBottom: '1.5rem',
+                        padding: '1.1rem',
+                        borderRadius: '14px',
+                        border: wizardErrorField === 'field-wizardPhone' ? '2px solid #EF4444' : '1.5px solid #A7F3D0',
+                        backgroundColor: wizardErrorField === 'field-wizardPhone' ? '#FEF2F2' : '#F0FDF4',
+                        boxShadow: wizardErrorField === 'field-wizardPhone' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : 'none',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                          <label className="form-label" style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
                             <Phone size={16} color="var(--brand-teal)" />
-                            Mobile Number <span style={{ color: '#DC2626' }}>*</span>
-                            <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 600, backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.1rem 0.4rem', borderRadius: '6px' }}>
-                              Required for Google Sign-in
-                            </span>
+                            WhatsApp / Calling Mobile Number <span style={{ color: '#DC2626' }}>*</span>
                           </label>
-                          <div style={{ position: 'relative' }}>
-                            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748B', fontSize: '0.9rem' }}>+91</span>
-                            <input
-                              id="field-wizardPhone"
-                              type="tel"
-                              maxLength={10}
-                              placeholder="Enter 10-digit mobile number"
-                              value={wizardPhone}
-                              onChange={(e) => {
-                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                setWizardPhone(val);
-                                if (wizardErrorField === 'field-wizardPhone') setWizardErrorField(null);
-                              }}
-                              className="form-control"
-                              style={{
-                                paddingLeft: '3.2rem',
-                                fontWeight: 700,
-                                letterSpacing: '0.5px',
-                                borderColor: wizardErrorField === 'field-wizardPhone' ? '#EF4444' : undefined,
-                                boxShadow: wizardErrorField === 'field-wizardPhone' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
-                              }}
-                              required
-                            />
-                          </div>
-                          <p style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '0.35rem', margin: 0 }}>
-                            We'll use this to contact you for student matching.
-                          </p>
+                          {/^\d{10}$/.test((wizardPhone || regPhone || '').replace(/\D/g, '').slice(-10)) ? (
+                            <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, backgroundColor: '#DCFCE7', padding: '0.1rem 0.5rem', borderRadius: '6px', border: '1px solid #86EFAC' }}>
+                              ✓ 10 Digits Entered
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.72rem', color: '#D97706', fontWeight: 600, backgroundColor: '#FEF3C7', padding: '0.1rem 0.5rem', borderRadius: '6px' }}>
+                              10 Digits Required
+                            </span>
+                          )}
                         </div>
-                      )}
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#64748B', fontSize: '0.9rem' }}>📞</span>
+                          <input
+                            id="field-wizardPhone"
+                            type="tel"
+                            maxLength={10}
+                            placeholder="Enter 10-digit mobile number"
+                            value={wizardPhone || regPhone}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                              setWizardPhone(val);
+                              if (wizardErrorField === 'field-wizardPhone') setWizardErrorField(null);
+                            }}
+                            className="form-control"
+                            style={{
+                              paddingLeft: '2.8rem',
+                              fontWeight: 700,
+                              letterSpacing: '0.5px',
+                              borderColor: wizardErrorField === 'field-wizardPhone' ? '#EF4444' : undefined,
+                              boxShadow: wizardErrorField === 'field-wizardPhone' ? '0 0 0 3.5px rgba(239, 68, 68, 0.22)' : undefined,
+                            }}
+                            required
+                          />
+                        </div>
+                        <p style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '0.35rem', margin: 0 }}>
+                          Tuition leads, demo schedules, and parent matching alerts will be sent directly to this number.
+                        </p>
+                      </div>
                       <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.45rem' }}>
                         Step 1: Teaching Mode & Basic Profile Info
                       </h3>
@@ -4970,7 +4978,8 @@ export default function TutorRegisterLoginPage() {
                           type="button"
                           onClick={() => {
                             if (currentStep === 1) {
-                              if (isGoogleUser && (!wizardPhone || wizardPhone.replace(/\D/g, '').length !== 10)) {
+                              const effPhone = (wizardPhone || regPhone || '').replace(/\D/g, '').slice(-10);
+                              if (!effPhone || effPhone.length !== 10 || !/^\d{10}$/.test(effPhone)) {
                                 triggerWizardError('field-wizardPhone', '⚠️ Please enter a valid 10-digit mobile number.');
                                 return;
                               }
