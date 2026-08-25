@@ -696,33 +696,75 @@ export default async function SubjectPage({ params }: PageProps) {
         </section>
 
         {/* =========================================================================
-            7. NEARBY LOCALITIES INTERNAL LINKING CLOUD
+            7. MULTI-DIMENSIONAL INTERNAL LINKING SPIDERWEB (GOOGLE CRAWLER ENGINE)
             ========================================================================= */}
-        <section style={{ padding: '3.5rem 0', backgroundColor: '#F8FAFC', borderTop: '1px solid #E2E8F0' }}>
+        <section style={{ padding: '4rem 0', backgroundColor: '#F8FAFC', borderTop: '1px solid #E2E8F0' }}>
           <div className="container">
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', marginBottom: '1.25rem', textAlign: 'center' }}>
-              Explore {payload.subject.name} Home Tutors Across Other {payload.locality.city} &amp; NCR Sectors
-            </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
-              {PSEO_LOCALITIES.slice(0, 30).map((loc) => (
+            {/* Grid 1: Related Search Intent Tracks in this Locality */}
+            <div style={{ marginBottom: '2.5rem' }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '1rem', textAlign: 'center' }}>
+                Popular Search Tracks in {payload.locality.name} ({payload.locality.city})
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
                 <Link
-                  key={loc.slug}
-                  href={`/tuition/${payload.subject.slug}-home-tutor-in-${loc.slug}`}
-                  style={{
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    backgroundColor: '#FFFFFF',
-                    color: '#334155',
-                    border: '1px solid #E2E8F0',
-                    padding: '0.4rem 0.75rem',
-                    borderRadius: '999px',
-                    textDecoration: 'none',
-                    transition: 'all 0.2s ease',
-                  }}
+                  href={`/tuition/female-${payload.subject.slug}-home-tutor-in-${payload.locality.slug}`}
+                  style={{ fontSize: '0.78rem', fontWeight: 700, backgroundColor: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0', padding: '0.4rem 0.8rem', borderRadius: '999px', textDecoration: 'none' }}
                 >
-                  📍 {payload.subject.name} in {loc.name}
+                  👩‍🏫 Female {payload.subject.name} Tutors in {payload.locality.name}
                 </Link>
-              ))}
+                <Link
+                  href={`/tuition/class-10-cbse-${payload.subject.slug}-home-tutor-in-${payload.locality.slug}`}
+                  style={{ fontSize: '0.78rem', fontWeight: 700, backgroundColor: '#EFF6FF', color: '#1E40AF', border: '1px solid #BFDBFE', padding: '0.4rem 0.8rem', borderRadius: '999px', textDecoration: 'none' }}
+                >
+                  🎯 Class 10 CBSE {payload.subject.name} in {payload.locality.name}
+                </Link>
+                <Link
+                  href={`/tuition/class-12-cbse-${payload.subject.slug}-home-tutor-in-${payload.locality.slug}`}
+                  style={{ fontSize: '0.78rem', fontWeight: 700, backgroundColor: '#EFF6FF', color: '#1E40AF', border: '1px solid #BFDBFE', padding: '0.4rem 0.8rem', borderRadius: '999px', textDecoration: 'none' }}
+                >
+                  📚 Class 12 Boards {payload.subject.name} in {payload.locality.name}
+                </Link>
+                <Link
+                  href={`/tuition/ib-board-${payload.subject.slug}-home-tutor-in-${payload.locality.slug}`}
+                  style={{ fontSize: '0.78rem', fontWeight: 700, backgroundColor: '#FAF5FF', color: '#6B21A8', border: '1px solid #E9D5FF', padding: '0.4rem 0.8rem', borderRadius: '999px', textDecoration: 'none' }}
+                >
+                  🌍 IB Diploma {payload.subject.name} in {payload.locality.name}
+                </Link>
+                <Link
+                  href={`/tuition/neet-${payload.subject.slug}-home-tutor-in-${payload.locality.slug}`}
+                  style={{ fontSize: '0.78rem', fontWeight: 700, backgroundColor: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA', padding: '0.4rem 0.8rem', borderRadius: '999px', textDecoration: 'none' }}
+                >
+                  🩺 NEET Prep {payload.subject.name} in {payload.locality.name}
+                </Link>
+              </div>
+            </div>
+
+            {/* Grid 2: Nearby Adjacent Localities & Sectors */}
+            <div>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '1rem', textAlign: 'center' }}>
+                Explore {payload.subject.name} Home Tutors Across Other {payload.locality.city} &amp; NCR Sectors
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
+                {PSEO_LOCALITIES.slice(0, 32).map((loc) => (
+                  <Link
+                    key={loc.slug}
+                    href={`/tuition/${payload.subject.slug}-home-tutor-in-${loc.slug}`}
+                    style={{
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      backgroundColor: '#FFFFFF',
+                      color: '#334155',
+                      border: '1px solid #E2E8F0',
+                      padding: '0.38rem 0.75rem',
+                      borderRadius: '999px',
+                      textDecoration: 'none',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    📍 {payload.subject.name} in {loc.name}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </section>
