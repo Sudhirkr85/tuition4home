@@ -615,8 +615,8 @@ export default function HomePage() {
                   }}>
                     <video
                       ref={parentStoryVideoRef}
-                      src="https://res.cloudinary.com/jhwajyyw/video/upload/q_auto:best,f_auto/v1787649423/tuitionforhome/marketing/tuitionforhome_parent_discussion_reel.mp4"
-                      poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_2,w_800,q_auto:best/v1787649423/tuitionforhome/marketing/tuitionforhome_parent_discussion_reel.jpg"
+                      src="https://res.cloudinary.com/jhwajyyw/video/upload/v1787651799/tuitionforhome/marketing/tuitionforhome_parent_discussion_reel_hq.mp4"
+                      poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_2,w_800/v1787651799/tuitionforhome/marketing/tuitionforhome_parent_discussion_reel_hq.jpg"
                       autoPlay
                       loop
                       muted={isParentStoryMuted}

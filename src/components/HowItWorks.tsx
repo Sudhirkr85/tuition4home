@@ -158,8 +158,8 @@ const Step3Illustration = () => {
     <div style={{ position: 'relative', width: '100%', height: '100%', backgroundColor: '#0F172A', overflow: 'hidden' }}>
       <video
         ref={videoRef}
-        src="https://res.cloudinary.com/jhwajyyw/video/upload/q_auto:best,f_auto/v1787649418/tuitionforhome/marketing/tuitionforhome_tutor_home_visit.mp4"
-        poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_2,w_800,q_auto:best/v1787649418/tuitionforhome/marketing/tuitionforhome_tutor_home_visit.jpg"
+        src="https://res.cloudinary.com/jhwajyyw/video/upload/v1787651802/tuitionforhome/marketing/tuitionforhome_tutor_home_visit_hq.mp4"
+        poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_2,w_800/v1787651802/tuitionforhome/marketing/tuitionforhome_tutor_home_visit_hq.jpg"
         autoPlay
         loop
         muted={isMuted}
