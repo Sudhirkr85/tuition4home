@@ -167,16 +167,12 @@ const getTutorData = cache(async (id: string): Promise<MockTutor | null> => {
         ? dbProfile.rating
         : null;
 
-      const fallbackAvatar = dbProfile.gender === 'MALE'
-        ? '/tutor_rohit_sharma_avatar.webp'
-        : '/tutor_ananya_sengupta_avatar.webp';
-
       return {
         id: dbProfile.id,
         name: dbProfile.user?.name || 'Verified Educator',
         phone: '',
         email: '',
-        avatarUrl: dbProfile.avatarUrl || fallbackAvatar,
+        avatarUrl: dbProfile.avatarUrl || '',
         introVideoUrl: dbProfile.introVideoUrl || '',
         videoDuration: dbProfile.introVideoUrl ? '1m 20s' : '',
         highestDegree: dbProfile.highestDegree || '',

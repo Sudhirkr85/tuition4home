@@ -344,8 +344,14 @@ export default async function LocalityPage({ params }: PageProps) {
                 <div key={tutor.id} className="luxury-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={tutor.avatarUrl} alt={tutor.name} style={{ width: '56px', height: '56px', borderRadius: '14px', objectFit: 'cover' }} />
+                      {tutor.avatarUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={tutor.avatarUrl} alt={tutor.name} style={{ width: '56px', height: '56px', borderRadius: '14px', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '56px', height: '56px', borderRadius: '14px', backgroundColor: '#E6F4EA', border: '1.5px solid #C8E6C9', color: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.2rem' }}>
+                          {tutor.name ? tutor.name.trim().charAt(0).toUpperCase() : 'T'}
+                        </div>
+                      )}
                       <div>
                         <h4 style={{ fontSize: '1.1rem', fontWeight: 800 }}>{tutor.name}</h4>
                         <div style={{ fontSize: '0.78rem', color: 'var(--color-blue-600)', fontWeight: 700 }}>{tutor.badge}</div>

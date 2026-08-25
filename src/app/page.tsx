@@ -18,10 +18,16 @@ const BookingModal = dynamic(() => import('@/components/BookingModal'), {
 const VideoModal = dynamic(() => import('@/components/VideoModal'), {
   ssr: false,
 });
+const PromoVideoModal = dynamic(() => import('@/components/PromoVideoModal'), {
+  ssr: false,
+});
 const RapidoStyleMap = dynamic(() => import('@/components/RapidoStyleMap'), {
   ssr: false,
   loading: () => <div style={{ height: '480px', backgroundColor: '#F8FAFC', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}>Loading Gurgaon Teachers Map...</div>,
 });
+
+import { PROMO_VIDEOS } from '@/lib/promoVideos';
+import { PromoVideoData } from '@/components/PromoVideoModal';
 
 import {
   GURGAON_LOCALITIES,
@@ -82,6 +88,7 @@ export default function HomePage() {
   } | undefined>(undefined);
 
   const [activeVideoTutor, setActiveVideoTutor] = useState<MockTutor | null>(null);
+  const [activePromoVideo, setActivePromoVideo] = useState<PromoVideoData | null>(null);
   const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>([]);
   const [dynamicLocalities, setDynamicLocalities] = useState<LocalityInfo[]>(GURGAON_LOCALITIES);
   const [showAllLocalities, setShowAllLocalities] = useState(false);
@@ -555,12 +562,10 @@ export default function HomePage() {
             ========================================================================= */}
         <HowItWorks onOpenBooking={() => handleOpenBooking()} />
 
-
-
         {/* =========================================================================
             4. FIGMA SCREENSHOT 3 STYLE: MOBILE EXPERIENCE CARD
             ========================================================================= */}
-        <section aria-label="WhatsApp and SMS Class Confirmation" style={{ padding: '2.5rem 0 3.75rem 0', backgroundColor: '#FFFFFF' }}>
+        <section aria-label="WhatsApp and SMS Class Confirmation" style={{ padding: '3rem 0 3.75rem 0', backgroundColor: '#FFFFFF' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: '2.25rem' }}>
               <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
@@ -582,18 +587,66 @@ export default function HomePage() {
               gap: '2.5rem',
               alignItems: 'center',
             }}>
-              {/* Left Column: Phone Mockup Image (Screenshot 3 Style) */}
-              <div style={{ textAlign: 'center' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/mobile_whatsapp_mockup.webp"
-                  alt="Mobile Class Confirmation Mockup"
-                  width={380}
-                  height={284}
-                  loading="lazy"
-                  decoding="async"
-                  style={{ width: '100%', maxWidth: '380px', height: 'auto', borderRadius: '20px', boxShadow: 'var(--shadow-hover)' }}
-                />
+              {/* Left Column: Live Parent Discussion Video in Smartphone Frame */}
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  maxWidth: '300px',
+                  borderRadius: '32px',
+                  backgroundColor: '#0F172A',
+                  padding: '10px',
+                  boxShadow: '0 20px 50px rgba(15, 23, 42, 0.2)',
+                  border: '3px solid #1E293B',
+                }}>
+                  {/* Phone Screen Container */}
+                  <div style={{
+                    position: 'relative',
+                    width: '100%',
+                    aspectRatio: '9/16',
+                    borderRadius: '24px',
+                    overflow: 'hidden',
+                    backgroundColor: '#000000',
+                  }}>
+                    <video
+                      src="https://res.cloudinary.com/jhwajyyw/video/upload/q_auto:eco,f_auto/v1787649423/tuitionforhome/marketing/tuitionforhome_parent_discussion_reel.mp4"
+                      poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_2,w_600,q_auto/v1787649423/tuitionforhome/marketing/tuitionforhome_parent_discussion_reel.jpg"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      preload="metadata"
+                      controls
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}
+                    />
+
+                    {/* Verified Parent Story Tag */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '12px',
+                      left: '12px',
+                      backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                      backdropFilter: 'blur(6px)',
+                      color: '#FFFFFF',
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      padding: '0.25rem 0.6rem',
+                      borderRadius: '999px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      zIndex: 2,
+                    }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22C55E' }} />
+                      <span>Gurgaon Parents Story</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Right Column: Key Experience Points (Screenshot 3 Style) */}
@@ -850,13 +903,31 @@ export default function HomePage() {
                     <div key={tutor.id} className="apple-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                       {/* Top Bar */}
                       <div style={{ padding: '1.25rem', paddingBottom: '0.45rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <Link href={`/tutors/${tutor.id}`} style={{ position: 'relative', display: 'block' }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={tutor.avatarUrl}
-                            alt={tutor.name}
-                            style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }}
-                          />
+                        <Link href={`/tutors/${tutor.id}`} style={{ position: 'relative', display: 'block', flexShrink: 0 }}>
+                          {tutor.avatarUrl ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={tutor.avatarUrl}
+                              alt={tutor.name}
+                              style={{ width: '64px', height: '64px', borderRadius: '16px', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <div style={{
+                              width: '64px',
+                              height: '64px',
+                              borderRadius: '16px',
+                              backgroundColor: '#E6F4EA',
+                              border: '1.5px solid #C8E6C9',
+                              color: '#0F6E56',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.35rem',
+                              fontWeight: 800,
+                            }}>
+                              {tutor.name ? tutor.name.trim().charAt(0).toUpperCase() : 'T'}
+                            </div>
+                          )}
                           <span style={{
                             position: 'absolute',
                             bottom: '-4px',
@@ -1269,6 +1340,28 @@ export default function HomePage() {
                 <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
                   Watch concise video introduction clips of shortlisted teachers to judge communication clarity, accent, and subject confidence before scheduling.
                 </p>
+                <button
+                  type="button"
+                  onClick={() => setActivePromoVideo(PROMO_VIDEOS.overview)}
+                  style={{
+                    marginTop: 'auto',
+                    alignSelf: 'flex-start',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    color: '#B45309',
+                    backgroundColor: '#FEF3C7',
+                    border: '1px solid #FDE68A',
+                    padding: '0.35rem 0.8rem',
+                    borderRadius: '999px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Play size={11} fill="#B45309" />
+                  <span>Watch Sample Audition Video</span>
+                </button>
               </div>
 
               {/* Card 4 */}
@@ -1504,6 +1597,12 @@ export default function HomePage() {
         tutor={activeVideoTutor}
         onClose={() => setActiveVideoTutor(null)}
         onSelectTutor={(tutor) => handleOpenBooking(tutor)}
+      />
+
+      <PromoVideoModal
+        video={activePromoVideo}
+        onClose={() => setActivePromoVideo(null)}
+        onOpenBooking={() => handleOpenBooking()}
       />
 
       <StickyMobileBar onOpenBooking={() => handleOpenBooking()} />

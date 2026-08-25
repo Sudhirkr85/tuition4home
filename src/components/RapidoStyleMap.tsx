@@ -367,10 +367,8 @@ export default function RapidoStyleMap({
 
     sortedTutorsWithDistance.slice(0, 15).forEach((tutor) => {
       const isSelected = currentSelected && currentSelected.id === tutor.id;
-      const defaultAvatar = tutor.gender === 'MALE'
-        ? '/tutor_rohit_sharma_avatar.webp'
-        : '/tutor_ananya_sengupta_avatar.webp';
-      const avatarSrc = tutor.avatarUrl && tutor.avatarUrl.trim() ? tutor.avatarUrl : defaultAvatar;
+      const hasAvatar = Boolean(tutor.avatarUrl && tutor.avatarUrl.trim());
+      const initialLetter = tutor.name ? tutor.name.trim().charAt(0).toUpperCase() : 'T';
 
       const tutorIcon = L.divIcon({
         className: 'custom-tutor-pin',
@@ -378,10 +376,14 @@ export default function RapidoStyleMap({
           <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: ${
             isSelected ? 'scale(1.18)' : 'scale(1)'
           }; transition: transform 0.2s ease;">
-            <div style="position: relative; width: 36px; height: 36px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.22); border: 2.5px solid ${
+            <div style="position: relative; width: 36px; height: 36px; border-radius: 50%; background: #E6F4EA; box-shadow: 0 4px 12px rgba(0,0,0,0.22); border: 2.5px solid ${
               isSelected ? '#0F766E' : tutor.distanceInfo.circleColor
-            }; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-              <img src="${avatarSrc}" onerror="this.onerror=null; this.src='${defaultAvatar}';" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+            }; overflow: hidden; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #0F6E56; font-size: 0.95rem;">
+              ${
+                hasAvatar
+                  ? `<img src="${tutor.avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; display: block;" />`
+                  : `<span>${initialLetter}</span>`
+              }
             </div>
             <div style="display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 800; background: ${
               isSelected ? '#0F172A' : '#FFFFFF'
@@ -399,7 +401,11 @@ export default function RapidoStyleMap({
       const popupHtml = `
         <div style="font-family: inherit; padding: 4px; min-width: 200px; text-align: left;">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-            <img src="${avatarSrc}" onerror="this.onerror=null; this.src='${defaultAvatar}';" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1.5px solid #0F6E56;" />
+            ${
+              hasAvatar
+                ? `<img src="${tutor.avatarUrl}" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1.5px solid #0F6E56;" />`
+                : `<div style="width: 38px; height: 38px; border-radius: 8px; background: #E6F4EA; border: 1.5px solid #0F6E56; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #0F6E56;">${initialLetter}</div>`
+            }
             <div style="flex: 1; min-width: 0;">
               <div style="font-weight: 800; font-size: 0.9rem; color: #0F172A; line-height: 1.2;">${
                 tutor.name
@@ -775,30 +781,38 @@ export default function RapidoStyleMap({
                   prefetch={true}
                   style={{ position: 'relative', display: 'block', flexShrink: 0 }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={
-                      activeTutorDetail.avatarUrl ||
-                      (activeTutorDetail.gender === 'MALE'
-                        ? '/tutor_rohit_sharma_avatar.webp'
-                        : '/tutor_ananya_sengupta_avatar.webp')
-                    }
-                    onError={(e: any) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src =
-                        activeTutorDetail.gender === 'MALE'
-                          ? '/tutor_rohit_sharma_avatar.webp'
-                          : '/tutor_ananya_sengupta_avatar.webp';
-                    }}
-                    alt={activeTutorDetail.name}
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '12px',
-                      border: '2px solid #059669',
-                      objectFit: 'cover',
-                    }}
-                  />
+                  {activeTutorDetail.avatarUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={activeTutorDetail.avatarUrl}
+                      alt={activeTutorDetail.name}
+                      style={{
+                        width: '46px',
+                        height: '46px',
+                        borderRadius: '12px',
+                        border: '2px solid #059669',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '46px',
+                        height: '46px',
+                        borderRadius: '12px',
+                        border: '2px solid #059669',
+                        backgroundColor: '#E6F4EA',
+                        color: '#0F6E56',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '1.1rem',
+                      }}
+                    >
+                      {activeTutorDetail.name ? activeTutorDetail.name.trim().charAt(0).toUpperCase() : 'T'}
+                    </div>
+                  )}
                   <span
                     style={{
                       position: 'absolute',

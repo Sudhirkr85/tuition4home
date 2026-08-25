@@ -3,14 +3,11 @@ import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-// Helper to ensure avatar url has a valid fallback if empty
-function sanitizeAvatarUrl(url: string | null | undefined, gender?: string): string {
+function sanitizeAvatarUrl(url: string | null | undefined): string {
   if (!url || !url.trim()) {
-    return gender === 'MALE'
-      ? '/tutor_rohit_sharma_avatar.webp'
-      : '/tutor_ananya_sengupta_avatar.webp';
+    return '';
   }
-  return url;
+  return url.trim();
 }
 
 export async function GET(req: Request) {
@@ -149,7 +146,7 @@ export async function GET(req: Request) {
         name: tp.user?.name || 'Verified Educator',
         phone: tp.user?.phone || '9811204921',
         email: tp.user?.email || '',
-        avatarUrl: sanitizeAvatarUrl(tp.avatarUrl, tp.gender),
+        avatarUrl: sanitizeAvatarUrl(tp.avatarUrl),
         introVideoUrl: tp.introVideoUrl || '',
         videoDuration: tp.introVideoUrl ? '1m 20s' : '',
         highestDegree: tp.highestDegree || '',

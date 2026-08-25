@@ -4,18 +4,11 @@ import { decrypt } from '@/lib/crypto';
 
 export const dynamic = 'force-dynamic';
 
-function sanitizeAvatarUrl(url: string | null | undefined, gender?: string): string {
-  if (!url) {
-    return gender === 'MALE'
-      ? '/tutor_rohit_sharma_avatar.webp'
-      : '/tutor_ananya_sengupta_avatar.webp';
+function sanitizeAvatarUrl(url: string | null | undefined): string {
+  if (!url || !url.trim()) {
+    return '';
   }
-  if (url.startsWith('data:image/') && url.length > 500) {
-    return gender === 'MALE'
-      ? '/tutor_rohit_sharma_avatar.webp'
-      : '/tutor_ananya_sengupta_avatar.webp';
-  }
-  return url;
+  return url.trim();
 }
 
 export async function GET() {
@@ -69,7 +62,7 @@ export async function GET() {
         name: profile.user?.name || 'Tutor',
         email: profile.user?.email || '',
         phone: profile.user?.phone || 'N/A',
-        avatarUrl: sanitizeAvatarUrl(profile.avatarUrl, profile.gender || undefined),
+        avatarUrl: sanitizeAvatarUrl(profile.avatarUrl),
         introVideoUrl: profile.introVideoUrl || '',
         highestDegree: profile.highestDegree || 'Bachelor Degree',
         experienceYears: profile.experienceYears || 1,
