@@ -432,9 +432,9 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
             </span>
             <a
               href={`tel:${SSSAM_OFFICE_DETAILS.phones[0]}`}
-              style={{ color: '#67E8F9', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.74rem' }}
+              style={{ color: '#67E8F9', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.74rem' }}
             >
-              <Phone size={12} />
+              <Phone size={13} className="phone-icon-animated" />
               <span>Helpline: {SSSAM_OFFICE_DETAILS.phones[0]}</span>
             </a>
           </div>
@@ -501,21 +501,29 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               {/* For Teachers / Tutors */}
               <Link
                 href="/tutor/register"
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary btn-sm btn-teacher-animated"
                 style={{
                   textDecoration: 'none',
-                  padding: '0.5rem 0.95rem',
+                  padding: '0.48rem 0.95rem',
                   fontSize: '0.82rem',
-                  fontWeight: 700,
+                  fontWeight: 800,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.35rem',
-                  borderRadius: '10px',
-                  border: '1.5px solid #CBD5E1',
-                  color: '#0F172A',
+                  gap: '0.45rem',
+                  borderRadius: '12px',
+                  border: '1.5px solid #34D399',
+                  backgroundColor: '#F0FDF4',
+                  color: '#047857',
+                  boxShadow: '0 3px 12px rgba(4, 120, 87, 0.15)',
+                  position: 'relative',
+                  transition: 'all 0.2s ease',
                 }}
               >
-                <GraduationCap size={15} color="#0F6E56" />
+                <span style={{ position: 'relative', display: 'inline-flex', width: '7px', height: '7px' }}>
+                  <span style={{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', backgroundColor: '#22C55E', animation: 'ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite', opacity: 0.8 }} />
+                  <span style={{ position: 'relative', display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#16A34A' }} />
+                </span>
+                <GraduationCap size={15} color="#047857" />
                 <span>I&apos;m a Teacher</span>
               </Link>
 
@@ -581,20 +589,26 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
           ) : (
             <Link
               href="/tutor/register"
-              className="btn btn-secondary btn-sm"
+              className="btn btn-secondary btn-sm btn-teacher-animated"
               style={{
                 fontSize: '0.76rem',
                 padding: '0.38rem 0.65rem',
-                fontWeight: 700,
+                fontWeight: 800,
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.25rem',
+                gap: '0.3rem',
                 borderRadius: '9999px',
                 whiteSpace: 'nowrap',
-                border: '1.5px solid #A7F3D0',
+                border: '1.5px solid #34D399',
                 color: '#047857',
                 backgroundColor: '#ECFDF5',
+                boxShadow: '0 2px 10px rgba(4, 120, 87, 0.18)',
               }}
             >
+              <span style={{ position: 'relative', display: 'inline-flex', width: '6px', height: '6px' }}>
+                <span style={{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', backgroundColor: '#22C55E', animation: 'ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite', opacity: 0.8 }} />
+                <span style={{ position: 'relative', display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#16A34A' }} />
+              </span>
               <GraduationCap size={13} color="#047857" />
               <span>I&apos;m a Teacher</span>
             </Link>
@@ -710,8 +724,16 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
                 fontWeight: 800,
                 fontSize: '0.85rem',
                 padding: '0.6rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                boxShadow: '0 2px 8px rgba(15, 110, 86, 0.15)',
               }}
             >
+              <span style={{ position: 'relative', display: 'inline-flex', width: '7px', height: '7px' }}>
+                <span style={{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', backgroundColor: '#22C55E', animation: 'ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite', opacity: 0.8 }} />
+                <span style={{ position: 'relative', display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#16A34A' }} />
+              </span>
               <GraduationCap size={16} color="#0F6E56" />
               <span>{mounted && tutorSession ? 'My Teacher Dashboard' : 'I\u0027m a Teacher'}</span>
             </Link>

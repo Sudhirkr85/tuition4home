@@ -61,6 +61,7 @@ export default function RapidoStyleMap({
   const leafletPopupMapInstanceRef = useRef<L.Map | null>(null);
   const leafletPopupMarkerRef = useRef<L.Marker | null>(null);
   const tutorLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const landmarksLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const parentMarkerRef = useRef<L.Marker | null>(null);
   const radiusCircleRef = useRef<L.Circle | null>(null);
 
@@ -290,20 +291,21 @@ export default function RapidoStyleMap({
       }).addTo(map);
 
       leafletMapInstanceRef.current = map;
+      landmarksLayerGroupRef.current = L.layerGroup().addTo(map);
       tutorLayerGroupRef.current = L.layerGroup().addTo(map);
       setIsMapReady(true);
       setTimeout(() => map.invalidateSize(), 100);
     } else {
       leafletMapInstanceRef.current.setView(
         [currentCoords.lat, currentCoords.lng],
-        leafletMapInstanceRef.current.getZoom() || 14
+        leafletMapInstanceRef.current.getZoom() || 15
       );
     }
 
     const map = leafletMapInstanceRef.current;
     if (!map) return;
 
-    // Render Parent Marker
+    // Render Parent / User Live GPS Marker
     if (parentMarkerRef.current) {
       try {
         map.removeLayer(parentMarkerRef.current);
@@ -314,22 +316,63 @@ export default function RapidoStyleMap({
       className: 'custom-parent-pin',
       html: `
         <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-          <div style="width: 32px; height: 32px; border-radius: 50%; background: #0F6E56; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(15,110,86,0.5);">
-            <div style="width: 10px; height: 10px; border-radius: 50%; background: #FFFFFF;"></div>
+          <div style="position: relative; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+            <div style="position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #10B981; opacity: 0.45; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: #0F6E56; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(15,110,86,0.6); position: relative; z-index: 2;">
+              <div style="width: 9px; height: 9px; border-radius: 50%; background: #FFFFFF;"></div>
+            </div>
           </div>
-          <span style="font-size: 0.68rem; font-weight: 800; background: #0F6E56; color: #FFFFFF; padding: 2px 7px; border-radius: 999px; margin-top: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.18); white-space: nowrap;">
-            📍 Your Sector
+          <span style="font-size: 0.7rem; font-weight: 800; background: #0F6E56; color: #FFFFFF; padding: 2.5px 8px; border-radius: 999px; margin-top: 1px; box-shadow: 0 2px 8px rgba(0,0,0,0.22); white-space: nowrap; border: 1.5px solid #FFFFFF;">
+            📍 You Are Here
           </span>
         </div>
       `,
-      iconSize: [90, 56],
-      iconAnchor: [45, 16],
+      iconSize: [100, 60],
+      iconAnchor: [50, 19],
     });
 
     parentMarkerRef.current = L.marker([currentCoords.lat, currentCoords.lng], {
       icon: parentIcon,
       zIndexOffset: 1000,
     }).addTo(map);
+
+    // Render Nearby Prominent Landmarks & Points of Interest
+    const KEY_GURGAON_LANDMARKS = [
+      { name: 'SSSAM Academy Center (Sec 14)', icon: '🏫', lat: 28.4728, lng: 77.0345 },
+      { name: 'Galleria Market (DLF 4)', icon: '🛍️', lat: 28.4685, lng: 77.0855 },
+      { name: 'Cyber Hub (DLF 2)', icon: '🏢', lat: 28.4895, lng: 77.0895 },
+      { name: 'Horizon Center (Golf Course Rd)', icon: '🏙️', lat: 28.4552, lng: 77.0945 },
+      { name: 'South City 2 / Nirvana', icon: '🌳', lat: 28.4185, lng: 77.0655 },
+      { name: 'HUDA City Centre Metro', icon: '🚇', lat: 28.4595, lng: 77.0725 },
+      { name: 'DPS Gurgaon (Sec 45)', icon: '🎓', lat: 28.4485, lng: 77.0715 },
+      { name: 'Hong Kong Bazaar (Sec 57)', icon: '🏪', lat: 28.4255, lng: 77.0885 },
+      { name: 'Sector 56 Metro', icon: '🚊', lat: 28.4315, lng: 77.1035 },
+      { name: 'Vatika City (Sector 49)', icon: '🏡', lat: 28.4125, lng: 77.0515 },
+    ];
+
+    if (landmarksLayerGroupRef.current) {
+      landmarksLayerGroupRef.current.clearLayers();
+    } else {
+      landmarksLayerGroupRef.current = L.layerGroup().addTo(map);
+    }
+
+    KEY_GURGAON_LANDMARKS.forEach((lm) => {
+      const lmDist = calculateHaversineKm(currentCoords.lat, currentCoords.lng, lm.lat, lm.lng);
+      if (lmDist <= 8.5) {
+        const lmIcon = L.divIcon({
+          className: 'custom-landmark-pin',
+          html: `
+            <div style="display: flex; align-items: center; gap: 3px; background: rgba(255,255,255,0.92); backdrop-filter: blur(4px); padding: 2px 7px; border-radius: 999px; border: 1px solid #CBD5E1; box-shadow: 0 1px 4px rgba(0,0,0,0.12); font-size: 0.65rem; font-weight: 700; color: #334155; white-space: nowrap; pointer-events: none;">
+              <span style="font-size: 0.72rem;">${lm.icon}</span>
+              <span>${lm.name}</span>
+            </div>
+          `,
+          iconSize: [120, 22],
+          iconAnchor: [60, 11],
+        });
+        L.marker([lm.lat, lm.lng], { icon: lmIcon, zIndexOffset: 20 }).addTo(landmarksLayerGroupRef.current!);
+      }
+    });
 
     // Clear & Re-render Tutor Markers
     if (tutorLayerGroupRef.current) {
@@ -559,6 +602,12 @@ export default function RapidoStyleMap({
 
   const handleAutoDetectGPS = () => {
     setIsDetecting(true);
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      setIsDetecting(false);
+      setShowLocationPopup(true);
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords;
@@ -567,19 +616,27 @@ export default function RapidoStyleMap({
         setLocationSource('GPS');
 
         if (leafletMapInstanceRef.current) {
-          leafletMapInstanceRef.current.flyTo([lat, lng], 15, { animate: true, duration: 1.2 });
+          leafletMapInstanceRef.current.flyTo([lat, lng], 16, { animate: true, duration: 1.4 });
         }
 
         const resolved = await handleReverseGeocode(lat, lng);
         setDetectedAddress(resolved);
         setIsDetecting(false);
+
+        try {
+          localStorage.setItem(
+            'user_detected_location',
+            JSON.stringify({ address: resolved, lat, lng })
+          );
+        } catch {}
+
         onLocationSelected({ address: resolved, lat, lng, nearestTutorsCount: 12 });
       },
       () => {
         setIsDetecting(false);
         setShowLocationPopup(true);
       },
-      { enableHighAccuracy: true, timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
@@ -590,9 +647,9 @@ export default function RapidoStyleMap({
     setShowLocationPopup(false);
 
     if (leafletMapInstanceRef.current) {
-      leafletMapInstanceRef.current.flyTo([popupCoords.lat, popupCoords.lng], 15, {
+      leafletMapInstanceRef.current.flyTo([popupCoords.lat, popupCoords.lng], 16, {
         animate: true,
-        duration: 1.2,
+        duration: 1.4,
       });
     }
 
@@ -749,6 +806,38 @@ export default function RapidoStyleMap({
 
           {/* Leaflet Map Canvas */}
           <div ref={mapContainerRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
+
+          {/* Floating GPS Recenter & Close-Up Zoom Button */}
+          <button
+            type="button"
+            onClick={handleAutoDetectGPS}
+            title="Recenter and zoom into my live GPS location"
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              zIndex: 500,
+              backgroundColor: '#FFFFFF',
+              border: '1.5px solid #10B981',
+              borderRadius: '10px',
+              padding: '0.45rem 0.75rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              boxShadow: '0 4px 14px rgba(15,110,86,0.22)',
+              cursor: 'pointer',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              color: '#047857',
+            }}
+          >
+            {isDetecting ? (
+              <Loader2 size={15} className="animate-spin" color="#047857" />
+            ) : (
+              <Crosshair size={15} color="#047857" />
+            )}
+            <span>{isDetecting ? 'Locating...' : '📍 My Location'}</span>
+          </button>
 
           {/* Floating In-Map Teacher Profile Card */}
           {activeTutorDetail && (

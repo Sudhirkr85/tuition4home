@@ -20,10 +20,7 @@ export default function StickyMobileBar({ onOpenBooking }: StickyMobileBarProps)
         className="btn btn-secondary btn-sm"
         style={{ flex: 1, minWidth: 0, padding: '0.65rem 0.4rem', fontSize: '0.82rem', fontWeight: 700, justifyContent: 'center', whiteSpace: 'nowrap', overflow: 'hidden', gap: '0.35rem' }}
       >
-        <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px' }}>
-          <span style={{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', backgroundColor: '#10B981', opacity: 0.35, animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
-          <Phone size={14} color="#0F6E56" style={{ position: 'relative', zIndex: 1, flexShrink: 0 }} />
-        </span>
+        <Phone size={15} color="#0F6E56" className="phone-icon-animated" style={{ flexShrink: 0 }} />
         <span>Call</span>
       </a>
 

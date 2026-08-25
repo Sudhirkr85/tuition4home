@@ -1328,18 +1328,16 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => handleOpenBooking()}
-                    className="btn btn-primary btn-lg"
+                    className="btn btn-primary btn-lg btn-cta-pulse"
                     style={{
                       backgroundColor: '#0F6E56',
                       padding: '0.9rem 1.85rem',
                       borderRadius: '14px',
                       fontWeight: 800,
-                      boxShadow: '0 6px 20px rgba(15, 110, 86, 0.38)',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.5rem',
                       cursor: 'pointer',
-                      transition: 'all 0.2s ease',
                     }}
                   >
                     <Sparkles size={17} color="#FDE047" style={{ animation: 'bounce 2s infinite' }} />
@@ -1362,28 +1360,9 @@ export default function HomePage() {
                       gap: '0.55rem',
                       boxShadow: '0 4px 14px rgba(15, 110, 86, 0.12)',
                       cursor: 'pointer',
-                      transition: 'all 0.2s ease',
                     }}
                   >
-                    <span style={{
-                      position: 'relative',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '20px',
-                      height: '20px',
-                    }}>
-                      <span style={{
-                        position: 'absolute',
-                        width: '100%',
-                        height: '100%',
-                        borderRadius: '50%',
-                        backgroundColor: '#10B981',
-                        opacity: 0.4,
-                        animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite',
-                      }} />
-                      <Phone size={17} color="#0F6E56" style={{ position: 'relative', zIndex: 1 }} />
-                    </span>
+                    <Phone size={18} className="phone-icon-animated" color="#0F6E56" />
                     <span>Call Sector 14 Center</span>
                   </a>
                 </div>
