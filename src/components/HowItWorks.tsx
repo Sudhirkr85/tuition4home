@@ -150,43 +150,84 @@ const Step2Illustration = () => (
 );
 
 // Video 2: In-Person Tutor Arrival & Home Visit Autoplay Looping Clip
-const Step3Illustration = () => (
-  <div style={{ position: 'relative', width: '100%', height: '100%', backgroundColor: '#0F172A', overflow: 'hidden' }}>
-    <video
-      src="https://res.cloudinary.com/jhwajyyw/video/upload/q_auto:eco,f_auto/v1787649418/tuitionforhome/marketing/tuitionforhome_tutor_home_visit.mp4"
-      poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_2,w_800,q_auto/v1787649418/tuitionforhome/marketing/tuitionforhome_tutor_home_visit.jpg"
-      autoPlay
-      loop
-      muted
-      playsInline
-      preload="metadata"
-      style={{
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-        display: 'block',
-      }}
-    />
-    <div style={{
-      position: 'absolute',
-      bottom: '8px',
-      left: '8px',
-      backgroundColor: 'rgba(15, 23, 42, 0.82)',
-      backdropFilter: 'blur(6px)',
-      color: '#FFFFFF',
-      fontSize: '0.68rem',
-      fontWeight: 800,
-      padding: '0.2rem 0.55rem',
-      borderRadius: '6px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.3rem',
-    }}>
-      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22C55E' }} />
-      <span>LIVE HOME VISIT</span>
+const Step3Illustration = () => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isMuted, setIsMuted] = useState(true);
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', backgroundColor: '#0F172A', overflow: 'hidden' }}>
+      <video
+        ref={videoRef}
+        src="https://res.cloudinary.com/jhwajyyw/video/upload/q_auto:best,f_auto/v1787649418/tuitionforhome/marketing/tuitionforhome_tutor_home_visit.mp4"
+        poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_2,w_800,q_auto:best/v1787649418/tuitionforhome/marketing/tuitionforhome_tutor_home_visit.jpg"
+        autoPlay
+        loop
+        muted={isMuted}
+        playsInline
+        preload="metadata"
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          display: 'block',
+        }}
+      />
+      <div style={{
+        position: 'absolute',
+        bottom: '8px',
+        left: '8px',
+        backgroundColor: 'rgba(15, 23, 42, 0.82)',
+        backdropFilter: 'blur(6px)',
+        color: '#FFFFFF',
+        fontSize: '0.68rem',
+        fontWeight: 800,
+        padding: '0.2rem 0.55rem',
+        borderRadius: '6px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.3rem',
+      }}>
+        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22C55E' }} />
+        <span>LIVE HOME VISIT</span>
+      </div>
+
+      {/* Clickable Sound Toggle Button */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (videoRef.current) {
+            const nextMuted = !videoRef.current.muted;
+            videoRef.current.muted = nextMuted;
+            setIsMuted(nextMuted);
+          }
+        }}
+        aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+        style={{
+          position: 'absolute',
+          top: '8px',
+          right: '8px',
+          width: '32px',
+          height: '32px',
+          borderRadius: '50%',
+          backgroundColor: 'rgba(15, 23, 42, 0.85)',
+          backdropFilter: 'blur(6px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          color: '#FFFFFF',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 5,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+          transition: 'transform 0.2s ease, background-color 0.2s ease',
+        }}
+      >
+        {isMuted ? <VolumeX size={15} color="#FFFFFF" /> : <Volume2 size={15} color="#10B981" />}
+      </button>
     </div>
-  </div>
-);
+  );
+};
 
 const Step4Illustration = () => (
   <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

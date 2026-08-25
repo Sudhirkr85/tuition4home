@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import Navbar from '@/components/Navbar';
@@ -73,6 +73,8 @@ import {
   RotateCcw,
   BadgeCheck,
   Clock,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -98,6 +100,8 @@ export default function HomePage() {
   const [selectedShowcaseGender, setSelectedShowcaseGender] = useState<'ALL' | 'FEMALE' | 'MALE'>('ALL');
   const [platformConfig, setPlatformConfig] = useState<any>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const parentStoryVideoRef = useRef<HTMLVideoElement>(null);
+  const [isParentStoryMuted, setIsParentStoryMuted] = useState(true);
 
   // Fetch live verified tutors, dynamic sectors & platform config from MySQL database
   useEffect(() => {
@@ -610,14 +614,14 @@ export default function HomePage() {
                     backgroundColor: '#000000',
                   }}>
                     <video
-                      src="https://res.cloudinary.com/jhwajyyw/video/upload/q_auto:eco,f_auto/v1787649423/tuitionforhome/marketing/tuitionforhome_parent_discussion_reel.mp4"
-                      poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_2,w_600,q_auto/v1787649423/tuitionforhome/marketing/tuitionforhome_parent_discussion_reel.jpg"
+                      ref={parentStoryVideoRef}
+                      src="https://res.cloudinary.com/jhwajyyw/video/upload/q_auto:best,f_auto/v1787649423/tuitionforhome/marketing/tuitionforhome_parent_discussion_reel.mp4"
+                      poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_2,w_800,q_auto:best/v1787649423/tuitionforhome/marketing/tuitionforhome_parent_discussion_reel.jpg"
                       autoPlay
                       loop
-                      muted
+                      muted={isParentStoryMuted}
                       playsInline
                       preload="metadata"
-                      controls
                       style={{
                         width: '100%',
                         height: '100%',
@@ -646,6 +650,40 @@ export default function HomePage() {
                       <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22C55E' }} />
                       <span>Gurgaon Parents Story</span>
                     </div>
+
+                    {/* Clickable Sound Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (parentStoryVideoRef.current) {
+                          const nextMuted = !parentStoryVideoRef.current.muted;
+                          parentStoryVideoRef.current.muted = nextMuted;
+                          setIsParentStoryMuted(nextMuted);
+                        }
+                      }}
+                      aria-label={isParentStoryMuted ? 'Unmute video' : 'Mute video'}
+                      style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '12px',
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(255, 255, 255, 0.25)',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        zIndex: 10,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                        transition: 'transform 0.2s ease, background-color 0.2s ease',
+                      }}
+                    >
+                      {isParentStoryMuted ? <VolumeX size={18} color="#FFFFFF" /> : <Volume2 size={18} color="#10B981" />}
+                    </button>
                   </div>
                 </div>
               </div>
