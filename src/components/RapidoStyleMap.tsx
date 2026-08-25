@@ -61,7 +61,6 @@ export default function RapidoStyleMap({
   const leafletPopupMapInstanceRef = useRef<L.Map | null>(null);
   const leafletPopupMarkerRef = useRef<L.Marker | null>(null);
   const tutorLayerGroupRef = useRef<L.LayerGroup | null>(null);
-  const landmarksLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const parentMarkerRef = useRef<L.Marker | null>(null);
   const radiusCircleRef = useRef<L.Circle | null>(null);
 
@@ -291,7 +290,6 @@ export default function RapidoStyleMap({
       }).addTo(map);
 
       leafletMapInstanceRef.current = map;
-      landmarksLayerGroupRef.current = L.layerGroup().addTo(map);
       tutorLayerGroupRef.current = L.layerGroup().addTo(map);
       setIsMapReady(true);
       setTimeout(() => map.invalidateSize(), 100);
@@ -336,45 +334,7 @@ export default function RapidoStyleMap({
       zIndexOffset: 1000,
     }).addTo(map);
 
-    // Render Nearby Prominent Landmarks & Points of Interest
-    const KEY_GURGAON_LANDMARKS = [
-      { name: 'SSSAM Academy Center (Sec 14)', icon: '🏫', lat: 28.4728, lng: 77.0345 },
-      { name: 'Galleria Market (DLF 4)', icon: '🛍️', lat: 28.4685, lng: 77.0855 },
-      { name: 'Cyber Hub (DLF 2)', icon: '🏢', lat: 28.4895, lng: 77.0895 },
-      { name: 'Horizon Center (Golf Course Rd)', icon: '🏙️', lat: 28.4552, lng: 77.0945 },
-      { name: 'South City 2 / Nirvana', icon: '🌳', lat: 28.4185, lng: 77.0655 },
-      { name: 'HUDA City Centre Metro', icon: '🚇', lat: 28.4595, lng: 77.0725 },
-      { name: 'DPS Gurgaon (Sec 45)', icon: '🎓', lat: 28.4485, lng: 77.0715 },
-      { name: 'Hong Kong Bazaar (Sec 57)', icon: '🏪', lat: 28.4255, lng: 77.0885 },
-      { name: 'Sector 56 Metro', icon: '🚊', lat: 28.4315, lng: 77.1035 },
-      { name: 'Vatika City (Sector 49)', icon: '🏡', lat: 28.4125, lng: 77.0515 },
-    ];
-
-    if (landmarksLayerGroupRef.current) {
-      landmarksLayerGroupRef.current.clearLayers();
-    } else {
-      landmarksLayerGroupRef.current = L.layerGroup().addTo(map);
-    }
-
-    KEY_GURGAON_LANDMARKS.forEach((lm) => {
-      const lmDist = calculateHaversineKm(currentCoords.lat, currentCoords.lng, lm.lat, lm.lng);
-      if (lmDist <= 8.5) {
-        const lmIcon = L.divIcon({
-          className: 'custom-landmark-pin',
-          html: `
-            <div style="display: flex; align-items: center; gap: 3px; background: rgba(255,255,255,0.92); backdrop-filter: blur(4px); padding: 2px 7px; border-radius: 999px; border: 1px solid #CBD5E1; box-shadow: 0 1px 4px rgba(0,0,0,0.12); font-size: 0.65rem; font-weight: 700; color: #334155; white-space: nowrap; pointer-events: none;">
-              <span style="font-size: 0.72rem;">${lm.icon}</span>
-              <span>${lm.name}</span>
-            </div>
-          `,
-          iconSize: [120, 22],
-          iconAnchor: [60, 11],
-        });
-        L.marker([lm.lat, lm.lng], { icon: lmIcon, zIndexOffset: 20 }).addTo(landmarksLayerGroupRef.current!);
-      }
-    });
-
-    // Clear & Re-render Tutor Markers
+    // Clear & Re-render Tutor Markers Only
     if (tutorLayerGroupRef.current) {
       tutorLayerGroupRef.current.clearLayers();
     } else {
