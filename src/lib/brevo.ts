@@ -212,3 +212,62 @@ export async function sendTutorVerifiedEmail(
     htmlContent,
   });
 }
+
+/**
+ * Sends an email to a tutor when their KYC Document or Degree is rejected by Admin with reason.
+ */
+export async function sendTutorKYCRejectedEmail(
+  tutorEmail: string,
+  tutorName: string,
+  docTypeLabel: string,
+  rejectionReason: string
+) {
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 580px; margin: 0 auto; background-color: #ffffff; padding: 28px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="color: #0F172A; margin: 0; font-size: 22px;">🎓 TuitionForHome</h2>
+        <p style="color: #64748B; font-size: 12px; margin: 4px 0 0 0;">SSSAM Academy • Sector 14 Gurugram</p>
+      </div>
+
+      <div style="background-color: #FEF2F2; border-radius: 12px; padding: 20px; text-align: left; border: 1px solid #FCA5A5; margin-bottom: 20px;">
+        <h3 style="color: #991B1B; margin: 0 0 8px 0; font-size: 17px;">Action Required: Document Verification Update ⚠️</h3>
+        <p style="color: #B91C1C; font-size: 14px; margin: 0; line-height: 1.5;">
+          Dear <strong>${tutorName}</strong>, during the SSSAM Academy verification review, your <strong>${docTypeLabel}</strong> requires re-upload.
+        </p>
+      </div>
+
+      <div style="background-color: #F8FAFC; border-radius: 12px; padding: 18px 20px; border: 1px solid #E2E8F0; margin-bottom: 20px;">
+        <strong style="color: #0F172A; font-size: 14px; display: block; marginBottom: 8px;">Reviewer Note / Reason:</strong>
+        <div style="background-color: #FFFFFF; padding: 12px 16px; border-radius: 8px; border-left: 4px solid #EF4444; font-size: 13px; color: #334155; line-height: 1.6;">
+          &ldquo;${rejectionReason}&rdquo;
+        </div>
+      </div>
+
+      <div style="background-color: #F0FDF4; border-radius: 12px; padding: 16px 20px; border: 1px solid #BBF7D0; margin-bottom: 20px; font-size: 13px; color: #166534; line-height: 1.6;">
+        <strong>How to Resolve:</strong>
+        <ol style="margin: 6px 0 0 0; padding-left: 18px;">
+          <li>Log in to your Tutor Profile dashboard.</li>
+          <li>Go to the <strong>KYC & Security</strong> section.</li>
+          <li>Upload a clear, un-cropped, high-resolution copy of your ${docTypeLabel} and click Save.</li>
+        </ol>
+      </div>
+
+      <div style="text-align: center; margin-bottom: 20px;">
+        <a href="https://tuitionforhome.com/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block;">
+          Re-Upload Document Now →
+        </a>
+      </div>
+
+      <div style="border-top: 1px solid #E2E8F0; margin-top: 24px; padding-top: 16px; text-align: center; font-size: 11px; color: #94A3B8; line-height: 1.5;">
+        SSSAM Academy • M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001<br />
+        Tutor Helpdesk: +91 92170 31899 | Email: support@tuitionforhome.com
+      </div>
+    </div>
+  `;
+
+  return sendTransactionalEmail({
+    to: [{ email: tutorEmail, name: tutorName }],
+    subject: `Action Required: Re-upload ${docTypeLabel} — TuitionForHome Verification`,
+    htmlContent,
+  });
+}

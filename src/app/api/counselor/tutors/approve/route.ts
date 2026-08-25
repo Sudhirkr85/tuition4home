@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { sendTutorVerifiedEmail } from '@/lib/brevo';
+import { sendTutorVerifiedEmail, sendTutorKYCRejectedEmail } from '@/lib/brevo';
 
 export async function POST(req: Request) {
   try {
@@ -18,13 +18,14 @@ export async function POST(req: Request) {
       }
 
       const updateData: any = {};
+      const note = rejectionNote || (docType === 'ID_DOC' ? 'Government ID photo is not clear or unreadable. Please re-upload a clear copy.' : 'Degree certificate document is not clear. Please re-upload a valid degree or marksheet.');
 
       if (docType === 'ID_DOC') {
         updateData.idStatus = decision === 'APPROVED' ? 'APPROVED' : 'REJECTED';
-        updateData.idRejectionNote = decision === 'REJECTED' ? (rejectionNote || 'Document image is not clear. Please re-upload a clear copy.') : null;
+        updateData.idRejectionNote = decision === 'REJECTED' ? note : null;
       } else if (docType === 'DEGREE_DOC') {
         updateData.degreeStatus = decision === 'APPROVED' ? 'APPROVED' : 'REJECTED';
-        updateData.degreeRejectionNote = decision === 'REJECTED' ? (rejectionNote || 'Degree document is not clear. Please re-upload a valid certificate.') : null;
+        updateData.degreeRejectionNote = decision === 'REJECTED' ? note : null;
       }
 
       await (prisma.tutorKYC as any).updateMany({
@@ -32,12 +33,22 @@ export async function POST(req: Request) {
         data: updateData
       });
 
-      // If document is rejected, update profile status to REJECTED so tutor knows re-upload is required
+      // If document is rejected, update profile status to REJECTED and send alert email
       if (decision === 'REJECTED') {
-        await prisma.tutorProfile.update({
+        const prof = await prisma.tutorProfile.update({
           where: { id: tutorId },
-          data: { status: 'REJECTED' }
+          data: { status: 'REJECTED' },
+          include: { user: true }
         });
+
+        if (prof.user?.email) {
+          try {
+            const docLabel = docType === 'ID_DOC' ? 'Government ID Proof (Aadhaar/PAN)' : 'Degree Certificate / Marksheet';
+            await sendTutorKYCRejectedEmail(prof.user.email, prof.user.name, docLabel, note);
+          } catch (err) {
+            console.error('Failed to send KYC rejection email:', err);
+          }
+        }
       }
 
       return NextResponse.json({
