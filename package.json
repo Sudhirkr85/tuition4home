@@ -5,8 +5,8 @@
   "scripts": {
     "predev": "prisma db push --accept-data-loss && node prisma/seed.js",
     "dev": "next dev",
-    "build": "prisma generate && prisma db push --accept-data-loss && node prisma/seed.js && next build",
-    "prestart": "prisma db push --accept-data-loss && node prisma/seed.js",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
