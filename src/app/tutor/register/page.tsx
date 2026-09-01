@@ -6,7 +6,7 @@ import { signIn, signOut, useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ImageCropperModal from '@/components/ImageCropperModal';
-import { compressDocumentFile } from '@/lib/imageUtils';
+import { compressDocumentFile, compressAvatarFile } from '@/lib/imageUtils';
 import {
   GURGAON_LOCALITIES,
   SUBJECT_OPTIONS,
@@ -1049,21 +1049,30 @@ export default function TutorRegisterLoginPage() {
       return;
     }
 
-    // Handle Photo (Cropper) & Video
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      if (type === 'photo') {
-        setRawPhotoToCrop(base64String);
-        setTempPhotoFileName(file.name);
-        setCropperOpen(true);
-        e.target.value = '';
-      } else if (type === 'video') {
+    if (type === 'photo') {
+      compressAvatarFile(file)
+        .then((compressedBase64) => {
+          setRawPhotoToCrop(compressedBase64);
+          setTempPhotoFileName(file.name);
+          setCropperOpen(true);
+          e.target.value = '';
+        })
+        .catch(() => {
+          setErrorMessage('⚠️ Failed to process photo. Please try another file.');
+        });
+      return;
+    }
+
+    if (type === 'video') {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
         setIntroVideoUrl(base64String);
         setIntroVideoFileName(file.name);
-      }
-    };
-    reader.readAsDataURL(file);
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
   };
 
   const handleFinalSubmit = async () => {

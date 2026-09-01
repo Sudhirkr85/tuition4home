@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { encrypt } from '@/lib/crypto';
 import { sendTutorProfileSubmittedEmail } from '@/lib/brevo';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import sharp from 'sharp';
 
 export const dynamic = 'force-dynamic';
 
@@ -178,6 +179,17 @@ export async function POST(req: Request) {
       } catch (err) {
         console.error('Failed to upload base64 avatar to Cloudinary:', err);
       }
+      // Safety fallback: ensure base64 avatar is resized to <20KB if still a data URI
+      if (finalAvatarUrl && finalAvatarUrl.startsWith('data:image/') && finalAvatarUrl.length > 25000) {
+        try {
+          const base64Data = finalAvatarUrl.replace(/^data:image\/\w+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          const resized = await sharp(buffer).resize(300, 300, { fit: 'cover' }).jpeg({ quality: 75 }).toBuffer();
+          finalAvatarUrl = `data:image/jpeg;base64,${resized.toString('base64')}`;
+        } catch (e) {
+          console.warn('Avatar sharp compression fallback failed:', e);
+        }
+      }
     }
 
     // Auto-upload Base64 KYC docs to Cloudinary if needed
@@ -189,6 +201,14 @@ export async function POST(req: Request) {
       } catch (err) {
         console.error('Failed to upload base64 idDoc to Cloudinary:', err);
       }
+      if (finalIdDocUrl && finalIdDocUrl.startsWith('data:image/') && finalIdDocUrl.length > 100000) {
+        try {
+          const base64Data = finalIdDocUrl.replace(/^data:image\/\w+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          const resized = await sharp(buffer).resize(1000, 1000, { fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 70 }).toBuffer();
+          finalIdDocUrl = `data:image/jpeg;base64,${resized.toString('base64')}`;
+        } catch {}
+      }
     }
 
     let finalDegreeDocUrl = degreeDocUrl;
@@ -198,6 +218,14 @@ export async function POST(req: Request) {
         finalDegreeDocUrl = uploadRes.secureUrl;
       } catch (err) {
         console.error('Failed to upload base64 degreeDoc to Cloudinary:', err);
+      }
+      if (finalDegreeDocUrl && finalDegreeDocUrl.startsWith('data:image/') && finalDegreeDocUrl.length > 100000) {
+        try {
+          const base64Data = finalDegreeDocUrl.replace(/^data:image\/\w+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          const resized = await sharp(buffer).resize(1000, 1000, { fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 70 }).toBuffer();
+          finalDegreeDocUrl = `data:image/jpeg;base64,${resized.toString('base64')}`;
+        } catch {}
       }
     }
 

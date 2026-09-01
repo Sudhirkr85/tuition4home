@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { decrypt } from '@/lib/crypto';
+import { uploadToCloudinary } from '@/lib/cloudinary';
+import sharp from 'sharp';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -127,7 +129,26 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     // 2. Update TutorProfile fields
     const profileUpdates: any = {};
 
-    if (body.avatarUrl !== undefined) profileUpdates.avatarUrl = body.avatarUrl;
+    if (body.avatarUrl !== undefined) {
+      let finalAvatarUrl = body.avatarUrl;
+      if (finalAvatarUrl && typeof finalAvatarUrl === 'string' && finalAvatarUrl.startsWith('data:image/')) {
+        try {
+          const uploadRes = await uploadToCloudinary(finalAvatarUrl, 'tuitionforhome/avatars', 'image');
+          finalAvatarUrl = uploadRes.secureUrl;
+        } catch (err) {
+          console.warn('Cloudinary upload failed on admin tutor edit, falling back to sharp:', err);
+        }
+        if (finalAvatarUrl && finalAvatarUrl.startsWith('data:image/') && finalAvatarUrl.length > 25000) {
+          try {
+            const base64Data = finalAvatarUrl.replace(/^data:image\/\w+;base64,/, '');
+            const buffer = Buffer.from(base64Data, 'base64');
+            const resized = await sharp(buffer).resize(300, 300, { fit: 'cover' }).jpeg({ quality: 75 }).toBuffer();
+            finalAvatarUrl = `data:image/jpeg;base64,${resized.toString('base64')}`;
+          } catch {}
+        }
+      }
+      profileUpdates.avatarUrl = finalAvatarUrl;
+    }
     if (body.introVideoUrl !== undefined) profileUpdates.introVideoUrl = body.introVideoUrl;
     if (body.bio !== undefined) profileUpdates.bio = body.bio;
     if (body.highestDegree !== undefined) profileUpdates.highestDegree = body.highestDegree;

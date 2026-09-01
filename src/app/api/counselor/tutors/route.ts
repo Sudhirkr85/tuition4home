@@ -8,7 +8,24 @@ function sanitizeAvatarUrl(url: string | null | undefined): string {
   if (!url || !url.trim()) {
     return '';
   }
-  return url.trim();
+  const clean = url.trim();
+  // Prevent mega base64 strings (>15KB) from freezing the list JSON response
+  if (clean.startsWith('data:image/') && clean.length > 15000) {
+    return '/placeholder-avatar.jpg';
+  }
+  return clean;
+}
+
+function sanitizeDocUrl(url: string | null | undefined): string {
+  if (!url || !url.trim()) {
+    return '';
+  }
+  const clean = url.trim();
+  // Strip heavy base64 documents (>500 chars) from the bulk list endpoint; full docs are fetched on-demand in /api/admin/tutors/[id]
+  if (clean.startsWith('data:')) {
+    return '';
+  }
+  return clean;
 }
 
 export async function GET() {
@@ -56,6 +73,9 @@ export async function GET() {
         console.error('Failed parsing tutor list fields', e);
       }
 
+      const hasIdDocUploaded = Boolean(profile.kycDoc?.idDocUrl && profile.kycDoc.idDocUrl.trim().length > 0);
+      const hasDegreeDocUploaded = Boolean(profile.kycDoc?.degreeDocUrl && profile.kycDoc.degreeDocUrl.trim().length > 0);
+
       return {
         id: profile.id,
         userId: profile.userId,
@@ -94,10 +114,12 @@ export async function GET() {
               idType: profile.kycDoc.idType,
               idLast4: profile.kycDoc.idLast4,
               idNumberDecrypted,
-              idDocUrl: profile.kycDoc.idDocUrl,
+              idDocUrl: sanitizeDocUrl(profile.kycDoc.idDocUrl),
+              hasIdDoc: hasIdDocUploaded,
               idStatus: profile.kycDoc.idStatus || 'NOT_SUBMITTED',
               idRejectionNote: profile.kycDoc.idRejectionNote || '',
-              degreeDocUrl: profile.kycDoc.degreeDocUrl || '',
+              degreeDocUrl: sanitizeDocUrl(profile.kycDoc.degreeDocUrl),
+              hasDegreeDoc: hasDegreeDocUploaded,
               degreeStatus: profile.kycDoc.degreeStatus || 'NOT_SUBMITTED',
               degreeRejectionNote: profile.kycDoc.degreeRejectionNote || '',
             }

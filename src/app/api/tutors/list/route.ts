@@ -7,7 +7,12 @@ function sanitizeAvatarUrl(url: string | null | undefined): string {
   if (!url || !url.trim()) {
     return '';
   }
-  return url.trim();
+  const clean = url.trim();
+  // Prevent mega base64 strings (>15KB) from freezing public search JSON responses
+  if (clean.startsWith('data:image/') && clean.length > 15000) {
+    return '/placeholder-avatar.jpg';
+  }
+  return clean;
 }
 
 export async function GET(req: Request) {

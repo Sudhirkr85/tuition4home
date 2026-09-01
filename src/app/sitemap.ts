@@ -129,13 +129,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   });
 
   // Combine and safely cap under Google's 50,000 limit
+  // Place high-priority core, locality, subject hubs & PSEO pages first
   const combinedSitemap = [
     ...coreRoutes,
-    ...course2SegmentUrls,
-    ...course3SegmentUrls,
     ...localityUrls,
     ...subjectUrls,
     ...pseoUrls,
+    ...course2SegmentUrls,
+    ...course3SegmentUrls,
   ];
 
   return combinedSitemap.slice(0, 48000);

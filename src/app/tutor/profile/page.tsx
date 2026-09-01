@@ -6,7 +6,7 @@ import { signOut, useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ImageCropperModal from '@/components/ImageCropperModal';
-import { compressDocumentFile } from '@/lib/imageUtils';
+import { compressDocumentFile, compressAvatarFile } from '@/lib/imageUtils';
 import {
   GURGAON_LOCALITIES,
   SUBJECT_OPTIONS,
@@ -525,14 +525,15 @@ export default function TutorProfileDashboard() {
     }
 
     setErrorMsg('');
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64Data = reader.result as string;
-      setRawPhotoToCrop(base64Data);
-      setCropperOpen(true);
-      e.target.value = '';
-    };
-    reader.readAsDataURL(file);
+    compressAvatarFile(file)
+      .then((compressedBase64) => {
+        setRawPhotoToCrop(compressedBase64);
+        setCropperOpen(true);
+        e.target.value = '';
+      })
+      .catch(() => {
+        setErrorMsg('⚠️ Failed to process image. Please try another file.');
+      });
   };
 
   const handleCroppedAvatarSave = async (croppedBase64: string) => {
@@ -3172,7 +3173,7 @@ export default function TutorProfileDashboard() {
                               color: 'var(--brand-teal)',
                             }}>
                               <Upload size={14} />
-                              <span>{degreeDocUploading ? 'Uploading to Cloudinary...' : degreeDocUrl ? '🔄 Re-upload Degree Document' : '📤 Upload Degree Marksheet (PDF/JPG)'}</span>
+                              <span>{degreeDocUploading ? 'Uploading document...' : degreeDocUrl ? '🔄 Re-upload Degree Document' : '📤 Upload Degree Marksheet (PDF/JPG)'}</span>
                               <input
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -3194,7 +3195,7 @@ export default function TutorProfileDashboard() {
                                       setDegreeDocUrl(d.url);
                                       setDegreeStatus('PENDING');
                                       setDegreeRejectionNote('');
-                                      setSuccessMsg('🎉 Degree document uploaded to Cloudinary! Submitted for admin verification.');
+                                      setSuccessMsg('🎉 Degree document uploaded successfully! Submitted for verification.');
                                     } else {
                                       setErrorMsg(d.error || 'Upload failed');
                                     }
@@ -3311,7 +3312,7 @@ export default function TutorProfileDashboard() {
                               color: 'var(--brand-teal)',
                             }}>
                               <Upload size={14} />
-                              <span>{idDocUploading ? 'Uploading to Cloudinary...' : idDocUrl ? '🔄 Re-upload ID Document' : '📤 Upload ID Proof (PDF/JPG)'}</span>
+                              <span>{idDocUploading ? 'Uploading ID proof...' : idDocUrl ? '🔄 Re-upload ID Document' : '📤 Upload ID Proof (PDF/JPG)'}</span>
                               <input
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -3333,7 +3334,7 @@ export default function TutorProfileDashboard() {
                                       setIdDocUrl(d.url);
                                       setIdStatus('PENDING');
                                       setIdRejectionNote('');
-                                      setSuccessMsg('🎉 ID document uploaded to Cloudinary! Submitted for admin verification.');
+                                      setSuccessMsg('🎉 ID document uploaded successfully! Submitted for verification.');
                                     } else {
                                       setErrorMsg(d.error || 'Upload failed');
                                     }

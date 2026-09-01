@@ -1571,7 +1571,7 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
                       onChange={(e) => setEditFormData({ ...editFormData, avatarUrl: e.target.value })}
                       className="form-control"
                       style={{ fontSize: '0.82rem' }}
-                      placeholder="https://images.unsplash.com/... or Cloudinary URL"
+                      placeholder="https://example.com/photo.jpg or image URL"
                     />
                   </div>
 
