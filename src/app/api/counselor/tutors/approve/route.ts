@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendTutorVerifiedEmail, sendTutorKYCRejectedEmail } from '@/lib/brevo';
+import { verifyAdminOrCounselor } from '@/lib/admin-auth';
 
 export async function POST(req: Request) {
+  const authUser = await verifyAdminOrCounselor(req);
+  if (!authUser) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized: Admin or Counselor access required.' },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await req.json();
     const { tutorId, action, docType, decision, rejectionNote } = body;

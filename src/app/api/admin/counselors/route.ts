@@ -1,11 +1,20 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { verifyAdminOrCounselor } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
-// GET all counselors (TELECALLER role)
-export async function GET() {
+// GET all counselors (TELECALLER role) - Super Admin only
+export async function GET(req: Request) {
+  const authUser = await verifyAdminOrCounselor(req);
+  if (!authUser || authUser.role !== 'SUPER_ADMIN') {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized: Only Super Admin can view staff counselors.' },
+      { status: 401 }
+    );
+  }
+
   try {
     let counselors: any[] = [];
     try {
@@ -41,8 +50,16 @@ export async function GET() {
   }
 }
 
-// POST create new counselor account
+// POST create new counselor account - Super Admin only
 export async function POST(req: Request) {
+  const authUser = await verifyAdminOrCounselor(req);
+  if (!authUser || authUser.role !== 'SUPER_ADMIN') {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized: Only Super Admin can create staff accounts.' },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await req.json();
     const { name, email, phone, password } = body;
@@ -97,7 +114,6 @@ export async function POST(req: Request) {
         message: 'Counselor account created successfully!',
       });
     } catch {
-      // Fallback response for mock/offline environment
       const mockNewCounselor = {
         id: `csl-${Date.now()}`,
         name,
@@ -119,8 +135,16 @@ export async function POST(req: Request) {
   }
 }
 
-// PUT update counselor details & reset password
+// PUT update counselor details & reset password - Super Admin only
 export async function PUT(req: Request) {
+  const authUser = await verifyAdminOrCounselor(req);
+  if (!authUser || authUser.role !== 'SUPER_ADMIN') {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized: Only Super Admin can modify counselor accounts.' },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await req.json();
     const { id, name, email, phone, password } = body;
@@ -170,8 +194,16 @@ export async function PUT(req: Request) {
   }
 }
 
-// DELETE counselor account
+// DELETE counselor account - Super Admin only
 export async function DELETE(req: Request) {
+  const authUser = await verifyAdminOrCounselor(req);
+  if (!authUser || authUser.role !== 'SUPER_ADMIN') {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized: Only Super Admin can delete counselor accounts.' },
+      { status: 401 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
@@ -193,4 +225,3 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ success: false, error: 'Failed to delete counselor' }, { status: 500 });
   }
 }
-

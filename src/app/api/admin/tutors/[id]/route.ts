@@ -3,8 +3,17 @@ import { prisma } from '@/lib/prisma';
 import { decrypt } from '@/lib/crypto';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import sharp from 'sharp';
+import { verifyAdminOrCounselor } from '@/lib/admin-auth';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
+  const authUser = await verifyAdminOrCounselor(req);
+  if (!authUser) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized: Admin or Counselor access required.' },
+      { status: 401 }
+    );
+  }
+
   try {
     const tutorId = params.id;
 
@@ -98,6 +107,14 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  const authUser = await verifyAdminOrCounselor(req);
+  if (!authUser) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized: Admin or Counselor access required.' },
+      { status: 401 }
+    );
+  }
+
   try {
     const tutorId = params.id;
     const body = await req.json();
