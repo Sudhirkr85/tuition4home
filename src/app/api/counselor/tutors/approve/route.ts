@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       if (decision === 'REJECTED') {
         const prof = await prisma.tutorProfile.update({
           where: { id: tutorId },
-          data: { status: 'REJECTED' },
+          data: { status: 'REJECTED', isAvailable: false },
           include: { user: true }
         });
 
@@ -66,68 +66,104 @@ export async function POST(req: Request) {
       });
     }
 
-    // Action: Toggle Admin Deactivation / Activation
-    if (action === 'TOGGLE_AVAILABILITY') {
-      const { isAvailable } = body;
+    // Action 2: Reject Entire Tutor Profile
+    if (action === 'REJECT_PROFILE') {
+      const updatedProfile = await prisma.tutorProfile.update({
+        where: { id: tutorId },
+        data: {
+          status: 'REJECTED',
+          isVerified: false,
+          isAvailable: false,
+        },
+        include: { user: true },
+      });
+
+      if (updatedProfile.user?.email) {
+        try {
+          await sendTutorKYCRejectedEmail(
+            updatedProfile.user.email,
+            updatedProfile.user.name,
+            'Profile Verification',
+            rejectionNote || 'Profile credentials or documentation did not meet verification criteria.'
+          );
+        } catch (err) {
+          console.error('Failed to send profile rejection email:', err);
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Tutor profile has been marked REJECTED and hidden from parent search.',
+      });
+    }
+
+    // Action 3: Suspend / Deactivate Tutor Profile
+    if (action === 'SUSPEND_PROFILE' || (action === 'TOGGLE_AVAILABILITY' && !body.isAvailable)) {
       await prisma.tutorProfile.update({
         where: { id: tutorId },
         data: {
-          isAvailable: !!isAvailable,
-          status: isAvailable ? 'ACTIVE_VERIFIED' : 'SUSPENDED'
-        }
+          isAvailable: false,
+          status: 'SUSPENDED',
+        },
       });
       return NextResponse.json({
         success: true,
-        message: `Admin status updated to ${isAvailable ? 'ACTIVE & VISIBLE' : 'SUSPENDED (DEACTIVATED BY ADMIN)'}.`
+        message: 'Tutor profile status updated to SUSPENDED (Deactivated by Admin).',
       });
     }
 
-    // Action: Final Profile Approval & Activation
-    const updatedProfile = await prisma.tutorProfile.update({
-      where: { id: tutorId },
-      data: {
-        status: 'ACTIVE_VERIFIED',
-        isVerified: true,
-        isAvailable: true
-      },
-      include: {
-        user: true
-      }
-    });
-
-    // Mark both Aadhaar/Govt ID & Degree Certificate documents as APPROVED together
-    const existingKyc = await (prisma.tutorKYC as any).findFirst({ where: { tutorId } });
-    if (existingKyc) {
-      await (prisma.tutorKYC as any).update({
-        where: { id: existingKyc.id },
+    // Action 4: Final Profile Approval & Activation / Re-Activation
+    if (action === 'APPROVE_FINAL_PROFILE' || action === 'REACTIVATE_PROFILE' || (action === 'TOGGLE_AVAILABILITY' && body.isAvailable)) {
+      const updatedProfile = await prisma.tutorProfile.update({
+        where: { id: tutorId },
         data: {
-          idStatus: 'APPROVED',
-          degreeStatus: 'APPROVED',
-        }
+          status: 'ACTIVE_VERIFIED',
+          isVerified: true,
+          isAvailable: true,
+        },
+        include: {
+          user: true,
+        },
       });
-    } else {
-      await (prisma.tutorKYC as any).create({
-        data: {
-          tutorId,
-          idStatus: 'APPROVED',
-          degreeStatus: 'APPROVED',
-        }
-      });
-    }
 
-    // Send congratulatory email to tutor upon complete verification
-    if (updatedProfile.user?.email) {
-      try {
-        await sendTutorVerifiedEmail(updatedProfile.user.email, updatedProfile.user.name);
-      } catch (mailErr) {
-        console.error('Failed to dispatch tutor verification email:', mailErr);
+      // Mark both Aadhaar/Govt ID & Degree Certificate documents as APPROVED together
+      const existingKyc = await (prisma.tutorKYC as any).findFirst({ where: { tutorId } });
+      if (existingKyc) {
+        await (prisma.tutorKYC as any).update({
+          where: { id: existingKyc.id },
+          data: {
+            idStatus: 'APPROVED',
+            degreeStatus: 'APPROVED',
+            idRejectionNote: null,
+            degreeRejectionNote: null,
+          },
+        });
+      } else {
+        await (prisma.tutorKYC as any).create({
+          data: {
+            tutorId,
+            idStatus: 'APPROVED',
+            degreeStatus: 'APPROVED',
+          },
+        });
       }
+
+      // Send congratulatory email to tutor upon complete verification
+      if (updatedProfile.user?.email) {
+        try {
+          await sendTutorVerifiedEmail(updatedProfile.user.email, updatedProfile.user.name);
+        } catch (mailErr) {
+          console.error('Failed to dispatch tutor verification email:', mailErr);
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Tutor profile approved and activated successfully. Live across Gurgaon & NCR matching searches.',
+      });
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Tutor profile approved and activated successfully.'
-    });
+    return NextResponse.json({ success: false, error: 'Unknown action specified.' }, { status: 400 });
 
   } catch (error: any) {
     console.error('[COUNSELOR_APPROVE_TUTOR_ERROR]:', error);

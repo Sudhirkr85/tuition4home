@@ -153,7 +153,7 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
     isOpen: boolean;
     title: string;
     description: string;
-    actionType: 'APPROVE_ID' | 'REJECT_ID' | 'APPROVE_DEGREE' | 'REJECT_DEGREE' | 'APPROVE_FINAL' | 'ACTIVATE_TUTOR' | 'DEACTIVATE_TUTOR';
+    actionType: 'APPROVE_ID' | 'REJECT_ID' | 'APPROVE_DEGREE' | 'REJECT_DEGREE' | 'APPROVE_FINAL' | 'ACTIVATE_TUTOR' | 'DEACTIVATE_TUTOR' | 'REJECT_PROFILE' | 'REACTIVATE_PROFILE' | 'SUSPEND_PROFILE';
     showNoteInput?: boolean;
     confirmText: string;
     confirmBgColor: string;
@@ -310,7 +310,7 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
 
   // Trigger Confirmation Modal for any action
   const requestActionConfirmation = (
-    actionType: 'APPROVE_ID' | 'REJECT_ID' | 'APPROVE_DEGREE' | 'REJECT_DEGREE' | 'APPROVE_FINAL' | 'ACTIVATE_TUTOR' | 'DEACTIVATE_TUTOR'
+    actionType: 'APPROVE_ID' | 'REJECT_ID' | 'APPROVE_DEGREE' | 'REJECT_DEGREE' | 'APPROVE_FINAL' | 'ACTIVATE_TUTOR' | 'DEACTIVATE_TUTOR' | 'REJECT_PROFILE' | 'REACTIVATE_PROFILE' | 'SUSPEND_PROFILE'
   ) => {
     setModalNoteText('');
     if (actionType === 'APPROVE_ID') {
@@ -369,14 +369,33 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
         confirmText: '▶️ Activate Tutor',
         confirmBgColor: '#059669'
       });
-    } else if (actionType === 'DEACTIVATE_TUTOR') {
+    } else if (actionType === 'DEACTIVATE_TUTOR' || actionType === 'SUSPEND_PROFILE') {
       setConfirmModal({
         isOpen: true,
         title: 'Deactivate Tutor Status?',
         description: `This will DEACTIVATE ${tutor?.name} and temporarily hide them from parent listings.`,
         actionType: 'DEACTIVATE_TUTOR',
         confirmText: '⏸️ Deactivate Tutor',
+        confirmBgColor: '#D97706'
+      });
+    } else if (actionType === 'REJECT_PROFILE') {
+      setConfirmModal({
+        isOpen: true,
+        title: 'Reject Entire Tutor Profile?',
+        description: `This will mark ${tutor?.name}'s profile as REJECTED and hide them from parent searches. You can re-activate anytime.`,
+        actionType: 'REJECT_PROFILE',
+        showNoteInput: true,
+        confirmText: '❌ Confirm Profile Rejection',
         confirmBgColor: '#DC2626'
+      });
+    } else if (actionType === 'REACTIVATE_PROFILE') {
+      setConfirmModal({
+        isOpen: true,
+        title: 'Re-Activate & Verify Tutor Profile?',
+        description: `This will clear previous rejection/suspension status, mark all credentials as APPROVED, and re-activate ${tutor?.name} live for student matching.`,
+        actionType: 'REACTIVATE_PROFILE',
+        confirmText: '🔄 Re-Activate & Verify Profile',
+        confirmBgColor: '#059669'
       });
     }
   };
@@ -420,7 +439,37 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
             type: 'error'
           });
         }
-      } else if (actionType === 'APPROVE_FINAL') {
+      } else if (actionType === 'REJECT_PROFILE') {
+        const res = await fetch('/api/counselor/tutors/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tutorId: tutor.id,
+            action: 'REJECT_PROFILE',
+            rejectionNote: modalNoteText
+          })
+        });
+
+        const data = await res.json();
+        setConfirmModal(null);
+
+        if (data.success) {
+          setFeedbackModal({
+            isOpen: true,
+            title: '❌ Profile Rejected',
+            message: `${tutor.name}'s profile has been marked REJECTED and hidden from matching search. You can re-activate them anytime from this page.`,
+            type: 'success'
+          });
+          fetchTutorDetails();
+        } else {
+          setFeedbackModal({
+            isOpen: true,
+            title: 'Rejection Failed',
+            message: data.error || 'Failed to reject profile.',
+            type: 'error'
+          });
+        }
+      } else if (actionType === 'APPROVE_FINAL' || actionType === 'REACTIVATE_PROFILE') {
         const res = await fetch('/api/counselor/tutors/approve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -436,8 +485,8 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
         if (data.success) {
           setFeedbackModal({
             isOpen: true,
-            title: '🏆 Profile & All Documents Fully Verified!',
-            message: `${tutor.name}'s profile, Government ID, and Degree Certificate have all been marked APPROVED together and activated live across Gurgaon.`,
+            title: '🏆 Profile & Documents Fully Approved & Activated!',
+            message: `${tutor.name}'s profile, Government ID, and Degree Certificate have all been marked APPROVED and activated live across Gurgaon.`,
             type: 'success'
           });
           fetchTutorDetails();
@@ -1216,15 +1265,32 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
             </div>
           </div>
 
-          {/* Section 3: Final Profile Approval & Activation */}
-          <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', color: '#FFFFFF', padding: '1.5rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+          {/* Section 3: Profile Status & Verification Command Center */}
+          <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', color: '#FFFFFF', padding: '1.75rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.25rem' }}>
               <div style={{ flex: 1, minWidth: '280px' }}>
-                <h3 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#FFFFFF', letterSpacing: '0.01em' }}>
-                  3. Final Profile Activation Command
-                </h3>
-                <p style={{ fontSize: '0.82rem', color: '#CBD5E1', marginTop: '0.35rem', margin: 0, lineHeight: 1.45 }}>
-                  Activating the tutor grants official SSSAM Verified status and lists them in live parent matching searches across Gurgaon.
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#FFFFFF', letterSpacing: '0.01em' }}>
+                    3. Profile Activation &amp; Status Control
+                  </h3>
+                  <span style={{
+                    fontSize: '0.74rem',
+                    fontWeight: 800,
+                    padding: '2px 10px',
+                    borderRadius: '6px',
+                    backgroundColor: tutor.status === 'ACTIVE_VERIFIED' ? 'rgba(74, 222, 128, 0.2)' : tutor.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(245, 158, 11, 0.25)',
+                    color: tutor.status === 'ACTIVE_VERIFIED' ? '#4ADE80' : tutor.status === 'REJECTED' ? '#FCA5A5' : '#FCD34D',
+                    border: `1px solid ${tutor.status === 'ACTIVE_VERIFIED' ? '#22C55E' : tutor.status === 'REJECTED' ? '#EF4444' : '#F59E0B'}`
+                  }}>
+                    {tutor.status === 'ACTIVE_VERIFIED' ? '✓ ACTIVE & VERIFIED' : tutor.status === 'REJECTED' ? '❌ REJECTED' : tutor.status === 'SUSPENDED' ? '⏸️ SUSPENDED' : '⏳ PENDING AUDIT'}
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.82rem', color: '#CBD5E1', margin: 0, lineHeight: 1.45 }}>
+                  {tutor.status === 'REJECTED'
+                    ? 'This tutor profile is currently REJECTED and hidden from parent search. You can review and re-activate anytime.'
+                    : tutor.status === 'SUSPENDED'
+                    ? 'This tutor profile is currently SUSPENDED / INACTIVE. Click to resume live matching.'
+                    : 'Verified tutors are instantly matched with parent inquiries across Gurgaon & NCR.'}
                 </p>
 
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
@@ -1237,27 +1303,161 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
                 </div>
               </div>
 
-              <button
-                type="button"
-                disabled={actionLoading || isFullyApproved}
-                onClick={() => requestActionConfirmation('APPROVE_FINAL')}
-                className="btn btn-primary"
-                style={{
-                  padding: '0.85rem 1.65rem',
-                  fontSize: '0.92rem',
-                  fontWeight: 800,
-                  backgroundColor: isFullyApproved ? '#059669' : '#0D9488',
-                  borderColor: isFullyApproved ? '#059669' : '#0D9488',
-                  boxShadow: '0 4px 20px rgba(13, 148, 136, 0.4)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  cursor: (actionLoading || isFullyApproved) ? 'not-allowed' : 'pointer'
-                }}
-              >
-                <UserCheck size={18} />
-                <span>{isFullyApproved ? 'Profile Fully Activated & Verified ✓' : '🏆 Complete & Approve Final Profile'}</span>
-              </button>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                {tutor.status === 'REJECTED' ? (
+                  <button
+                    type="button"
+                    disabled={actionLoading}
+                    onClick={() => requestActionConfirmation('REACTIVATE_PROFILE')}
+                    className="btn btn-primary"
+                    style={{
+                      padding: '0.85rem 1.65rem',
+                      fontSize: '0.92rem',
+                      fontWeight: 800,
+                      backgroundColor: '#059669',
+                      borderColor: '#059669',
+                      boxShadow: '0 4px 20px rgba(5, 150, 105, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      cursor: actionLoading ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <UserCheck size={18} />
+                    <span>🔄 Re-Activate &amp; Approve Tutor Profile</span>
+                  </button>
+                ) : tutor.status === 'SUSPENDED' ? (
+                  <>
+                    <button
+                      type="button"
+                      disabled={actionLoading}
+                      onClick={() => requestActionConfirmation('ACTIVATE_TUTOR')}
+                      className="btn btn-primary"
+                      style={{
+                        padding: '0.85rem 1.4rem',
+                        fontSize: '0.92rem',
+                        fontWeight: 800,
+                        backgroundColor: '#059669',
+                        borderColor: '#059669',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.45rem'
+                      }}
+                    >
+                      <Check size={18} />
+                      <span>▶️ Re-Activate Live Profile</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={actionLoading}
+                      onClick={() => requestActionConfirmation('REJECT_PROFILE')}
+                      className="btn btn-secondary"
+                      style={{
+                        padding: '0.85rem 1.25rem',
+                        fontSize: '0.88rem',
+                        fontWeight: 700,
+                        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                        borderColor: '#EF4444',
+                        color: '#FCA5A5',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.45rem'
+                      }}
+                    >
+                      <X size={16} />
+                      <span>Reject Profile</span>
+                    </button>
+                  </>
+                ) : tutor.status === 'ACTIVE_VERIFIED' ? (
+                  <>
+                    <span style={{ fontSize: '0.85rem', color: '#4ADE80', fontWeight: 700, marginRight: '0.5rem' }}>
+                      ✓ Active Live
+                    </span>
+                    <button
+                      type="button"
+                      disabled={actionLoading}
+                      onClick={() => requestActionConfirmation('DEACTIVATE_TUTOR')}
+                      className="btn btn-secondary"
+                      style={{
+                        padding: '0.75rem 1.15rem',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                        borderColor: '#F59E0B',
+                        color: '#FCD34D',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem'
+                      }}
+                    >
+                      <span>⏸️ Suspend</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={actionLoading}
+                      onClick={() => requestActionConfirmation('REJECT_PROFILE')}
+                      className="btn btn-secondary"
+                      style={{
+                        padding: '0.75rem 1.15rem',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                        borderColor: '#EF4444',
+                        color: '#FCA5A5',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem'
+                      }}
+                    >
+                      <X size={16} />
+                      <span>Reject</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      disabled={actionLoading}
+                      onClick={() => requestActionConfirmation('APPROVE_FINAL')}
+                      className="btn btn-primary"
+                      style={{
+                        padding: '0.85rem 1.65rem',
+                        fontSize: '0.92rem',
+                        fontWeight: 800,
+                        backgroundColor: '#0F6E56',
+                        borderColor: '#0F6E56',
+                        boxShadow: '0 4px 20px rgba(15, 110, 86, 0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}
+                    >
+                      <UserCheck size={18} />
+                      <span>🏆 Complete &amp; Approve Profile</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={actionLoading}
+                      onClick={() => requestActionConfirmation('REJECT_PROFILE')}
+                      className="btn btn-secondary"
+                      style={{
+                        padding: '0.85rem 1.25rem',
+                        fontSize: '0.88rem',
+                        fontWeight: 700,
+                        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                        borderColor: '#EF4444',
+                        color: '#FCA5A5',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.45rem'
+                      }}
+                    >
+                      <X size={16} />
+                      <span>Reject</span>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1384,10 +1584,25 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
                     className="form-control"
                     style={{ fontSize: '0.85rem' }}
                   >
-                    <option value="BOTH">Both (Offline Home + Online)</option>
-                    <option value="OFFLINE_HOME">Offline Home Visit Only</option>
-                    <option value="ONLINE_LIVE">Online Live 1-on-1 Only</option>
+                    <option value="BOTH">🏡 Home Visit + 💻 Online Live (Hybrid)</option>
+                    <option value="OFFLINE_HOME">🏡 Offline Home Visit Only</option>
+                    <option value="ONLINE_LIVE">💻 Online Live 1-on-1 Only</option>
                   </select>
+                  {editFormData.teachingMode === 'ONLINE_LIVE' && (
+                    <div style={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '0.45rem 0.65rem', color: '#1E40AF', fontSize: '0.74rem', marginTop: '0.4rem', lineHeight: 1.35 }}>
+                      💻 <strong>Online-Only Mode:</strong> Physical travel map &amp; radius are optional. Online tuition rates (₹/hr) will apply.
+                    </div>
+                  )}
+                  {editFormData.teachingMode === 'OFFLINE_HOME' && (
+                    <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '8px', padding: '0.45rem 0.65rem', color: '#166534', fontSize: '0.74rem', marginTop: '0.4rem', lineHeight: 1.35 }}>
+                      🏡 <strong>Home Visit Only Mode:</strong> Tutor travels in-person to student residences in Gurgaon/NCR.
+                    </div>
+                  )}
+                  {editFormData.teachingMode === 'BOTH' && (
+                    <div style={{ backgroundColor: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: '8px', padding: '0.45rem 0.65rem', color: '#5B21B6', fontSize: '0.74rem', marginTop: '0.4rem', lineHeight: 1.35 }}>
+                      ✨ <strong>Hybrid Mode:</strong> Tutor accepts both in-person home tutoring and live 1-on-1 online classes.
+                    </div>
+                  )}
                 </div>
               </div>
 
