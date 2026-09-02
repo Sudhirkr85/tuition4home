@@ -13,10 +13,10 @@ export const dynamic = 'force-static';
 export const revalidate = 604800; // 7 days Edge CDN caching
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://tuitionforhome.com';
+  const baseUrl = 'https://sssamacademy.tech';
   const currentDate = new Date();
 
-  // 1. Core High-Priority Static Landing Routes
+  // 1. Core High-Priority Static Landing Routes & Legal Trust Pages
   const coreRoutes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
@@ -60,37 +60,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.85,
     },
+    {
+      url: `${baseUrl}/privacy-policy`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
   ];
 
-  // 2. Programmatic Course Landing Pages: City × Topic (2-Segment URLs)
-  const course2SegmentUrls: MetadataRoute.Sitemap = [];
-  SEO_LOCATIONS.forEach((loc) => {
-    SEO_TOPICS.forEach((topic) => {
-      course2SegmentUrls.push({
-        url: `${baseUrl}/courses/${loc.city}/${topic.topic}`,
-        lastModified: currentDate,
-        changeFrequency: 'weekly',
-        priority: loc.isTopCity ? 0.92 : 0.85,
-      });
-    });
-  });
-
-  // 3. Programmatic Course Intent Pages: City × Modifier × Topic (3-Segment URLs)
-  const course3SegmentUrls: MetadataRoute.Sitemap = [];
-  SEO_LOCATIONS.forEach((loc) => {
-    SEO_MODIFIERS.forEach((mod) => {
-      SEO_TOPICS.forEach((topic) => {
-        course3SegmentUrls.push({
-          url: `${baseUrl}/courses/${loc.city}/${mod.modifier}/${topic.topic}`,
-          lastModified: currentDate,
-          changeFrequency: 'weekly',
-          priority: mod.isTopModifier && loc.isTopCity ? 0.9 : 0.8,
-        });
-      });
-    });
-  });
-
-  // 4. Locality-Specific Hub URLs
+  // 2. Gurgaon Residential Locality Hubs (Primary Local Search Equity)
   const localityUrls: MetadataRoute.Sitemap = GURGAON_LOCALITIES.map((loc) => ({
     url: `${baseUrl}/home-tutors-in-gurgaon/${loc.slug}`,
     lastModified: currentDate,
@@ -98,7 +82,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.95,
   }));
 
-  // 5. Subject SEO Hub URLs
+  // 3. Subject Directory Hub URLs
   const subjectUrls: MetadataRoute.Sitemap = SUBJECT_SEO_PAGES.map((sub) => ({
     url: `${baseUrl}/tuition/${sub.slug}`,
     lastModified: currentDate,
@@ -106,9 +90,39 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.95,
   }));
 
-  // 6. Hyper-Local NCR Micro-Landing Pages
+  // 4. Curated Delhi NCR NCR City × Topic Hubs (Clean Local Authority)
+  const course2SegmentUrls: MetadataRoute.Sitemap = [];
+  SEO_LOCATIONS.forEach((loc) => {
+    SEO_TOPICS.forEach((topic) => {
+      course2SegmentUrls.push({
+        url: `${baseUrl}/courses/${loc.city}/${topic.topic}`,
+        lastModified: currentDate,
+        changeFrequency: 'weekly',
+        priority: loc.city === 'gurgaon' ? 0.92 : 0.85,
+      });
+    });
+  });
+
+  // 5. Curated Top Modifier × Topic Pages for NCR Hubs
+  const course3SegmentUrls: MetadataRoute.Sitemap = [];
+  const topModifiers = SEO_MODIFIERS.filter((m) => m.isTopModifier);
+  SEO_LOCATIONS.forEach((loc) => {
+    topModifiers.forEach((mod) => {
+      SEO_TOPICS.slice(0, 8).forEach((topic) => {
+        course3SegmentUrls.push({
+          url: `${baseUrl}/courses/${loc.city}/${mod.modifier}/${topic.topic}`,
+          lastModified: currentDate,
+          changeFrequency: 'weekly',
+          priority: 0.82,
+        });
+      });
+    });
+  });
+
+  // 6. Hyper-Local NCR Micro-Landing Pages (Curated High-Intent Localities)
   const pseoUrls: MetadataRoute.Sitemap = [];
-  PSEO_LOCALITIES.forEach((loc) => {
+  const curatedLocalities = PSEO_LOCALITIES.slice(0, 35); // Top 35 Gurgaon/NCR localities
+  curatedLocalities.forEach((loc) => {
     PSEO_SUBJECTS.forEach((sub) => {
       pseoUrls.push({
         url: `${baseUrl}/tuition/${sub.slug}-home-tutor-in-${loc.slug}`,
@@ -117,7 +131,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
         priority: loc.affluenceTier === 'ULTRA_LUXURY' ? 0.88 : 0.82,
       });
 
-      PSEO_INTENT_TRACKS.slice(1, 4).forEach((track) => {
+      // Include top intent tracks (e.g. female tutor, ib board)
+      PSEO_INTENT_TRACKS.slice(1, 3).forEach((track) => {
         pseoUrls.push({
           url: `${baseUrl}/tuition/${track.prefix}${sub.slug}-home-tutor-in-${loc.slug}`,
           lastModified: currentDate,
@@ -128,16 +143,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     });
   });
 
-  // Combine and safely cap under Google's 50,000 limit
-  // Place high-priority core, locality, subject hubs & PSEO pages first
-  const combinedSitemap = [
+  return [
     ...coreRoutes,
     ...localityUrls,
     ...subjectUrls,
-    ...pseoUrls,
     ...course2SegmentUrls,
     ...course3SegmentUrls,
+    ...pseoUrls,
   ];
-
-  return combinedSitemap.slice(0, 48000);
 }

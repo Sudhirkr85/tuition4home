@@ -13,7 +13,11 @@ export async function POST(req: Request) {
     }
 
     // Security Verification: Ensure request is from authorized Admin
-    const expectedSecret = process.env.NEXTAUTH_SECRET || 'tuitionforhome_super_secret_jwt_key_2026';
+    const expectedSecret = process.env.NEXTAUTH_SECRET;
+    if (!expectedSecret) {
+      console.error('CRITICAL ERROR: NEXTAUTH_SECRET environment variable is missing.');
+      return NextResponse.json({ success: false, error: 'Server configuration error: authentication secret missing' }, { status: 500 });
+    }
     if (!adminSecret || adminSecret !== expectedSecret) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Only Super Admin can delete assets' }, { status: 403 });
     }

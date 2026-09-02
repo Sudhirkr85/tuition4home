@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { MapPin, Phone, Mail, ShieldCheck, GraduationCap, Clock, CheckCircle, Instagram, Facebook, Youtube } from 'lucide-react';
 import { GURGAON_LOCALITIES, SSSAM_OFFICE_DETAILS } from '@/lib/data';
 
@@ -27,13 +28,12 @@ export default function Footer() {
           {/* Col 1: Brand & SSSAM Academy Trust */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="/logo.webp"
                 alt="TuitionForHome Logo"
+                width={48}
+                height={48}
                 style={{
-                  height: '48px',
-                  width: '48px',
                   objectFit: 'cover',
                   backgroundColor: '#FFFFFF',
                   padding: '0',
@@ -220,15 +220,14 @@ export default function Footer() {
             © {new Date().getFullYear()} <strong>TuitionForHome</strong>. Powered by SSSAM Academy. All rights reserved.
           </div>
           <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <Link href="/" style={{ color: '#94A3B8' }}>Privacy Policy</Link>
-            <Link href="/tutor/register" style={{ color: '#94A3B8' }}>Tutor Agreement</Link>
-            <Link href="/#how-it-works" style={{ color: '#94A3B8' }}>Payment Policy</Link>
-            <Link href="/#how-it-works" style={{ color: '#94A3B8' }}>Cancellation Policy</Link>
+            <Link href="/privacy-policy" style={{ color: '#94A3B8' }}>Privacy Policy</Link>
+            <Link href="/terms" style={{ color: '#94A3B8' }}>Terms of Service</Link>
+            <Link href="/terms#tutor-terms" style={{ color: '#94A3B8' }}>Tutor Agreement</Link>
+            <Link href="/terms#payment-policy" style={{ color: '#94A3B8' }}>Payment Policy</Link>
+            <Link href="/terms#cancellation-policy" style={{ color: '#94A3B8' }}>Cancellation &amp; Refunds</Link>
             <a href={`tel:${SSSAM_OFFICE_DETAILS.phones[0]}`} style={{ color: '#94A3B8' }}>Grievance Support</a>
             <a href={`mailto:${SSSAM_OFFICE_DETAILS.email}`} style={{ color: '#94A3B8' }}>Contact</a>
             <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8' }}>Sitemap (XML)</a>
-            <Link href="/counselor" style={{ color: '#94A3B8' }}>Counselor Desk</Link>
-            <Link href="/admin" style={{ color: '#94A3B8' }}>Admin Portal</Link>
           </div>
         </div>
       </div>

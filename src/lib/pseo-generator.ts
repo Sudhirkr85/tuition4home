@@ -7,6 +7,7 @@ import {
   PSEOIntentTrack,
 } from './pseo-data';
 import { SSSAM_OFFICE_DETAILS } from './data';
+import { SUBJECT_SEO_PAGES } from './seo-data';
 
 export interface PSEOPagePayload {
   slug: string;
@@ -43,15 +44,29 @@ export interface PSEOPagePayload {
 
 /**
  * Resolves Locality, Subject and Intent Track from any URL slug
+ * Returns null if no valid subject or locality match is found (prevents soft-404 traps)
  */
 export function resolvePSEOSlug(slug: string): {
   locality: PSEOLocality;
   subject: PSEOSubject;
   intentTrack: PSEOIntentTrack;
-} {
-  const cleanSlug = slug.toLowerCase();
+} | null {
+  if (!slug || typeof slug !== 'string') return null;
+  const cleanSlug = slug.toLowerCase().trim();
 
-  // 1. Resolve Intent Track
+  // 1. Check direct Legacy Subject Pages match
+  const legacyMatch = SUBJECT_SEO_PAGES.find((s) => s.slug === cleanSlug);
+  if (legacyMatch) {
+    const sortedSubjects = [...PSEO_SUBJECTS].sort((a, b) => b.slug.length - a.slug.length);
+    const sub = sortedSubjects.find((s) => cleanSlug.includes(s.slug)) || PSEO_SUBJECTS[0];
+    return {
+      locality: PSEO_LOCALITIES[0],
+      subject: sub,
+      intentTrack: PSEO_INTENT_TRACKS[0],
+    };
+  }
+
+  // 2. Resolve Intent Track
   let matchedIntent = PSEO_INTENT_TRACKS.find(
     (t) => t.prefix !== '' && cleanSlug.startsWith(t.prefix)
   );
@@ -59,28 +74,7 @@ export function resolvePSEOSlug(slug: string): {
     matchedIntent = PSEO_INTENT_TRACKS[0]; // General
   }
 
-  // 2. Resolve Locality Match (Sort by longest slug first for maximum specificity)
-  const sortedLocalities = [...PSEO_LOCALITIES].sort((a, b) => b.slug.length - a.slug.length);
-  let matchedLocality = sortedLocalities.find((l) => cleanSlug.includes(l.slug));
-
-  if (!matchedLocality) {
-    matchedLocality = sortedLocalities.find((l) => {
-      const stripped = l.slug.replace('-gurgaon', '').replace('-delhi', '').replace('-noida', '');
-      return cleanSlug.includes(stripped);
-    });
-  }
-
-  if (!matchedLocality) {
-    if (cleanSlug.includes('noida')) {
-      matchedLocality = PSEO_LOCALITIES.find((l) => l.city === 'Noida') || PSEO_LOCALITIES[0];
-    } else if (cleanSlug.includes('delhi')) {
-      matchedLocality = PSEO_LOCALITIES.find((l) => l.city === 'Delhi') || PSEO_LOCALITIES[0];
-    } else {
-      matchedLocality = PSEO_LOCALITIES[0]; // DLF Phase 5
-    }
-  }
-
-  // 3. Resolve Subject Match (Sort by longest slug first for maximum specificity)
+  // 3. Resolve Subject Match (Must strictly match a real subject)
   const sortedSubjects = [...PSEO_SUBJECTS].sort((a, b) => b.slug.length - a.slug.length);
   let matchedSubject = sortedSubjects.find((s) => cleanSlug.includes(s.slug));
 
@@ -94,12 +88,42 @@ export function resolvePSEOSlug(slug: string): {
     else if (cleanSlug.includes('eco')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'economics');
     else if (cleanSlug.includes('french')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'french-language');
     else if (cleanSlug.includes('german')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'german-language');
-    else matchedSubject = PSEO_SUBJECTS[0]; // Default Mathematics
+    else if (cleanSlug.includes('science')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'science-foundation');
+    else if (cleanSlug.includes('english')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'english-literature');
+    else if (cleanSlug.includes('hindi')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'hindi-language');
+    else if (cleanSlug.includes('social-science')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'social-studies');
+    else if (cleanSlug.includes('business')) matchedSubject = PSEO_SUBJECTS.find((s) => s.slug === 'business-studies');
+  }
+
+  // If no subject keyword matched at all, it is an invalid route -> return null (trigger 404)
+  if (!matchedSubject) {
+    return null;
+  }
+
+  // 4. Resolve Locality Match
+  const sortedLocalities = [...PSEO_LOCALITIES].sort((a, b) => b.slug.length - a.slug.length);
+  let matchedLocality = sortedLocalities.find((l) => cleanSlug.includes(l.slug));
+
+  if (!matchedLocality) {
+    matchedLocality = sortedLocalities.find((l) => {
+      const stripped = l.slug.replace('-gurgaon', '').replace('-delhi', '').replace('-noida', '');
+      return cleanSlug.includes(stripped);
+    });
+  }
+
+  // If the slug contains '-in-' or '-near-' specifying a locality but no known locality was found, reject it
+  if (!matchedLocality && (cleanSlug.includes('-in-') || cleanSlug.includes('-near-'))) {
+    return null;
+  }
+
+  // If no specific locality is in the slug (general subject query), default to primary hub (DLF Phase 5, Gurgaon)
+  if (!matchedLocality) {
+    matchedLocality = PSEO_LOCALITIES[0];
   }
 
   return {
-    locality: matchedLocality || PSEO_LOCALITIES[0],
-    subject: matchedSubject || PSEO_SUBJECTS[0],
+    locality: matchedLocality,
+    subject: matchedSubject,
     intentTrack: matchedIntent,
   };
 }
@@ -144,12 +168,17 @@ function calculatePseoPricing(locality: PSEOLocality, subject: PSEOSubject, inte
 
 /**
  * Master Programmatic SEO Content Generator
- * Generates 100% unique, anti-duplicate landing page payloads for all 50,000+ paths
+ * Generates 100% unique, anti-duplicate landing page payloads
  */
-export function generatePSEOPagePayload(slug: string): PSEOPagePayload {
-  const { locality, subject, intentTrack } = resolvePSEOSlug(slug);
+export function generatePSEOPagePayload(slug: string): PSEOPagePayload | null {
+  const resolved = resolvePSEOSlug(slug);
+  if (!resolved) {
+    return null;
+  }
+
+  const { locality, subject, intentTrack } = resolved;
   const pricing = calculatePseoPricing(locality, subject, intentTrack);
-  const baseUrl = 'https://tuitionforhome.com';
+  const baseUrl = 'https://sssamacademy.tech';
   const canonicalUrl = `${baseUrl}/tuition/${slug}`;
 
   // Unique Dynamic Meta Title & Description
@@ -174,11 +203,23 @@ export function generatePSEOPagePayload(slug: string): PSEOPagePayload {
     intro = `Cracking competitive entrance exams in ${subject.name} demands conceptual speed, high-frequency numerical practice, and error-elimination strategies. Our entrance faculty in ${locality.name}, ${locality.city} provides personalized 1-on-1 coaching focusing on previous 15-year papers and high-yield question formats.`;
   }
 
-  // Contextual Localized FAQs tailored to Intent & Locality
+/**
+ * Computes a realistic counselor matching time window with a meaningful spread.
+ * Ensures the lower bound is always strictly less than the upper bound.
+ */
+function calculateMatchingTimeRange(averageTravelMin?: number): string {
+  const travel = averageTravelMin || 8;
+  const minMinutes = travel <= 7 ? 5 : travel <= 11 ? 10 : 15;
+  const maxMinutes = minMinutes === 5 ? 15 : minMinutes === 10 ? 25 : 30;
+  return `${minMinutes}–${maxMinutes} minutes`;
+}
+
+// Contextual Localized FAQs tailored to Intent & Locality
+  const matchingTimeWindow = calculateMatchingTimeRange(locality.averageTravelMin);
   const faqs = [
     {
       question: `How quickly can a verified ${subject.name} teacher start in ${locality.name}, ${locality.city}?`,
-      answer: `Following your request, SSSAM Academy academic counselors match a background-checked ${subject.name} educator within ${locality.averageTravelMin || 10}–15 minutes. A trial demo class can be scheduled at your residence in ${locality.name} within 24 to 48 hours.`,
+      answer: `Following your request, SSSAM Academy academic counselors match a background-checked ${subject.name} educator within ${matchingTimeWindow}. A trial demo class can be scheduled at your residence in ${locality.name} within 24 to 48 hours.`,
     },
     {
       question: `Do your tutors follow the exact exam pattern of schools in ${locality.name}?`,
@@ -207,7 +248,7 @@ export function generatePSEOPagePayload(slug: string): PSEOPagePayload {
     provider: {
       '@type': 'EducationalOrganization',
       name: 'TuitionForHome by SSSAM Academy',
-      sameAs: 'https://tuitionforhome.com',
+      sameAs: 'https://sssamacademy.tech',
       address: {
         '@type': 'PostalAddress',
         streetAddress: SSSAM_OFFICE_DETAILS.address,

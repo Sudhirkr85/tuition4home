@@ -1,50 +1,9 @@
-'use client';
-
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
+import { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import HowItWorks from '@/components/HowItWorks';
-import StickyMobileBar from '@/components/StickyMobileBar';
-import TutorAvatar from '@/components/TutorAvatar';
-
-const FeeEstimator = dynamic(() => import('@/components/FeeEstimator'), {
-  ssr: true,
-  loading: () => <div style={{ minHeight: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading Fee Calculator...</div>,
-});
-const BookingModal = dynamic(() => import('@/components/BookingModal'), {
-  ssr: false,
-});
-const VideoModal = dynamic(() => import('@/components/VideoModal'), {
-  ssr: false,
-});
-const PromoVideoModal = dynamic(() => import('@/components/PromoVideoModal'), {
-  ssr: false,
-});
-const RapidoStyleMap = dynamic(() => import('@/components/RapidoStyleMap'), {
-  ssr: false,
-  loading: () => <div style={{ height: '480px', backgroundColor: '#F8FAFC', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}>Loading Gurgaon Teachers Map...</div>,
-});
-
-import { PROMO_VIDEOS } from '@/lib/promoVideos';
-import { PromoVideoData } from '@/components/PromoVideoModal';
-
-import {
-  GURGAON_LOCALITIES,
-  SUBJECT_OPTIONS,
-  CLASS_OPTIONS,
-  VERIFIED_TUTORS,
-  SSSAM_OFFICE_DETAILS,
-  MockTutor,
-  LocalityInfo,
-} from '@/lib/data';
-import {
-  calculateHaversineKm,
-  getDistanceInfo,
-  getTeacherCoordinates,
-  POPULAR_GURGAON_SECTORS,
-} from '@/lib/geo';
+import { GURGAON_LOCALITIES, SSSAM_OFFICE_DETAILS } from '@/lib/data';
 import {
   Sparkles,
   ShieldCheck,
@@ -62,1718 +21,625 @@ import {
   Award,
   BookOpen,
   Briefcase,
-  MessageSquare,
-  Smartphone,
-  Globe,
-  ChevronDown,
-  ChevronUp,
-  HelpCircle,
-  Check,
   Headphones,
   RotateCcw,
   BadgeCheck,
   Clock,
-  Volume2,
-  VolumeX,
 } from 'lucide-react';
+import { HomeClientProvider } from '@/components/home/HomeContext';
+import { HomeNavbar } from '@/components/home/HomeNavbar';
+import { HeroSectorBadge } from '@/components/home/HeroSectorBadge';
+import { HeroActionButtons } from '@/components/home/HeroActionButtons';
+import { HomeMapSection } from '@/components/home/HomeMapSection';
+import { HomeHowItWorksSection } from '@/components/home/HomeHowItWorksSection';
+import { ParentStoryVideo } from '@/components/home/ParentStoryVideo';
+import { HomeTutorSection } from '@/components/home/HomeTutorSection';
+import { HomeFeeEstimatorSection } from '@/components/home/HomeFeeEstimatorSection';
+import { LocalityDirectoryToggle } from '@/components/home/LocalityDirectoryToggle';
+import { HomeFaqAccordion } from '@/components/home/HomeFaqAccordion';
+
+export const revalidate = 3600; // 1 hour ISR Edge CDN caching
+
+export const metadata: Metadata = {
+  title: 'TuitionForHome — #1 Verified Home & Online Tutors in Gurgaon | SSSAM Academy',
+  description:
+    'Find top-rated, background-checked CBSE, ICSE, IB & Coding home tutors in Gurgaon (DLF Phase 1-5, Golf Course Rd, Sohna Rd, Sector 56). Verified by SSSAM Academy Sector 14 Gurugram. 1-on-1 Trial Class + 100% Replacement Guarantee.',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'TuitionForHome — Verified Home & Online Tutors in Gurgaon',
+    description:
+      'Book top 1% verified home and online tutors in Gurgaon & Delhi NCR with 1-on-1 trial class. Operated by SSSAM Academy, Sector 14 Gurugram.',
+    url: 'https://sssamacademy.tech',
+    siteName: 'TuitionForHome',
+    locale: 'en_IN',
+    type: 'website',
+  },
+};
 
 export default function HomePage() {
-  const [bookingOpen, setBookingOpen] = useState(false);
-  const [selectedTutorForBooking, setSelectedTutorForBooking] = useState<{
-    tutorName?: string;
-    tutorAvatar?: string;
-    tutorDegree?: string;
-    tutorRate?: number;
-    tutorId?: string;
-    grade?: string;
-    mode?: string;
-    subject?: string;
-  } | undefined>(undefined);
-
-  const [activeVideoTutor, setActiveVideoTutor] = useState<MockTutor | null>(null);
-  const [activePromoVideo, setActivePromoVideo] = useState<PromoVideoData | null>(null);
-  const [dynamicTutors, setDynamicTutors] = useState<MockTutor[]>([]);
-  const [dynamicLocalities, setDynamicLocalities] = useState<LocalityInfo[]>(GURGAON_LOCALITIES);
-  const [showAllLocalities, setShowAllLocalities] = useState(false);
-  const [totalVerifiedTutors, setTotalVerifiedTutors] = useState<string>('');
-  const [selectedShowcaseSector, setSelectedShowcaseSector] = useState<string>('All Sectors');
-  const [selectedShowcaseGender, setSelectedShowcaseGender] = useState<'ALL' | 'FEMALE' | 'MALE'>('ALL');
-  const [platformConfig, setPlatformConfig] = useState<any>(null);
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-  const parentStoryVideoRef = useRef<HTMLVideoElement>(null);
-  const [isParentStoryMuted, setIsParentStoryMuted] = useState(true);
-
-  // Fetch live verified tutors, dynamic sectors & platform config from MySQL database
-  useEffect(() => {
-    fetch('/api/tutors/list')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.tutors)) {
-          setDynamicTutors(data.tutors);
-        } else {
-          setDynamicTutors([]);
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to fetch live tutors:', err);
-        setDynamicTutors([]);
-      });
-
-    fetch('/api/localities')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.localities)) {
-          setDynamicLocalities(data.localities);
-          if (data.totalTutorsCount && data.totalTutorsCount > 0) {
-            setTotalVerifiedTutors(`${data.totalTutorsCount}+`);
-          } else {
-            setTotalVerifiedTutors('');
-          }
-        }
-      })
-      .catch((err) => console.error('Failed to fetch dynamic localities:', err));
-
-    fetch('/api/config/global')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.config) {
-          setPlatformConfig(data.config);
-        }
-      })
-      .catch((err) => console.error('Failed to fetch platform config:', err));
-  }, []);
-
-  // Search Mode State
-  const [searchMode, setSearchMode] = useState<'OFFLINE_HOME' | 'ONLINE_LIVE'>('OFFLINE_HOME');
-
-  // Dynamic Sector Text Auto-Slide State
-  const [currentSectorIndex, setCurrentSectorIndex] = useState(0);
-  const sectorList = [
-    'DLF Phase 5',
-    'Golf Course Road',
-    'Sector 56',
-    'DLF Phase 1',
-    'Sohna Road',
-    'Nirvana Country',
-    'Sushant Lok 1',
-    'Sector 14 & Old DLF',
-  ];
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSectorIndex((prev) => (prev + 1) % sectorList.length);
-    }, 2800);
-    return () => clearInterval(timer);
-  }, [sectorList.length]);
-
-  const handleOpenBooking = (tutor?: MockTutor) => {
-    if (tutor) {
-      setSelectedTutorForBooking({
-        tutorName: tutor.name,
-        tutorAvatar: tutor.avatarUrl,
-        tutorDegree: tutor.highestDegree,
-        tutorRate: tutor.hourlyRateHome,
-        tutorId: tutor.id,
-        grade: tutor.classes?.[0],
-        subject: tutor.subjects?.[0],
-      });
-    } else {
-      setSelectedTutorForBooking(undefined);
-    }
-    setBookingOpen(true);
-  };
-
-  const handleBookWithEstimate = (data: { grade: string; mode: string; estimatedMonthly: string }) => {
-    setSelectedTutorForBooking({ grade: data.grade, mode: data.mode });
-    setBookingOpen(true);
-  };
-
-
-
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)' }}>
+    <HomeClientProvider>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)' }}>
+        
+        {/* Navigation Bar */}
+        <HomeNavbar />
 
+        <main style={{ flex: 1 }}>
+          {/* =========================================================================
+              1. MINIMALIST HERO SECTION (SEO & TRUST OPTIMIZED)
+              ========================================================================= */}
+          <section aria-label="Hero Search and Overview" style={{
+            paddingTop: '1rem',
+            paddingBottom: '2.5rem',
+            backgroundColor: '#FFFFFF',
+            borderBottom: '1px solid #E8E8ED',
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            <div className="container">
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+                gap: '2.5rem',
+                alignItems: 'center',
+              }}>
+                {/* Left Column: Headline & Action Controls */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', minWidth: 0 }}>
+                  {/* Dynamic Sector Badge */}
+                  <div>
+                    <HeroSectorBadge />
+                  </div>
 
-      <Navbar onOpenBooking={() => handleOpenBooking()} />
-
-      <main style={{ flex: 1 }}>
-        {/* =========================================================================
-            1. APPLE-STYLE MINIMALIST HERO SECTION (SEO & TRUST OPTIMIZED)
-            ========================================================================= */}
-        <section aria-label="Hero Search and Overview" style={{
-          paddingTop: '1rem',
-          paddingBottom: '2.5rem',
-          backgroundColor: '#FFFFFF',
-          borderBottom: '1px solid #E8E8ED',
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
-          <div className="container">
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-              gap: '2.5rem',
-              alignItems: 'center',
-            }}>
-              {/* Left Column: Headline & Action Controls */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', minWidth: 0 }}>
-                {/* 1. Dynamic Sector Badge (no longer duplicating SSSAM branding) */}
-                <div>
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.55rem',
-                    padding: '0.4rem 0.9rem',
-                    borderRadius: '999px',
-                    backgroundColor: '#E8F5E9',
-                    border: '1px solid #C8E6C9',
-                    color: '#0F6E56',
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    maxWidth: '100%',
+                  {/* Primary Keyword H1 Headline */}
+                  <h1 style={{
+                    fontSize: 'clamp(1.9rem, 4vw, 3.2rem)',
+                    fontWeight: 800,
+                    color: '#1D1D1F',
+                    lineHeight: 1.15,
+                    letterSpacing: '-0.02em',
+                    margin: 0,
+                    wordBreak: 'break-word',
                   }}>
-                    <MapPin size={14} color="#0F6E56" style={{ flexShrink: 0 }} />
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      Active in <strong>{sectorList[currentSectorIndex]}</strong>
-                    </span>
+                    Find a <span style={{ color: '#0F6E56' }}>Home Teacher</span> for Your Child in Gurgaon
+                  </h1>
+
+                  {/* Subtext */}
+                  <p style={{
+                    fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
+                    color: '#515154',
+                    lineHeight: 1.55,
+                    margin: 0,
+                  }}>
+                    Connect with background-checked <strong>home teachers in Gurgaon</strong> for CBSE, ICSE, IB &amp; Coding. Matched within 3.5 km of your sector with a <strong>100% Free Replacement Guarantee</strong>.
+                  </p>
+
+                  {/* Hero CTA Button Row */}
+                  <HeroActionButtons />
+
+                  {/* Trust Signal Pillars */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                    gap: '0.75rem',
+                    paddingTop: '0.5rem',
+                    borderTop: '1px solid #F1F5F9',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', color: '#475569', fontWeight: 600 }}>
+                      <ShieldCheck size={16} color="#059669" />
+                      <span>In-Person KYC Vetted</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', color: '#475569', fontWeight: 600 }}>
+                      <Video size={16} color="#0D9488" />
+                      <span>60s Video Auditions</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', color: '#475569', fontWeight: 600 }}>
+                      <RotateCcw size={16} color="#2563EB" />
+                      <span>Free Replacement</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* 7. Single Primary Keyword H1 Headline */}
-                <h1 style={{
-                  fontSize: 'clamp(1.9rem, 4vw, 3.2rem)',
-                  fontWeight: 800,
-                  color: '#1D1D1F',
-                  lineHeight: 1.15,
-                  letterSpacing: '-0.02em',
-                  margin: 0,
-                  wordBreak: 'break-word',
-                }}>
-                  Find a <span style={{ color: '#0F6E56' }}>Home Teacher</span> for Your Child in Gurgaon
-                </h1>
-
-                {/* 9. LSI Keywords Subtext */}
-                <p style={{
-                  fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
-                  color: '#515154',
-                  lineHeight: 1.55,
-                  margin: 0,
-                }}>
-                  Connect with background-checked <strong>home teachers in Gurgaon</strong> for CBSE, ICSE, IB & Coding. Matched within 3.5 km of your sector with a <strong>100% Free Replacement Guarantee</strong>.
-                </p>
-
-
-
-
-                {/* 6. Bolder CTA Button Row */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%', maxWidth: '440px' }}>
-                  {/* Live Animated Status Badge */}
+                {/* Right Column: Hero Visual Asset Optimized with next/image */}
+                <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', minHeight: '380px' }}>
                   <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.45rem',
-                    backgroundColor: 'rgba(37, 211, 102, 0.1)',
-                    border: '1px solid rgba(37, 211, 102, 0.3)',
-                    padding: '0.3rem 0.75rem',
-                    borderRadius: '999px',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    color: '#047857',
-                    alignSelf: 'flex-start',
-                  }}>
-                    <span style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '100%',
+                    maxWidth: '460px',
+                    aspectRatio: '1',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(15, 110, 86, 0.12) 0%, rgba(13, 148, 136, 0.05) 50%, rgba(255,255,255,0) 70%)',
+                    zIndex: 1,
+                  }} />
+
+                  <Image
+                    src="/hero_young_teacher_girl_student_cutout.webp"
+                    alt="Verified Home Tutor and Student in Gurgaon"
+                    width={600}
+                    height={600}
+                    priority
+                    sizes="(max-width: 768px) 100vw, 550px"
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      maxHeight: '520px',
+                      objectFit: 'contain',
+                      objectPosition: 'bottom center',
+                      display: 'block',
+                      filter: 'drop-shadow(0 20px 30px rgba(15, 23, 42, 0.15))',
                       position: 'relative',
-                      display: 'inline-flex',
-                      width: '8px',
-                      height: '8px',
-                    }}>
-                      <span style={{
-                        position: 'absolute',
-                        width: '100%',
-                        height: '100%',
-                        borderRadius: '50%',
-                        backgroundColor: '#22C55E',
-                        animation: 'ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite',
-                        opacity: 0.75,
-                      }} />
-                      <span style={{
-                        position: 'relative',
-                        display: 'inline-block',
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: '#16A34A',
-                      }} />
-                    </span>
-                    <span>Verified Teachers Online Now in Gurgaon</span>
-                  </div>
+                      zIndex: 2,
+                    }}
+                  />
 
+                  {/* Floating Trust Card */}
                   <div style={{
+                    position: 'absolute',
+                    bottom: '15px',
+                    left: '10px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1.5px solid #CCFBF1',
+                    borderRadius: '16px',
+                    padding: '0.65rem 1rem',
+                    boxShadow: '0 10px 25px rgba(15, 23, 42, 0.12)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.65rem',
-                    flexWrap: 'wrap',
-                    width: '100%',
+                    zIndex: 3,
                   }}>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenBooking()}
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      backgroundColor: '#ECFDF5',
+                      color: '#059669',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      <Building2 size={20} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0F172A' }}>
+                        SSSAM Academy Center
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700 }}>
+                        Sector 14 Gurugram
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* =========================================================================
+              2. INTERACTIVE VISUAL PROXIMITY MAP
+              ========================================================================= */}
+          <HomeMapSection />
+
+          {/* =========================================================================
+              3. HOW IT WORKS SECTION
+              ========================================================================= */}
+          <HomeHowItWorksSection />
+
+          {/* =========================================================================
+              4. MOBILE PARENT EXPERIENCE CARD & VIDEO
+              ========================================================================= */}
+          <section aria-label="WhatsApp and SMS Class Confirmation" style={{ padding: '3rem 0 3.75rem 0', backgroundColor: '#FFFFFF' }}>
+            <div className="container">
+              <div style={{ textAlign: 'center', marginBottom: '2.25rem' }}>
+                <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
+                  <span>PARENT EXPERIENCE</span>
+                </div>
+                <h2 style={{ fontSize: '2.25rem', fontWeight: 800 }}>
+                  The Simplest Tuition Experience. Ever.
+                </h2>
+                <p style={{ color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+                  No account required for parents. Receive your verified tutor match details directly via WhatsApp or Phone.
+                </p>
+              </div>
+
+              <div className="apple-card" style={{
+                backgroundColor: 'var(--bg-app)',
+                padding: 'clamp(1.75rem, 3.5vw, 2.75rem)',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '2.5rem',
+                alignItems: 'center',
+              }}>
+                {/* Left Column: Live Parent Discussion Video in Smartphone Frame */}
+                <ParentStoryVideo />
+
+                {/* Right Column: 3-Step WhatsApp Experience Flow */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '12px',
+                      backgroundColor: '#ECFDF5',
+                      color: '#059669',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      flexShrink: 0,
+                    }}>
+                      1
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+                        Submit Your Learning Need
+                      </h3>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                        Select student class (1–12 or Board prep), subjects, and preferred tutor timing in your Gurgaon sector.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '12px',
+                      backgroundColor: '#EFF6FF',
+                      color: '#2563EB',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      flexShrink: 0,
+                    }}>
+                      2
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+                        Review Verified Teacher Video Profiles
+                      </h3>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                        Our academic counselor shares top 2–3 educator profiles with degrees and 60-second video intros right on WhatsApp.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '12px',
+                      backgroundColor: '#FEF3C7',
+                      color: '#B45309',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      flexShrink: 0,
+                    }}>
+                      3
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+                        1-on-1 Trial Class at Home
+                      </h3>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                        Confirm your trial session. If satisfied, regular classes begin with weekly attendance tracking and our 100% Free Replacement Guarantee.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* =========================================================================
+              5. VERIFIED TUTORS SHOWCASE (SECTOR & GENDER DYNAMIC)
+              ========================================================================= */}
+          <HomeTutorSection />
+
+          {/* =========================================================================
+              6. INTERACTIVE FEE ESTIMATOR
+              ========================================================================= */}
+          <HomeFeeEstimatorSection />
+
+          {/* =========================================================================
+              7. SSSAM ACADEMY PHYSICAL CENTER TRUST SECTION
+              ========================================================================= */}
+          <section aria-label="Why Parents Trust SSSAM Academy" style={{ padding: '4.5rem 0', backgroundColor: '#FFFFFF' }}>
+            <div className="container">
+              <div className="apple-card" style={{
+                background: 'linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 55%, #F8FAFC 100%)',
+                color: '#0F172A',
+                padding: 'clamp(1.75rem, 4vw, 3.5rem)',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: 'clamp(1.75rem, 3.5vw, 3.5rem)',
+                alignItems: 'center',
+                borderRadius: '32px',
+                border: '1.5px solid #E2E8F0',
+                boxShadow: '0 15px 45px rgba(15, 23, 42, 0.06)',
+              }}>
+                <div>
+                  <div className="badge" style={{ backgroundColor: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', marginBottom: '1rem', fontWeight: 800, letterSpacing: '0.03em' }}>
+                    <Building2 size={14} />
+                    <span>ESTABLISHED PHYSICAL CENTER IN GURUGRAM</span>
+                  </div>
+                  <h2 style={{ color: '#0F172A', fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)', fontWeight: 800, marginBottom: '1rem', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                    Not Just a Website. A Real Educational Institute.
+                  </h2>
+                  <p style={{ color: '#475569', fontSize: '1rem', lineHeight: 1.65, marginBottom: '1.75rem' }}>
+                    Backed by <strong style={{ color: '#0F172A' }}>SSSAM Academy</strong>, situated in Sector 14, Old DLF, Gurugram. Tutors undergo in-person document screening and video intro audits.
+                  </p>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', fontSize: '0.92rem', color: '#334155' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <CheckCircle2 size={18} color="#059669" />
+                      <span>In-person tutor document audit &amp; interview screening</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <CheckCircle2 size={18} color="#059669" />
+                      <span>Option to have classes at our Sector 14 classrooms</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <CheckCircle2 size={18} color="#059669" />
+                      <span>100% Free replacement guarantee if student is unsatisfied</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                    <Link
+                      href="/request-tutor"
                       className="btn btn-primary btn-lg"
                       style={{
                         backgroundColor: '#0F6E56',
-                        padding: '0.85rem 1.35rem',
-                        fontSize: 'clamp(0.9rem, 2.4vw, 1.02rem)',
+                        padding: '0.9rem 1.85rem',
+                        borderRadius: '14px',
                         fontWeight: 800,
-                        borderRadius: '999px',
-                        boxShadow: '0 6px 18px rgba(15, 110, 86, 0.32)',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
                         gap: '0.5rem',
-                        flex: '1 1 190px',
-                        boxSizing: 'border-box',
-                        transition: 'all 0.2s ease',
+                        textDecoration: 'none',
                       }}
                     >
-                      <Sparkles size={17} color="#FDE047" style={{ flexShrink: 0 }} />
+                      <Sparkles size={17} color="#FDE047" />
                       <span>Get a Home Teacher</span>
-                      <ChevronRight size={17} style={{ flexShrink: 0 }} />
-                    </button>
+                      <ChevronRight size={17} />
+                    </Link>
 
                     <a
-                      href="https://wa.me/919217031899?text=Hello%20SSSAM%20Academy%2C%20I%20want%20to%20find%20a%20home%20teacher%20for%20my%20child%20in%20Gurgaon."
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`tel:${SSSAM_OFFICE_DETAILS.phones[0]}`}
+                      className="btn btn-secondary btn-lg"
                       style={{
-                        padding: '0.85rem 1.35rem',
-                        fontSize: 'clamp(0.9rem, 2.4vw, 1.02rem)',
+                        backgroundColor: '#FFFFFF',
+                        color: '#0F6E56',
+                        border: '2px solid #0F6E56',
+                        padding: '0.9rem 1.75rem',
+                        borderRadius: '14px',
                         fontWeight: 800,
-                        borderRadius: '999px',
-                        backgroundColor: '#25D366',
-                        color: '#FFFFFF',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
                         gap: '0.55rem',
                         textDecoration: 'none',
-                        boxShadow: '0 6px 18px rgba(37, 211, 102, 0.35)',
-                        flex: '1 1 190px',
-                        boxSizing: 'border-box',
-                        transition: 'all 0.2s ease',
                       }}
                     >
-                      <span style={{
-                        position: 'relative',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '20px',
-                        height: '20px',
-                      }}>
-                        <span style={{
-                          position: 'absolute',
-                          width: '100%',
-                          height: '100%',
-                          borderRadius: '50%',
-                          backgroundColor: '#FFFFFF',
-                          opacity: 0.5,
-                          animation: 'ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite',
-                        }} />
-                        <MessageSquare size={17} style={{ position: 'relative', zIndex: 1 }} />
-                      </span>
-                      <span>Chat on WhatsApp</span>
-                    </a>
-                  </div>
-
-                  <div>
-                    <a
-                      href="#find-tutor"
-                      style={{
-                        fontSize: '0.88rem',
-                        fontWeight: 700,
-                        color: '#475569',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        textDecoration: 'none',
-                      }}
-                    >
-                      <span>Browse Verified Teachers in Gurgaon</span>
-                      <ChevronRight size={15} color="#0F6E56" />
+                      <Phone size={18} color="#0F6E56" />
+                      <span>Call Sector 14 Center</span>
                     </a>
                   </div>
                 </div>
-              </div>
 
-              {/* Right Column: Hero Visual Frame with Rich Background Flower Scribble Line-Art */}
-              <div style={{
-                position: 'relative',
-                minHeight: 'clamp(440px, 52vh, 540px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-              }}>
-                {/* Rich SVG Organic Flower Scribble Line-Art, Atomic Orbits & Math Formulas */}
-                <svg
-                  style={{
-                    position: 'absolute',
-                    top: '-25%',
-                    left: '-15%',
-                    width: '130%',
-                    height: '150%',
-                    pointerEvents: 'none',
-                    opacity: 0.85,
-                    zIndex: 0,
-                    overflow: 'visible',
-                  }}
-                  viewBox="0 0 700 700"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <defs>
-                    <linearGradient id="heroFlowerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#0F6E56" stopOpacity="0.85" />
-                      <stop offset="50%" stopColor="#2DD4BF" stopOpacity="0.75" />
-                      <stop offset="100%" stopColor="#CBD5E1" stopOpacity="0.5" />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Organic Swirl Petal Loops Filling Upper Space Above Teacher Head */}
-                  <path
-                    d="M140,320 C70,160 210,60 380,120 C550,180 610,360 470,500 C330,640 130,500 190,340 C250,180 470,90 550,260 C630,430 430,590 230,530 C70,470 90,250 270,150 C450,50 630,210 530,410 C430,610 210,550 150,370 C90,190 270,80 430,160 C590,240 550,460 370,540"
-                    stroke="url(#heroFlowerGrad)"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                  />
-
-                  {/* Concentric Decorative Rings */}
-                  <circle cx="350" cy="350" r="260" stroke="#E8E8ED" strokeWidth="1.5" strokeDasharray="6 6" />
-                  <circle cx="350" cy="350" r="190" stroke="#0F6E56" strokeWidth="1.2" strokeOpacity="0.2" />
-
-                  {/* Atomic Electron Orbit Rings (Physics/Chemistry Symbol) */}
-                  <g opacity="0.45" transform="translate(130, 80) scale(0.85)">
-                    <ellipse cx="50" cy="50" rx="42" ry="16" stroke="#0F6E56" strokeWidth="1.5" transform="rotate(-30 50 50)" />
-                    <ellipse cx="50" cy="50" rx="42" ry="16" stroke="#0F6E56" strokeWidth="1.5" transform="rotate(30 50 50)" />
-                    <circle cx="50" cy="50" r="5" fill="#0F6E56" />
-                    <circle cx="85" cy="38" r="3" fill="#2DD4BF" />
-                  </g>
-
-                  {/* === Floating STEM Formulas — Left, Right, Center, and Behind/Above Image === */}
-
-                  {/* LEFT SIDE — Distributed vertically */}
-                  <text className="formula-float-8" x="18" y="55"  fontSize="12" fontFamily="sans-serif" fill="#7C3AED" fontWeight="700">NaCl → Na⁺ + Cl⁻</text>
-                  <text className="formula-float-7" x="22" y="145" fontSize="13" fontFamily="serif" fill="#64748B" fontWeight="700">a² + b² = c²</text>
-                  <text className="formula-float-9" x="15" y="240" fontSize="12" fontFamily="serif" fontStyle="italic" fill="#0891B2" fontWeight="700">sin²θ + cos²θ = 1</text>
-                  <text className="formula-float-2" x="25" y="360" fontSize="14" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">∫ f(x) dx</text>
-                  <text className="formula-float-10" x="15" y="470" fontSize="11" fontFamily="monospace" fill="#0891B2" fontWeight="700">print(&quot;Hello!&quot;)</text>
-                  <text className="formula-float-5" x="22" y="570" fontSize="12" fontFamily="sans-serif" fill="#047857" fontWeight="700">ATP = Energy</text>
-
-                  {/* RIGHT SIDE — Distributed vertically */}
-                  <text className="formula-float-1" x="520" y="55"  fontSize="15" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">E = mc²</text>
-                  <text className="formula-float-3" x="540" y="145" fontSize="13" fontFamily="sans-serif" fill="#7C3AED" fontWeight="700">H₂O + CO₂</text>
-                  <text className="formula-float-4" x="550" y="240" fontSize="13" fontFamily="sans-serif" fill="#2DD4BF" fontWeight="800">A = πr²</text>
-                  <text className="formula-float-6" x="560" y="360" fontSize="13" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">F = ma</text>
-                  <text className="formula-float-5" x="540" y="470" fontSize="12" fontFamily="sans-serif" fill="#047857" fontWeight="700">DNA → RNA</text>
-                  <text className="formula-float-4" x="520" y="570" fontSize="11" fontFamily="sans-serif" fill="#B45309" fontWeight="700">Supply ∝ Price</text>
-                  <text className="formula-float-7" x="535" y="630" fontSize="12" fontFamily="monospace" fill="#0F6E56" fontWeight="700">x = [1,2,3...]</text>
-
-                  {/* CENTER & BEHIND IMAGE / JUST ABOVE IMAGE */}
-                  {/* Just above image heads */}
-                  <text className="formula-float-3" x="260" y="90" fontSize="13" fontFamily="sans-serif" fill="#7C3AED" fontWeight="700">CO₂ + H₂O</text>
-                  <text className="formula-float-1" x="380" y="75" fontSize="15" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">dy/dx</text>
-                  
-                  {/* Behind teacher & student (layered underneath since SVG zIndex is 0 and image is 2) */}
-                  <text className="formula-float-6" x="180" y="210" fontSize="14" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">PV = nRT</text>
-                  <text className="formula-float-4" x="420" y="220" fontSize="13" fontFamily="sans-serif" fill="#2DD4BF" fontWeight="800">λ = h/p</text>
-                  
-                  <text className="formula-float-2" x="200" y="330" fontSize="15" fontFamily="serif" fontStyle="italic" fill="#0891B2" fontWeight="700">∑ x_i</text>
-                  <text className="formula-float-10" x="450" y="340" fontSize="12" fontFamily="monospace" fill="#0F6E56" fontWeight="700">def match_tutor():</text>
-                  
-                  <text className="formula-float-9" x="230" y="460" fontSize="13" fontFamily="serif" fontStyle="italic" fill="#7C3AED" fontWeight="700">lim (x→0)</text>
-                  <text className="formula-float-5" x="410" y="470" fontSize="12" fontFamily="sans-serif" fill="#047857" fontWeight="700">C₆H₁₂O₆</text>
-                  
-                  <text className="formula-float-7" x="320" y="550" fontSize="12" fontFamily="monospace" fill="#B45309" fontWeight="700">import numpy as np</text>
-
-                  {/* Sparkle Stars & Accents */}
-                  <path d="M468,28 L470,36 L478,38 L470,40 L468,48 L466,40 L458,38 L466,36 Z" fill="#0F6E56" opacity="0.8" />
-                  <path d="M8,155 L10,162 L17,164 L10,166 L8,173 L6,166 L-1,164 L6,162 Z" fill="#7C3AED" opacity="0.65" />
-                  <path d="M570,480 L572,487 L579,489 L572,491 L570,498 L568,491 L561,489 L568,487 Z" fill="#2DD4BF" opacity="0.7" />
-
-                  {/* Constellation line */}
-                  <line x1="465" y1="55" x2="498" y2="45" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3 3" />
-                  <circle cx="465" cy="55" r="3" fill="#2DD4BF" />
-                  <circle cx="498" cy="45" r="4" fill="#0F6E56" />
-                </svg>
-
-
-
-                {/* Physical Center Trust Badge */}
+                {/* Right Side: Integrated Showcase Image & Address Card */}
                 <div style={{
-                  position: 'absolute',
-                  top: '15px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  zIndex: 4,
                   backgroundColor: '#FFFFFF',
-                  border: '1px solid #E8E8ED',
-                  padding: '0.45rem 1rem',
-                  borderRadius: '999px',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-                  fontSize: '0.78rem',
-                  fontWeight: 800,
-                  color: '#1D1D1F',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  whiteSpace: 'nowrap',
+                  border: '1.5px solid #E2E8F0',
+                  borderRadius: '24px',
+                  overflow: 'hidden',
+                  boxShadow: '0 12px 35px rgba(15, 23, 42, 0.08)',
                 }}>
-                  <Building2 size={14} color="#0F6E56" />
-                  <span>Physical Center in Sector 14 Gurugram</span>
-                </div>
-
-
-                {/* Soft Fade Blend Hero Image Cutout */}
-                <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/hero_young_teacher_girl_student_cutout.webp"
-                    alt="Home tutor teaching CBSE student in Gurgaon"
-                    width={490}
-                    height={360}
-                    loading="eager"
-                    decoding="async"
-                    fetchPriority="high"
-                    style={{
-                      width: '100%',
-                      maxWidth: '490px',
-                      height: 'auto',
-                      borderRadius: '20px',
-                      display: 'block',
-                      mixBlendMode: 'multiply',
-                      maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
-                      WebkitMaskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
-                    }}
-                  />
-                </div>
-
-
-                {/* 3. Combined Single Unified Bottom White Trust Card */}
-                <div className="hero-unified-card" style={{
-                  position: 'absolute',
-                  bottom: '-32px',
-                  left: '4%',
-                  right: '4%',
-                  padding: '0.95rem 1.25rem',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  boxShadow: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '1rem',
-                  zIndex: 3,
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <div style={{ width: '38px', height: '38px', borderRadius: '12px', backgroundColor: '#E8F5E9', color: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Building2 size={18} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1D1D1F' }}>SSSAM Academy</div>
-                      <div style={{ fontSize: '0.72rem', color: '#6E6E73' }}>Sector 14 Gurugram</div>
-                    </div>
-                  </div>
-
-                  <div className="hero-unified-divider" style={{ width: '1px', height: '28px', backgroundColor: '#E8E8ED' }} />
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <div style={{ width: '38px', height: '38px', borderRadius: '12px', backgroundColor: '#E8F5E9', color: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <ShieldCheck size={18} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1D1D1F' }}>100% Replacement</div>
-                      <div style={{ fontSize: '0.72rem', color: '#6E6E73' }}>Zero Advance Risk</div>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* =========================================================================
-            2. RAPIDO-STYLE INTERACTIVE VISUAL PROXIMITY MAP (IF OFFLINE HOME TUITION)
-            ========================================================================= */}
-        {searchMode === 'OFFLINE_HOME' && (
-          <section aria-label="Interactive Gurgaon Tutor Map" style={{ padding: '3.5rem 0 1rem 0' }}>
-            <div className="container">
-              <RapidoStyleMap
-                tutors={dynamicTutors}
-                onOpenBookingForTutor={(tutor) => handleOpenBooking(tutor)}
-                onLocationSelected={(data) => {
-                  if (data.address) {
-                    const sectorPart = data.address.split(',')[0].replace('(Auto-Detected GPS)', '').trim();
-                    if (sectorPart) {
-                      setSelectedShowcaseSector(sectorPart);
-                    }
-                  }
-                }}
-              />
-            </div>
-          </section>
-        )}
-
-        {/* =========================================================================
-            3. HOW IT WORKS — Animated Scroll Reveal Step-by-Step Section
-            ========================================================================= */}
-        <HowItWorks onOpenBooking={() => handleOpenBooking()} />
-
-        {/* =========================================================================
-            4. FIGMA SCREENSHOT 3 STYLE: MOBILE EXPERIENCE CARD
-            ========================================================================= */}
-        <section aria-label="WhatsApp and SMS Class Confirmation" style={{ padding: '3rem 0 3.75rem 0', backgroundColor: '#FFFFFF' }}>
-          <div className="container">
-            <div style={{ textAlign: 'center', marginBottom: '2.25rem' }}>
-              <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
-                <span>PARENT EXPERIENCE</span>
-              </div>
-              <h2 style={{ fontSize: '2.25rem', fontWeight: 800 }}>
-                The Simplest Tuition Experience. Ever.
-              </h2>
-              <p style={{ color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-                No account required for parents. Receive your verified tutor match details directly via WhatsApp or Phone.
-              </p>
-            </div>
-
-            <div className="apple-card" style={{
-              backgroundColor: 'var(--bg-app)',
-              padding: 'clamp(1.75rem, 3.5vw, 2.75rem)',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '2.5rem',
-              alignItems: 'center',
-            }}>
-              {/* Left Column: Live Parent Discussion Video in Smartphone Frame */}
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <div style={{
-                  position: 'relative',
-                  width: '100%',
-                  maxWidth: '300px',
-                  borderRadius: '32px',
-                  backgroundColor: '#0F172A',
-                  padding: '10px',
-                  boxShadow: '0 20px 50px rgba(15, 23, 42, 0.2)',
-                  border: '3px solid #1E293B',
-                }}>
-                  {/* Phone Screen Container */}
+                  {/* 1-on-1 Academic Tutoring Showcase Image */}
                   <div style={{
                     position: 'relative',
                     width: '100%',
-                    aspectRatio: '9/16',
-                    borderRadius: '24px',
+                    aspectRatio: '16/9',
+                    backgroundColor: '#0F172A',
                     overflow: 'hidden',
-                    backgroundColor: '#000000',
                   }}>
-                    <video
-                      ref={parentStoryVideoRef}
-                      src="https://res.cloudinary.com/jhwajyyw/video/upload/v1787652806/tuitionforhome/marketing/tuitionforhome_student_learning_reel_hq.mp4"
-                      poster="https://res.cloudinary.com/jhwajyyw/video/upload/so_2,w_800/v1787652806/tuitionforhome/marketing/tuitionforhome_student_learning_reel_hq.jpg"
-                      autoPlay
-                      loop
-                      muted={isParentStoryMuted}
-                      playsInline
-                      preload="metadata"
+                    <Image
+                      src="/images/how-it-works/step3_teaching.webp"
+                      alt="1-on-1 In-Home Tutoring Session in Gurgaon"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 550px"
                       style={{
-                        width: '100%',
-                        height: '100%',
                         objectFit: 'cover',
-                        display: 'block',
+                        objectPosition: 'center',
                       }}
                     />
-
-                    {/* Verified Parent Story Tag */}
                     <div style={{
                       position: 'absolute',
-                      top: '12px',
-                      left: '12px',
-                      backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                      backdropFilter: 'blur(6px)',
-                      color: '#FFFFFF',
-                      fontSize: '0.7rem',
-                      fontWeight: 800,
-                      padding: '0.25rem 0.6rem',
-                      borderRadius: '999px',
+                      bottom: '10px',
+                      left: '10px',
+                      right: '10px',
+                      backgroundColor: 'rgba(15, 23, 42, 0.88)',
+                      backdropFilter: 'blur(8px)',
+                      padding: '0.45rem 0.85rem',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
                       display: 'flex',
                       alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
                       gap: '0.35rem',
-                      zIndex: 2,
                     }}>
-                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22C55E' }} />
-                      <span>Gurgaon Parents Story</span>
+                      <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#34D399' }}>
+                        ✓ 1-on-1 Verified Faculty
+                      </span>
+                      <span style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>
+                        Sector 14 &amp; All Gurgaon Sectors
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Address & Helpline Details */}
+                  <div style={{ padding: '1.5rem', backgroundColor: '#F8FAFC' }}>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                      <MapPin size={18} color="#0F6E56" />
+                      <span>SSSAM Academy Gurugram Center</span>
                     </div>
 
-                    {/* Clickable Sound Toggle Button */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (parentStoryVideoRef.current) {
-                          const nextMuted = !parentStoryVideoRef.current.muted;
-                          parentStoryVideoRef.current.muted = nextMuted;
-                          setIsParentStoryMuted(nextMuted);
-                        }
-                      }}
-                      aria-label={isParentStoryMuted ? 'Unmute video' : 'Mute video'}
-                      style={{
-                        position: 'absolute',
-                        top: '12px',
-                        right: '12px',
-                        width: '38px',
-                        height: '38px',
-                        borderRadius: '50%',
-                        backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                        backdropFilter: 'blur(8px)',
-                        border: '1px solid rgba(255, 255, 255, 0.25)',
-                        color: '#FFFFFF',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        zIndex: 10,
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                        transition: 'transform 0.2s ease, background-color 0.2s ease',
-                      }}
-                    >
-                      {isParentStoryMuted ? <VolumeX size={18} color="#FFFFFF" /> : <Volume2 size={18} color="#10B981" />}
-                    </button>
-                  </div>
-                </div>
-              </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.86rem', color: '#475569' }}>
+                      <div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>OFFICIAL ADDRESS</div>
+                        <div style={{ color: '#0F172A', fontWeight: 600, marginTop: '2px' }}>{SSSAM_OFFICE_DETAILS.address}</div>
+                      </div>
 
-              {/* Right Column: Key Experience Points (Screenshot 3 Style) */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--brand-teal-light)', color: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <MessageSquare size={20} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.25rem' }}>
-                      Receive Class Slip via WhatsApp
-                    </h3>
-                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                      Parent gets tutor qualifications, verified credentials, and schedule link directly on WhatsApp — zero app download needed.
-                    </p>
-                  </div>
-                </div>
+                      <div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>DIRECT HELPLINE NUMBER</div>
+                        <div style={{ color: '#0F6E56', fontWeight: 800, marginTop: '2px', fontSize: '1.05rem' }}>
+                          {SSSAM_OFFICE_DETAILS.phones.filter(Boolean).join(' • ')}
+                        </div>
+                      </div>
 
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--brand-teal-light)', color: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Smartphone size={20} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.25rem' }}>
-                      Attend on Any Device or Home Visit
-                    </h3>
-                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                      Home visits scheduled at your preferred timing in Gurgaon sectors, or online live on Google Meet.
-                    </p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '#D1FAE5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, backgroundColor: '#D1FAE5' }}>
-                    <ShieldCheck size={20} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.25rem' }}>
-                      100% Free Replacement Guarantee
-                    </h3>
-                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                      If student or parent is unsatisfied at any point, counselor assigns a new top-tier tutor at zero additional fee.
-                    </p>
+                      <div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>COUNSELOR DESK TIMINGS</div>
+                        <div style={{ color: '#0F172A', fontWeight: 600, marginTop: '2px' }}>{SSSAM_OFFICE_DETAILS.hours}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* =========================================================================
-            5. VERIFIED TUTORS SHOWCASE (FIGMA SOFT CARDS - DYNAMIC BY SECTOR)
-            ========================================================================= */}
-        <section id="find-tutor" aria-label="Verified Tutors in Gurgaon" style={{ padding: '5rem 0', backgroundColor: 'var(--bg-app)' }}>
-          <div className="container">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.75rem' }}>
-              <div>
+          {/* =========================================================================
+              8. WHY CHOOSE TUITIONFORHOME (6 PILLARS OF TRUST)
+              ========================================================================= */}
+          <section aria-label="Why Choose TuitionForHome" style={{ padding: '5rem 0', backgroundColor: '#FFFFFF', borderTop: '1px solid var(--border-subtle)' }}>
+            <div className="container">
+              <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 3rem auto' }}>
                 <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
-                  <Award size={14} />
-                  <span>REVIEW-VERIFIED EDUCATORS</span>
+                  <BadgeCheck size={14} />
+                  <span>THE SSSAM ACADEMY ADVANTAGE</span>
                 </div>
-                <h2 style={{ fontSize: 'clamp(1.75rem, 3vw, 2.35rem)', fontWeight: 800 }}>
-                  Top Verified Teachers {selectedShowcaseSector === 'All Sectors' ? 'Near Your Sector' : `in ${selectedShowcaseSector}`}
+                <h2 style={{ fontSize: 'clamp(1.85rem, 3.5vw, 2.5rem)', fontWeight: 800, color: 'var(--text-main)' }}>
+                  Why Gurgaon &amp; Delhi NCR Parents Trust TuitionForHome
+                </h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '0.5rem', lineHeight: 1.6 }}>
+                  Unlike anonymous aggregator websites, every educator on our platform is verified in-person at our physical institute in Sector 14, Gurugram.
+                </p>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '1.5rem',
+              }}>
+                {/* Card 1 */}
+                <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#065F46' }}>
+                    <Building2 size={24} />
+                  </div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>Physical Center Anchor</h3>
+                  <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                    Backed by SSSAM Academy at Sector 14, Old DLF, Gurugram. You have a real physical address, helpline numbers, and center classrooms for personalized classes.
+                  </p>
+                </div>
+
+                {/* Card 2 */}
+                <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#F0F9FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0369A1' }}>
+                    <ShieldCheck size={24} />
+                  </div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>In-Person KYC &amp; Degree Audit</h3>
+                  <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                    Every tutor’s degree certificates, Aadhaar KYC, address, and past teaching track record are audited before granting the verified educator badge.
+                  </p>
+                </div>
+
+                {/* Card 3 */}
+                <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B45309' }}>
+                    <Video size={24} />
+                  </div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>60-Second Video Intro Auditions</h3>
+                  <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                    Watch concise video introduction clips of shortlisted teachers to judge communication clarity, accent, and subject confidence before scheduling.
+                  </p>
+                </div>
+
+                {/* Card 4 */}
+                <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#FDF2F8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#BE185D' }}>
+                    <RotateCcw size={24} />
+                  </div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>100% Free Replacement Guarantee</h3>
+                  <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                    If your child does not connect with the tutor’s style, our counselors assign an alternate top-matched educator within 24 hours at no extra charge.
+                  </p>
+                </div>
+
+                {/* Card 5 */}
+                <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6D28D9' }}>
+                    <Award size={24} />
+                  </div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>Top Gurgaon &amp; Delhi School Alignment</h3>
+                  <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                    Experienced mentors for CBSE, ICSE, IB (DP/MYP), and Cambridge (IGCSE) aligned with The Shri Ram School, DPS, Heritage, and Pathways curricula.
+                  </p>
+                </div>
+
+                {/* Card 6 */}
+                <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#065F46' }}>
+                    <Headphones size={24} />
+                  </div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>Dedicated Academic Counselor</h3>
+                  <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                    Get 1-on-1 human assistance via phone and WhatsApp. We monitor attendance, test score progress, and parent feedback continuously.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* =========================================================================
+              9. GURGAON & DELHI NCR LOCALITIES SEO DIRECTORY GRID
+              ========================================================================= */}
+          <section aria-label="Hyper-Local Area Directory" style={{ padding: '4.5rem 0', backgroundColor: 'var(--bg-app)' }}>
+            <div className="container">
+              <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 2.5rem auto' }}>
+                <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
+                  <MapPin size={14} />
+                  <span>HYPER-LOCAL COVERAGE (45+ AREAS)</span>
+                </div>
+                <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>
+                  Home Tutors Available Across Gurgaon &amp; Delhi NCR
                 </h2>
                 <p style={{ color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-                  Watch 60-second intro videos and connect with verified educators ready to teach in {selectedShowcaseSector === 'All Sectors' ? 'your Gurgaon sector' : selectedShowcaseSector}.
+                  Verified 1-on-1 home and online educators available across all sectors of Gurgaon and prime South/West Delhi hubs.
                 </p>
               </div>
 
-              <Link href="/tutors" className="btn btn-secondary">
-                <span>Browse All Verified Teachers</span>
-                <ChevronRight size={16} color="#0F6E56" />
-              </Link>
+              {/* Locality Toggle and Directory */}
+              <LocalityDirectoryToggle localities={GURGAON_LOCALITIES} />
             </div>
+          </section>
 
-            {/* Quick Specialty / Gender Highlight Bar */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.65rem',
-              overflowX: 'auto',
-              padding: '0.2rem 0.25rem 0.65rem 0.25rem',
-              marginBottom: '0.75rem',
-              scrollbarWidth: 'none',
-              WebkitOverflowScrolling: 'touch',
-            }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                Filter:
-              </span>
-              {[
-                { id: 'ALL', label: '🌐 All Verified Teachers' },
-                { id: 'FEMALE', label: '👩 Female Teachers Only', highlight: true },
-                { id: 'MALE', label: '👨 Male Teachers' },
-              ].map((cat) => {
-                const isSel = selectedShowcaseGender === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setSelectedShowcaseGender(cat.id as any)}
-                    style={{
-                      padding: '0.45rem 0.95rem',
-                      borderRadius: '999px',
-                      fontSize: '0.82rem',
-                      fontWeight: 800,
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      border: isSel 
-                        ? (cat.highlight ? '2px solid #0D9488' : '2px solid #0F172A') 
-                        : (cat.highlight ? '2px solid #CCFBF1' : '1px solid #E2E8F0'),
-                      backgroundColor: isSel 
-                        ? (cat.highlight ? '#0F766E' : '#0F172A') 
-                        : (cat.highlight ? '#F0FDFA' : '#FFFFFF'),
-                      color: isSel ? '#FFFFFF' : (cat.highlight ? '#0F766E' : '#334155'),
-                      cursor: 'pointer',
-                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                      boxShadow: isSel ? '0 4px 12px rgba(13, 148, 136, 0.25)' : '0 1px 2px rgba(0,0,0,0.03)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                    }}
-                  >
-                    <span>{cat.label}</span>
-                    {cat.highlight && !isSel && (
-                      <span style={{ backgroundColor: '#0D9488', color: '#FFFFFF', fontSize: '0.65rem', padding: '0.1rem 0.45rem', borderRadius: '999px', fontWeight: 900 }}>
-                        POPULAR
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+          {/* =========================================================================
+              10. FREQUENTLY ASKED QUESTIONS
+              ========================================================================= */}
+          <HomeFaqAccordion />
 
-            {/* Interactive Sector Selector Filter Pills */}
-            <div style={{
-              display: 'flex',
-              gap: '0.5rem',
-              overflowX: 'auto',
-              padding: '0.2rem 0.25rem 0.75rem 0.25rem',
-              marginBottom: '1.75rem',
-              scrollbarWidth: 'none',
-              WebkitOverflowScrolling: 'touch',
-            }}>
-              {['All Sectors', 'DLF Phase 5', 'Golf Course Road', 'Sector 14 & Old DLF', 'Sohna Road', 'Sector 56', 'Nirvana Country', 'Sushant Lok 1', 'DLF Phase 1', 'Cyber City', 'Sector 57', 'Sector 48'].map((sec) => {
-                const isSel = selectedShowcaseSector === sec;
-                return (
-                  <button
-                    key={sec}
-                    type="button"
-                    onClick={() => setSelectedShowcaseSector(sec)}
-                    style={{
-                      padding: '0.45rem 0.95rem',
-                      borderRadius: '999px',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      border: isSel ? '1.5px solid #0F6E56' : '1px solid #E2E8F0',
-                      backgroundColor: isSel ? '#0F6E56' : '#FFFFFF',
-                      color: isSel ? '#FFFFFF' : '#334155',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: isSel ? '0 4px 12px rgba(15,110,86,0.2)' : '0 1px 3px rgba(0,0,0,0.03)',
-                    }}
-                  >
-                    {sec === 'All Sectors' ? '🌐 All Sectors' : `📍 ${sec}`}
-                  </button>
-                );
-              })}
-            </div>
+        </main>
 
-            {/* Teachers Grid (Filtered Dynamically by Selected Sector & Gender) */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
-              gap: '1.75rem',
-            }}>
-              {(() => {
-                const showcaseSectorCoords = (() => {
-                  const match = POPULAR_GURGAON_SECTORS.find(s => s.name.toLowerCase().includes(selectedShowcaseSector.toLowerCase()));
-                  if (match) return { lat: match.lat, lng: match.lng };
-                  return { lat: 28.4552, lng: 77.0945 };
-                })();
-
-                const baseList = selectedShowcaseGender === 'ALL'
-                  ? dynamicTutors
-                  : dynamicTutors.filter(t => (t.gender || '').toUpperCase() === selectedShowcaseGender);
-
-                const filtered = selectedShowcaseSector === 'All Sectors'
-                  ? baseList.slice(0, 6)
-                  : (() => {
-                      const matched = baseList.filter(t => 
-                        t.serviceAreas.some(area => area.toLowerCase().includes(selectedShowcaseSector.toLowerCase()))
-                      );
-                      if (matched.length >= 6) return matched.slice(0, 6);
-                      const remaining = baseList.filter(t => !matched.some(m => m.id === t.id));
-                      return [...matched, ...remaining].slice(0, 6);
-                    })();
-
-                if (filtered.length === 0) {
-                  return (
-                    <div style={{
-                      gridColumn: '1 / -1',
-                      backgroundColor: '#FFFFFF',
-                      borderRadius: '24px',
-                      padding: '3.5rem 2rem',
-                      textAlign: 'center',
-                      border: '1.5px dashed #CBD5E1',
-                      boxShadow: 'var(--shadow-subtle)',
-                    }}>
-                      <div style={{
-                        width: '56px',
-                        height: '56px',
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--brand-teal-light)',
-                        color: '#0F6E56',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 1.25rem auto',
-                      }}>
-                        <Sparkles size={28} />
-                      </div>
-                      <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
-                        Teacher Verification & Matching Active
-                      </h3>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.94rem', maxWidth: '540px', margin: '0 auto 1.75rem auto', lineHeight: 1.6 }}>
-                        SSSAM Academy academic counselors are actively matching verified teachers across all Gurgaon sectors. Submit your requirement to get matched directly within 2 hours!
-                      </p>
-                      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenBooking()}
-                          className="btn btn-primary"
-                          style={{ padding: '0.75rem 1.75rem', backgroundColor: 'var(--brand-teal)' }}
-                        >
-                          <span>Request a Home Teacher</span>
-                          <ChevronRight size={16} />
-                        </button>
-                        <Link href="/tutor/register" className="btn btn-secondary" style={{ padding: '0.75rem 1.75rem' }}>
-                          <span>Apply as Educator</span>
-                        </Link>
-                      </div>
-                    </div>
-                  );
-                }
-
-                return filtered.map((tutor) => {
-                  const tCoords = getTeacherCoordinates(tutor);
-                  const distanceKm = calculateHaversineKm(showcaseSectorCoords.lat, showcaseSectorCoords.lng, tCoords.lat, tCoords.lng);
-                  const distanceInfo = getDistanceInfo(distanceKm);
-
-                  return (
-                    <div key={tutor.id} className="apple-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                      {/* Top Bar */}
-                      <div style={{ padding: '1.25rem', paddingBottom: '0.45rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <Link href={`/tutors/${tutor.id}`} style={{ position: 'relative', display: 'block', flexShrink: 0 }}>
-                          <TutorAvatar
-                            src={tutor.avatarUrl}
-                            name={tutor.name}
-                            size={64}
-                            borderRadius="16px"
-                          />
-                          <span style={{
-                            position: 'absolute',
-                            bottom: '-4px',
-                            right: '-4px',
-                            backgroundColor: '#047857',
-                            borderRadius: '50%',
-                            width: '18px',
-                            height: '18px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#FFFFFF',
-                            border: '2px solid #FFFFFF',
-                          }}>
-                            <ShieldCheck size={11} />
-                          </span>
-                        </Link>
-
-                        <div style={{ flex: 1 }}>
-                          <Link href={`/tutors/${tutor.id}`} style={{ textDecoration: 'none' }}>
-                            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                              {tutor.name}
-                            </h3>
-                          </Link>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', margin: '2px 0' }}>
-                            <span style={{ fontSize: '0.78rem', color: '#0F6E56', fontWeight: 700 }}>
-                              {tutor.badge}
-                            </span>
-                            {tutor.gender?.toUpperCase() === 'FEMALE' && (
-                              <span style={{ backgroundColor: '#F0FDFA', color: '#0F766E', fontSize: '0.7rem', fontWeight: 800, padding: '1px 5px', borderRadius: '4px', border: '1px solid #CCFBF1' }}>
-                                👩 Female Educator
-                              </span>
-                            )}
-                          </div>
-                          {tutor.totalReviews > 0 && tutor.rating > 0 ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                              <Star size={13} color="var(--brand-amber)" fill="var(--brand-amber)" />
-                              <strong>{tutor.rating}</strong>
-                              <span>({tutor.totalReviews} {tutor.totalReviews === 1 ? 'review' : 'reviews'})</span>
-                            </div>
-                          ) : (
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.74rem', color: '#059669', fontWeight: 700, backgroundColor: '#ECFDF5', padding: '1px 6px', borderRadius: '4px', marginTop: '2px' }}>
-                              <span>✨ New Verified Teacher</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Live Proximity Badge */}
-                      <div style={{ padding: '0 1.25rem', marginBottom: '0.4rem' }}>
-                        <div style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: '0.28rem 0.65rem',
-                          borderRadius: '8px',
-                          backgroundColor: distanceInfo.badgeBg,
-                          color: distanceInfo.badgeColor,
-                          border: `1px solid ${distanceInfo.badgeBorder}`,
-                          fontSize: '0.74rem',
-                          fontWeight: 700,
-                          width: '100%',
-                          boxSizing: 'border-box',
-                        }}>
-                          <Clock size={12} />
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {distanceInfo.distanceText} ({distanceInfo.travelTime})
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Prominent Education & Experience Stat Box */}
-                      <div style={{ padding: '1.25rem', paddingTop: '0.2rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                          gap: '0.5rem',
-                          padding: '0.65rem 0.75rem',
-                          backgroundColor: '#F8FAFC',
-                          borderRadius: '12px',
-                          border: '1px solid #E2E8F0',
-                          alignItems: 'center',
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
-                            <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', flexShrink: 0 }}>
-                              <GraduationCap size={15} />
-                            </div>
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Degree</div>
-                              <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tutor.highestDegree}>
-                                {tutor.highestDegree}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, borderLeft: '1px solid #E2E8F0', paddingLeft: '0.5rem' }}>
-                            <div style={{ width: '28px', height: '28px', borderRadius: '8px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', flexShrink: 0 }}>
-                              <Briefcase size={15} />
-                            </div>
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Experience</div>
-                              <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {tutor.experienceYears}+ Years
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div style={{ fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'flex-start', gap: '0.45rem', marginTop: '0.1rem' }}>
-                          <MapPin size={15} color="#047857" style={{ flexShrink: 0, marginTop: '2px' }} />
-                          <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>
-                            {tutor.serviceAreas.join(' • ')}
-                          </span>
-                        </div>
-
-                        {/* Subjects Badges */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.2rem' }}>
-                          {tutor.subjects.map((s) => (
-                            <span key={s} style={{ fontSize: '0.74rem', padding: '0.2rem 0.55rem', backgroundColor: '#F0FDF4', color: '#166534', border: '1px solid #DCFCE7', borderRadius: '6px', fontWeight: 600 }}>
-                              {s}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* 60s Video Intro Pill (Optional) */}
-                        {tutor.introVideoUrl && tutor.introVideoUrl.trim() !== '' ? (
-                          <button
-                            type="button"
-                            onClick={() => setActiveVideoTutor(tutor)}
-                            style={{
-                              marginTop: '0.5rem',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              padding: '0.6rem 0.85rem',
-                              borderRadius: '10px',
-                              backgroundColor: '#F0FDF4',
-                              border: '1px solid #BBF7D0',
-                              color: '#0F6E56',
-                              fontSize: '0.8rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                              <Play size={14} fill="#0F6E56" />
-                              <span>Watch 60s Intro Video</span>
-                            </span>
-                            <span style={{ fontSize: '0.72rem', color: '#0F6E56' }}>{tutor.videoDuration || 'Preview'}</span>
-                          </button>
-                        ) : (
-                          <div
-                            style={{
-                              marginTop: '0.5rem',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.45rem',
-                              padding: '0.55rem 0.85rem',
-                              borderRadius: '10px',
-                              backgroundColor: '#F8FAFC',
-                              border: '1px solid #E2E8F0',
-                              color: '#0F6E56',
-                              fontSize: '0.78rem',
-                              fontWeight: 700,
-                            }}
-                          >
-                            <ShieldCheck size={14} color="#059669" />
-                            <span>Interview Verified • SSSAM Sector 14</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Card Footer Price & Action */}
-                      <div style={{
-                        padding: '1.25rem',
-                        borderTop: '1px solid var(--border-hairline)',
-                        backgroundColor: 'var(--bg-card-subtle)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '0.5rem',
-                      }}>
-                        <div>
-                          <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '2px', letterSpacing: '0.04em' }}>
-                            ESTIMATED FEE
-                          </div>
-
-                          {(!tutor.teachingMode || tutor.teachingMode === 'BOTH' || (tutor.hourlyRateHome && tutor.hourlyRateOnline)) ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                              {/* Home Tuition Rate */}
-                              <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '2px', backgroundColor: '#F0FDF4', padding: '2px 6px', borderRadius: '6px' }}>
-                                <span style={{ fontSize: '0.7rem', color: '#0F6E56', fontWeight: 800 }}>🏠 Home:</span>
-                                <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
-                                  ₹{tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600}–₹{tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMax !== tutor.hourlyRateHomeMin ? tutor.hourlyRateHomeMax : Math.round(((tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600) * 1.4) / 50) * 50}
-                                </span>
-                                <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
-                              </div>
-
-                              {/* Online Tuition Rate */}
-                              <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '2px', backgroundColor: '#F0F9FF', padding: '2px 6px', borderRadius: '6px' }}>
-                                <span style={{ fontSize: '0.7rem', color: '#0284C7', fontWeight: 800 }}>💻 Online:</span>
-                                <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A' }}>
-                                  ₹{tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500}–₹{tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMax !== tutor.hourlyRateOnlineMin ? tutor.hourlyRateOnlineMax : Math.round(((tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}
-                                </span>
-                                <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
-                              </div>
-                            </div>
-                          ) : tutor.teachingMode === 'ONLINE_LIVE' ? (
-                            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '3px', backgroundColor: '#F0F9FF', padding: '3px 8px', borderRadius: '6px' }}>
-                              <span style={{ fontSize: '0.74rem', color: '#0284C7', fontWeight: 800 }}>💻 Online 1-on-1:</span>
-                              <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
-                                ₹{tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500} – ₹{tutor.hourlyRateOnlineMax && tutor.hourlyRateOnlineMax !== tutor.hourlyRateOnlineMin ? tutor.hourlyRateOnlineMax : Math.round(((tutor.hourlyRateOnlineMin || tutor.hourlyRateOnline || 500) * 1.4) / 50) * 50}
-                              </span>
-                              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
-                            </div>
-                          ) : (
-                            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '3px', backgroundColor: '#F0FDF4', padding: '3px 8px', borderRadius: '6px' }}>
-                              <span style={{ fontSize: '0.74rem', color: '#0F6E56', fontWeight: 800 }}>🏠 Home Visit:</span>
-                              <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#0F172A' }}>
-                                ₹{tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600} – ₹{tutor.hourlyRateHomeMax && tutor.hourlyRateHomeMax !== tutor.hourlyRateHomeMin ? tutor.hourlyRateHomeMax : Math.round(((tutor.hourlyRateHomeMin || tutor.hourlyRateHome || 600) * 1.4) / 50) * 50}
-                              </span>
-                              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>/hr</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.4rem' }}>
-                          <Link
-                            href={`/tutors/${tutor.id}`}
-                            className="btn btn-secondary btn-sm"
-                            style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem' }}
-                          >
-                            Profile
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenBooking(tutor)}
-                            className="btn btn-primary btn-sm"
-                            style={{ backgroundColor: '#0F6E56' }}
-                          >
-                            <span>Request</span>
-                            <div className="btn-arrow">
-                              <ChevronRight size={14} />
-                            </div>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-
-            {/* Bottom Explore Button */}
-            <div style={{ textAlign: 'center', marginTop: '3rem' }}>
-              <Link href="/tutors" className="btn btn-primary btn-lg" style={{ padding: '0.9rem 2.25rem' }}>
-                <span>Explore All Verified Teachers in Gurgaon &amp; Delhi NCR</span>
-                <ChevronRight size={18} />
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* =========================================================================
-            6. INTERACTIVE FEE ESTIMATOR WIDGET
-            ========================================================================= */}
-        <FeeEstimator onBookWithEstimate={handleBookWithEstimate} />
-
-        {/* =========================================================================
-            7. SSSAM ACADEMY PHYSICAL CENTER TRUST SECTION (SIMPLE CLEAN BRIGHT STYLE)
-            ========================================================================= */}
-        <section aria-label="Why Parents Trust SSSAM Academy" style={{ padding: '4.5rem 0', backgroundColor: '#FFFFFF' }}>
-          <div className="container">
-            <div className="apple-card" style={{
-              background: 'linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 55%, #F8FAFC 100%)',
-              color: '#0F172A',
-              padding: 'clamp(1.75rem, 4vw, 3.5rem)',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: 'clamp(1.75rem, 3.5vw, 3.5rem)',
-              alignItems: 'center',
-              borderRadius: '32px',
-              border: '1.5px solid #E2E8F0',
-              boxShadow: '0 15px 45px rgba(15, 23, 42, 0.06)',
-            }}>
-              <div>
-                <div className="badge" style={{ backgroundColor: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', marginBottom: '1rem', fontWeight: 800, letterSpacing: '0.03em' }}>
-                  <Building2 size={14} />
-                  <span>ESTABLISHED PHYSICAL CENTER IN GURUGRAM</span>
-                </div>
-                <h2 style={{ color: '#0F172A', fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)', fontWeight: 800, marginBottom: '1rem', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-                  Not Just a Website. A Real Educational Institute.
-                </h2>
-                <p style={{ color: '#475569', fontSize: '1rem', lineHeight: 1.65, marginBottom: '1.75rem' }}>
-                  Backed by <strong style={{ color: '#0F172A' }}>SSSAM Academy</strong>, situated in Sector 14, Old DLF, Gurugram. Tutors undergo in-person document screening and video intro audits.
-                </p>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem', fontSize: '0.92rem', color: '#334155' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <CheckCircle2 size={18} color="#059669" />
-                    <span>In-person tutor document audit &amp; interview screening</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <CheckCircle2 size={18} color="#059669" />
-                    <span>Option to have classes at our Sector 14 classrooms</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <CheckCircle2 size={18} color="#059669" />
-                    <span>100% Free replacement guarantee if student is unsatisfied</span>
-                  </div>
-                </div>
-
-                {/* Animated Attention-Grabbing Action Buttons */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenBooking()}
-                    className="btn btn-primary btn-lg btn-cta-pulse"
-                    style={{
-                      backgroundColor: '#0F6E56',
-                      padding: '0.9rem 1.85rem',
-                      borderRadius: '14px',
-                      fontWeight: 800,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <Sparkles size={17} color="#FDE047" style={{ animation: 'bounce 2s infinite' }} />
-                    <span>Get a Home Teacher</span>
-                    <ChevronRight size={17} />
-                  </button>
-
-                  <a
-                    href={`tel:${SSSAM_OFFICE_DETAILS.phones[0]}`}
-                    className="btn btn-secondary btn-lg"
-                    style={{
-                      backgroundColor: '#FFFFFF',
-                      color: '#0F6E56',
-                      border: '2px solid #0F6E56',
-                      padding: '0.9rem 1.75rem',
-                      borderRadius: '14px',
-                      fontWeight: 800,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.55rem',
-                      boxShadow: '0 4px 14px rgba(15, 110, 86, 0.12)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <Phone size={18} className="phone-icon-animated" color="#0F6E56" />
-                    <span>Call Sector 14 Center</span>
-                  </a>
-                </div>
-              </div>
-
-              {/* Right Side: Integrated Showcase Image & Address Card */}
-              <div style={{
-                backgroundColor: '#FFFFFF',
-                border: '1.5px solid #E2E8F0',
-                borderRadius: '24px',
-                overflow: 'hidden',
-                boxShadow: '0 12px 35px rgba(15, 23, 42, 0.08)',
-              }}>
-                {/* 1-on-1 Academic Tutoring Showcase Image (Full 16:9 Uncropped) */}
-                <div style={{
-                  position: 'relative',
-                  width: '100%',
-                  aspectRatio: '16/9',
-                  backgroundColor: '#0F172A',
-                  overflow: 'hidden',
-                }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/images/how-it-works/step3_teaching.webp"
-                    alt="1-on-1 In-Home Tutoring Session in Gurgaon"
-                    width={1376}
-                    height={768}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center',
-                      display: 'block',
-                    }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '10px',
-                    left: '10px',
-                    right: '10px',
-                    backgroundColor: 'rgba(15, 23, 42, 0.88)',
-                    backdropFilter: 'blur(8px)',
-                    padding: '0.45rem 0.85rem',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '0.35rem',
-                  }}>
-                    <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#34D399' }}>
-                      ✓ 1-on-1 Verified Faculty
-                    </span>
-                    <span style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>
-                      Sector 14 &amp; All Gurgaon Sectors
-                    </span>
-                  </div>
-                </div>
-
-                {/* Address & Helpline Details */}
-                <div style={{ padding: '1.5rem', backgroundColor: '#F8FAFC' }}>
-                  <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <MapPin size={18} color="#0F6E56" />
-                    <span>SSSAM Academy Gurugram Center</span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.86rem', color: '#475569' }}>
-                    <div>
-                      <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>OFFICIAL ADDRESS</div>
-                      <div style={{ color: '#0F172A', fontWeight: 600, marginTop: '2px' }}>{SSSAM_OFFICE_DETAILS.address}</div>
-                    </div>
-
-                    <div>
-                      <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>DIRECT HELPLINE NUMBER</div>
-                      <div style={{ color: '#0F6E56', fontWeight: 800, marginTop: '2px', fontSize: '1.05rem' }}>
-                        {SSSAM_OFFICE_DETAILS.phones.filter(Boolean).join(' • ')}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>COUNSELOR DESK TIMINGS</div>
-                      <div style={{ color: '#0F172A', fontWeight: 600, marginTop: '2px' }}>{SSSAM_OFFICE_DETAILS.hours}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* =========================================================================
-            8. WHY CHOOSE TUITIONFORHOME (6 PILLARS OF TRUST)
-            ========================================================================= */}
-        <section aria-label="Why Choose TuitionForHome" style={{ padding: '5rem 0', backgroundColor: '#FFFFFF', borderTop: '1px solid var(--border-subtle)' }}>
-          <div className="container">
-            <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 3rem auto' }}>
-              <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
-                <BadgeCheck size={14} />
-                <span>THE SSSAM ACADEMY ADVANTAGE</span>
-              </div>
-              <h2 style={{ fontSize: 'clamp(1.85rem, 3.5vw, 2.5rem)', fontWeight: 800, color: 'var(--text-main)' }}>
-                Why Gurgaon &amp; Delhi NCR Parents Trust TuitionForHome
-              </h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '0.5rem', lineHeight: 1.6 }}>
-                Unlike anonymous aggregator websites, every educator on our platform is verified in-person at our physical institute in Sector 14, Gurugram.
-              </p>
-            </div>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '1.5rem',
-            }}>
-              {/* Card 1 */}
-              <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#065F46' }}>
-                  <Building2 size={24} />
-                </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>Physical Center Anchor</h3>
-                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  Backed by SSSAM Academy at Sector 14, Old DLF, Gurugram. You have a real physical address, helpline numbers, and center classrooms for personalized classes.
-                </p>
-              </div>
-
-              {/* Card 2 */}
-              <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#F0F9FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0369A1' }}>
-                  <ShieldCheck size={24} />
-                </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>In-Person KYC &amp; Degree Audit</h3>
-                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  Every tutor’s degree certificates, Aadhaar KYC, address, and past teaching track record are audited before granting the verified educator badge.
-                </p>
-              </div>
-
-              {/* Card 3 */}
-              <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B45309' }}>
-                  <Video size={24} />
-                </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>60-Second Video Intro Auditions</h3>
-                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  Watch concise video introduction clips of shortlisted teachers to judge communication clarity, accent, and subject confidence before scheduling.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setActivePromoVideo(PROMO_VIDEOS.overview)}
-                  style={{
-                    marginTop: 'auto',
-                    alignSelf: 'flex-start',
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    color: '#B45309',
-                    backgroundColor: '#FEF3C7',
-                    border: '1px solid #FDE68A',
-                    padding: '0.35rem 0.8rem',
-                    borderRadius: '999px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Play size={11} fill="#B45309" />
-                  <span>Watch Sample Audition Video</span>
-                </button>
-              </div>
-
-              {/* Card 4 */}
-              <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#FDF2F8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#BE185D' }}>
-                  <RotateCcw size={24} />
-                </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>100% Free Replacement Guarantee</h3>
-                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  If your child does not connect with the tutor’s style, our counselors assign an alternate top-matched educator within 24 hours at no extra charge.
-                </p>
-              </div>
-
-              {/* Card 5 */}
-              <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6D28D9' }}>
-                  <Award size={24} />
-                </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>Top Gurgaon &amp; Delhi School Alignment</h3>
-                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  Experienced mentors for CBSE, ICSE, IB (DP/MYP), and Cambridge (IGCSE) aligned with The Shri Ram School, DPS, Heritage, and Pathways curricula.
-                </p>
-              </div>
-
-              {/* Card 6 */}
-              <div className="apple-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#065F46' }}>
-                  <Headphones size={24} />
-                </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>Dedicated Academic Counselor</h3>
-                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  Get 1-on-1 human assistance via phone and WhatsApp. We monitor attendance, test score progress, and parent feedback continuously.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* =========================================================================
-            9. GURGAON & DELHI NCR LOCALITIES SEO DIRECTORY GRID
-            ========================================================================= */}
-        <section aria-label="Hyper-Local Area Directory" style={{ padding: '4.5rem 0', backgroundColor: 'var(--bg-app)' }}>
-          <div className="container">
-            <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 2.5rem auto' }}>
-              <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
-                <MapPin size={14} />
-                <span>HYPER-LOCAL COVERAGE (45+ AREAS)</span>
-              </div>
-              <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>
-                Home Tutors Available Across Gurgaon &amp; Delhi NCR
-              </h2>
-              <p style={{ color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-                {totalVerifiedTutors
-                  ? `Over ${totalVerifiedTutors} verified educators ready to travel across DLF, Golf Course, Sohna Rd, Dwarka, Vasant Kunj & Saket.`
-                  : 'Verified 1-on-1 home and online educators available across all sectors of Gurgaon and prime South/West Delhi hubs.'}
-              </p>
-            </div>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-              gap: '1rem',
-            }}>
-              {(showAllLocalities ? dynamicLocalities : dynamicLocalities.slice(0, 8)).map((loc) => (
-                <Link
-                  key={loc.slug}
-                  href={`/home-tutors-in-gurgaon/${loc.slug}`}
-                  className="apple-card"
-                  style={{
-                    padding: '1.25rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    textDecoration: 'none',
-                    color: 'inherit',
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: '0.96rem', color: 'var(--text-main)' }}>
-                      {loc.name}
-                    </div>
-                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '2px', lineClamp: 1 }}>
-                      {loc.landmark}
-                    </div>
-                  </div>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#065F46', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.25rem 0.65rem', borderRadius: '999px', whiteSpace: 'nowrap' }}>
-                    Explore →
-                  </span>
-                </Link>
-              ))}
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginTop: '2rem', flexWrap: 'wrap' }}>
-              {dynamicLocalities.length > 8 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllLocalities(!showAllLocalities)}
-                  className="btn btn-primary"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.45rem',
-                    padding: '0.75rem 1.4rem',
-                    fontSize: '0.88rem',
-                    fontWeight: 800,
-                    backgroundColor: '#0F6E56',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(15, 110, 86, 0.15)',
-                  }}
-                >
-                  <span>{showAllLocalities ? 'Show Fewer Sectors' : 'Explore All Gurgaon & NCR Sectors'}</span>
-                  {showAllLocalities ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
-              )}
-
-              <Link
-                href="/home-tutors-in-gurgaon"
-                className="btn btn-secondary"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  padding: '0.75rem 1.25rem',
-                  fontSize: '0.88rem',
-                  fontWeight: 700,
-                  borderRadius: '12px',
-                }}
-              >
-                <span>Full Directory Page</span>
-                <ChevronRight size={16} />
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* =========================================================================
-            10. FREQUENTLY ASKED QUESTIONS (FAQ ACCORDION)
-            ========================================================================= */}
-        <section aria-label="Frequently Asked Questions" style={{ padding: '5rem 0', backgroundColor: '#FFFFFF', borderTop: '1px solid var(--border-subtle)' }}>
-          <div className="container" style={{ maxWidth: '840px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-              <div className="badge badge-emerald" style={{ marginBottom: '0.5rem' }}>
-                <HelpCircle size={14} />
-                <span>GOT QUESTIONS?</span>
-              </div>
-              <h2 style={{ fontSize: 'clamp(1.85rem, 3.5vw, 2.5rem)', fontWeight: 800, color: 'var(--text-main)' }}>
-                Frequently Asked Questions
-              </h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '0.5rem' }}>
-                Everything you need to know about finding, verifying, and hiring home tutors in Gurgaon and Delhi NCR.
-              </p>
-            </div>
-
-            {/* FAQ Accordion List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {[
-                {
-                  q: 'How does TuitionForHome verify and screen home tutors in Gurgaon & Delhi NCR?',
-                  a: 'Every educator undergoes a strict 3-stage auditing pipeline by SSSAM Academy: (1) Aadhaar & government ID background verification, (2) In-person degree & academic transcript verification, (3) 60-second video teaching audition evaluating communication, accent, and subject mastery. Only the top 5% of applicants are approved as ACTIVE_VERIFIED.',
-                },
-                {
-                  q: 'What are the home tuition fees in Gurgaon, Dwarka, and South Delhi?',
-                  a: 'Tuition rates depend on the grade and curriculum: Primary (Classes 1–5): ₹600 – ₹900/hr, Middle School (Classes 6–8): ₹700 – ₹1,000/hr, Secondary (Classes 9–10): ₹800 – ₹1,200/hr, Senior Secondary & NEET/JEE (Classes 11–12): ₹900 – ₹1,500/hr, and IB / Cambridge (MYP/DP): ₹1,500 – ₹2,500/hr. You can use our live Fee Calculator to get an instant estimate with zero hidden commissions.',
-                },
-                {
-                  q: 'What happens if my child is not comfortable or satisfied with the allocated tutor?',
-                  a: 'We offer a 100% Free Tutor Replacement Guarantee. If you feel the teaching chemistry or speed does not match your child’s learning style, our dedicated academic counselors will arrange an alternate top-rated educator within 24 hours at zero extra charge.',
-                },
-                {
-                  q: 'Do you provide tutors for CBSE, ICSE, IB Diploma, and Cambridge IGCSE boards?',
-                  a: 'Yes! We specialize in board-specific tutors familiar with the curriculum and exam patterns of premier schools like The Shri Ram School, DPS Sector 45 & Vasant Kunj, The Heritage School, Pathways World School, and Scottish High International.',
-                },
-                {
-                  q: 'Can I request a verified female home tutor for my child?',
-                  a: 'Absolutely. Over 45% of our verified teaching faculty are experienced lady educators. You can specify a preference for a female tutor during your inquiry, and all female tutors have verified background and address credentials.',
-                },
-                {
-                  q: 'Can we visit your physical center in Sector 14 Gurugram or take classes there?',
-                  a: 'Yes! TuitionForHome is operated by SSSAM Academy located at M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram. Parents are welcome to visit our center to meet our academic counselors, review tutor profiles in person, or attend sessions in our offline center classrooms.',
-                },
-              ].map((faq, idx) => {
-                const isOpen = openFaqIndex === idx;
-                return (
-                  <div
-                    key={idx}
-                    className="apple-card"
-                    style={{
-                      padding: '1.25rem 1.5rem',
-                      border: '1px solid var(--border-subtle)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      backgroundColor: isOpen ? '#F0FDF9' : '#FFFFFF',
-                    }}
-                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-                      <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: isOpen ? '#065F46' : 'var(--text-main)', margin: 0 }}>
-                        {faq.q}
-                      </h3>
-                      <div style={{
-                        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.2s ease',
-                        color: isOpen ? '#065F46' : 'var(--text-muted)',
-                        flexShrink: 0,
-                      }}>
-                        <ChevronDown size={20} />
-                      </div>
-                    </div>
-                    {isOpen && (
-                      <p style={{ marginTop: '0.85rem', color: 'var(--color-slate-700)', fontSize: '0.93rem', lineHeight: 1.65, borderTop: '1px solid rgba(6, 95, 70, 0.1)', paddingTop: '0.85rem' }}>
-                        {faq.a}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <Footer />
-
-      {/* Interactive Modals */}
-      <BookingModal
-        isOpen={bookingOpen}
-        onClose={() => setBookingOpen(false)}
-        initialData={selectedTutorForBooking}
-      />
-
-      <VideoModal
-        tutor={activeVideoTutor}
-        onClose={() => setActiveVideoTutor(null)}
-        onSelectTutor={(tutor) => handleOpenBooking(tutor)}
-      />
-
-      <PromoVideoModal
-        video={activePromoVideo}
-        onClose={() => setActivePromoVideo(null)}
-        onOpenBooking={() => handleOpenBooking()}
-      />
-
-      <StickyMobileBar onOpenBooking={() => handleOpenBooking()} />
-    </div>
+        <Footer />
+      </div>
+    </HomeClientProvider>
   );
 }

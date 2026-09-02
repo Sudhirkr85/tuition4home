@@ -14,9 +14,8 @@ export default function robots(): MetadataRoute.Robots {
         '/tutor/review/',
         '/api/',
         '/checkout/',
-        '/_next/',
       ],
     },
-    sitemap: 'https://tuitionforhome.com/sitemap.xml',
+    sitemap: 'https://sssamacademy.tech/sitemap.xml',
   };
 }

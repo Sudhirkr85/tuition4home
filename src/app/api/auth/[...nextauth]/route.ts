@@ -109,7 +109,7 @@ const authOptions: NextAuthOptions = {
     signIn: '/parent/login',
     error: '/parent/login',
   },
-  secret: process.env.NEXTAUTH_SECRET || 'tuitionforhome_super_secret_jwt_key_2026',
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);

@@ -5456,7 +5456,7 @@ export default function TutorRegisterLoginPage() {
                 <div style={{ backgroundColor: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.8rem', color: '#475569', lineHeight: 1.55, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   <div><strong>🏢 Physical Center:</strong> SSSAM Academy, M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001 (Near HUDA Market).</div>
                   <div><strong>📞 Helpline / WhatsApp:</strong> +91 92170 31899</div>
-                  <div><strong>✉️ Support Email:</strong> support@tuitionforhome.com / info@tuitionforhome.com</div>
+                  <div><strong>✉️ Support Email:</strong> support@sssamacademy.com / info@sssamacademy.com</div>
                   <div><strong>⏰ Office Timings:</strong> Monday to Sunday, 9:00 AM – 9:00 PM</div>
                 </div>
               </div>

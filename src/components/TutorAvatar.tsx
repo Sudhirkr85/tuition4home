@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 interface TutorAvatarProps {
   src?: string | null;
@@ -74,11 +75,15 @@ export default function TutorAvatar({
     );
   }
 
+  const isDataUrl = src.startsWith('data:') || src.startsWith('blob:');
+
   return (
-    /* eslint-disable-next-line @next/next/no-img-element */
-    <img
+    <Image
       src={src}
       alt={cleanName || 'Tutor Avatar'}
+      width={size}
+      height={size}
+      unoptimized={isDataUrl}
       onError={() => setHasError(true)}
       style={{
         width: `${size}px`,

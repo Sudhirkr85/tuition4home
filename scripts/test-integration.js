@@ -164,7 +164,7 @@ async function runTests() {
     const brevoKey = process.env.BREVO_API_KEY;
     const brevoSender = process.env.BREVO_SENDER_EMAIL;
 
-    if (brevoKey && brevoKey.startsWith('xkeysib-') && brevoSender === 'support@tuitionforhome.com') {
+    if (brevoKey && brevoKey.startsWith('xkeysib-') && (brevoSender === 'support@sssamacademy.com' || brevoSender?.includes('@sssamacademy'))) {
       console.log('   ✅ Brevo API Key Loaded: PASSED');
       console.log(`   ✅ Sender Email (${brevoSender}) Verified: PASSED`);
       passed++;

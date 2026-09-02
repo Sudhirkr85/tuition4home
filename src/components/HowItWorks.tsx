@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { MapPin, Users, Sparkles, CheckCircle2, ChevronRight, ShieldCheck, Award, BookOpen, Clock, ArrowRight, Play, Volume2, VolumeX, Maximize } from 'lucide-react';
 import Link from 'next/link';
 
@@ -113,13 +114,11 @@ function StepCard({ stepNumber, title, badgeText, description, icon, accentColor
 
 const Step1Illustration = () => (
   <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    <img
+    <Image
       src="/images/how-it-works/step1_location.webp"
       alt="Select Mode and Sector"
       width={600}
       height={328}
-      loading="lazy"
-      decoding="async"
       style={{
         width: '100%',
         height: '100%',
@@ -132,13 +131,11 @@ const Step1Illustration = () => (
 
 const Step2Illustration = () => (
   <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    <img
+    <Image
       src="/images/how-it-works/step2_matching.webp"
       alt="Counselor Proximity Match"
       width={600}
       height={330}
-      loading="lazy"
-      decoding="async"
       style={{
         width: '100%',
         height: '100%',
@@ -231,13 +228,11 @@ const Step3Illustration = () => {
 
 const Step4Illustration = () => (
   <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    <img
+    <Image
       src="/images/how-it-works/step4_guarantee.webp"
       alt="100% Parent Guarantee"
       width={600}
       height={328}
-      loading="lazy"
-      decoding="async"
       style={{
         width: '100%',
         height: '100%',

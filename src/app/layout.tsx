@@ -10,7 +10,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://tuitionforhome.com'),
+  metadataBase: new URL('https://sssamacademy.tech'),
   alternates: {
     canonical: '/',
   },
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     'home tuition academy sector 14 gurgaon',
     'SSSAM Academy',
   ],
-  authors: [{ name: 'SSSAM Academy', url: 'https://sssamacademy.com' }],
+  authors: [{ name: 'SSSAM Academy', url: 'https://sssamacademy.tech' }],
   icons: {
     icon: [
       { url: '/logo.webp', type: 'image/webp' },
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     title: 'TuitionForHome — Verified Home & Online Tutors in Gurgaon',
     description:
       'Book top 1% verified home and online tutors in Gurgaon & Delhi NCR with 1-on-1 trial class. Operated by SSSAM Academy, Sector 14 Gurugram.',
-    url: 'https://tuitionforhome.com',
+    url: 'https://sssamacademy.tech',
     siteName: 'TuitionForHome',
     images: [
       {
@@ -110,7 +110,7 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': ['LocalBusiness', 'EducationalOrganization'],
               name: 'TuitionForHome — SSSAM Academy',
-              url: 'https://tuitionforhome.com',
+              url: 'https://sssamacademy.tech',
               logo: 'https://sssamacademy.com/assets/logo.webp',
               image: 'https://sssamacademy.com/assets/home_page.webp',
               description:
@@ -167,61 +167,10 @@ export default function RootLayout({
               priceRange: '₹₹ - ₹₹₹',
               currenciesAccepted: 'INR',
               paymentAccepted: 'Cash, UPI, Net Banking, Credit Card',
-              aggregateRating: {
-                '@type': 'AggregateRating',
-                ratingValue: '4.95',
-                reviewCount: '500',
-                bestRating: '5',
-                worstRating: '1',
-              },
               sameAs: [
                 'https://www.instagram.com/tuition4home',
                 'https://www.facebook.com/share/1FL3vBLgqm/',
                 'https://www.youtube.com/@codingwithsudhir',
-              ],
-            }),
-          }}
-        />
-        {/* Schema.org FAQPage for Google PAA & Rich Snippets */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'FAQPage',
-              mainEntity: [
-                {
-                  '@type': 'Question',
-                  name: 'How does TuitionForHome verify and screen home tutors in Gurgaon & Delhi NCR?',
-                  acceptedAnswer: {
-                    '@type': 'Answer',
-                    text: 'Every educator undergoes a strict 3-stage auditing pipeline by SSSAM Academy: Aadhaar KYC background verification, in-person academic degree audit, and a 60-second video teaching audition.',
-                  },
-                },
-                {
-                  '@type': 'Question',
-                  name: 'What are the home tuition fees in Gurgaon, Dwarka, and South Delhi?',
-                  acceptedAnswer: {
-                    '@type': 'Answer',
-                    text: 'Tuition rates typically range from ₹600 to ₹1,500/hr for CBSE/ICSE and ₹1,500 to ₹2,500/hr for IB/IGCSE curricula, with transparent online fee estimation.',
-                  },
-                },
-                {
-                  '@type': 'Question',
-                  name: 'What happens if my child is not satisfied with the allocated tutor?',
-                  acceptedAnswer: {
-                    '@type': 'Answer',
-                    text: 'TuitionForHome provides a 100% Free Tutor Replacement Guarantee within 24 hours at zero extra charge.',
-                  },
-                },
-                {
-                  '@type': 'Question',
-                  name: 'Can we visit your physical center in Sector 14 Gurugram?',
-                  acceptedAnswer: {
-                    '@type': 'Answer',
-                    text: 'Yes! TuitionForHome is operated by SSSAM Academy at M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram. Parents are welcome to visit our counseling desk or attend offline trial classes.',
-                  },
-                },
               ],
             }),
           }}

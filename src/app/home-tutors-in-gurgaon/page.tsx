@@ -17,7 +17,7 @@ export default function GurgaonLocalitiesHubPage() {
     '@type': 'CollectionPage',
     name: 'Home Tutors Across Gurgaon & Delhi NCR Localities',
     description: 'Find verified home tutors across 45+ residential sectors in Gurgaon, Dwarka, Vasant Kunj & South Delhi.',
-    url: 'https://tuitionforhome.com/home-tutors-in-gurgaon',
+    url: 'https://sssamacademy.tech/home-tutors-in-gurgaon',
     provider: {
       '@type': 'EducationalOrganization',
       name: 'TuitionForHome (SSSAM Academy)',
@@ -34,13 +34,13 @@ export default function GurgaonLocalitiesHubPage() {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://tuitionforhome.com',
+        item: 'https://sssamacademy.tech',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Gurgaon & Delhi Localities',
-        item: 'https://tuitionforhome.com/home-tutors-in-gurgaon',
+        item: 'https://sssamacademy.tech/home-tutors-in-gurgaon',
       },
     ],
   };

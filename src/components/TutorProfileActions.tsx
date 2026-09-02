@@ -24,7 +24,7 @@ export default function TutorProfileActions({
   const shareText = `Check out ${tutorName}'s profile on TuitionForHome. Specializes in ${subjects.slice(0, 3).join(', ')} (${highestDegree}). Verified by SSSAM Academy.`;
   
   const handleShare = async () => {
-    const url = typeof window !== 'undefined' ? window.location.href : `https://tuitionforhome.com/tutors/${tutorId}`;
+    const url = typeof window !== 'undefined' ? window.location.href : `https://sssamacademy.tech/tutors/${tutorId}`;
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({

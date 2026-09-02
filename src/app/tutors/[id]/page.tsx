@@ -236,7 +236,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: `${tutorName} — Verified Tutor in Gurgaon`,
       description: `Hire ${tutorName} for ${subjects} in Gurgaon. Verified by SSSAM Academy.`,
-      url: `https://tuitionforhome.com/tutors/${params.id}`,
+      url: `https://sssamacademy.tech/tutors/${params.id}`,
       siteName: 'TuitionForHome',
       images: [
         {
@@ -272,7 +272,7 @@ export default async function TutorProfilePage({ params }: PageProps) {
     worksFor: {
       '@type': 'EducationalOrganization',
       name: 'TuitionForHome (SSSAM Academy)',
-      url: 'https://tuitionforhome.com',
+      url: 'https://sssamacademy.tech',
     },
     knowsAbout: tutorData.subjects,
     hasCredential: {
@@ -297,19 +297,19 @@ export default async function TutorProfilePage({ params }: PageProps) {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://tuitionforhome.com',
+        item: 'https://sssamacademy.tech',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Gurgaon Tutors',
-        item: 'https://tuitionforhome.com/tutors',
+        item: 'https://sssamacademy.tech/tutors',
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: tutorData.name,
-        item: `https://tuitionforhome.com/tutors/${params.id}`,
+        item: `https://sssamacademy.tech/tutors/${params.id}`,
       },
     ],
   };

@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { verifyAdminOrCounselor } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
+  // Enforce Admin / Counselor Authentication to protect Parent PII
+  const authUser = await verifyAdminOrCounselor(req);
+  if (!authUser) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized: Admin or Counselor authentication required.' },
+      { status: 401 }
+    );
+  }
+
   try {
     let rawParents: any[] = [];
     try {

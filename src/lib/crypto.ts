@@ -1,10 +1,16 @@
 import crypto from 'crypto';
 
 const ALGORITHM = 'aes-256-cbc';
-const SECRET_KEY = process.env.ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || 'tuitionforhome_super_secret_jwt_key_2026';
+const SECRET_KEY = process.env.ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET;
+
+if (!SECRET_KEY) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('CRITICAL SECURITY ERROR: ENCRYPTION_KEY or NEXTAUTH_SECRET environment variable is missing.');
+  }
+}
 
 // Deriving a 32-byte key from our secret key using SHA-256
-const KEY = crypto.createHash('sha256').update(SECRET_KEY).digest();
+const KEY = crypto.createHash('sha256').update(SECRET_KEY || 'tfh_dev_encryption_key_do_not_use_in_prod').digest();
 
 /**
  * Encrypts a plain text string using AES-256-CBC.

@@ -411,11 +411,32 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
     }
   };
 
+  const getAuthHeaders = () => {
+    let email = adminUser?.email;
+    let id = adminUser?.id;
+    if (!email && typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('tfh_admin_user') || localStorage.getItem('tfh_counselor_user');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          email = parsed.email;
+          id = parsed.id;
+        }
+      } catch {}
+    }
+    return {
+      'x-admin-email': email || '',
+      'x-admin-id': id || '',
+    };
+  };
+
   // Fetch leads
   const fetchLeads = async () => {
     setLeadsLoading(true);
     try {
-      const res = await fetch('/api/leads/list');
+      const res = await fetch('/api/leads/list', {
+        headers: getAuthHeaders(),
+      });
       const data = await res.json();
       if (data.success && data.leads) {
         setLeads(data.leads);
@@ -480,7 +501,9 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
   const fetchParents = async () => {
     setParentsLoading(true);
     try {
-      const res = await fetch('/api/parents/list');
+      const res = await fetch('/api/parents/list', {
+        headers: getAuthHeaders(),
+      });
       const data = await res.json();
       if (data.success && data.parents) {
         setRegisteredParents(data.parents);
@@ -1183,7 +1206,7 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           <span style={{ color: '#94A3B8', fontSize: '0.76rem' }}>
-            Active: <strong style={{ color: '#F8FAFC' }}>{adminUser?.email || 'admin@tuitionforhome.com'}</strong>
+            Active: <strong style={{ color: '#F8FAFC' }}>{adminUser?.email || 'admin@sssamacademy.com'}</strong>
           </span>
           <a href="/" target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8', fontWeight: 600, textDecoration: 'none', fontSize: '0.76rem' }}>
             Public Site ↗

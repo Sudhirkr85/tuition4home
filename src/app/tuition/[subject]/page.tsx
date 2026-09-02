@@ -1,5 +1,6 @@
 import React from 'react';
 import { Metadata } from 'next';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -29,6 +30,7 @@ import {
 import Link from 'next/link';
 
 export const dynamicParams = true;
+export const revalidate = 86400; // 24 hours ISR Edge CDN caching
 
 interface PageProps {
   params: {
@@ -56,6 +58,12 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const payload = generatePSEOPagePayload(params.subject);
+  if (!payload) {
+    return {
+      title: 'Tuition Subject Not Found | TuitionForHome',
+      robots: { index: false, follow: false },
+    };
+  }
 
   return {
     title: payload.metaTitle,
@@ -89,7 +97,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function SubjectPage({ params }: PageProps) {
   const payload = generatePSEOPagePayload(params.subject);
-  if (!payload) notFound();
+  if (!payload) {
+    notFound();
+  }
 
   // Fetch live verified tutors from MySQL matching subject category
   let dynamicTutors: MockTutor[] = [];
@@ -337,18 +347,14 @@ export default async function SubjectPage({ params }: PageProps) {
                   backgroundColor: '#0F172A',
                   marginBottom: '1.25rem',
                 }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src="/images/how-it-works/step3_teaching.webp"
                     alt={`1-on-1 ${payload.subject.name} Home Tuition in ${payload.locality.name}`}
-                    width={1376}
-                    height={768}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 600px"
                     style={{
-                      width: '100%',
-                      height: '100%',
                       objectFit: 'cover',
                       objectPosition: 'center',
-                      display: 'block',
                     }}
                   />
                   <div style={{

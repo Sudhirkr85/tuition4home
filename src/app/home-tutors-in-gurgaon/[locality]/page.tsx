@@ -1,5 +1,6 @@
 import React from 'react';
 import { Metadata } from 'next';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -16,6 +17,8 @@ interface PageProps {
     locality: string;
   };
 }
+
+export const revalidate = 86400; // 24 hours ISR Edge CDN caching
 
 // Generate Static Params for all 20+ Gurgaon Localities
 export async function generateStaticParams() {
@@ -46,7 +49,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: `Home Tutors in ${loc.name}, Gurgaon | TuitionForHome`,
       description: `Hire verified home tutors in ${loc.name} (${loc.landmark}) for CBSE, ICSE, IB & Coding.`,
-      url: `https://tuitionforhome.com/home-tutors-in-gurgaon/${loc.slug}`,
+      url: `https://sssamacademy.tech/home-tutors-in-gurgaon/${loc.slug}`,
       siteName: 'TuitionForHome',
       locale: 'en_IN',
       type: 'website',
@@ -128,7 +131,7 @@ export default async function LocalityPage({ params }: PageProps) {
     '@context': 'https://schema.org',
     '@type': ['LocalBusiness', 'EducationalOrganization'],
     name: `TuitionForHome - Home Tutors in ${loc.name}, Gurgaon`,
-    url: `https://tuitionforhome.com/home-tutors-in-gurgaon/${loc.slug}`,
+    url: `https://sssamacademy.tech/home-tutors-in-gurgaon/${loc.slug}`,
     description: `Find verified home and online tutors in ${loc.name}, Gurgaon (${loc.landmark}).`,
     telephone: SSSAM_OFFICE_DETAILS.phones[0],
     address: {
@@ -149,13 +152,6 @@ export default async function LocalityPage({ params }: PageProps) {
       name: `${loc.name}, Gurugram`,
     },
     priceRange: '₹₹',
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.9',
-      reviewCount: '500',
-      bestRating: '5',
-      worstRating: '1',
-    },
   };
 
   const breadcrumbSchema = {
@@ -166,19 +162,19 @@ export default async function LocalityPage({ params }: PageProps) {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://tuitionforhome.com',
+        item: 'https://sssamacademy.tech',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Home Tutors in Gurgaon',
-        item: 'https://tuitionforhome.com/home-tutors-in-gurgaon',
+        item: 'https://sssamacademy.tech/home-tutors-in-gurgaon',
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: `Home Tutors in ${loc.name}`,
-        item: `https://tuitionforhome.com/home-tutors-in-gurgaon/${loc.slug}`,
+        item: `https://sssamacademy.tech/home-tutors-in-gurgaon/${loc.slug}`,
       },
     ],
   };
@@ -295,11 +291,12 @@ export default async function LocalityPage({ params }: PageProps) {
                   marginBottom: '1.25rem',
                   height: '160px',
                 }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src="/images/how-it-works/step3_teaching.webp"
                     alt={`1-on-1 Home Tutor in ${loc.name}`}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 400px"
+                    style={{ objectFit: 'cover' }}
                   />
                   <div style={{
                     position: 'absolute',

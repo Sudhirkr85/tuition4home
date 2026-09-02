@@ -15,7 +15,7 @@ export async function sendTransactionalEmail({
   to,
   subject,
   htmlContent,
-  senderEmail = process.env.BREVO_SENDER_EMAIL || 'support@tuitionforhome.com',
+  senderEmail = process.env.BREVO_SENDER_EMAIL || 'support@sssamacademy.com',
   senderName = process.env.BREVO_SENDER_NAME || 'TuitionForHome Support',
 }: SendEmailParams): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const apiKey = process.env.BREVO_API_KEY;
@@ -89,7 +89,7 @@ export async function sendParentInquiryConfirmationEmail(
 
       <div style="border-top: 1px solid #E2E8F0; padding-top: 16px; text-align: center; font-size: 12px; color: #94A3B8;">
         SSSAM Academy, M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001<br />
-        Counselor Helpline: +91 92170 31899 | Email: support@tuitionforhome.com
+        Counselor Helpline: +91 92170 31899 | Email: support@sssamacademy.com
       </div>
     </div>
   `;
@@ -139,14 +139,14 @@ export async function sendTutorProfileSubmittedEmail(
       </p>
 
       <div style="text-align: center; margin-bottom: 20px;">
-        <a href="https://tuitionforhome.com/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block;">
+        <a href="https://sssamacademy.tech/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block;">
           Open Tutor Dashboard →
         </a>
       </div>
 
       <div style="border-top: 1px solid #E2E8F0; margin-top: 24px; padding-top: 16px; text-align: center; font-size: 11px; color: #94A3B8; line-height: 1.5;">
         SSSAM Academy • M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001<br />
-        Tutor Support Desk: +91 92170 31899 | Email: support@tuitionforhome.com
+        Tutor Support Desk: +91 92170 31899 | Email: support@sssamacademy.com
       </div>
     </div>
   `;
@@ -194,14 +194,14 @@ export async function sendTutorVerifiedEmail(
       </p>
 
       <div style="text-align: center; margin-bottom: 20px;">
-        <a href="https://tuitionforhome.com/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 26px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(15, 110, 86, 0.2);">
+        <a href="https://sssamacademy.tech/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 26px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(15, 110, 86, 0.2);">
           View Your Verified Dashboard →
         </a>
       </div>
 
       <div style="border-top: 1px solid #E2E8F0; margin-top: 24px; padding-top: 16px; text-align: center; font-size: 11px; color: #94A3B8; line-height: 1.5;">
         SSSAM Academy • M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001<br />
-        Tutor Support Desk: +91 92170 31899 | Email: support@tuitionforhome.com
+        Tutor Support Desk: +91 92170 31899 | Email: support@sssamacademy.com
       </div>
     </div>
   `;
@@ -253,14 +253,14 @@ export async function sendTutorKYCRejectedEmail(
       </div>
 
       <div style="text-align: center; margin-bottom: 20px;">
-        <a href="https://tuitionforhome.com/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block;">
+        <a href="https://sssamacademy.tech/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block;">
           Re-Upload Document Now →
         </a>
       </div>
 
       <div style="border-top: 1px solid #E2E8F0; margin-top: 24px; padding-top: 16px; text-align: center; font-size: 11px; color: #94A3B8; line-height: 1.5;">
         SSSAM Academy • M24 Ground Floor, Old DLF Colony, Sector 14, Gurugram, Haryana 122001<br />
-        Tutor Helpdesk: +91 92170 31899 | Email: support@tuitionforhome.com
+        Tutor Helpdesk: +91 92170 31899 | Email: support@sssamacademy.com
       </div>
     </div>
   `;

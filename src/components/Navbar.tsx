@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { Phone, Menu, X, ShieldCheck, ChevronRight, LogOut, User, Settings, GraduationCap } from 'lucide-react';
@@ -445,10 +446,12 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px' }}>
         {/* Brand Logo & Brand Name */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', textDecoration: 'none' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/logo.webp"
             alt="TuitionForHome Logo"
+            width={44}
+            height={44}
+            priority
             style={{ height: '44px', width: '44px', objectFit: 'cover', borderRadius: '50%', flexShrink: 0 }}
           />
           <div style={{ display: 'flex', flexDirection: 'column' }}>

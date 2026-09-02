@@ -134,7 +134,7 @@ export async function generateMetadata({
   }
 
   const { location, topic, modifier } = resolved;
-  const baseUrl = 'https://tuitionforhome.com';
+  const baseUrl = 'https://sssamacademy.tech';
 
   const canonicalPath = modifier
     ? `/courses/${location.city}/${modifier.modifier}/${topic.topic}`
@@ -215,7 +215,7 @@ export default function ProgrammaticCoursePage({
   }
 
   const { location, topic, modifier } = resolved;
-  const baseUrl = 'https://tuitionforhome.com';
+  const baseUrl = 'https://sssamacademy.tech';
 
   const pageTitle = modifier
     ? `${modifier.label} ${topic.label} Classes in ${location.label}`
@@ -349,13 +349,6 @@ export default function ProgrammaticCoursePage({
       addressRegion: location.state,
       addressCountry: 'IN',
       ...(location.pincode ? { postalCode: location.pincode } : {}),
-    },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.95',
-      reviewCount: '520',
-      bestRating: '5',
-      worstRating: '1',
     },
   };
 

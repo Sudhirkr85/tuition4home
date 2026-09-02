@@ -93,7 +93,7 @@ export async function POST(req: Request) {
     if (((profile.status as string) === 'SUSPENDED' || (profile.status as string) === 'DEACTIVATED' || (profile.status as string) === 'REJECTED') && body.isAvailable === true) {
       return NextResponse.json({
         success: false,
-        error: 'Your account has been deactivated by SSSAM Academy Admin. Please contact Admin (support@tuitionforhome.com) for profile reactivation.'
+        error: 'Your account has been deactivated by SSSAM Academy Admin. Please contact Admin (support@sssamacademy.com) for profile reactivation.'
       }, { status: 403 });
     }
 

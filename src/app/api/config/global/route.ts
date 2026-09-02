@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { verifyAdminOrCounselor } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +20,19 @@ const DEFAULT_CONFIG = {
   googleMapsLimit: 25000,
 };
 
-export async function GET() {
+function sanitizePublicConfig(config: any) {
+  if (!config) return DEFAULT_CONFIG;
+  const sanitized = { ...config };
+  // Never expose sensitive server API keys or secret limits in public responses
+  delete sanitized.googleMapsApiKey;
+  delete sanitized.googleMapsUsageCount;
+  return sanitized;
+}
+
+export async function GET(req: Request) {
   try {
+    const authUser = await verifyAdminOrCounselor(req);
+
     // 1. Fast Read-only query (No write-locks / no upsert on GET)
     let config = await prisma.platformConfig.findUnique({
       where: { id: 'global_config' },
@@ -38,10 +50,14 @@ export async function GET() {
       }
     }
 
+    const outputConfig = authUser && authUser.role === 'SUPER_ADMIN'
+      ? (config || DEFAULT_CONFIG)
+      : sanitizePublicConfig(config || DEFAULT_CONFIG);
+
     return NextResponse.json(
       {
         success: true,
-        config: config || DEFAULT_CONFIG,
+        config: outputConfig,
       },
       {
         headers: {
@@ -54,7 +70,7 @@ export async function GET() {
     return NextResponse.json(
       {
         success: true,
-        config: DEFAULT_CONFIG,
+        config: sanitizePublicConfig(DEFAULT_CONFIG),
       },
       {
         headers: {
@@ -66,6 +82,15 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  // Enforce Admin Authentication before allowing configuration mutation
+  const authUser = await verifyAdminOrCounselor(req);
+  if (!authUser || authUser.role !== 'SUPER_ADMIN') {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized: Only Super Admin can modify platform settings.' },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await req.json();
     const updated = await prisma.platformConfig.upsert({
@@ -121,3 +146,4 @@ export async function POST(req: Request) {
     );
   }
 }
+
