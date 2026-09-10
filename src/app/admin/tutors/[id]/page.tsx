@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import Navbar from '@/components/Navbar';
@@ -91,9 +91,10 @@ interface TutorAuditData {
   } | null;
 }
 
-export default function DedicatedTutorAuditPage({ params }: { params: { id: string } }) {
+export default function DedicatedTutorAuditPage({ params }: { params?: { id?: string } }) {
   const router = useRouter();
-  const tutorId = params.id;
+  const routeParams = useParams();
+  const tutorId = ((params?.id || routeParams?.id) as string) || '';
 
   const [tutor, setTutor] = useState<TutorAuditData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,6 +102,23 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
   const [actionLoading, setActionLoading] = useState(false);
   const [backUrl, setBackUrl] = useState('/admin');
   const [backLabel, setBackLabel] = useState('Back to Admin Portal');
+
+  // Helper to extract authenticated user headers from localStorage
+  const getAuthHeaders = (): Record<string, string> => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const adminSession = localStorage.getItem('tfh_admin_user');
+      const counselorSession = localStorage.getItem('tfh_counselor_user');
+      const session = adminSession ? JSON.parse(adminSession) : (counselorSession ? JSON.parse(counselorSession) : null);
+      if (session) {
+        return {
+          'x-admin-email': session.email || '',
+          'x-admin-id': session.id || '',
+        };
+      }
+    } catch {}
+    return {};
+  };
 
   // Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -120,6 +138,7 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
 
       const res = await fetch('/api/upload', {
         method: 'POST',
+        headers: getAuthHeaders(),
         body: formData,
       });
       const data = await res.json();
@@ -136,17 +155,21 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
     }
   };
 
-  // Detect who is viewing: admin or counselor
+  // Detect who is viewing: admin or counselor, and verify session
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const counselorSession = localStorage.getItem('tfh_counselor_user');
       const adminSession = localStorage.getItem('tfh_admin_user');
+      if (!counselorSession && !adminSession) {
+        router.push('/admin/login');
+        return;
+      }
       if (counselorSession && !adminSession) {
         setBackUrl('/counselor');
         setBackLabel('Back to Counselor Portal');
       }
     }
-  }, []);
+  }, [router]);
 
   // Custom Centered Modals State (No browser native alert/confirm)
   const [confirmModal, setConfirmModal] = useState<{
@@ -172,10 +195,14 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
   const [activeImageModal, setActiveImageModal] = useState<string | null>(null);
 
   const fetchTutorDetails = async () => {
+    if (!tutorId) return;
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/admin/tutors/${tutorId}`);
+      const headers = getAuthHeaders();
+      const res = await fetch(`/api/admin/tutors/${tutorId}`, {
+        headers,
+      });
       const data = await res.json();
       if (data.success && data.tutor) {
         setTutor(data.tutor);
@@ -273,7 +300,10 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
 
       const res = await fetch(`/api/admin/tutors/${tutor.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify(payload),
       });
 
@@ -412,7 +442,10 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
         const isAvailable = actionType === 'ACTIVATE_TUTOR';
         const res = await fetch('/api/counselor/tutors/approve', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
           body: JSON.stringify({
             tutorId: tutor.id,
             action: 'TOGGLE_AVAILABILITY',
@@ -442,7 +475,10 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
       } else if (actionType === 'REJECT_PROFILE') {
         const res = await fetch('/api/counselor/tutors/approve', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
           body: JSON.stringify({
             tutorId: tutor.id,
             action: 'REJECT_PROFILE',
@@ -472,7 +508,10 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
       } else if (actionType === 'APPROVE_FINAL' || actionType === 'REACTIVATE_PROFILE') {
         const res = await fetch('/api/counselor/tutors/approve', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
           body: JSON.stringify({
             tutorId: tutor.id,
             action: 'APPROVE_FINAL_PROFILE'
@@ -505,7 +544,10 @@ export default function DedicatedTutorAuditPage({ params }: { params: { id: stri
 
         const res = await fetch('/api/counselor/tutors/approve', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
           body: JSON.stringify({
             tutorId: tutor.id,
             action: 'REVIEW_DOCUMENT',

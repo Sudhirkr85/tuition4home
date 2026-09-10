@@ -395,22 +395,6 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
     }
   };
 
-  // Fetch counselors
-  const fetchCounselors = async () => {
-    setCounselorLoading(true);
-    try {
-      const res = await fetch('/api/admin/counselors');
-      const data = await res.json();
-      if (data.success && data.counselors) {
-        setCounselors(data.counselors);
-      }
-    } catch (err) {
-      console.error('Failed to fetch counselors:', err);
-    } finally {
-      setCounselorLoading(false);
-    }
-  };
-
   const getAuthHeaders = () => {
     let email = adminUser?.email;
     let id = adminUser?.id;
@@ -428,6 +412,24 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
       'x-admin-email': email || '',
       'x-admin-id': id || '',
     };
+  };
+
+  // Fetch counselors
+  const fetchCounselors = async () => {
+    setCounselorLoading(true);
+    try {
+      const res = await fetch('/api/admin/counselors', {
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (data.success && data.counselors) {
+        setCounselors(data.counselors);
+      }
+    } catch (err) {
+      console.error('Failed to fetch counselors:', err);
+    } finally {
+      setCounselorLoading(false);
+    }
   };
 
   // Fetch leads
@@ -517,7 +519,9 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
 
   const fetchPlatformConfig = async () => {
     try {
-      const res = await fetch('/api/config/global');
+      const res = await fetch('/api/config/global', {
+        headers: getAuthHeaders(),
+      });
       const data = await res.json();
       if (data.success && data.config) {
         setBasePrice(data.config.baseVerificationFee ?? 999);
@@ -620,7 +624,10 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
     try {
       const res = await fetch('/api/admin/counselors', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify({
           name: newCounselorName,
           email: newCounselorEmail,
@@ -675,7 +682,10 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
     try {
       const res = await fetch('/api/admin/counselors', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify({
           id: selectedCounselorForEdit.id,
           name: editCounselorName,
@@ -714,7 +724,10 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
       onConfirm: async () => {
         setConfirmModal(null);
         try {
-          const res = await fetch(`/api/admin/counselors?id=${id}`, { method: 'DELETE' });
+          const res = await fetch(`/api/admin/counselors?id=${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+          });
           const data = await res.json();
           if (data.success) {
             setCounselors((prev) => prev.filter((c) => c.id !== id));

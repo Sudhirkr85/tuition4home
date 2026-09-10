@@ -5,6 +5,8 @@ import { uploadToCloudinary } from '@/lib/cloudinary';
 import sharp from 'sharp';
 import { verifyAdminOrCounselor } from '@/lib/admin-auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const authUser = await verifyAdminOrCounselor(req);
   if (!authUser) {
@@ -15,10 +17,10 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 
   try {
-    const tutorId = params.id;
+    const tutorId = decodeURIComponent(params.id || '').trim();
 
     // Find profile by ID or by userId
-    const profile = await prisma.tutorProfile.findFirst({
+    let profile = await prisma.tutorProfile.findFirst({
       where: {
         OR: [{ id: tutorId }, { userId: tutorId }]
       },
@@ -27,6 +29,25 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         kycDoc: true
       }
     });
+
+    if (!profile) {
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [{ id: tutorId }, { email: tutorId }]
+        },
+        include: {
+          tutorProfile: {
+            include: {
+              user: true,
+              kycDoc: true
+            }
+          }
+        }
+      });
+      if (user?.tutorProfile) {
+        profile = user.tutorProfile;
+      }
+    }
 
     if (!profile) {
       return NextResponse.json({ success: false, error: 'Tutor profile not found.' }, { status: 404 });
@@ -116,15 +137,27 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   try {
-    const tutorId = params.id;
+    const tutorId = decodeURIComponent(params.id || '').trim();
     const body = await req.json();
 
-    const existing = await prisma.tutorProfile.findFirst({
+    let existing = await prisma.tutorProfile.findFirst({
       where: {
         OR: [{ id: tutorId }, { userId: tutorId }]
       },
       include: { user: true }
     });
+
+    if (!existing) {
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [{ id: tutorId }, { email: tutorId }]
+        },
+        include: { tutorProfile: { include: { user: true } } }
+      });
+      if (user?.tutorProfile) {
+        existing = user.tutorProfile;
+      }
+    }
 
     if (!existing) {
       return NextResponse.json({ success: false, error: 'Tutor not found.' }, { status: 404 });
