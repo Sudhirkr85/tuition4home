@@ -9,7 +9,7 @@ export function HeroActionButtons() {
   const { openBooking } = useHomeContext();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%', maxWidth: '440px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%', maxWidth: '520px' }}>
       {/* Live Animated Status Badge */}
       <div style={{
         display: 'inline-flex',

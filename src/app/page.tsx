@@ -70,48 +70,23 @@ export default function HomePage() {
           {/* =========================================================================
               1. MINIMALIST HERO SECTION (SEO & TRUST OPTIMIZED)
               ========================================================================= */}
-          <section aria-label="Hero Search and Overview" style={{
-            paddingTop: '1rem',
-            paddingBottom: '2.5rem',
-            backgroundColor: '#FFFFFF',
-            borderBottom: '1px solid #E8E8ED',
-            position: 'relative',
-            overflow: 'hidden',
-          }}>
+          <section aria-label="Hero Search and Overview" className="home-hero-section">
             <div className="container">
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-                gap: '2.5rem',
-                alignItems: 'center',
-              }}>
+              <div className="home-hero-grid">
                 {/* Left Column: Headline & Action Controls */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', minWidth: 0 }}>
+                <div className="home-hero-content">
                   {/* Dynamic Sector Badge */}
                   <div>
                     <HeroSectorBadge />
                   </div>
 
                   {/* Primary Keyword H1 Headline */}
-                  <h1 style={{
-                    fontSize: 'clamp(1.9rem, 4vw, 3.2rem)',
-                    fontWeight: 800,
-                    color: '#1D1D1F',
-                    lineHeight: 1.15,
-                    letterSpacing: '-0.02em',
-                    margin: 0,
-                    wordBreak: 'break-word',
-                  }}>
+                  <h1 className="home-hero-title">
                     Find a <span style={{ color: '#0F6E56' }}>Home Teacher</span> for Your Child in Gurgaon
                   </h1>
 
                   {/* Subtext */}
-                  <p style={{
-                    fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
-                    color: '#515154',
-                    lineHeight: 1.55,
-                    margin: 0,
-                  }}>
+                  <p className="home-hero-subtitle">
                     Connect with background-checked <strong>home teachers in Gurgaon</strong> for CBSE, ICSE, IB &amp; Coding. Matched within 3.5 km of your sector with a <strong>100% Free Replacement Guarantee</strong>.
                   </p>
 
@@ -119,22 +94,16 @@ export default function HomePage() {
                   <HeroActionButtons />
 
                   {/* Trust Signal Pillars */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-                    gap: '0.75rem',
-                    paddingTop: '0.5rem',
-                    borderTop: '1px solid #F1F5F9',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', color: '#475569', fontWeight: 600 }}>
+                  <div className="home-hero-trust-bar">
+                    <div className="home-hero-trust-item">
                       <ShieldCheck size={16} color="#059669" />
                       <span>In-Person KYC Vetted</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', color: '#475569', fontWeight: 600 }}>
+                    <div className="home-hero-trust-item">
                       <Video size={16} color="#0D9488" />
                       <span>60s Video Auditions</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', color: '#475569', fontWeight: 600 }}>
+                    <div className="home-hero-trust-item">
                       <RotateCcw size={16} color="#2563EB" />
                       <span>Free Replacement</span>
                     </div>
@@ -142,19 +111,8 @@ export default function HomePage() {
                 </div>
 
                 {/* Right Column: Hero Visual Asset Optimized with next/image */}
-                <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', minHeight: '380px' }}>
-                  <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: '100%',
-                    maxWidth: '460px',
-                    aspectRatio: '1',
-                    borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(15, 110, 86, 0.12) 0%, rgba(13, 148, 136, 0.05) 50%, rgba(255,255,255,0) 70%)',
-                    zIndex: 1,
-                  }} />
+                <div className="home-hero-visual">
+                  <div className="home-hero-glow-circle" />
 
                   <Image
                     src="/hero_young_teacher_girl_student_cutout.webp"
@@ -162,40 +120,16 @@ export default function HomePage() {
                     width={600}
                     height={600}
                     priority
-                    sizes="(max-width: 768px) 100vw, 550px"
-                    style={{
-                      width: '100%',
-                      height: 'auto',
-                      maxHeight: '520px',
-                      objectFit: 'contain',
-                      objectPosition: 'bottom center',
-                      display: 'block',
-                      filter: 'drop-shadow(0 20px 30px rgba(15, 23, 42, 0.15))',
-                      position: 'relative',
-                      zIndex: 2,
-                    }}
+                    sizes="(max-width: 992px) 100vw, 520px"
+                    className="home-hero-img"
                   />
 
-                  {/* Floating Trust Card */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '15px',
-                    left: '10px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.94)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1.5px solid #CCFBF1',
-                    borderRadius: '16px',
-                    padding: '0.65rem 1rem',
-                    boxShadow: '0 10px 25px rgba(15, 23, 42, 0.12)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.65rem',
-                    zIndex: 3,
-                  }}>
+                  {/* Floating Animated Badge 1 (Bottom-Left: SSSAM Academy Center) */}
+                  <div className="home-hero-floating-card-1">
                     <div style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '10px',
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '12px',
                       backgroundColor: '#ECFDF5',
                       color: '#059669',
                       display: 'flex',
@@ -206,12 +140,58 @@ export default function HomePage() {
                       <Building2 size={20} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0F172A' }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', whiteSpace: 'nowrap' }}>
                         SSSAM Academy Center
                       </div>
-                      <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700 }}>
+                      <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#059669', display: 'inline-block' }} />
                         Sector 14 Gurugram
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Floating Animated Badge 2 (Top-Right: Rating & Tutors Count) */}
+                  <div className="home-hero-floating-card-2">
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      backgroundColor: '#FEF3C7',
+                      color: '#D97706',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      <Star size={18} fill="#D97706" color="#D97706" />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0F172A', whiteSpace: 'nowrap' }}>
+                        4.9 ★ (500+ Tutors)
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: '#D97706', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        CBSE • ICSE • IB Board
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Floating Animated Badge 3 (Top-Left: 100% Vetted) */}
+                  <div className="home-hero-floating-card-3">
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '10px',
+                      backgroundColor: '#DCFCE7',
+                      color: '#166534',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      <ShieldCheck size={18} />
+                    </div>
+                    <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#166534', whiteSpace: 'nowrap' }}>
+                      100% KYC Vetted
                     </div>
                   </div>
                 </div>
