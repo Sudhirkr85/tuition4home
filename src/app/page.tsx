@@ -110,8 +110,93 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Right Column: Hero Visual Asset Optimized with next/image */}
+                {/* Right Column: Hero Visual Asset Optimized with next/image & Animated STEM Formulas */}
                 <div className="home-hero-visual">
+                  {/* Rich SVG Organic Flower Scribble Line-Art, Atomic Orbits & Math Formulas */}
+                  <svg
+                    style={{
+                      position: 'absolute',
+                      top: '-15%',
+                      left: '-15%',
+                      width: '130%',
+                      height: '135%',
+                      pointerEvents: 'none',
+                      opacity: 0.9,
+                      zIndex: 1,
+                      overflow: 'visible',
+                    }}
+                    viewBox="0 0 700 700"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <defs>
+                      <linearGradient id="heroFlowerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#0F6E56" stopOpacity="0.85" />
+                        <stop offset="50%" stopColor="#2DD4BF" stopOpacity="0.75" />
+                        <stop offset="100%" stopColor="#CBD5E1" stopOpacity="0.5" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* Organic Swirl Petal Loops */}
+                    <path
+                      d="M140,320 C70,160 210,60 380,120 C550,180 610,360 470,500 C330,640 130,500 190,340 C250,180 470,90 550,260 C630,430 430,590 230,530 C70,470 90,250 270,150 C450,50 630,210 530,410 C430,610 210,550 150,370 C90,190 270,80 430,160 C590,240 550,460 370,540"
+                      stroke="url(#heroFlowerGrad)"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                    />
+
+                    {/* Concentric Decorative Rings */}
+                    <circle cx="350" cy="350" r="260" stroke="#E8E8ED" strokeWidth="1.5" strokeDasharray="6 6" />
+                    <circle cx="350" cy="350" r="190" stroke="#0F6E56" strokeWidth="1.2" strokeOpacity="0.2" />
+
+                    {/* Atomic Electron Orbit Rings */}
+                    <g opacity="0.5" transform="translate(130, 80) scale(0.85)">
+                      <ellipse cx="50" cy="50" rx="42" ry="16" stroke="#0F6E56" strokeWidth="1.5" transform="rotate(-30 50 50)" />
+                      <ellipse cx="50" cy="50" rx="42" ry="16" stroke="#0F6E56" strokeWidth="1.5" transform="rotate(30 50 50)" />
+                      <circle cx="50" cy="50" r="5" fill="#0F6E56" />
+                      <circle cx="85" cy="38" r="3" fill="#2DD4BF" />
+                    </g>
+
+                    {/* === Floating STEM Formulas === */}
+                    {/* LEFT SIDE */}
+                    <text className="formula-float-8" x="18" y="55" fontSize="12" fontFamily="sans-serif" fill="#7C3AED" fontWeight="700">NaCl → Na⁺ + Cl⁻</text>
+                    <text className="formula-float-7" x="22" y="145" fontSize="13" fontFamily="serif" fill="#64748B" fontWeight="700">a² + b² = c²</text>
+                    <text className="formula-float-9" x="15" y="240" fontSize="12" fontFamily="serif" fontStyle="italic" fill="#0891B2" fontWeight="700">sin²θ + cos²θ = 1</text>
+                    <text className="formula-float-2" x="25" y="360" fontSize="14" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">∫ f(x) dx</text>
+                    <text className="formula-float-10" x="15" y="470" fontSize="11" fontFamily="monospace" fill="#0891B2" fontWeight="700">print(&quot;Hello!&quot;)</text>
+                    <text className="formula-float-5" x="22" y="570" fontSize="12" fontFamily="sans-serif" fill="#047857" fontWeight="700">ATP = Energy</text>
+
+                    {/* RIGHT SIDE */}
+                    <text className="formula-float-1" x="520" y="55" fontSize="15" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">E = mc²</text>
+                    <text className="formula-float-3" x="540" y="145" fontSize="13" fontFamily="sans-serif" fill="#7C3AED" fontWeight="700">H₂O + CO₂</text>
+                    <text className="formula-float-4" x="550" y="240" fontSize="13" fontFamily="sans-serif" fill="#2DD4BF" fontWeight="800">A = πr²</text>
+                    <text className="formula-float-6" x="560" y="360" fontSize="13" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">F = ma</text>
+                    <text className="formula-float-5" x="540" y="470" fontSize="12" fontFamily="sans-serif" fill="#047857" fontWeight="700">DNA → RNA</text>
+                    <text className="formula-float-4" x="520" y="570" fontSize="11" fontFamily="sans-serif" fill="#B45309" fontWeight="700">Supply ∝ Price</text>
+                    <text className="formula-float-7" x="535" y="630" fontSize="12" fontFamily="monospace" fill="#0F6E56" fontWeight="700">x = [1,2,3...]</text>
+
+                    {/* CENTER & BEHIND IMAGE */}
+                    <text className="formula-float-3" x="260" y="90" fontSize="13" fontFamily="sans-serif" fill="#7C3AED" fontWeight="700">CO₂ + H₂O</text>
+                    <text className="formula-float-1" x="380" y="75" fontSize="15" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">dy/dx</text>
+                    <text className="formula-float-6" x="180" y="210" fontSize="14" fontFamily="serif" fontStyle="italic" fill="#0F6E56" fontWeight="700">PV = nRT</text>
+                    <text className="formula-float-4" x="420" y="220" fontSize="13" fontFamily="sans-serif" fill="#2DD4BF" fontWeight="800">λ = h/p</text>
+                    <text className="formula-float-2" x="200" y="330" fontSize="15" fontFamily="serif" fontStyle="italic" fill="#0891B2" fontWeight="700">∑ x_i</text>
+                    <text className="formula-float-10" x="450" y="340" fontSize="12" fontFamily="monospace" fill="#0F6E56" fontWeight="700">def match_tutor():</text>
+                    <text className="formula-float-9" x="230" y="460" fontSize="13" fontFamily="serif" fontStyle="italic" fill="#7C3AED" fontWeight="700">lim (x→0)</text>
+                    <text className="formula-float-5" x="410" y="470" fontSize="12" fontFamily="sans-serif" fill="#047857" fontWeight="700">C₆H₁₂O₆</text>
+                    <text className="formula-float-7" x="320" y="550" fontSize="12" fontFamily="monospace" fill="#B45309" fontWeight="700">import numpy as np</text>
+
+                    {/* Sparkle Stars & Accents */}
+                    <path d="M468,28 L470,36 L478,38 L470,40 L468,48 L466,40 L458,38 L466,36 Z" fill="#0F6E56" opacity="0.8" />
+                    <path d="M8,155 L10,162 L17,164 L10,166 L8,173 L6,166 L-1,164 L6,162 Z" fill="#7C3AED" opacity="0.65" />
+                    <path d="M570,480 L572,487 L579,489 L572,491 L570,498 L568,491 L561,489 L568,487 Z" fill="#2DD4BF" opacity="0.7" />
+
+                    {/* Constellation line */}
+                    <line x1="465" y1="55" x2="498" y2="45" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3 3" />
+                    <circle cx="465" cy="55" r="3" fill="#2DD4BF" />
+                    <circle cx="498" cy="45" r="4" fill="#0F6E56" />
+                  </svg>
+
                   <div className="home-hero-glow-circle" />
 
                   <Image
