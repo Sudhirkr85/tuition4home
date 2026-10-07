@@ -94,14 +94,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossOrigin="" />
-        <link rel="preconnect" href="https://b.basemaps.cartocdn.com" crossOrigin="" />
-        <link rel="preconnect" href="https://c.basemaps.cartocdn.com" crossOrigin="" />
-        <link rel="preconnect" href="https://d.basemaps.cartocdn.com" crossOrigin="" />
-        <link rel="dns-prefetch" href="https://a.basemaps.cartocdn.com" />
-        <link rel="dns-prefetch" href="https://b.basemaps.cartocdn.com" />
-        <link rel="dns-prefetch" href="https://c.basemaps.cartocdn.com" />
-        <link rel="dns-prefetch" href="https://d.basemaps.cartocdn.com" />
+        <link rel="preconnect" href="https://tile.openstreetmap.org" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://tile.openstreetmap.org" />
         {/* Schema.org LocalBusiness & EducationalOrganization */}
         <script
           type="application/ld+json"

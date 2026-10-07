@@ -269,10 +269,9 @@ export default function TutorRegisterLoginPage() {
         });
         tutorPickerMapInstanceRef.current = pMap;
 
-        leafletLib.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        leafletLib.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
-          subdomains: 'abcd',
-          attribution: '&copy; OpenStreetMap &copy; CARTO',
+          attribution: '&copy; OpenStreetMap contributors',
           keepBuffer: 8,
         }).addTo(pMap);
 
