@@ -1119,7 +1119,7 @@ export default function TutorRegisterLoginPage() {
           hourlyRateOnlineMin,
           hourlyRateOnlineMax,
           avatarUrl: profilePhotoUrl || '/placeholder-avatar.jpg',
-          introVideoUrl: introVideoUrl || '/placeholder-video.mp4',
+          introVideoUrl: introVideoUrl || null,
           idType,
           idNumber,
           idDocUrl: idDocUrl || '',

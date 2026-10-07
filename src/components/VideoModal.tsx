@@ -96,6 +96,7 @@ export default function VideoModal({ tutor, onClose, onSelectTutor }: VideoModal
               key={videoInfo.embedUrl}
               src={videoInfo.embedUrl}
               controls
+              autoPlay
               playsInline
               preload="auto"
               style={{

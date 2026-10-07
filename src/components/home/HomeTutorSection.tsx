@@ -6,6 +6,7 @@ import { Award, ChevronRight, ShieldCheck, Star, Clock, GraduationCap, Briefcase
 import TutorAvatar from '@/components/TutorAvatar';
 import { MockTutor } from '@/lib/data';
 import { calculateHaversineKm, getDistanceInfo, getTeacherCoordinates, POPULAR_GURGAON_SECTORS } from '@/lib/geo';
+import { hasValidIntroVideo } from '@/lib/video';
 import { useHomeContext } from './HomeContext';
 
 const SECTORS = [
@@ -380,7 +381,7 @@ export function HomeTutorSection() {
                     </div>
 
                     {/* 60s Video Intro Pill */}
-                    {tutor.introVideoUrl && tutor.introVideoUrl.trim() !== '' ? (
+                    {hasValidIntroVideo(tutor.introVideoUrl) ? (
                       <button
                         type="button"
                         onClick={() => openVideo(tutor)}

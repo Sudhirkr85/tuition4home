@@ -23,7 +23,9 @@ export function getVideoSourceInfo(url?: string | null): VideoSourceInfo {
     trimmed === 'null' ||
     trimmed === 'undefined' ||
     trimmed === 'N/A' ||
-    trimmed === 'none'
+    trimmed === 'none' ||
+    trimmed === '/placeholder-video.mp4' ||
+    trimmed.startsWith('/placeholder-video')
   ) {
     return { type: 'none', embedUrl: '', originalUrl: '', isEmbeddable: false };
   }
@@ -81,7 +83,6 @@ export function getVideoSourceInfo(url?: string | null): VideoSourceInfo {
     trimmed.startsWith('blob:') ||
     trimmed.startsWith('/uploads/') ||
     trimmed.startsWith('/videos/') ||
-    trimmed.startsWith('/placeholder-video.mp4') ||
     (trimmed.startsWith('http') && (trimmed.includes('video') || trimmed.includes('.mp4') || trimmed.includes('.webm')));
 
   if (isDirectVideo) {
@@ -111,4 +112,13 @@ export function getVideoSourceInfo(url?: string | null): VideoSourceInfo {
     originalUrl: trimmed,
     isEmbeddable: false,
   };
+}
+
+/**
+ * Helper to check if a tutor has a valid, playable intro video.
+ */
+export function hasValidIntroVideo(url?: string | null): boolean {
+  if (!url || typeof url !== 'string' || !url.trim()) return false;
+  const info = getVideoSourceInfo(url);
+  return info.isEmbeddable && info.type !== 'none';
 }
