@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { sendTelegramLeadAlert } from '@/lib/telegram';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,41 +55,22 @@ export async function POST(req: Request) {
       },
     });
 
-    // If Telegram Bot credentials exist, fire instant notification to staff group
-    const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-    const telegramChatId = process.env.TELEGRAM_CHAT_ID;
-
-    if (telegramToken && telegramToken !== 'mock_telegram_bot_token' && telegramChatId) {
-      try {
-        const locationLine = latitude && longitude
-          ? `📍 *GPS Location:* [Open in Google Maps](https://www.google.com/maps?q=${latitude},${longitude})`
-          : `📍 *Locality:* ${locality}`;
-
-        const text = `🚨 *NEW PARENT LEAD (Gurgaon)*\n\n👤 *Parent:* ${parentName}\n📞 *Phone:* +91 ${parentPhone}\n${locationLine}\n🏠 *Address:* ${formattedAddress || locality}\n📚 *Class & Subject:* ${gradeClass} - ${subjectsNeeded?.join(', ')}\n🎯 *Mode:* ${preferredMode}\n${assignedTutorName ? `👨‍🏫 *Requested Tutor:* ${assignedTutorName}` : ''}`;
-        
-        await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: telegramChatId,
-            text,
-            parse_mode: 'Markdown',
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  { text: '📞 Call Parent', url: `tel:${parentPhone}` },
-                  { text: '💬 WhatsApp', url: `https://wa.me/91${parentPhone}` },
-                ],
-                ...(latitude && longitude
-                  ? [[{ text: '🗺️ View on Map', url: `https://www.google.com/maps?q=${latitude},${longitude}` }]]
-                  : []),
-              ],
-            },
-          }),
-        });
-      } catch (tgErr) {
-        console.error('Telegram notification error:', tgErr);
-      }
+    // Send instant Telegram alert to team/staff group
+    try {
+      await sendTelegramLeadAlert({
+        parentName: parentName || 'Parent (Gurgaon)',
+        parentPhone: resolvedPhone,
+        locality: locality || 'Gurgaon',
+        formattedAddress: formattedAddress || locality || undefined,
+        latitude: latitude ? parseFloat(latitude) : undefined,
+        longitude: longitude ? parseFloat(longitude) : undefined,
+        gradeClass: gradeClass || 'Class 10',
+        subjectsNeeded: Array.isArray(subjectsNeeded) ? subjectsNeeded : [],
+        preferredMode: preferredMode || 'BOTH',
+        requestedTutorName: specificTutor || undefined,
+      });
+    } catch (tgErr) {
+      console.error('Telegram notification error:', tgErr);
     }
 
     return NextResponse.json({

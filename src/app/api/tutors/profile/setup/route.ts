@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { encrypt } from '@/lib/crypto';
 import { sendTutorProfileSubmittedEmail } from '@/lib/brevo';
+import { sendTelegramTutorAlert } from '@/lib/telegram';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import sharp from 'sharp';
 
@@ -318,6 +319,35 @@ export async function POST(req: Request) {
         }
       } catch (mailErr) {
         console.error('Failed to send tutor profile submitted email:', mailErr);
+      }
+
+      // 2. Dispatch Telegram alert to team
+      try {
+        let subjectsList: string[] = [];
+        if (Array.isArray(subjects)) subjectsList = subjects;
+        else if (typeof subjects === 'string') {
+          try { subjectsList = JSON.parse(subjects); } catch { subjectsList = [subjects]; }
+        }
+
+        let sectorsList: string[] = [];
+        if (Array.isArray(serviceAreas)) sectorsList = serviceAreas;
+        else if (typeof serviceAreas === 'string') {
+          try { sectorsList = JSON.parse(serviceAreas); } catch { sectorsList = [serviceAreas]; }
+        }
+
+        await sendTelegramTutorAlert({
+          name: profile.user?.name || body.name || 'Educator',
+          phone: profile.user?.phone || body.phone || '',
+          email: profile.user?.email || body.email || undefined,
+          highestDegree: highestDegree || profile.highestDegree || undefined,
+          teachingMode: teachingMode || profile.teachingMode || undefined,
+          subjects: subjectsList,
+          serviceAreas: sectorsList,
+          experienceYears: experienceYears ?? profile.experienceYears ?? undefined,
+          travelRadiusKm: travelRadiusKm ?? profile.travelRadiusKm ?? undefined,
+        });
+      } catch (tgErr) {
+        console.error('Failed to send tutor Telegram alert:', tgErr);
       }
     }
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sendTutorProfileSubmittedEmail } from '@/lib/brevo';
+import { sendTelegramTutorAlert } from '@/lib/telegram';
 
 export async function POST(req: Request) {
   try {
@@ -8,13 +9,31 @@ export async function POST(req: Request) {
 
     const tutorId = `TUT-${Math.floor(10000 + Math.random() * 90000)}`;
 
+    const subjectsArr = Array.isArray(subjects) ? subjects : (subjects ? [subjects] : []);
+    const sectorsArr = Array.isArray(serviceAreas) ? serviceAreas : (serviceAreas ? [serviceAreas] : []);
+
+    // 1. Email notification to tutor
     if (email) {
       try {
-        const subjectsArr = Array.isArray(subjects) ? subjects : (subjects ? [subjects] : []);
         await sendTutorProfileSubmittedEmail(email, name || 'Educator', subjectsArr);
       } catch (e) {
         console.error('Failed to send tutor registration email:', e);
       }
+    }
+
+    // 2. Instant Telegram alert to team
+    try {
+      await sendTelegramTutorAlert({
+        name: name || 'Educator',
+        phone: phone || '9876543210',
+        email: email || undefined,
+        highestDegree: highestDegree || undefined,
+        teachingMode: teachingMode || 'OFFLINE_HOME',
+        subjects: subjectsArr,
+        serviceAreas: sectorsArr,
+      });
+    } catch (tgErr) {
+      console.error('Failed to dispatch tutor telegram alert:', tgErr);
     }
 
     return NextResponse.json({
