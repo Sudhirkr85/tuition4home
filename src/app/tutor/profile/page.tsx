@@ -844,9 +844,123 @@ export default function TutorProfileDashboard() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)', width: '100%', overflowX: 'hidden' }}>
       <Navbar />
 
-      <main style={{ flex: 1, padding: '2.75rem 0 5rem 0', width: '100%' }}>
+      <main style={{ flex: 1, padding: '2rem 0 5rem 0', width: '100%' }}>
         <div className="container" style={{ maxWidth: '1240px' }}>
           
+          {/* Official WhatsApp Community Top Banner */}
+          <div
+            style={{
+              marginBottom: '1.5rem',
+              background: 'linear-gradient(135deg, #0F5132 0%, #0F6E56 50%, #198754 100%)',
+              borderRadius: '16px',
+              padding: '1.15rem 1.4rem',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1.25rem',
+              flexWrap: 'wrap',
+              boxShadow: '0 8px 24px rgba(15, 81, 50, 0.16)',
+              border: '1px solid rgba(255, 255, 255, 0.18)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Background ambient glow */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '-30px',
+                right: '-30px',
+                width: '120px',
+                height: '120px',
+                background: 'rgba(37, 211, 102, 0.2)',
+                borderRadius: '50%',
+                pointerEvents: 'none',
+                filter: 'blur(20px)',
+              }}
+            />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: '280px', position: 'relative', zIndex: 1 }}>
+              <div
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  backgroundColor: '#25D366',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(37, 211, 102, 0.35)',
+                }}
+              >
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
+                  <strong style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF' }}>
+                    Join Official Verified Tutors WhatsApp Community
+                  </strong>
+                  <span
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.22)',
+                      color: '#FFFFFF',
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      padding: '0.15rem 0.55rem',
+                      borderRadius: '999px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    Active Group
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#E8F8F5', lineHeight: 1.4 }}>
+                  Connect with 500+ top educators in Gurgaon &amp; get direct student tuition leads, urgent demo alerts &amp; assignments.
+                </p>
+              </div>
+            </div>
+
+            <a
+              href="https://chat.whatsapp.com/D4KS3LRWcja6vNAtOCRcM4"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                backgroundColor: '#25D366',
+                color: '#064E3B',
+                fontWeight: 800,
+                fontSize: '0.88rem',
+                padding: '0.65rem 1.3rem',
+                borderRadius: '10px',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.2)',
+                transition: 'all 0.2s ease',
+                flexShrink: 0,
+                position: 'relative',
+                zIndex: 1,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.backgroundColor = '#20bd5a';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.backgroundColor = '#25D366';
+              }}
+            >
+              <span>Join WhatsApp Community</span>
+              <ExternalLink size={15} />
+            </a>
+          </div>
+
           <div className="profile-dashboard-layout">
             
             {/* 1. LEFT STICKY BRAND SIDEBAR (Figma Style) */}

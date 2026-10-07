@@ -193,6 +193,17 @@ export async function sendTutorVerifiedEmail(
         Make sure your WhatsApp number and notifications are active to receive instant demo class inquiries from our counselors.
       </p>
 
+      <!-- WhatsApp Community Invitation Card -->
+      <div style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); border-radius: 12px; padding: 20px; text-align: center; color: #ffffff; margin-bottom: 20px; box-shadow: 0 4px 14px rgba(18, 140, 126, 0.25);">
+        <h3 style="color: #ffffff; margin: 0 0 6px 0; font-size: 17px; font-weight: 800;">📲 Join Verified Tutors WhatsApp Community</h3>
+        <p style="color: #E8F8F5; font-size: 13px; margin: 0 0 14px 0; line-height: 1.5;">
+          Get direct 1-on-1 student inquiries, urgent demo alerts, and interact with 500+ top educators in Gurgaon &amp; NCR.
+        </p>
+        <a href="https://chat.whatsapp.com/D4KS3LRWcja6vNAtOCRcM4" target="_blank" rel="noopener noreferrer" style="background-color: #ffffff; color: #075E54; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 800; font-size: 14px; display: inline-block; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+          👉 Join WhatsApp Community Now
+        </a>
+      </div>
+
       <div style="text-align: center; margin-bottom: 20px;">
         <a href="https://sssamacademy.tech/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 26px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(15, 110, 86, 0.2);">
           View Your Verified Dashboard →
