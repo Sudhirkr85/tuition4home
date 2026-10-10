@@ -117,7 +117,7 @@
 - [x] **Update 9.18 (Optional Intro Video Architecture):** Made 60s intro video optional across all tutor cards and profile views with automatic fallback to SSSAM Academy In-Person Interview verification seals.
 - [x] **Update 9.19 (Dynamic Fee Range Pricing Engine):** Converted single static pricing to realistic hourly and monthly fee ranges (e.g. `₹700–₹1,000/hr`, `₹7,500–₹11,000/mo`) and added a budget range filter in the directory.
 - [x] **Update 9.20 (Prominent Dual Education & Experience Stat Cards):** Re-engineered tutor cards with high-contrast, strictly balanced 50-50 dual stat boxes showcasing Degree and Experience with text truncation and clean dividers.
-- [x] **Update 9.21 (LinkedIn-Style Professional Experience Timeline & Zero Police Check Clean):** Added an interactive LinkedIn-style career timeline and education block on `/tutors/[id]`, balanced the 2-column layout to full height with 4 comprehensive parent guarantee and process cards, eliminated all police check references in favor of Aadhaar/degree audits, and polished the Parent Dashboard.
+- [x] **Update 9.22 (Master Domain Canonical & Sitemap URL Fix):** Replaced hardcoded legacy domain (`sssamacademy.tech`) with production domain (`tuitionforhome.com`) across `sitemap.ts`, `robots.ts`, `layout.tsx`, `page.tsx`, `pseo-generator.ts`, locality hubs, subject directories, courses, terms, privacy policy, and Brevo email templates. All 2,093 sitemap URLs now cleanly point to `https://tuitionforhome.com` resolving 404 indexing errors on Google Search Console.
 - [ ] *(Upcoming features and enhancements discussed with the user will be logged here with status checkpoints).*
 
 

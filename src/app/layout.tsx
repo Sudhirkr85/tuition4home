@@ -10,7 +10,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://sssamacademy.tech'),
+  metadataBase: new URL('https://tuitionforhome.com'),
   alternates: {
     canonical: '/',
   },
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     'home tuition academy sector 14 gurgaon',
     'SSSAM Academy',
   ],
-  authors: [{ name: 'SSSAM Academy', url: 'https://sssamacademy.tech' }],
+  authors: [{ name: 'SSSAM Academy', url: 'https://tuitionforhome.com' }],
   icons: {
     icon: [
       { url: '/logo.webp', type: 'image/webp' },
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     title: 'TuitionForHome — Verified Home & Online Tutors in Gurgaon',
     description:
       'Book top 1% verified home and online tutors in Gurgaon & Delhi NCR with 1-on-1 trial class. Operated by SSSAM Academy, Sector 14 Gurugram.',
-    url: 'https://sssamacademy.tech',
+    url: 'https://tuitionforhome.com',
     siteName: 'TuitionForHome',
     images: [
       {
@@ -104,7 +104,7 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': ['LocalBusiness', 'EducationalOrganization'],
               name: 'TuitionForHome — SSSAM Academy',
-              url: 'https://sssamacademy.tech',
+              url: 'https://tuitionforhome.com',
               logo: 'https://sssamacademy.com/assets/logo.webp',
               image: 'https://sssamacademy.com/assets/home_page.webp',
               description:

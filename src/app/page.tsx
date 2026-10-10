@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     title: 'TuitionForHome — Verified Home & Online Tutors in Gurgaon',
     description:
       'Book top 1% verified home and online tutors in Gurgaon & Delhi NCR with 1-on-1 trial class. Operated by SSSAM Academy, Sector 14 Gurugram.',
-    url: 'https://sssamacademy.tech',
+    url: 'https://tuitionforhome.com',
     siteName: 'TuitionForHome',
     locale: 'en_IN',
     type: 'website',

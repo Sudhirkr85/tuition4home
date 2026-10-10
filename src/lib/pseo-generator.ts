@@ -178,7 +178,7 @@ export function generatePSEOPagePayload(slug: string): PSEOPagePayload | null {
 
   const { locality, subject, intentTrack } = resolved;
   const pricing = calculatePseoPricing(locality, subject, intentTrack);
-  const baseUrl = 'https://sssamacademy.tech';
+  const baseUrl = 'https://tuitionforhome.com';
   const canonicalUrl = `${baseUrl}/tuition/${slug}`;
 
   // Unique Dynamic Meta Title & Description
@@ -248,7 +248,7 @@ function calculateMatchingTimeRange(averageTravelMin?: number): string {
     provider: {
       '@type': 'EducationalOrganization',
       name: 'TuitionForHome by SSSAM Academy',
-      sameAs: 'https://sssamacademy.tech',
+      sameAs: 'https://tuitionforhome.com',
       address: {
         '@type': 'PostalAddress',
         streetAddress: SSSAM_OFFICE_DETAILS.address,

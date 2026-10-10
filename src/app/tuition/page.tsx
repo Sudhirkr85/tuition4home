@@ -18,7 +18,7 @@ export default function TuitionHubPage() {
     '@type': 'CollectionPage',
     name: 'Home Tuition Subjects in Gurgaon & Delhi NCR',
     description: 'Comprehensive directory of 25+ subject home tutors for CBSE, ICSE, IB, Cambridge & competitive exams.',
-    url: 'https://sssamacademy.tech/tuition',
+    url: 'https://tuitionforhome.com/tuition',
     provider: {
       '@type': 'EducationalOrganization',
       name: 'TuitionForHome (SSSAM Academy)',
@@ -35,13 +35,13 @@ export default function TuitionHubPage() {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://sssamacademy.tech',
+        item: 'https://tuitionforhome.com',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Tuition Subjects',
-        item: 'https://sssamacademy.tech/tuition',
+        item: 'https://tuitionforhome.com/tuition',
       },
     ],
   };

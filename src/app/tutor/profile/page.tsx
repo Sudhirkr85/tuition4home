@@ -481,7 +481,7 @@ export default function TutorProfileDashboard() {
           setIntroVideoUrl(prof.introVideoUrl || '');
 
           // Set the official hosted review & profile link for this tutor
-          const origin = typeof window !== 'undefined' ? window.location.origin : 'https://sssamacademy.tech';
+          const origin = typeof window !== 'undefined' ? window.location.origin : 'https://tuitionforhome.com';
           setReviewLink(`${origin}/tutor/review/${effectiveUserId}`);
 
           // Fetch reviews for this tutor
@@ -1679,7 +1679,7 @@ export default function TutorProfileDashboard() {
                           <div style={{ backgroundColor: '#FFFFFF', padding: '0.35rem', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src={`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(reviewLink || `https://sssamacademy.tech/tutor/review/${userId}`)}`}
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(reviewLink || `https://tuitionforhome.com/tutor/review/${userId}`)}`}
                               alt="Scan Profile QR"
                               style={{ width: '50px', height: '50px', display: 'block' }}
                             />
@@ -1738,7 +1738,7 @@ export default function TutorProfileDashboard() {
 
                       {/* WhatsApp Share */}
                       <a
-                        href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hello! View my verified TuitionForHome tutor profile and request 1-on-1 home tuition in Gurgaon: ${reviewLink || `https://sssamacademy.tech/tutor/review/${userId}`}`)}`}
+                        href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Hello! View my verified TuitionForHome tutor profile and request 1-on-1 home tuition in Gurgaon: ${reviewLink || `https://tuitionforhome.com/tutor/review/${userId}`}`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn btn-secondary btn-sm"
@@ -1761,7 +1761,7 @@ export default function TutorProfileDashboard() {
                       <button
                         type="button"
                         onClick={() => {
-                          const link = reviewLink || `https://sssamacademy.tech/tutor/review/${userId}`;
+                          const link = reviewLink || `https://tuitionforhome.com/tutor/review/${userId}`;
                           navigator.clipboard.writeText(link);
                           setLinkCopied(true);
                           setSuccessMsg('📋 Profile & visiting card link copied to clipboard!');
@@ -3631,7 +3631,7 @@ export default function TutorProfileDashboard() {
                         <div style={{ padding: '0.5rem', backgroundColor: '#FFFFFF', borderRadius: '14px', border: '1px solid #CCFBF1', boxShadow: '0 4px 12px rgba(13,148,136,0.1)', flexShrink: 0 }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(reviewLink || `https://sssamacademy.tech/tutor/review/${userId}`)}`}
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(reviewLink || `https://tuitionforhome.com/tutor/review/${userId}`)}`}
                             alt="Public Profile Review QR Code"
                             style={{ width: '100px', height: '100px', display: 'block' }}
                           />

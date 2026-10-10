@@ -281,7 +281,7 @@ export const SSSAM_OFFICE_DETAILS = {
   contactEmail: 'contact@sssamacademy.com',
   supportEmail: 'support@sssamacademy.com',
   tutorsEmail: 'tutors@sssamacademy.com',
-  website: 'https://sssamacademy.tech',
+  website: 'https://tuitionforhome.com',
   hours: 'Mon - Sun: 9:00 AM – 9:00 PM',
 };
 

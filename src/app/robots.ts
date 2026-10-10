@@ -16,6 +16,6 @@ export default function robots(): MetadataRoute.Robots {
         '/checkout/',
       ],
     },
-    sitemap: 'https://sssamacademy.tech/sitemap.xml',
+    sitemap: 'https://tuitionforhome.com/sitemap.xml',
   };
 }

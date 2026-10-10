@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     title: 'Privacy Policy | TuitionForHome — SSSAM Academy',
     description:
       'Learn how TuitionForHome and SSSAM Academy protect user data, student privacy, and educator verification credentials.',
-    url: 'https://sssamacademy.tech/privacy-policy',
+    url: 'https://tuitionforhome.com/privacy-policy',
     siteName: 'TuitionForHome',
     locale: 'en_IN',
     type: 'website',
@@ -43,7 +43,7 @@ export default function PrivacyPolicyPage() {
               Privacy Policy
             </h1>
             <p style={{ color: '#64748B', fontSize: '0.88rem', marginTop: '0.5rem' }}>
-              Last Updated: <strong>{lastUpdated}</strong> • Effective for all users of <strong>TuitionForHome (sssamacademy.tech)</strong>
+              Last Updated: <strong>{lastUpdated}</strong> • Effective for all users of <strong>TuitionForHome (tuitionforhome.com)</strong>
             </p>
           </div>
 

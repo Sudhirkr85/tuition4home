@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     title: 'Terms of Service | TuitionForHome — SSSAM Academy',
     description:
       'Learn about TuitionForHome terms, parent trial policies, tutor codes of conduct, and refund guidelines.',
-    url: 'https://sssamacademy.tech/terms',
+    url: 'https://tuitionforhome.com/terms',
     siteName: 'TuitionForHome',
     locale: 'en_IN',
     type: 'website',
@@ -55,7 +55,7 @@ export default function TermsPage() {
                 1. Acceptance of Terms
               </h2>
               <p>
-                By accessing or submitting an inquiry on <strong>TuitionForHome (sssamacademy.tech)</strong>, parents, students, and educators agree to be bound by these Terms of Service. TuitionForHome operates as a dedicated home tutoring and mentor coordination platform managed by SSSAM Academy Gurugram.
+                By accessing or submitting an inquiry on <strong>TuitionForHome (tuitionforhome.com)</strong>, parents, students, and educators agree to be bound by these Terms of Service. TuitionForHome operates as a dedicated home tutoring and mentor coordination platform managed by SSSAM Academy Gurugram.
               </p>
             </section>
 

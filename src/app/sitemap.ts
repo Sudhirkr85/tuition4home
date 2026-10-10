@@ -13,7 +13,7 @@ export const dynamic = 'force-static';
 export const revalidate = 604800; // 7 days Edge CDN caching
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://sssamacademy.tech';
+  const baseUrl = 'https://tuitionforhome.com';
   const currentDate = new Date();
 
   // 1. Core High-Priority Static Landing Routes & Legal Trust Pages

@@ -134,7 +134,7 @@ export async function generateMetadata({
   }
 
   const { location, topic, modifier } = resolved;
-  const baseUrl = 'https://sssamacademy.tech';
+  const baseUrl = 'https://tuitionforhome.com';
 
   const canonicalPath = modifier
     ? `/courses/${location.city}/${modifier.modifier}/${topic.topic}`
@@ -215,7 +215,7 @@ export default function ProgrammaticCoursePage({
   }
 
   const { location, topic, modifier } = resolved;
-  const baseUrl = 'https://sssamacademy.tech';
+  const baseUrl = 'https://tuitionforhome.com';
 
   const pageTitle = modifier
     ? `${modifier.label} ${topic.label} Classes in ${location.label}`

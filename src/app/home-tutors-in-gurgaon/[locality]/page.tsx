@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: `Home Tutors in ${loc.name}, Gurgaon | TuitionForHome`,
       description: `Hire verified home tutors in ${loc.name} (${loc.landmark}) for CBSE, ICSE, IB & Coding.`,
-      url: `https://sssamacademy.tech/home-tutors-in-gurgaon/${loc.slug}`,
+      url: `https://tuitionforhome.com/home-tutors-in-gurgaon/${loc.slug}`,
       siteName: 'TuitionForHome',
       locale: 'en_IN',
       type: 'website',
@@ -131,7 +131,7 @@ export default async function LocalityPage({ params }: PageProps) {
     '@context': 'https://schema.org',
     '@type': ['LocalBusiness', 'EducationalOrganization'],
     name: `TuitionForHome - Home Tutors in ${loc.name}, Gurgaon`,
-    url: `https://sssamacademy.tech/home-tutors-in-gurgaon/${loc.slug}`,
+    url: `https://tuitionforhome.com/home-tutors-in-gurgaon/${loc.slug}`,
     description: `Find verified home and online tutors in ${loc.name}, Gurgaon (${loc.landmark}).`,
     telephone: SSSAM_OFFICE_DETAILS.phones[0],
     address: {
@@ -162,19 +162,19 @@ export default async function LocalityPage({ params }: PageProps) {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://sssamacademy.tech',
+        item: 'https://tuitionforhome.com',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Home Tutors in Gurgaon',
-        item: 'https://sssamacademy.tech/home-tutors-in-gurgaon',
+        item: 'https://tuitionforhome.com/home-tutors-in-gurgaon',
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: `Home Tutors in ${loc.name}`,
-        item: `https://sssamacademy.tech/home-tutors-in-gurgaon/${loc.slug}`,
+        item: `https://tuitionforhome.com/home-tutors-in-gurgaon/${loc.slug}`,
       },
     ],
   };

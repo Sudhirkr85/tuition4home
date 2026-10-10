@@ -139,7 +139,7 @@ export async function sendTutorProfileSubmittedEmail(
       </p>
 
       <div style="text-align: center; margin-bottom: 20px;">
-        <a href="https://sssamacademy.tech/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block;">
+        <a href="https://tuitionforhome.com/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block;">
           Open Tutor Dashboard →
         </a>
       </div>
@@ -205,7 +205,7 @@ export async function sendTutorVerifiedEmail(
       </div>
 
       <div style="text-align: center; margin-bottom: 20px;">
-        <a href="https://sssamacademy.tech/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 26px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(15, 110, 86, 0.2);">
+        <a href="https://tuitionforhome.com/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 26px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(15, 110, 86, 0.2);">
           View Your Verified Dashboard →
         </a>
       </div>
@@ -264,7 +264,7 @@ export async function sendTutorKYCRejectedEmail(
       </div>
 
       <div style="text-align: center; margin-bottom: 20px;">
-        <a href="https://sssamacademy.tech/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block;">
+        <a href="https://tuitionforhome.com/tutor/profile" style="background-color: #0F6E56; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block;">
           Re-Upload Document Now →
         </a>
       </div>
