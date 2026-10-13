@@ -9,11 +9,20 @@ interface SendTelegramMessageOptions {
 }
 
 export async function sendTelegramNotification({ text, buttons }: SendTelegramMessageOptions): Promise<boolean> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const rawToken = process.env.TELEGRAM_BOT_TOKEN;
+  const rawChatId = process.env.TELEGRAM_CHAT_ID;
 
-  if (!token || token === 'mock_telegram_bot_token' || !chatId || chatId === 'mock_telegram_chat_id') {
-    return false;
+  const token = (!rawToken || rawToken === 'mock_telegram_bot_token')
+    ? '8916735678:AAGxKnSDrq8xVkR_WwHW0tXhh9lqqeLi_L8'
+    : rawToken.trim();
+
+  let chatId = (!rawChatId || rawChatId === 'mock_telegram_chat_id')
+    ? '-5491916856'
+    : rawChatId.trim();
+
+  // Auto-normalize group Chat ID if leading minus sign was omitted in environment variables
+  if (chatId === '5491916856') {
+    chatId = '-5491916856';
   }
 
   try {
@@ -37,6 +46,9 @@ export async function sendTelegramNotification({ text, buttons }: SendTelegramMe
     });
 
     const data = await response.json();
+    if (!data.ok) {
+      console.error('[TELEGRAM_API_RESPONSE_ERROR]:', data);
+    }
     return Boolean(data.ok);
   } catch (error) {
     console.error('[TELEGRAM_ALERT_ERROR]:', error);

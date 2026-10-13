@@ -54,24 +54,29 @@ export async function GET() {
         idNumberDecrypted = decrypt(profile.kycDoc.idNumberEncrypted);
       }
 
-      // Safe parse JSON strings for lists
-      let parsedSubjects: string[] = [];
-      let parsedClasses: string[] = [];
-      let parsedBoards: string[] = [];
-      let parsedServiceAreas: string[] = [];
-      let parsedQualifications: any[] = [];
-      let parsedExperiences: any[] = [];
+      // Safe parse JSON strings for lists (recovers gracefully if legacy VARCHAR/TEXT row was truncated)
+      const safeParseArray = (raw: string | null | undefined): any[] => {
+        if (!raw || !raw.trim()) return [];
+        const trimmed = raw.trim();
+        try {
+          const parsed = JSON.parse(trimmed);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          // Recover complete string items if array was truncated at 191 or 65535 chars
+          const matches = trimmed.match(/"([^"\\]*(?:\\.[^"\\]*)*)"/g);
+          if (matches && matches.length > 0 && !trimmed.startsWith('[{')) {
+            return matches.map((m) => m.slice(1, -1));
+          }
+          return [];
+        }
+      };
 
-      try {
-        if (profile.subjects) parsedSubjects = JSON.parse(profile.subjects);
-        if (profile.classes) parsedClasses = JSON.parse(profile.classes);
-        if (profile.boards) parsedBoards = JSON.parse(profile.boards);
-        if (profile.serviceAreas) parsedServiceAreas = JSON.parse(profile.serviceAreas);
-        if (profile.qualifications) parsedQualifications = JSON.parse(profile.qualifications);
-        if (profile.experiences) parsedExperiences = JSON.parse(profile.experiences);
-      } catch (e) {
-        console.error('Failed parsing tutor list fields', e);
-      }
+      const parsedSubjects = safeParseArray(profile.subjects);
+      const parsedClasses = safeParseArray(profile.classes);
+      const parsedBoards = safeParseArray(profile.boards);
+      const parsedServiceAreas = safeParseArray(profile.serviceAreas);
+      const parsedQualifications = safeParseArray(profile.qualifications);
+      const parsedExperiences = safeParseArray(profile.experiences);
 
       const hasIdDocUploaded = Boolean(profile.kycDoc?.idDocUrl && profile.kycDoc.idDocUrl.trim().length > 0);
       const hasDegreeDocUploaded = Boolean(profile.kycDoc?.degreeDocUrl && profile.kycDoc.degreeDocUrl.trim().length > 0);

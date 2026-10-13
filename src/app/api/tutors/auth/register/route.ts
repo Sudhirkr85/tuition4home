@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { sendTelegramTutorAlert } from '@/lib/telegram';
 import bcrypt from 'bcryptjs';
 
 export async function POST(req: Request) {
@@ -68,6 +69,18 @@ export async function POST(req: Request) {
 
       return { user, profile };
     });
+
+    // Send instant Telegram alert to team on Step-1 Sign Up
+    try {
+      await sendTelegramTutorAlert({
+        name: result.user.name,
+        phone: cleanPhone,
+        email: cleanEmail,
+        highestDegree: 'Onboarding Started (Step 1)',
+      });
+    } catch (tgErr) {
+      console.error('Failed to send Step-1 tutor Telegram alert:', tgErr);
+    }
 
     return NextResponse.json({
       success: true,

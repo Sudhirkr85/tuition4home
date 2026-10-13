@@ -83,18 +83,18 @@ model TutorProfile {
   experienceYears   Int          @default(0)
   highestDegree     String?
   gender            String?      // "FEMALE" | "MALE" | "OTHER"
-  qualifications    String?      @db.Text // JSON array: [{ id, degree, institute, year, grade }]
-  experiences       String?      @db.Text // JSON array: [{ id, role, organization, startYear, endYear, isCurrent, description }]
+  qualifications    String?      @db.LongText // JSON array: [{ id, degree, institute, year, grade }]
+  experiences       String?      @db.LongText // JSON array: [{ id, role, organization, startYear, endYear, isCurrent, description }]
   teachingMode      TeachingMode @default(BOTH) // OFFLINE_HOME | ONLINE_LIVE | BOTH
-  subjects          String?      // JSON string: ["Mathematics", "Physics"]
-  classes           String?      // JSON string: ["Class 9", "Class 10", "Class 11", "Class 12"]
-  boards            String?      // JSON string: ["CBSE", "ICSE", "IB", "IGCSE"]
-  serviceAreas      String?      // JSON string: ["DLF Phase 5", "Golf Course Road", "Sector 56"]
+  subjects          String?      @db.LongText // JSON string: ["Mathematics", "Physics"]
+  classes           String?      @db.LongText // JSON string: ["Class 9", "Class 10", "Class 11", "Class 12"]
+  boards            String?      @db.LongText // JSON string: ["CBSE", "ICSE", "IB", "IGCSE"]
+  serviceAreas      String?      @db.LongText // JSON string: ["DLF Phase 5", "Golf Course Road", "Sector 56"]
   travelRadiusKm    Int          @default(5)  // Maximum travel radius in KM for home visits
   latitude          Float?       // Precise GPS from Google Maps
   longitude         Float?
-  formattedAddress  String?
-  availableSlots    String?      // JSON string of weekly availability
+  formattedAddress  String?      @db.Text
+  availableSlots    String?      @db.LongText // JSON string of weekly availability
   hourlyRateHome    Int?
   hourlyRateOnline  Int?
   hourlyRateHomeMin Int?
@@ -149,11 +149,11 @@ model Lead {
   parentEmail      String?
   preferredMode    TeachingMode   @default(OFFLINE_HOME)
   locality         String         // e.g. "DLF Phase 4, Gurgaon"
-  formattedAddress String?        // Exact Google Maps Address
+  formattedAddress String?        @db.Text // Exact Google Maps Address
   latitude         Float?
   longitude        Float?
   gradeClass       String         // e.g. "Class 10"
-  subjectsNeeded   String         // JSON string: ["Mathematics"]
+  subjectsNeeded   String         @db.Text // JSON string: ["Mathematics"]
   board            String         // e.g. "CBSE"
   budgetMonthly    Int?
   status           LeadStatus     @default(NEW_LEAD)
