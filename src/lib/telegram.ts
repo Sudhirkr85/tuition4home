@@ -17,35 +17,49 @@ export async function sendTelegramNotification({ text, buttons }: SendTelegramMe
     : rawToken.trim();
 
   let chatId = (!rawChatId || rawChatId === 'mock_telegram_chat_id')
-    ? '-5491916856'
+    ? '-1003529665644'
     : rawChatId.trim();
 
-  // Auto-normalize group Chat ID if leading minus sign was omitted in environment variables
-  if (chatId === '5491916856') {
-    chatId = '-5491916856';
+  // Auto-upgrade legacy group ID (-5491916856 or 5491916856) to the new Supergroup ID (-1003529665644)
+  if (chatId === '5491916856' || chatId === '-5491916856' || chatId === '1003529665644') {
+    chatId = '-1003529665644';
   }
 
   try {
-    const payload: any = {
-      chat_id: chatId,
-      text,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
+    const buildPayload = (targetChatId: string | number) => {
+      const p: any = {
+        chat_id: targetChatId,
+        text,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+      };
+      if (buttons && buttons.length > 0) {
+        p.reply_markup = {
+          inline_keyboard: buttons,
+        };
+      }
+      return p;
     };
 
-    if (buttons && buttons.length > 0) {
-      payload.reply_markup = {
-        inline_keyboard: buttons,
-      };
-    }
-
-    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    let response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(buildPayload(chatId)),
     });
 
-    const data = await response.json();
+    let data = await response.json();
+
+    // If Telegram upgraded a group to a supergroup, automatically retry with migrate_to_chat_id
+    if (!data.ok && data.parameters?.migrate_to_chat_id) {
+      const newSupergroupId = data.parameters.migrate_to_chat_id;
+      response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildPayload(newSupergroupId)),
+      });
+      data = await response.json();
+    }
+
     if (!data.ok) {
       console.error('[TELEGRAM_API_RESPONSE_ERROR]:', data);
     }
