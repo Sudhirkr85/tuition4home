@@ -994,8 +994,23 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
   };
 
   // Dashboard Month & Year Filtering
-  const [selectedYear, setSelectedYear] = useState<string>('2026');
-  const [selectedMonth, setSelectedMonth] = useState<string>('08');
+  const currentNow = new Date();
+  const currentYearStr = String(currentNow.getFullYear());
+  const currentMonthStr = String(currentNow.getMonth() + 1).padStart(2, '0');
+  const availableYears = Array.from(
+    new Set([
+      currentNow.getFullYear() + 1,
+      currentNow.getFullYear(),
+      currentNow.getFullYear() - 1,
+      currentNow.getFullYear() - 2,
+      2026,
+      2025,
+      2024,
+    ])
+  ).sort((a, b) => b - a);
+
+  const [selectedYear, setSelectedYear] = useState<string>(currentYearStr);
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthStr);
 
   const monthFilteredLeads = leads.filter((l) => {
     const created = new Date(l.createdAt);
@@ -1756,9 +1771,11 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                       outline: 'none',
                     }}
                   >
-                    <option value="2026">2026</option>
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
+                    {availableYears.map((yr) => (
+                      <option key={yr} value={String(yr)}>
+                        {yr}
+                      </option>
+                    ))}
                     <option value="ALL">All Years</option>
                   </select>
 
@@ -1797,15 +1814,21 @@ export function OperationsDashboard({ portalMode = 'admin' }: { portalMode?: 'ad
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedYear('2026');
-                      setSelectedMonth('08');
+                      setSelectedYear(currentYearStr);
+                      setSelectedMonth(currentMonthStr);
                     }}
                     style={{
                       padding: '0.35rem 0.75rem',
                       borderRadius: '8px',
                       border: 'none',
-                      backgroundColor: selectedYear === '2026' && selectedMonth === '08' ? 'var(--brand-teal)' : 'transparent',
-                      color: selectedYear === '2026' && selectedMonth === '08' ? '#FFFFFF' : 'var(--text-muted)',
+                      backgroundColor:
+                        selectedYear === currentYearStr && selectedMonth === currentMonthStr
+                          ? 'var(--brand-teal)'
+                          : 'transparent',
+                      color:
+                        selectedYear === currentYearStr && selectedMonth === currentMonthStr
+                          ? '#FFFFFF'
+                          : 'var(--text-muted)',
                       fontWeight: 700,
                       fontSize: '0.75rem',
                       cursor: 'pointer',
